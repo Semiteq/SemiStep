@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="Config/Config.csproj" />
+  <Project Path="Core/Core.csproj" />
+  <Project Path="Csv/Csv.csproj" />
+  <Project Path="Domain/Domain.csproj" />
+  <Project Path="ModbusTcp/ModbusTcp.csproj" />
+  <Project Path="Tests/Tests.csproj" />
+  <Project Path="UI/UI.csproj" />
+</Solution>

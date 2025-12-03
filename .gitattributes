@@ -1,0 +1,30 @@
+* text=auto eol=lf
+
+# Source code
+*.cs text eol=lf diff=csharp
+*.csproj text eol=lf
+*.sln text eol=lf
+*.config text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.xaml text eol=lf
+
+# Scripts - Windows needs CRLF!
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=lf
+
+# Docs
+*.md text eol=lf
+*.txt text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.dll binary
+*.exe binary
+*.pdb binary
+*.snk binary

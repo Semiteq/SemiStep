@@ -1,6 +1,6 @@
 ﻿namespace Core.Entities;
 
-public enum DeployDuration
+internal enum DeployDuration
 {
 	Immediate,
 	LongLasting,

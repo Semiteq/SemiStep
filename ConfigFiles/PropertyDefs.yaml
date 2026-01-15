@@ -1,0 +1,119 @@
+# --- Example ---
+# - property_type_id: "Temp"      # Уникальный ID. Используется в ColumnDefs и ActionsDefs.
+#   system_type: "System.Single"  # Тип в .NET. Допустимы: System.Single, System.Int16, System.String.
+#   units: "°C"                   # Единицы измерения для UI. Могут принимать любое текстовое значение. При валидации отбрасываются и в логике не участвуют.
+#   min: 0                        # Минимально допустимое значение (для числовых типов) в пределах указанного типа (float или Int16).
+#   max: 2000                     # Максимально допустимое значение в пределах указанного типа (float или Int16).
+#   format_kind: "Numeric"           # Формат отображения. Варианты: Numeric, Scientific, TimeHms. Numeric выводит данные в формате 123.## с опциональной дробной частью, Scientific 123.##E123, TimeHms 01:02:03.###.
+# (Детальное описание см. в документации)
+# --- End Of Example ---
+
+# --- Basic Types ---
+
+## Целое число
+## Используем Short (Int16), т.к в PLC применяется 16-битный Int
+## См https://learn.microsoft.com/en-us/dotnet/api/system.int16?view=net-9.0
+- property_type_id: "int"
+  system_type: "System.Int16"
+  units: ""
+  format_kind: "Numeric"
+
+## Число с плавающей точкой
+## Здесь и далее используем Single (aka Float), т.к в PLC применяется 32-битный Real
+## См https://learn.microsoft.com/en-us/dotnet/api/system.single?view=net-9.0
+- property_type_id: "float"
+  system_type: "System.Single"
+  units: ""
+  format_kind: "Numeric"
+
+## Строка
+- property_type_id: "string"
+  system_type: "System.String"
+  units: ""
+  max_length: 255
+  format_kind: "Numeric"
+
+# --- End Basic Types ---
+
+# --- Custom Types ---
+
+## Выпадающий список
+## Использует Int16
+- property_type_id: "enum"
+  system_type: "System.Int16"
+  units: ""
+  format_kind: "Numeric"
+
+## --- Группа наследников Single ---
+
+## Число с плавающей точкой размерности потока (см³/мин)
+- property_type_id: "flow"
+  system_type: "System.Single"
+  units: "см³/мин"
+  min: 0
+  max: 100000
+  format_kind: "Numeric"
+
+## Процент
+- property_type_id: "percent"
+  system_type: "System.Single"
+  units: "%"
+  min: 0
+  max: 100
+  format_kind: "Numeric"
+
+## Число с плавающей точкой размерности мощность/время (%/мин)
+- property_type_id: "power_speed"
+  system_type: "System.Single"
+  units: "%/мин"
+  min: -100
+  max: 100
+  format_kind: "Numeric"
+
+
+## 1атм = 101,325Па = 1013.25мБар
+## или грубо 1атм ~ 100,000Па ~ 1,000мБар
+
+## Число с плавающей точкой размерности давления (Па)
+- property_type_id: "pressure_pa"
+  system_type: "System.Single"
+  units: "Па"
+  min: -200000
+  max: 200000
+  format_kind: "Numeric"
+
+## Число с плавающей точкой размерности давления (мБар)
+- property_type_id: "pressure_bar"
+  system_type: "System.Single"
+  units: "мбар"
+  min: -2000
+  max: 2000
+  format_kind: "Numeric"
+
+## Число с плавающей точкой размерности температуры (°C)
+- property_type_id: "temp"
+  system_type: "System.Single"
+  units: "°C"
+  min: 0
+  max: 2000
+  format_kind: "Numeric"
+
+## Число с плавающей точкой размерности температуры/время (°C/мин)
+- property_type_id: "temp_speed"
+  system_type: "System.Single"
+  units: "°C/мин"
+  min: -1000
+  max: 1000
+  format_kind: "Numeric"
+
+## Время в секундах
+- property_type_id: "time"
+  system_type: "System.Single"
+  units: "с"
+  min: 0
+  max: 86400
+  format_kind: "TimeHms"
+
+## --- Конец группы наследников Single ---
+
+# --- End Custom Types ---

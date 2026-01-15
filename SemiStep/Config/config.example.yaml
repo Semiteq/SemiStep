@@ -1,0 +1,30 @@
+# Пример конфигурационного файла для SemiStep
+# Этот файл демонстрирует структуру конфигурации с Actions и Properties
+
+actions:
+  # Пример действия - установка температуры
+  - key: "SetTemperature"
+    internalId: 1
+    properties:
+      - columnId: "targetTemp"
+        propertyTypeId: "Temperature"
+      
+      - columnId: "duration"
+        propertyTypeId: "Duration"
+
+  # Пример действия - ожидание
+  - key: "WaitForStabilization"
+    internalId: 2
+    properties:
+      - columnId: "waitTime"
+        propertyTypeId: "Duration"
+
+  # Пример действия с несколькими свойствами
+  - key: "SetPressure"
+    internalId: 3
+    properties:
+      - columnId: "targetPressure"
+        propertyTypeId: "Pressure"
+      
+      - columnId: "rampRate"
+        propertyTypeId: "Rate"

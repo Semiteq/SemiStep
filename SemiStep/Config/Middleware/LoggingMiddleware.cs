@@ -1,11 +1,11 @@
 ﻿using System.Diagnostics;
 
-using Config.Models;
+using SemiStep.Config.Models;
 
 using Serilog;
 using Serilog.Events;
 
-namespace Config.Middleware;
+namespace SemiStep.Config.Middleware;
 
 /// <summary>
 /// Middleware для логирования процесса загрузки конфигурации

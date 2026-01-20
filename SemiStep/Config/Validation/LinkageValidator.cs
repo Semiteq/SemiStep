@@ -1,9 +1,9 @@
 ﻿using System.Reflection;
 
-using Config.Models;
-using Config.Validation.Attributes;
+using SemiStep.Config.Models;
+using SemiStep.Config.Validation.Attributes;
 
-namespace Config.Validation;
+namespace SemiStep.Config.Validation;
 
 /// <summary>
 /// Валидатор для проверки линковки между объектами конфигурации

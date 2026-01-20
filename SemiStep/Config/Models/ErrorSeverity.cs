@@ -1,4 +1,4 @@
-﻿namespace Config.Models;
+﻿namespace SemiStep.Config.Models;
 
 /// <summary>
 /// Уровень серьезности ошибки конфигурации

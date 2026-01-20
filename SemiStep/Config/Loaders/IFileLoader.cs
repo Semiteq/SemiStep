@@ -1,6 +1,6 @@
-﻿using Core.ConfigImport.Dto;
+﻿using SemiStep.Config.Dto;
 
-namespace Config.Loaders;
+namespace SemiStep.Config.Loaders;
 
 /// <summary>
 /// Интерфейс для загрузки конфигурационных файлов

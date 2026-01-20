@@ -1,9 +1,9 @@
-﻿using Config.Core;
+﻿using SemiStep.Config.Core;
 
 using Serilog;
 using Serilog.Events;
 
-namespace Config;
+namespace SemiStep.Config;
 
 class Program
 {
@@ -48,7 +48,7 @@ class Program
 
 				foreach (var action in context.ParsedConfig.Actions)
 				{
-					Console.WriteLine($"     - {action.Key} (ID: {action.InternalId}, Properties: {action.Properties.Count})");
+					Console.WriteLine($"     - {action.Key} (ID: {action.InternalId}, PropertyColumns: {action.PropertyColumns?.Count ?? 0})");
 				}
 			}
 		}

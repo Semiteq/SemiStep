@@ -2,7 +2,9 @@
 
 namespace Core.Entities;
 
-internal record Recipe(IImmutableList<Step> Steps)
+public sealed record Recipe(ImmutableList<Step> Steps)
 {
-	internal static Recipe Empty => new(ImmutableList<Step>.Empty);
+	public static Recipe Empty => new([]);
+
+	public int StepCount => Steps.Count;
 }

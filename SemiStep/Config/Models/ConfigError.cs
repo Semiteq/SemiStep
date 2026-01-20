@@ -1,4 +1,4 @@
-﻿namespace Config.Models;
+﻿namespace SemiStep.Config.Models;
 
 /// <summary>
 /// Представляет ошибку или предупреждение конфигурации

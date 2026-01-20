@@ -1,7 +1,7 @@
-﻿using Config.Models;
-using Config.Validation;
+﻿using SemiStep.Config.Models;
+using SemiStep.Config.Validation;
 
-namespace Config.Middleware;
+namespace SemiStep.Config.Middleware;
 
 /// <summary>
 /// Middleware для валидации конфигурации

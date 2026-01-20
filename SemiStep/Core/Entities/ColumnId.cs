@@ -1,3 +1,6 @@
 ﻿namespace Core.Entities;
 
-internal sealed record ColumnId(string Id);
+public readonly record struct ColumnId(string Value)
+{
+	public override string ToString() => Value;
+}

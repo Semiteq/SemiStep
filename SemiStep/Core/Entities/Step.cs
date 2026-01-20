@@ -1,9 +1,7 @@
 ﻿using System.Collections.Immutable;
 
-using Core.Properties;
-
 namespace Core.Entities;
 
-internal sealed record Step(
-	ImmutableDictionary<ColumnId, Property?> Properties,
-	DeployDuration DeployDuration);
+public sealed record Step(
+	string ActionKey,
+	ImmutableDictionary<ColumnId, PropertyValue> Properties);

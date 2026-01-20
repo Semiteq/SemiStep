@@ -1,10 +1,10 @@
-﻿using Config.Loaders;
-using Config.Middleware;
-using Config.Models;
+﻿using SemiStep.Config.Loaders;
+using SemiStep.Config.Middleware;
+using SemiStep.Config.Models;
 
 using Serilog;
 
-namespace Config.Core;
+namespace SemiStep.Config.Core;
 
 public sealed class ConfigLoader
 {

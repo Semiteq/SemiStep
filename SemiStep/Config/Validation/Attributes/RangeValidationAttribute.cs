@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Config.Validation.Attributes;
+using DataAnnotationsValidationResult = System.ComponentModel.DataAnnotations.ValidationResult;
+
+namespace SemiStep.Config.Validation.Attributes;
 
 /// <summary>
 /// Атрибут для валидации числовых диапазонов
@@ -18,13 +20,13 @@ public sealed class RangeValidationAttribute : ValidationAttribute
 		Maximum = maximum;
 	}
 
-	protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+	protected override DataAnnotationsValidationResult? IsValid(object? value, ValidationContext validationContext)
 	{
 		if (value == null)
-			return ValidationResult.Success;
+			return DataAnnotationsValidationResult.Success;
 
 		if (value is not IConvertible convertible)
-			return new ValidationResult($"Value must be a numeric type");
+			return new DataAnnotationsValidationResult($"Value must be a numeric type");
 
 		try
 		{
@@ -32,15 +34,15 @@ public sealed class RangeValidationAttribute : ValidationAttribute
 
 			if (numericValue < Minimum || numericValue > Maximum)
 			{
-				return new ValidationResult(
+				return new DataAnnotationsValidationResult(
 					$"Value {numericValue} is out of range [{Minimum}, {Maximum}]");
 			}
 
-			return ValidationResult.Success;
+			return DataAnnotationsValidationResult.Success;
 		}
 		catch
 		{
-			return new ValidationResult($"Unable to convert value to numeric type");
+			return new DataAnnotationsValidationResult($"Unable to convert value to numeric type");
 		}
 	}
 }

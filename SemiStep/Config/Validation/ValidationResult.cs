@@ -1,6 +1,6 @@
-﻿using Config.Models;
+﻿using SemiStep.Config.Models;
 
-namespace Config.Validation;
+namespace SemiStep.Config.Validation;
 
 public sealed class ValidationResult
 {

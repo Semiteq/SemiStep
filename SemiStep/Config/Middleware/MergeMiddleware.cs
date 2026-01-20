@@ -1,8 +1,7 @@
-﻿using Config.Models;
+﻿using SemiStep.Config.Dto;
+using SemiStep.Config.Models;
 
-using Core.ConfigImport.Dto;
-
-namespace Config.Middleware;
+namespace SemiStep.Config.Middleware;
 
 /// <summary>
 /// Middleware для слияния конфигураций из нескольких файлов

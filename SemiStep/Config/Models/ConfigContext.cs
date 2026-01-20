@@ -1,6 +1,6 @@
-﻿using Core.ConfigImport.Dto;
+﻿using SemiStep.Config.Dto;
 
-namespace Config.Models;
+namespace SemiStep.Config.Models;
 
 public sealed class ConfigContext
 {

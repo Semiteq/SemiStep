@@ -1,4 +1,4 @@
-﻿namespace Config.Validation.Attributes;
+﻿namespace SemiStep.Config.Validation.Attributes;
 
 /// <summary>
 /// Атрибут для указания ссылки на другой объект в конфигурации

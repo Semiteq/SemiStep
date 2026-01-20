@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="Application/Application.csproj" />
   <Project Path="Config/Config.csproj" />
   <Project Path="Core/Core.csproj" />
   <Project Path="Csv/Csv.csproj" />

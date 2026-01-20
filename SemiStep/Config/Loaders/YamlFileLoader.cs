@@ -1,9 +1,9 @@
-﻿using Core.ConfigImport.Dto;
+﻿using SemiStep.Config.Dto;
 
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace Config.Loaders;
+namespace SemiStep.Config.Loaders;
 
 /// <summary>
 /// Загрузчик конфигурации из YAML файлов

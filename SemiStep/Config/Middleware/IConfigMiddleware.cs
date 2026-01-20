@@ -1,6 +1,6 @@
-﻿using Config.Models;
+﻿using SemiStep.Config.Models;
 
-namespace Config.Middleware;
+namespace SemiStep.Config.Middleware;
 
 /// <summary>
 /// Базовый интерфейс для middleware в конвейере загрузки конфигурации

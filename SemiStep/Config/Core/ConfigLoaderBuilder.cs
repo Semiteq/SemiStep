@@ -1,10 +1,11 @@
-﻿using Config.Loaders;
-using Config.Middleware;
+﻿using SemiStep.Config.Loaders;
+using SemiStep.Config.Middleware;
+using SemiStep.Config.Validation;
 
 using Serilog;
 using Serilog.Events;
 
-namespace Config.Core;
+namespace SemiStep.Config.Core;
 
 public sealed class ConfigLoaderBuilder
 {
@@ -61,9 +62,9 @@ public sealed class ConfigLoaderBuilder
 	/// </summary>
 	public ConfigLoaderBuilder AddValidation()
 	{
-		var validator = new Validation.ConfigSchemaValidator(
-			new Validation.RangeValidator(),
-			new Validation.LinkageValidator()
+		var validator = new ConfigSchemaValidator(
+			new RangeValidator(),
+			new LinkageValidator()
 		);
 		_middlewares.Add(new ValidationMiddleware(validator));
 		return this;

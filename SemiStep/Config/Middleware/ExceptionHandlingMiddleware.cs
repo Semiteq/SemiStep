@@ -1,10 +1,10 @@
-﻿using Config.Models;
+﻿using SemiStep.Config.Models;
 
 using Serilog;
 
 using YamlDotNet.Core;
 
-namespace Config.Middleware;
+namespace SemiStep.Config.Middleware;
 
 /// <summary>
 /// Middleware для перехвата и обработки исключений в pipeline

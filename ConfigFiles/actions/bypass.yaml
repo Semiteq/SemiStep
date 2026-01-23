@@ -1,0 +1,38 @@
+- id: 800
+  ui_name: "Bypass"
+  deploy_duration: "immediate"
+  columns:
+    - key: "channel"
+      group_name: "bypass"
+      property_type_id: "enum"
+    - key: "target_value"
+      default_value: "0"
+      property_type_id: "flow"
+    - key: "step_duration"
+      default_value: "0"
+      property_type_id: "time"
+    - key: "comment"
+      property_type_id: "string"
+
+- id: 810
+  ui_name: "Wait Bypass"
+  deploy_duration: "immediate"
+  columns:
+    - key: "channel"
+      group_name: "bypass"
+      property_type_id: "enum"
+    - key: "comment"
+      property_type_id: "string"
+
+- id: 820
+  ui_name: "Set_Default_Bypass"
+  deploy_duration: "immediate"
+  columns:
+    - key: "channel"
+      group_name: "bypass"
+      property_type_id: "enum"
+    - key: "step_duration"
+      default_value: "0"
+      property_type_id: "time"
+    - key: "comment"
+      property_type_id: "string"

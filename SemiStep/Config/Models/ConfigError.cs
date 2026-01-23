@@ -1,22 +1,11 @@
-﻿namespace SemiStep.Config.Models;
+﻿namespace Config.Models;
 
-/// <summary>
-/// Представляет ошибку или предупреждение конфигурации
-/// </summary>
-public sealed class ConfigError
+public sealed class ConfigError(ErrorSeverity severity, string message, string? location = null)
 {
-	public ErrorSeverity Severity { get; }
-	public string Message { get; }
-	public string? Location { get; }
-	public DateTime Timestamp { get; }
-
-	public ConfigError(ErrorSeverity severity, string message, string? location = null)
-	{
-		Severity = severity;
-		Message = message;
-		Location = location;
-		Timestamp = DateTime.UtcNow;
-	}
+	public ErrorSeverity Severity { get; } = severity;
+	public string Message { get; } = message;
+	public string? Location { get; } = location;
+	public DateTime Timestamp { get; } = DateTime.UtcNow;
 
 	public override string ToString()
 	{

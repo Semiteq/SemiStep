@@ -1,0 +1,47 @@
+- id: 100
+  ui_name: "MOC"
+  deploy_duration: "immediate"
+  columns:
+    - key: "channel"
+      group_name: "moc_cell"
+      property_type_id: "enum"
+    - key: "mode"
+      group_name: "moc_state"
+      property_type_id: "enum"
+    - key: "target_value"
+      default_value: "10"
+      property_type_id: "flow"
+    - key: "dilution"
+      default_value: "10"
+      property_type_id: "flow"
+    - key: "pressure"
+      default_value: "10"
+      property_type_id: "pressure_bar"
+    - key: "step_duration"
+      default_value: "10"
+      property_type_id: "time"
+    - key: "comment"
+      property_type_id: "string"
+
+- id: 110
+  ui_name: "Wait MOC"
+  deploy_duration: "immediate"
+  columns:
+    - key: "channel"
+      group_name: "moc_cell"
+      property_type_id: "enum"
+    - key: "comment"
+      property_type_id: "string"
+
+- id: 120
+  ui_name: "Set Default MOC"
+  deploy_duration: "immediate"
+  columns:
+    - key: "channel"
+      group_name: "moc_cell"
+      property_type_id: "enum"
+    - key: "step_duration"
+      default_value: "0"
+      property_type_id: "time"
+    - key: "comment"
+      property_type_id: "string"

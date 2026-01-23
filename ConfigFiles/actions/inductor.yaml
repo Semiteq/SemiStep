@@ -1,0 +1,25 @@
+- id: 1000
+  ui_name: "Inductor T"
+  deploy_duration: "immediate"
+  columns:
+    - key: "target_value"
+      default_value: "0"
+      property_type_id: "temp"
+    - key: "step_duration"
+      default_value: "0"
+      property_type_id: "time"
+    - key: "comment"
+      property_type_id: "string"
+
+- id: 1010
+  ui_name: "Inductor P"
+  deploy_duration: "immediate"
+  columns:
+    - key: "target_value"
+      default_value: "0"
+      property_type_id: "percent"
+    - key: "step_duration"
+      default_value: "0"
+      property_type_id: "time"
+    - key: "comment"
+      property_type_id: "string"

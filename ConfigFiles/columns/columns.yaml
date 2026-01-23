@@ -1,0 +1,120 @@
+- key: "action"
+  column_type: "action_combo_box"
+  ui:
+    ui_name: "Имя команды"
+    width: 150
+  business_logic:
+    property_type_id: "enum"
+    plc_data_type: "int"
+    read_only: false
+    save_to_csv: true
+
+- key: "channel"
+  column_type: "action_target_combo_box"
+  ui:
+    ui_name: "Канал"
+    width: 100
+  business_logic:
+    property_type_id: "enum"
+    plc_data_type: "int"
+    read_only: false
+    save_to_csv: true
+
+- key: "mode"
+  column_type: "action_target_combo_box"
+  ui:
+    ui_name: "Режим"
+    width: 100
+  business_logic:
+    property_type_id: "enum"
+    plc_data_type: "int"
+    read_only: false
+    save_to_csv: true
+
+- key: "target_value"
+  column_type: "property_field"
+  ui:
+    ui_name: "Значение"
+    width: 160
+  business_logic:
+    property_type_id: "float"
+    plc_data_type: "float"
+    read_only: false
+    save_to_csv: true
+
+- key: "dilution"
+  column_type: "property_field"
+  ui:
+    ui_name: "Разбавление"
+    width: 230
+  business_logic:
+    property_type_id: "float"
+    plc_data_type: "float"
+    read_only: false
+    save_to_csv: true
+
+- key: "pressure"
+  column_type: "property_field"
+  ui:
+    ui_name: "Давление"
+    width: 110
+  business_logic:
+    property_type_id: "pressure_bar"
+    plc_data_type: "float"
+    read_only: false
+    save_to_csv: true
+
+- key: "mixing"
+  column_type: "property_field"
+  ui:
+    ui_name: "Смешивание"
+    width: 140
+  business_logic:
+    property_type_id: "flow"
+    plc_data_type: "float"
+    read_only: false
+    save_to_csv: true
+
+- key: "transport"
+  column_type: "property_field"
+  ui:
+    ui_name: "Транспорт"
+    width: 120
+  business_logic:
+    property_type_id: "flow"
+    plc_data_type: "float"
+    read_only: false
+    save_to_csv: true
+
+- key: "step_duration"
+  column_type: "property_field"
+  ui:
+    ui_name: "Время"
+    width: 120
+  business_logic:
+    property_type_id: "time"
+    plc_data_type: "float"
+    read_only: false
+    save_to_csv: true
+
+- key: "step_start_time"
+  column_type: "step_start_time_field"
+  ui:
+    ui_name: "Время абс."
+    width: 130
+  business_logic:
+    property_type_id: "string"
+    plc_data_type: none
+    save_to_csv: false
+    read_only: true
+
+- key: "comment"
+  column_type: "text_field"
+  ui:
+    ui_name: "Комментарий"
+    width: -1
+  business_logic:
+    property_type_id: "string"
+    plc_data_type: none
+    save_to_csv: true
+    read_only: false

@@ -1,18 +1,26 @@
-﻿using SemiStep.Config.Dto;
+﻿using Config.Dto;
 
-namespace SemiStep.Config.Models;
+using Shared;
+
+namespace Config.Models;
 
 public sealed class ConfigContext
 {
-	public List<string> FilePaths { get; init; } = new();
+	public List<string> FilePaths { get; init; } = [];
 
-	public Dictionary<string, object> RawData { get; set; } = new();
+	public List<ActionDto>? Actions { get; set; }
 
-	public ConfigRootDto? ParsedConfig { get; set; }
+	public List<ColumnDto>? Columns { get; set; }
 
-	public List<ConfigError> Errors { get; } = new();
+	public List<PropertyDto>? Properties { get; set; }
 
-	public Dictionary<string, object> Metadata { get; } = new();
+	public Dictionary<string, Dictionary<int, string>>? Groups { get; set; }
+
+	public AppConfiguration? Configuration { get; set; }
+
+	public List<ConfigError> Errors { get; } = [];
+
+	public Dictionary<string, object> Metadata { get; } = [];
 
 	public bool HasErrors => Errors.Any(e => e.Severity == ErrorSeverity.Error);
 

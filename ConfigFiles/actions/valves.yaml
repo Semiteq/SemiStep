@@ -1,0 +1,19 @@
+- id: 1100
+  ui_name: "Open"
+  deploy_duration: "immediate"
+  columns:
+    - key: "channel"
+      group_name: "valve"
+      property_type_id: "enum"
+    - key: "comment"
+      property_type_id: "string"
+
+- id: 1110
+  ui_name: "Close"
+  deploy_duration: "immediate"
+  columns:
+    - key: "channel"
+      group_name: "valve"
+      property_type_id: "enum"
+    - key: "comment"
+      property_type_id: "string"

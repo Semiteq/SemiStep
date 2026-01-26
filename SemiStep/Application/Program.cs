@@ -1,7 +1,8 @@
-﻿using Config;
+using Config;
 using Config.Facade;
 
 using Domain;
+using Domain.Facade;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,11 +10,15 @@ using Recipe;
 
 using Serilog;
 
+using Shared;
+
+using UI;
+
 namespace SemiStep.Application;
 
 public class Program
 {
-	public static async Task Main(string[] args)
+	public static void Main(string[] args)
 	{
 		var logger = new LoggerConfiguration()
 			.MinimumLevel.Debug()
@@ -25,7 +30,8 @@ public class Program
 		try
 		{
 			var services = ConfigureServices(logger);
-			await RunAsync(services);
+			var configuration = InitializeConfigurationAsync(services).GetAwaiter().GetResult();
+			RunAvaloniaApp(services, configuration);
 		}
 		catch (Exception ex)
 		{
@@ -33,7 +39,7 @@ public class Program
 		}
 		finally
 		{
-			await Log.CloseAndFlushAsync();
+			Log.CloseAndFlush();
 		}
 	}
 
@@ -43,17 +49,17 @@ public class Program
 
 		services.AddSingleton(logger);
 
-		services.AddCore(logger);
+		services.AddRecipe(logger);
 		services.AddConfig(logger);
 		services.AddDomain(logger);
+		services.AddUi();
 
 		return services.BuildServiceProvider();
 	}
 
-	private static async Task RunAsync(IServiceProvider services)
+	private static async Task<AppConfiguration> InitializeConfigurationAsync(IServiceProvider services)
 	{
 		var configLoader = services.GetRequiredService<ConfigFacade>();
-		var domain = services.GetRequiredService<DomainFacade>();
 
 		const string ConfigDirectory = @"C:\Users\admin\Projects\git\SemiStep\ConfigFiles";
 
@@ -66,17 +72,25 @@ public class Program
 				Log.Error("{Severity}: {Message} at {Location}", error.Severity, error.Message, error.Location);
 			}
 
-			return;
+			throw new InvalidOperationException("Configuration loading failed with errors");
 		}
 
 		if (context.Configuration is null)
 		{
 			Log.Error("Configuration is null after successful loading");
-			return;
+			throw new InvalidOperationException("Configuration is null");
 		}
 
-		domain.Initialize(context.Configuration);
+		var domainFacade = services.GetRequiredService<DomainFacade>();
+		domainFacade.Initialize(context.Configuration);
 
-		Log.Information("Application initialized successfully");
+		Log.Information("Configuration loaded successfully");
+
+		return context.Configuration;
+	}
+
+	private static void RunAvaloniaApp(IServiceProvider services, AppConfiguration configuration)
+	{
+		App.Run(services, configuration);
 	}
 }

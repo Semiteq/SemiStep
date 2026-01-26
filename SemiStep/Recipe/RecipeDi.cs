@@ -9,7 +9,7 @@ namespace Recipe;
 
 public static class RecipeDi
 {
-	public static IServiceCollection AddCore(this IServiceCollection services, ILogger? logger = null)
+	public static IServiceCollection AddRecipe(this IServiceCollection services, ILogger? logger = null)
 	{
 		if (logger is not null)
 		{

@@ -1,0 +1,65 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:UI.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="UI.Views.MainWindow"
+        Title="{Binding WindowTitle}"
+        Width="1200" Height="800">
+
+    <DockPanel>
+        <!-- Menu Bar at top -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="New" Command="{Binding NewRecipeCommand}" />
+                <MenuItem Header="Open" Command="{Binding LoadRecipeCommand}" />
+                <MenuItem Header="Save" Command="{Binding SaveRecipeCommand}" />
+                <Separator />
+                <MenuItem Header="Exit" />
+            </MenuItem>
+            <MenuItem Header="Edit">
+                <MenuItem Header="Add Step" Command="{Binding AddStepCommand}" />
+                <MenuItem Header="Delete Step" />
+            </MenuItem>
+            <MenuItem Header="PLC">
+                <MenuItem Header="Connect" />
+                <MenuItem Header="Disconnect" />
+                <Separator />
+                <MenuItem Header="Send to PLC" />
+                <MenuItem Header="Read from PLC" />
+            </MenuItem>
+        </Menu>
+
+        <!-- Status bar at bottom -->
+        <Border DockPanel.Dock="Bottom" Background="#F0F0F0" Padding="5">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="{Binding StatusText}" />
+                <TextBlock Text="|" />
+                <TextBlock Text="{Binding ConnectionStatus}" />
+            </StackPanel>
+        </Border>
+
+        <!-- Validation errors panel -->
+        <Expander DockPanel.Dock="Bottom" 
+                  Header="Validation Errors" 
+                  IsExpanded="True"
+                  IsVisible="{Binding HasValidationErrors}">
+            <ListBox ItemsSource="{Binding ValidationErrors}" MaxHeight="100" />
+        </Expander>
+
+        <!-- Recipe DataGrid (main content) -->
+        <DataGrid Name="RecipeGrid"
+                  ItemsSource="{Binding RecipeRows}"
+                  AutoGenerateColumns="False"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  IsReadOnly="False"
+                  GridLinesVisibility="All"
+                  BorderThickness="1"
+                  BorderBrush="Gray">
+            <!-- Columns generated dynamically in code-behind -->
+        </DataGrid>
+    </DockPanel>
+
+</Window>

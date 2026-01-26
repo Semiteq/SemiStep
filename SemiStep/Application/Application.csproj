@@ -20,6 +20,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Domain\Domain.csproj" />
         <ProjectReference Include="..\Config\Config.csproj" />
+        <ProjectReference Include="..\UI\UI.csproj" />
     </ItemGroup>
 
     <ItemGroup>

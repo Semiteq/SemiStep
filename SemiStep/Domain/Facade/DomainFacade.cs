@@ -2,14 +2,15 @@
 using Domain.Services;
 
 using Shared;
+using Shared.Registries;
 
-namespace Domain;
+namespace Domain.Facade;
 
 public sealed class DomainFacade(
-	ActionRegistry actionRegistry,
-	PropertyRegistry propertyRegistry,
-	ColumnRegistry columnRegistry,
-	GroupRegistry groupRegistry,
+	IActionRegistry actionRegistry,
+	IPropertyRegistry propertyRegistry,
+	IColumnRegistry columnRegistry,
+	IGroupRegistry groupRegistry,
 	RecipeService recipeService)
 	: IDisposable
 {

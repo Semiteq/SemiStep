@@ -1,15 +1,20 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Reactive;
 
-using ReactiveUI;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 
 using Domain.Facade;
+using Domain.Services;
+
+using ReactiveUI;
 
 using Recipe.Exceptions;
 
 using Shared;
 using Shared.Registries;
+using Shared.Services;
 
 namespace UI.ViewModels;
 
@@ -17,16 +22,25 @@ public class MainWindowViewModel : ReactiveObject
 {
 	private readonly DomainFacade _domainFacade;
 	private readonly IActionRegistry _actionRegistry;
-	private readonly IPropertyRegistry _propertyRegistry;
+	private readonly IGroupRegistry _groupRegistry;
+	private readonly IColumnRegistry _columnRegistry;
+	private readonly CellStateResolver _cellStateResolver;
+	private readonly IGridStyleProvider _gridStyleProvider;
 
 	public MainWindowViewModel(
 		DomainFacade domainFacade,
 		IActionRegistry actionRegistry,
-		IPropertyRegistry propertyRegistry)
+		IGroupRegistry groupRegistry,
+		IColumnRegistry columnRegistry,
+		CellStateResolver cellStateResolver,
+		IGridStyleProvider gridStyleProvider)
 	{
 		_domainFacade = domainFacade;
 		_actionRegistry = actionRegistry;
-		_propertyRegistry = propertyRegistry;
+		_groupRegistry = groupRegistry;
+		_columnRegistry = columnRegistry;
+		_cellStateResolver = cellStateResolver;
+		_gridStyleProvider = gridStyleProvider;
 
 		RecipeRows = new ObservableCollection<RecipeRowViewModel>();
 		ValidationErrors = new ObservableCollection<string>();
@@ -37,7 +51,18 @@ public class MainWindowViewModel : ReactiveObject
 		SaveRecipeCommand = ReactiveCommand.Create(SaveRecipe);
 		LoadRecipeCommand = ReactiveCommand.Create(LoadRecipe);
 		NewRecipeCommand = ReactiveCommand.Create(NewRecipe);
+		ExitCommand = ReactiveCommand.Create(Exit);
 	}
+
+	public IActionRegistry ActionRegistry => _actionRegistry;
+
+	public IGroupRegistry GroupRegistry => _groupRegistry;
+
+	public IColumnRegistry ColumnRegistry => _columnRegistry;
+
+	public CellStateResolver CellStateResolver => _cellStateResolver;
+
+	public IGridStyleProvider GridStyleProvider => _gridStyleProvider;
 
 	public ObservableCollection<RecipeRowViewModel> RecipeRows { get; }
 
@@ -54,6 +79,8 @@ public class MainWindowViewModel : ReactiveObject
 	public ReactiveCommand<Unit, Unit> LoadRecipeCommand { get; }
 
 	public ReactiveCommand<Unit, Unit> NewRecipeCommand { get; }
+
+	public ReactiveCommand<Unit, Unit> ExitCommand { get; }
 
 	public string WindowTitle => "SemiStep - Recipe Editor";
 
@@ -137,13 +164,24 @@ public class MainWindowViewModel : ReactiveObject
 				i + 1,
 				step,
 				action,
-				_propertyRegistry,
-				OnCellValueChanged);
+				_groupRegistry,
+				_columnRegistry,
+				_cellStateResolver,
+				OnCellValueChanged,
+				OnActionChanged);
 			RecipeRows.Add(rowVm);
 		}
 	}
 
-	private void OnCellValueChanged(int stepIndex, string propertyTypeId, object? value)
+	private static void Exit()
+	{
+		if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
+		{
+			lifetime.Shutdown();
+		}
+	}
+
+	private void OnCellValueChanged(int stepIndex, string columnKey, object? value)
 	{
 		if (value is null)
 		{
@@ -152,7 +190,7 @@ public class MainWindowViewModel : ReactiveObject
 
 		try
 		{
-			_domainFacade.Recipe.UpdateProperty(stepIndex, propertyTypeId, value);
+			_domainFacade.Recipe.UpdateProperty(stepIndex, columnKey, value);
 			RefreshRecipeRows();
 			this.RaisePropertyChanged(nameof(IsDirty));
 			this.RaisePropertyChanged(nameof(StatusText));
@@ -160,6 +198,21 @@ public class MainWindowViewModel : ReactiveObject
 		catch (PropertyValidationException ex)
 		{
 			ValidationErrors.Add($"Step {stepIndex + 1}: {ex.Message}");
+		}
+	}
+
+	private void OnActionChanged(int stepIndex, short newActionId)
+	{
+		try
+		{
+			_domainFacade.Recipe.ChangeStepAction(stepIndex, newActionId);
+			RefreshRecipeRows();
+			this.RaisePropertyChanged(nameof(IsDirty));
+			this.RaisePropertyChanged(nameof(StatusText));
+		}
+		catch (Exception ex)
+		{
+			ValidationErrors.Add($"Step {stepIndex + 1}: Failed to change action - {ex.Message}");
 		}
 	}
 

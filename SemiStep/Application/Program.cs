@@ -1,4 +1,4 @@
-using Config;
+﻿using Config;
 using Config.Facade;
 
 using Domain;
@@ -52,7 +52,7 @@ public class Program
 		services.AddRecipe(logger);
 		services.AddConfig(logger);
 		services.AddDomain(logger);
-		services.AddUi();
+		services.AddUi(logger);
 
 		return services.BuildServiceProvider();
 	}

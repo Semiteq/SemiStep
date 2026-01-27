@@ -35,6 +35,17 @@ public sealed class RecipeMutator(StepFactory stepFactory)
 		return recipe with { Steps = recipe.Steps.SetItem(stepIndex, newStep) };
 	}
 
+	public Entities.Recipe ChangeStepAction(
+		Entities.Recipe recipe,
+		int stepIndex,
+		ActionDefinition newAction,
+		IReadOnlyList<PropertyDefinition> properties)
+	{
+		ValidateIndex(recipe, stepIndex);
+		var newStep = stepFactory.Create(newAction, properties);
+		return recipe with { Steps = recipe.Steps.SetItem(stepIndex, newStep) };
+	}
+
 	private static void ValidateIndex(Entities.Recipe recipe, int index)
 	{
 		if (index < 0 || index >= recipe.Steps.Count)

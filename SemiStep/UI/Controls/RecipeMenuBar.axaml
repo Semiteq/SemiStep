@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="UI.Controls.RecipeMenuBar">
+
+    <Menu>
+        <MenuItem Header="_File">
+            <MenuItem Header="_New Recipe"
+                      Command="{Binding NewRecipeCommand}"
+                      InputGesture="Ctrl+N" />
+            <MenuItem Header="_Open Recipe"
+                      Command="{Binding LoadRecipeCommand}"
+                      InputGesture="Ctrl+O" />
+            <MenuItem Header="_Save Recipe"
+                      Command="{Binding SaveRecipeCommand}"
+                      InputGesture="Ctrl+S" />
+            <Separator />
+            <MenuItem Header="E_xit"
+                      Command="{Binding ExitCommand}"
+                      InputGesture="Alt+F4" />
+        </MenuItem>
+
+        <MenuItem Header="_Edit">
+            <MenuItem Header="_Add Step"
+                      Command="{Binding AddStepCommand}"
+                      InputGesture="Ctrl+Insert" />
+            <MenuItem Header="_Delete Step"
+                      IsEnabled="False"
+                      InputGesture="Ctrl+Delete" />
+            <Separator />
+            <MenuItem Header="_Undo"
+                      IsEnabled="False"
+                      InputGesture="Ctrl+Z" />
+            <MenuItem Header="_Redo"
+                      IsEnabled="False"
+                      InputGesture="Ctrl+Y" />
+        </MenuItem>
+
+        <MenuItem Header="_View">
+            <MenuItem Header="_Validation Errors"
+                      IsEnabled="False" />
+        </MenuItem>
+
+        <MenuItem Header="_Help">
+            <MenuItem Header="_About"
+                      IsEnabled="False" />
+        </MenuItem>
+    </Menu>
+
+</UserControl>

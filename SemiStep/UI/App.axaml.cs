@@ -1,15 +1,16 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
-using ReactiveUI;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using ReactiveUI;
+
 using Shared;
 
-using UI.Views;
 using UI.ViewModels;
+using UI.Views;
 
 namespace UI;
 

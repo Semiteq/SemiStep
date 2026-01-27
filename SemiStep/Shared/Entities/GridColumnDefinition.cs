@@ -1,6 +1,6 @@
 ﻿namespace Shared.Entities;
 
-public sealed record ColumnDefinition(
+public sealed record GridColumnDefinition(
 	string Key,
 	string ColumnType,
 	string UiName,

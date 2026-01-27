@@ -1,0 +1,53 @@
+# Grid Style Configuration
+# Color formats supported:
+#   - #RGB        (e.g., #FFF)
+#   - #RRGGBB     (e.g., #FFFFFF)
+#   - #ARGB       (e.g., #0FFF for transparent white)
+#   - #AARRGGBB   (e.g., #00FFFFFF for fully transparent white)
+# Alpha: 00 = fully transparent, FF = fully opaque
+
+fonts:
+  header_size: 14
+  cell_size: 12
+
+layout:
+  cell_padding_left: 6
+  cell_padding_top: 4
+  cell_padding_right: 6
+  cell_padding_bottom: 4
+  row_height: 28
+
+colors:
+  selection:
+    background: "#0078D7"
+    foreground: "#FFFFFF"
+  cells:
+    enabled:
+      normal: "#FFFFFF"
+      selected: "#0078D7"
+    readonly:
+      normal: "#F5F5F5"
+      selected: "#5A9ED7"
+    disabled:
+      normal: "#E0E0E0"
+      selected: "#89B4D7"
+  rows:
+    alternating_background: "#FAFAFA"
+    normal_background: "#FFFFFF"
+  grid_line: "#E0E0E0"
+
+borders:
+  grid_line_thickness: 1.0
+
+status_bar:
+  background: "#F0F0F0"
+  foreground: "#000000"
+  padding: 5
+  item_spacing: 10
+
+validation_panel:
+  background: "#FFFFFF"
+  foreground: "#000000"
+  error_color: "#D32F2F"
+  warning_color: "#F57C00"
+  max_height: 100

@@ -1,17 +1,15 @@
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Data;
+﻿using Avalonia.Controls;
 
-using UI.Converters;
+using UI.Helpers;
 using UI.ViewModels;
-
-using Shared;
-using Shared.Entities;
 
 namespace UI.Views;
 
 public partial class MainWindow : Window
 {
+	private ColumnBuilder? _columnBuilder;
+	private GridStyleApplier? _styleApplier;
+
 	public MainWindow()
 	{
 		InitializeComponent();
@@ -20,65 +18,65 @@ public partial class MainWindow : Window
 
 	private void OnDataContextChanged(object? sender, EventArgs e)
 	{
-		if (DataContext is MainWindowViewModel viewModel && viewModel.Configuration is not null)
-		{
-			BuildColumnsFromConfiguration(viewModel.Configuration);
-		}
-	}
-
-	private void BuildColumnsFromConfiguration(AppConfiguration config)
-	{
-		var grid = this.FindControl<DataGrid>("RecipeGrid");
-		if (grid is null)
+		if (DataContext is not MainWindowViewModel viewModel || viewModel.Configuration is null)
 		{
 			return;
 		}
 
-		grid.Columns.Clear();
+		var gridStyles = viewModel.GridStyleProvider.Current;
 
-		grid.Columns.Add(new DataGridTextColumn
-		{
-			Header = "Step",
-			Binding = new Binding("StepNumber"),
-			IsReadOnly = true,
-			Width = new DataGridLength(60)
-		});
+		_columnBuilder = new ColumnBuilder(
+			viewModel.ActionRegistry,
+			viewModel.GroupRegistry,
+			gridStyles);
 
-		grid.Columns.Add(new DataGridTextColumn
-		{
-			Header = "Action",
-			Binding = new Binding("ActionName"),
-			IsReadOnly = true,
-			Width = new DataGridLength(150)
-		});
+		_styleApplier = new GridStyleApplier();
 
-		foreach (var columnDef in config.Columns.Values.OrderBy(c => c.Key))
-		{
-			var propertyDef = config.Properties[columnDef.PropertyTypeId];
-			var column = CreateColumnFromDefinition(columnDef, propertyDef);
-			grid.Columns.Add(column);
-		}
+		viewModel.GridStyleProvider.StylesChanged += OnStylesChanged;
+
+		BuildGrid();
 	}
 
-	private DataGridColumn CreateColumnFromDefinition(
-		Shared.Entities.ColumnDefinition columnDef,
-		PropertyDefinition propertyDef)
+	private void OnStylesChanged(object? sender, Shared.Entities.GridStyleOptions styles)
 	{
-		var width = columnDef.Width > 0 ? columnDef.Width : 100;
-		
-		var column = new DataGridTextColumn
+		if (_columnBuilder is null || _styleApplier is null)
 		{
-			Header = columnDef.UiName,
-			Width = new DataGridLength(width),
-			IsReadOnly = columnDef.ReadOnly,
-			Binding = new Binding
-			{
-				Path = ".",
-				Converter = new PropertyValueConverter(columnDef.PropertyTypeId),
-				Mode = columnDef.ReadOnly ? BindingMode.OneWay : BindingMode.TwoWay
-			}
-		};
+			return;
+		}
 
-		return column;
+		_columnBuilder.UpdateStyles(styles);
+		BuildGrid();
+	}
+
+	private void BuildGrid()
+	{
+		if (DataContext is not MainWindowViewModel viewModel || viewModel.Configuration is null)
+		{
+			return;
+		}
+
+		if (_columnBuilder is null || _styleApplier is null)
+		{
+			return;
+		}
+
+		var gridStyles = viewModel.GridStyleProvider.Current;
+
+		_columnBuilder.BuildColumnsFromConfiguration(RecipeGrid, viewModel.Configuration);
+		_styleApplier.ApplyGridStyles(RecipeGrid, gridStyles);
+		_styleApplier.ApplyControlStyles(ValidationPanel, StatusBar, gridStyles);
+	}
+
+	private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (DataContext is not MainWindowViewModel viewModel)
+		{
+			return;
+		}
+
+		foreach (var row in viewModel.RecipeRows)
+		{
+			row.IsSelected = RecipeGrid.SelectedItems?.Contains(row) ?? false;
+		}
 	}
 }

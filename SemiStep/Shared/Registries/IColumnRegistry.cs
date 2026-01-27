@@ -4,8 +4,8 @@ namespace Shared.Registries;
 
 public interface IColumnRegistry
 {
-	void Initialize(IReadOnlyDictionary<string, ColumnDefinition> columns);
-	ColumnDefinition GetColumn(string key);
+	void Initialize(IReadOnlyDictionary<string, GridColumnDefinition> columns);
+	GridColumnDefinition GetColumn(string key);
 	bool ColumnExists(string key);
-	IReadOnlyList<ColumnDefinition> GetAll();
+	IReadOnlyList<GridColumnDefinition> GetAll();
 }

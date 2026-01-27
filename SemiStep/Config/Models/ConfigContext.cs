@@ -16,6 +16,8 @@ public sealed class ConfigContext
 
 	public Dictionary<string, Dictionary<int, string>>? Groups { get; set; }
 
+	public GridStyleOptionsDto? GridStyle { get; set; }
+
 	public AppConfiguration? Configuration { get; set; }
 
 	public List<ConfigError> Errors { get; } = [];

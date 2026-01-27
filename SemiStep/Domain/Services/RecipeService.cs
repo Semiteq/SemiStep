@@ -17,7 +17,8 @@ public sealed class RecipeService(
 	PropertyValidator propertyValidator,
 	RecipeAnalyzer recipeAnalyzer,
 	IActionRegistry actionRegistry,
-	IPropertyRegistry propertyRegistry)
+	IPropertyRegistry propertyRegistry,
+	IColumnRegistry columnRegistry)
 {
 	private readonly PropertyValidator _propertyValidator = propertyValidator;
 
@@ -44,6 +45,15 @@ public sealed class RecipeService(
 		state.Update(newRecipe, analysis);
 	}
 
+	public void ChangeStepAction(int stepIndex, short newActionId)
+	{
+		var newAction = actionRegistry.GetAction(newActionId);
+		var properties = ResolvePropertiesForAction(newAction);
+		var newRecipe = recipeMutator.ChangeStepAction(state.Current, stepIndex, newAction, properties);
+		var analysis = recipeAnalyzer.Analyze(newRecipe);
+		state.Update(newRecipe, analysis);
+	}
+
 	public void RemoveStep(int index)
 	{
 		var newRecipe = recipeMutator.RemoveStep(state.Current, index);
@@ -51,25 +61,27 @@ public sealed class RecipeService(
 		state.Update(newRecipe, analysis);
 	}
 
-	public void UpdateProperty(int stepIndex, string propertyTypeId, object value)
+	public void UpdateProperty(int stepIndex, string columnKey, object value)
 	{
-		var property = propertyRegistry.GetProperty(propertyTypeId);
+		var columnDef = columnRegistry.GetColumn(columnKey);
+		var property = propertyRegistry.GetProperty(columnDef.PropertyTypeId);
 		var validation = PropertyValidator.Validate(property, value);
 		if (!validation.IsValid)
 		{
 			throw new PropertyValidationException(validation);
 		}
 
-		var columnId = new ColumnId(propertyTypeId);
+		var columnId = new ColumnId(columnKey);
 		var propertyValue = CreatePropertyValue(value);
 		var newRecipe = recipeMutator.UpdateProperty(state.Current, stepIndex, columnId, propertyValue);
 		var analysis = recipeAnalyzer.Analyze(newRecipe);
 		state.Update(newRecipe, analysis);
 	}
 
-	public ValidationResult ValidateProperty(string propertyTypeId, object value)
+	public ValidationResult ValidateProperty(string columnKey, object value)
 	{
-		var property = propertyRegistry.GetProperty(propertyTypeId);
+		var columnDef = columnRegistry.GetColumn(columnKey);
+		var property = propertyRegistry.GetProperty(columnDef.PropertyTypeId);
 		return PropertyValidator.Validate(property, value);
 	}
 
@@ -102,6 +114,7 @@ public sealed class RecipeService(
 		{
 			int => PropertyType.Int,
 			float => PropertyType.Float,
+			double => PropertyType.Float,
 			string => PropertyType.String,
 			_ => throw new ArgumentException($"Unsupported value type: {value.GetType()}")
 		};

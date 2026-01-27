@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 using Shared.Registries;
+using Shared.Services;
 
 namespace Domain;
 
@@ -24,6 +25,8 @@ public static class DomainDi
 		services.AddSingleton<IPropertyRegistry, PropertyRegistry>();
 		services.AddSingleton<IColumnRegistry, ColumnRegistry>();
 		services.AddSingleton<IGroupRegistry, GroupRegistry>();
+		services.AddSingleton<IGridStyleProvider, GridStyleProvider>();
+		services.AddSingleton<CellStateResolver>();
 		services.AddSingleton<RecipeStateManager>();
 		services.AddSingleton<RecipeService>();
 		services.AddSingleton<DomainFacade>();

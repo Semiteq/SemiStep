@@ -15,10 +15,12 @@ public sealed class ConfigFacade(ILogger? logger = null)
 	private readonly ColumnsSectionLoader _columnsLoader = new();
 	private readonly PropertiesSectionLoader _propertiesLoader = new();
 	private readonly GroupsSectionLoader _groupsLoader = new();
+	private readonly GridStyleLoader _gridStyleLoader = new();
 	private readonly ActionMapper _actionMapper = new();
 	private readonly ColumnMapper _columnMapper = new();
 	private readonly PropertyMapper _propertyMapper = new();
 	private readonly GroupMapper _groupMapper = new();
+	private readonly GridStyleMapper _gridStyleMapper = new();
 
 	public async Task<ConfigContext> LoadAsync(string configDirectory)
 	{
@@ -64,6 +66,7 @@ public sealed class ConfigFacade(ILogger? logger = null)
 		context.Columns = await _columnsLoader.LoadAsync(configDirectory, context);
 		context.Groups = await _groupsLoader.LoadAsync(configDirectory, context);
 		context.Actions = await _actionsLoader.LoadAsync(configDirectory, context);
+		context.GridStyle = await _gridStyleLoader.LoadAsync(configDirectory, context);
 
 		return context;
 	}
@@ -84,6 +87,8 @@ public sealed class ConfigFacade(ILogger? logger = null)
 			.MapMany(context.Actions!)
 			.ToDictionary(a => a.Id);
 
-		return new AppConfiguration(properties, columns, groups, actions);
+		var gridStyle = _gridStyleMapper.Map(context.GridStyle);
+
+		return new AppConfiguration(properties, columns, groups, actions, gridStyle);
 	}
 }

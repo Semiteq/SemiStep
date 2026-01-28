@@ -40,20 +40,30 @@ public sealed class PropertiesSectionLoader : ISectionLoader<List<PropertyDto>>
 			try
 			{
 				var content = await File.ReadAllTextAsync(file);
-				var properties = _deserializer.Deserialize<List<PropertyDto>>(content);
+				var propertiesDict = _deserializer.Deserialize<Dictionary<string, PropertyDto>>(content);
 
-				if (properties == null)
+				if (propertiesDict == null || propertiesDict.Count == 0)
 				{
 					context.AddWarning($"Empty or invalid YAML file: {Path.GetFileName(file)}", file);
 					continue;
 				}
 
-				foreach (var property in properties)
+				foreach (var (propertyTypeId, propertyContent) in propertiesDict)
 				{
-					ValidateProperty(property, file, context, seenIds);
-				}
+					var property = new PropertyDto
+					{
+						PropertyTypeId = propertyTypeId,
+						SystemType = propertyContent.SystemType,
+						FormatKind = propertyContent.FormatKind,
+						Units = propertyContent.Units,
+						Min = propertyContent.Min,
+						Max = propertyContent.Max,
+						MaxLength = propertyContent.MaxLength
+					};
 
-				allProperties.AddRange(properties);
+					ValidateProperty(property, file, context, seenIds);
+					allProperties.Add(property);
+				}
 			}
 			catch (Exception ex)
 			{

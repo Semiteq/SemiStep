@@ -6,5 +6,5 @@ public sealed record AppConfiguration(
 	IReadOnlyDictionary<string, PropertyDefinition> Properties,
 	IReadOnlyDictionary<string, GridColumnDefinition> Columns,
 	IReadOnlyDictionary<string, GroupDefinition> Groups,
-	IReadOnlyDictionary<short, ActionDefinition> Actions,
+	IReadOnlyDictionary<int, ActionDefinition> Actions,
 	GridStyleOptions GridStyle);

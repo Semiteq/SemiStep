@@ -27,7 +27,6 @@ public partial class MainWindow : Window
 
 		_columnBuilder = new ColumnBuilder(
 			viewModel.ActionRegistry,
-			viewModel.GroupRegistry,
 			gridStyles);
 
 		_styleApplier = new GridStyleApplier();

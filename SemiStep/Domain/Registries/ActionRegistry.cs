@@ -5,10 +5,10 @@ namespace Domain.Registries;
 
 public sealed class ActionRegistry : IActionRegistry
 {
-	private readonly Dictionary<short, ActionDefinition> _byId = new();
+	private readonly Dictionary<int, ActionDefinition> _byId = new();
 	private readonly Dictionary<string, ActionDefinition> _byName = new(StringComparer.OrdinalIgnoreCase);
 
-	public void Initialize(IReadOnlyDictionary<short, ActionDefinition> actions)
+	public void Initialize(IReadOnlyDictionary<int, ActionDefinition> actions)
 	{
 		_byId.Clear();
 		_byName.Clear();
@@ -20,7 +20,7 @@ public sealed class ActionRegistry : IActionRegistry
 		}
 	}
 
-	public ActionDefinition GetAction(short id)
+	public ActionDefinition GetAction(int id)
 	{
 		if (!_byId.TryGetValue(id, out var action))
 		{

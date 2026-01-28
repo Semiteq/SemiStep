@@ -1,14 +1,13 @@
-# Выбор рабочего газа
-
-- id: 500
+# Gas choice
+500:
   ui_name: "Gas Choice"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "gas_choice"
-      property_type_id: "enum"
-    - key: "mode"
-      group_name: "gas"
-      property_type_id: "enum"
-    - key: "comment"
-      property_type_id: "string"
+    - key: channel
+      group_name: gas_choice
+      property_type_id: enum
+    - key: mode
+      group_name: gas
+      property_type_id: enum
+    - key: comment
+      property_type_id: string

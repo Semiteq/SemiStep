@@ -42,10 +42,14 @@ public sealed class ActionMapper : IEntityMapper<ActionDto, ActionDefinition>
 	private static ActionColumnDefinition MapColumn(ActionColumnDto dto)
 	{
 		if (string.IsNullOrWhiteSpace(dto.Key))
+		{
 			throw new InvalidOperationException("Action column Key is required for mapping");
+		}
 
 		if (string.IsNullOrWhiteSpace(dto.PropertyTypeId))
+		{
 			throw new InvalidOperationException($"PropertyTypeId is required for action column '{dto.Key}'");
+		}
 
 		return new ActionColumnDefinition(
 			Key: dto.Key,

@@ -1,74 +1,74 @@
-# Wait по времени
-- id: 10
+# Wait by time
+10:
   ui_name: "Wait time"
-  deploy_duration: "longlasting"
+  deploy_duration: longlasting
   columns:
-    - key: "step_duration"
+    - key: step_duration
       default_value: "10"
-      property_type_id: "time"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
 
-# Wait по достижению температуры со стабилизацией
-- id: 11
+# Wait by temperature stabilization
+11:
   ui_name: "Wait Temp"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "temp_sensor"
-      property_type_id: "enum"
-    - key: "target_value"
+    - key: channel
+      group_name: temp_sensor
+      property_type_id: enum
+    - key: target_value
       default_value: "0"
-      property_type_id: "Temp"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: temp
+    - key: comment
+      property_type_id: string
 
-# Wait по достижению давления со стабилизацией
-- id: 12
+# Wait by pressure stabilization
+12:
   ui_name: "Wait Pressure"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "pressure_sensor"
-      property_type_id: "enum"
-    - key: "target_value"
+    - key: channel
+      group_name: pressure_sensor
+      property_type_id: enum
+    - key: target_value
       default_value: "0"
-      property_type_id: "pressure_bar"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: pressure_bar
+    - key: comment
+      property_type_id: string
 
-# Wait по достижению <= давления
-- id: 15
+# Wait by pressure <=
+15:
   ui_name: "Wait Pressure <="
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "pressure_sensor"
-      property_type_id: "enum"
-    - key: "target_value"
+    - key: channel
+      group_name: pressure_sensor
+      property_type_id: enum
+    - key: target_value
       default_value: "0"
-      property_type_id: "pressure_bar"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: pressure_bar
+    - key: comment
+      property_type_id: string
 
-# Wait по достижению >= давления
-- id: 16
+# Wait by pressure >=
+16:
   ui_name: "Wait Pressure >="
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "pressure_sensor"
-      property_type_id: "enum"
-    - key: "target_value"
+    - key: channel
+      group_name: pressure_sensor
+      property_type_id: enum
+    - key: target_value
       default_value: "0"
-      property_type_id: "pressure_bar"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: pressure_bar
+    - key: comment
+      property_type_id: string
 
-# Пауза
-- id: 40
+# Pause
+40:
   ui_name: "Pause"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "comment"
-      property_type_id: "string"
+    - key: comment
+      property_type_id: string

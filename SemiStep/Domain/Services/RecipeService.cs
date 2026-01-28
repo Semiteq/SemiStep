@@ -27,7 +27,7 @@ public sealed class RecipeService(
 	public bool IsValid => state.IsValid;
 	public AnalysisResult? LastAnalysis => state.LastAnalysis;
 
-	public void AddStep(short actionId)
+	public void AddStep(int actionId)
 	{
 		var action = actionRegistry.GetAction(actionId);
 		var properties = ResolvePropertiesForAction(action);
@@ -45,7 +45,7 @@ public sealed class RecipeService(
 		state.Update(newRecipe, analysis);
 	}
 
-	public void ChangeStepAction(int stepIndex, short newActionId)
+	public void ChangeStepAction(int stepIndex, int newActionId)
 	{
 		var newAction = actionRegistry.GetAction(newActionId);
 		var properties = ResolvePropertiesForAction(newAction);

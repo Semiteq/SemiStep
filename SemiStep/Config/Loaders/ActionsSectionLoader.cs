@@ -40,20 +40,27 @@ public sealed class ActionsSectionLoader : ISectionLoader<List<ActionDto>>
 			try
 			{
 				var content = await File.ReadAllTextAsync(file);
-				var actions = _deserializer.Deserialize<List<ActionDto>>(content);
+				var actionsDict = _deserializer.Deserialize<Dictionary<short, ActionDto>>(content);
 
-				if (actions == null)
+				if (actionsDict == null || actionsDict.Count == 0)
 				{
 					context.AddWarning($"Empty or invalid YAML file: {Path.GetFileName(file)}", file);
 					continue;
 				}
 
-				foreach (var action in actions)
+				foreach (var (id, actionContent) in actionsDict)
 				{
-					ValidateAction(action, file, context, seenIds);
-				}
+					var action = new ActionDto
+					{
+						Id = id,
+						UiName = actionContent.UiName,
+						DeployDuration = actionContent.DeployDuration,
+						Columns = actionContent.Columns
+					};
 
-				allActions.AddRange(actions);
+					ValidateAction(action, file, context, seenIds);
+					allActions.Add(action);
+				}
 			}
 			catch (Exception ex)
 			{

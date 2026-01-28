@@ -12,25 +12,19 @@ using UI.ViewModels;
 
 namespace UI.Helpers;
 
-public sealed class ColumnBuilder
+public sealed class ColumnBuilder(
+	IActionRegistry actionRegistry,
+	GridStyleOptions gridStyles)
 {
 	private const string ActionColumnKey = "action";
-	private const string ActionComboBoxType = "action_combo_box";
 	private const string ActionTargetComboBoxType = "action_target_combo_box";
 
-	private readonly IActionRegistry _actionRegistry;
-	private readonly IGroupRegistry _groupRegistry;
-	private GridStyleOptions _gridStyles;
+	private const string CellEnabledClass = "cell-enabled";
+	private const string CellReadonlyClass = "cell-readonly";
+	private const string CellDisabledClass = "cell-disabled";
+	private const string SelectedClass = "selected";
 
-	public ColumnBuilder(
-		IActionRegistry actionRegistry,
-		IGroupRegistry groupRegistry,
-		GridStyleOptions gridStyles)
-	{
-		_actionRegistry = actionRegistry;
-		_groupRegistry = groupRegistry;
-		_gridStyles = gridStyles;
-	}
+	private GridStyleOptions _gridStyles = gridStyles;
 
 	public void UpdateStyles(GridStyleOptions gridStyles)
 	{
@@ -60,7 +54,8 @@ public sealed class ColumnBuilder
 	{
 		foreach (var columnDef in config.Columns.Values.OrderBy(c => c.Key))
 		{
-			grid.Columns.Add(CreateColumn(columnDef));
+			var column = CreateColumn(columnDef);
+			grid.Columns.Add(column);
 		}
 	}
 
@@ -78,6 +73,11 @@ public sealed class ColumnBuilder
 			return CreateGroupComboBoxColumn(columnDef, width);
 		}
 
+		if (columnDef.ReadOnly)
+		{
+			return CreateReadOnlyTextColumn(columnDef, width);
+		}
+
 		return CreateTextColumn(columnDef, width);
 	}
 
@@ -86,93 +86,28 @@ public sealed class ColumnBuilder
 		return string.Equals(columnType, ActionTargetComboBoxType, StringComparison.OrdinalIgnoreCase);
 	}
 
-	private DataGridColumn CreateTextColumn(GridColumnDefinition columnDef, int width)
+	private static DataGridColumn CreateReadOnlyTextColumn(GridColumnDefinition columnDef, int width)
 	{
-		var column = new DataGridTemplateColumn
+		return new DataGridTextColumn
 		{
 			Header = columnDef.UiName,
 			Width = new DataGridLength(width),
-			IsReadOnly = columnDef.ReadOnly,
+			IsReadOnly = true,
 			CanUserSort = false,
-			CellTemplate = CreateTextCellTemplate(columnDef.Key, isEditing: false)
+			Binding = new Binding($"[{columnDef.Key}]")
 		};
-
-		if (!columnDef.ReadOnly)
-		{
-			column.CellEditingTemplate = CreateTextCellTemplate(columnDef.Key, isEditing: true);
-		}
-
-		return column;
 	}
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateTextCellTemplate(string columnKey, bool isEditing)
+	private static DataGridColumn CreateTextColumn(GridColumnDefinition columnDef, int width)
 	{
-		return new FuncDataTemplate<RecipeRowViewModel>((row, _) => BuildTextCell(row, columnKey, isEditing));
-	}
-
-	private Control BuildTextCell(RecipeRowViewModel? row, string columnKey, bool isEditing)
-	{
-		if (row is null)
+		return new DataGridTextColumn
 		{
-			return CreateEmptyTextBlock();
-		}
-
-		var value = row.GetPropertyValue(columnKey)?.ToString() ?? string.Empty;
-
-		if (!isEditing)
-		{
-			return CreateStyledTextBlock(row, columnKey, value);
-		}
-
-		return CreateStyledTextBox(row, columnKey, value);
-	}
-
-	private TextBlock CreateStyledTextBlock(RecipeRowViewModel row, string columnKey, string text)
-	{
-		var cellState = row.CellStates.TryGetValue(columnKey, out var state) ? state : CellState.Enabled;
-		var isSelected = row.IsSelected;
-
-		var backgroundColor = GetBackgroundColor(cellState, isSelected);
-		var foregroundColor = GetForegroundColor(isSelected);
-
-		var textBlock = new TextBlock
-		{
-			Text = text,
-			FontSize = _gridStyles.CellFontSize,
-			Padding = GetCellPadding(),
-			VerticalAlignment = VerticalAlignment.Center,
-			Background = StyleHelper.ToBrush(backgroundColor),
-			Foreground = StyleHelper.ToBrush(foregroundColor)
+			Header = columnDef.UiName,
+			Width = new DataGridLength(width),
+			IsReadOnly = false,
+			CanUserSort = false,
+			Binding = new Binding($"[{columnDef.Key}]") { Mode = BindingMode.TwoWay }
 		};
-
-		return textBlock;
-	}
-
-	private TextBox CreateStyledTextBox(RecipeRowViewModel row, string columnKey, string value)
-	{
-		var cellState = row.CellStates.TryGetValue(columnKey, out var state) ? state : CellState.Enabled;
-		var isSelected = row.IsSelected;
-
-		var backgroundColor = GetBackgroundColor(cellState, isSelected);
-		var foregroundColor = GetForegroundColor(isSelected);
-
-		var textBox = new TextBox
-		{
-			Text = value,
-			FontSize = _gridStyles.CellFontSize,
-			Padding = GetCellPadding(),
-			VerticalAlignment = VerticalAlignment.Center,
-			HorizontalAlignment = HorizontalAlignment.Stretch,
-			Background = StyleHelper.ToBrush(backgroundColor),
-			Foreground = StyleHelper.ToBrush(foregroundColor)
-		};
-
-		textBox.LostFocus += (_, _) =>
-		{
-			row.SetPropertyValue(columnKey, textBox.Text);
-		};
-
-		return textBox;
 	}
 
 	private DataGridColumn CreateActionColumn(GridColumnDefinition columnDef, int width)
@@ -181,54 +116,60 @@ public sealed class ColumnBuilder
 		{
 			Header = columnDef.UiName,
 			Width = new DataGridLength(width),
-			IsReadOnly = columnDef.ReadOnly,
+			IsReadOnly = false,
 			CanUserSort = false,
-			CellTemplate = CreateActionTemplate(isEditing: false)
+			CellTemplate = CreateActionTemplate(isEditing: false, isColumnReadOnly: columnDef.ReadOnly),
+			CellEditingTemplate = CreateActionTemplate(isEditing: true, isColumnReadOnly: columnDef.ReadOnly)
 		};
-
-		if (!columnDef.ReadOnly)
-		{
-			column.CellEditingTemplate = CreateActionTemplate(isEditing: true);
-		}
 
 		return column;
 	}
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateActionTemplate(bool isEditing)
+	private FuncDataTemplate<RecipeRowViewModel> CreateActionTemplate(bool isEditing, bool isColumnReadOnly)
 	{
-		return new FuncDataTemplate<RecipeRowViewModel>((row, _) => BuildActionCell(row, isEditing));
+		return new FuncDataTemplate<RecipeRowViewModel>(
+			(row, _) => BuildActionCell(row, isEditing, isColumnReadOnly),
+			supportsRecycling: false);
 	}
 
-	private Control BuildActionCell(RecipeRowViewModel? row, bool isEditing)
+	private Control BuildActionCell(RecipeRowViewModel? row, bool isEditing, bool isColumnReadOnly)
 	{
 		if (row is null)
 		{
 			return CreateEmptyTextBlock();
 		}
 
-		if (!isEditing)
+		if (!isEditing || isColumnReadOnly)
 		{
-			return CreateStyledTextBlock(row, ActionColumnKey, row.ActionName);
+			return CreateDisplayTextBlock(row.ActionName);
 		}
 
 		return CreateActionComboBox(row);
 	}
 
-	private ComboBox CreateActionComboBox(RecipeRowViewModel row)
+	private Control CreateActionComboBox(RecipeRowViewModel row)
 	{
-		var actions = _actionRegistry?.GetAll() ?? [];
+		var actions = actionRegistry.GetAll();
 		var items = actions
 			.Select(a => new ActionComboBoxItemViewModel(a.Id, a.UiName))
 			.ToList();
+
+		var border = new Border
+		{
+			Padding = GetCellPadding(),
+			VerticalAlignment = VerticalAlignment.Stretch,
+			HorizontalAlignment = HorizontalAlignment.Stretch
+		};
 
 		var comboBox = new ComboBox
 		{
 			ItemsSource = items,
 			DisplayMemberBinding = new Binding("DisplayText"),
 			FontSize = _gridStyles.CellFontSize,
-			Padding = GetCellPadding(),
 			HorizontalAlignment = HorizontalAlignment.Stretch,
 			VerticalAlignment = VerticalAlignment.Center,
+			Background = Avalonia.Media.Brushes.Transparent,
+			BorderThickness = new Thickness(0),
 			IsEnabled = true
 		};
 
@@ -243,7 +184,12 @@ public sealed class ColumnBuilder
 			}
 		};
 
-		return comboBox;
+		border.Child = comboBox;
+
+		ApplyCellClasses(border, row, ActionColumnKey);
+		SubscribeToRowChanges(border, row, ActionColumnKey);
+
+		return border;
 	}
 
 	private DataGridColumn CreateGroupComboBoxColumn(GridColumnDefinition columnDef, int width)
@@ -252,25 +198,23 @@ public sealed class ColumnBuilder
 		{
 			Header = columnDef.UiName,
 			Width = new DataGridLength(width),
-			IsReadOnly = columnDef.ReadOnly,
+			IsReadOnly = false,
 			CanUserSort = false,
-			CellTemplate = CreateGroupComboBoxTemplate(columnDef.Key, isEditing: false)
+			CellTemplate = CreateGroupComboBoxTemplate(columnDef.Key, isEditing: false, isColumnReadOnly: columnDef.ReadOnly),
+			CellEditingTemplate = CreateGroupComboBoxTemplate(columnDef.Key, isEditing: true, isColumnReadOnly: columnDef.ReadOnly)
 		};
-
-		if (!columnDef.ReadOnly)
-		{
-			column.CellEditingTemplate = CreateGroupComboBoxTemplate(columnDef.Key, isEditing: true);
-		}
 
 		return column;
 	}
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateGroupComboBoxTemplate(string columnKey, bool isEditing)
+	private FuncDataTemplate<RecipeRowViewModel> CreateGroupComboBoxTemplate(string columnKey, bool isEditing, bool isColumnReadOnly)
 	{
-		return new FuncDataTemplate<RecipeRowViewModel>((row, _) => BuildGroupComboBoxCell(row, columnKey, isEditing));
+		return new FuncDataTemplate<RecipeRowViewModel>(
+			(row, _) => BuildGroupComboBoxCell(row, columnKey, isEditing, isColumnReadOnly),
+			supportsRecycling: false);
 	}
 
-	private Control BuildGroupComboBoxCell(RecipeRowViewModel? row, string columnKey, bool isEditing)
+	private Control BuildGroupComboBoxCell(RecipeRowViewModel? row, string columnKey, bool isEditing, bool isColumnReadOnly)
 	{
 		if (row is null)
 		{
@@ -281,66 +225,41 @@ public sealed class ColumnBuilder
 
 		if (cellState == CellState.Disabled)
 		{
-			return CreateDisabledGroupCell(row);
+			return CreateEmptyTextBlock();
 		}
 
-		if (!isEditing || cellState == CellState.Readonly)
+		if (!isEditing || isColumnReadOnly || cellState == CellState.Readonly)
 		{
-			return CreateReadonlyGroupCell(row, columnKey, cellState);
+			var groupItems = row.GetGroupItemsForColumn(columnKey);
+			var currentValue = row.GetPropertyValue(columnKey);
+			var displayText = GetGroupItemDisplayText(groupItems, currentValue);
+			return CreateDisplayTextBlock(displayText);
 		}
 
 		return CreateGroupComboBox(row, columnKey);
 	}
 
-	private TextBlock CreateDisabledGroupCell(RecipeRowViewModel row)
-	{
-		var backgroundColor = GetBackgroundColor(CellState.Disabled, row.IsSelected);
-		var foregroundColor = GetForegroundColor(row.IsSelected);
-
-		return new TextBlock
-		{
-			Text = string.Empty,
-			FontSize = _gridStyles.CellFontSize,
-			Padding = GetCellPadding(),
-			VerticalAlignment = VerticalAlignment.Center,
-			Background = StyleHelper.ToBrush(backgroundColor),
-			Foreground = StyleHelper.ToBrush(foregroundColor)
-		};
-	}
-
-	private TextBlock CreateReadonlyGroupCell(RecipeRowViewModel row, string columnKey, CellState cellState)
-	{
-		var groupItems = row.GetGroupItemsForColumn(columnKey);
-		var currentValue = row.GetPropertyValue(columnKey);
-		var displayText = GetGroupItemDisplayText(groupItems, currentValue);
-
-		var backgroundColor = GetBackgroundColor(cellState, row.IsSelected);
-		var foregroundColor = GetForegroundColor(row.IsSelected);
-
-		return new TextBlock
-		{
-			Text = displayText,
-			FontSize = _gridStyles.CellFontSize,
-			Padding = GetCellPadding(),
-			VerticalAlignment = VerticalAlignment.Center,
-			Background = StyleHelper.ToBrush(backgroundColor),
-			Foreground = StyleHelper.ToBrush(foregroundColor)
-		};
-	}
-
-	private ComboBox CreateGroupComboBox(RecipeRowViewModel row, string columnKey)
+	private Control CreateGroupComboBox(RecipeRowViewModel row, string columnKey)
 	{
 		var groupItems = row.GetGroupItemsForColumn(columnKey);
 		var items = CreateGroupComboBoxItems(groupItems);
+
+		var border = new Border
+		{
+			Padding = GetCellPadding(),
+			VerticalAlignment = VerticalAlignment.Stretch,
+			HorizontalAlignment = HorizontalAlignment.Stretch
+		};
 
 		var comboBox = new ComboBox
 		{
 			ItemsSource = items,
 			DisplayMemberBinding = new Binding("DisplayText"),
 			FontSize = _gridStyles.CellFontSize,
-			Padding = GetCellPadding(),
 			HorizontalAlignment = HorizontalAlignment.Stretch,
 			VerticalAlignment = VerticalAlignment.Center,
+			Background = Avalonia.Media.Brushes.Transparent,
+			BorderThickness = new Thickness(0),
 			IsEnabled = true
 		};
 
@@ -358,7 +277,12 @@ public sealed class ColumnBuilder
 			}
 		};
 
-		return comboBox;
+		border.Child = comboBox;
+
+		ApplyCellClasses(border, row, columnKey);
+		SubscribeToRowChanges(border, row, columnKey);
+
+		return border;
 	}
 
 	private static List<GroupComboBoxItemViewModel> CreateGroupComboBoxItems(IReadOnlyDictionary<int, string>? groupItems)
@@ -396,6 +320,15 @@ public sealed class ColumnBuilder
 		return new TextBlock { Text = string.Empty };
 	}
 
+	private static TextBlock CreateDisplayTextBlock(string text)
+	{
+		return new TextBlock
+		{
+			Text = text,
+			VerticalAlignment = VerticalAlignment.Center
+		};
+	}
+
 	private Thickness GetCellPadding()
 	{
 		return StyleHelper.ToThickness(
@@ -405,23 +338,43 @@ public sealed class ColumnBuilder
 			_gridStyles.CellPaddingBottom);
 	}
 
-	private string GetBackgroundColor(CellState cellState, bool isSelected)
+	private static void ApplyCellClasses(Control control, RecipeRowViewModel row, string columnKey)
+	{
+		control.Classes.Remove(CellEnabledClass);
+		control.Classes.Remove(CellReadonlyClass);
+		control.Classes.Remove(CellDisabledClass);
+
+		var cellState = row.CellStates.TryGetValue(columnKey, out var state) ? state : CellState.Enabled;
+		var stateClass = GetCellStateClass(cellState);
+
+		control.Classes.Add(stateClass);
+		control.Classes.Set(SelectedClass, row.IsSelected);
+	}
+
+	private static string GetCellStateClass(CellState cellState)
 	{
 		return cellState switch
 		{
-			CellState.Enabled => isSelected ? _gridStyles.EnabledCellSelectedColor : _gridStyles.EnabledCellNormalColor,
-			CellState.Readonly => isSelected ? _gridStyles.ReadonlyCellSelectedColor : _gridStyles.ReadonlyCellNormalColor,
-			CellState.Disabled => isSelected ? _gridStyles.DisabledCellSelectedColor : _gridStyles.DisabledCellNormalColor,
-			_ => _gridStyles.EnabledCellNormalColor
+			CellState.Enabled => CellEnabledClass,
+			CellState.Readonly => CellReadonlyClass,
+			CellState.Disabled => CellDisabledClass,
+			_ => CellEnabledClass
 		};
 	}
 
-	private string GetForegroundColor(bool isSelected)
+	private static void SubscribeToRowChanges(Control control, RecipeRowViewModel row, string columnKey)
 	{
-		return isSelected ? _gridStyles.SelectionForegroundColor : _gridStyles.NormalForegroundColor;
+		row.PropertyChanged += (_, e) =>
+		{
+			if (e.PropertyName == nameof(RecipeRowViewModel.IsSelected) ||
+				e.PropertyName == nameof(RecipeRowViewModel.CellStates))
+			{
+				ApplyCellClasses(control, row, columnKey);
+			}
+		};
 	}
 }
 
-public sealed record ActionComboBoxItemViewModel(short Id, string DisplayText);
+public sealed record ActionComboBoxItemViewModel(int Id, string DisplayText);
 
 public sealed record GroupComboBoxItemViewModel(int Id, string DisplayText);

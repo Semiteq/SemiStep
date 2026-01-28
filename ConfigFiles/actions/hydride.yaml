@@ -1,44 +1,44 @@
-- id: 300
+300:
   ui_name: "Hydride"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "hydride_cell"
-      property_type_id: "enum"
-    - key: "mode"
-      group_name: "hydride_state"
-      property_type_id: "enum"
-    - key: "target_value"
+    - key: channel
+      group_name: hydride_cell
+      property_type_id: enum
+    - key: mode
+      group_name: hydride_state
+      property_type_id: enum
+    - key: target_value
       default_value: "0"
-      property_type_id: "flow"
-    - key: "dilution"
+      property_type_id: flow
+    - key: dilution
       default_value: "0"
-      property_type_id: "flow"
-    - key: "step_duration"
+      property_type_id: flow
+    - key: step_duration
       default_value: "0"
-      property_type_id: "time"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
 
-- id: 310
+310:
   ui_name: "Wait Hydride"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "hydride_cell"
-      property_type_id: "enum"
-    - key: "comment"
-      property_type_id: "string"
+    - key: channel
+      group_name: hydride_cell
+      property_type_id: enum
+    - key: comment
+      property_type_id: string
 
-- id: 320
+320:
   ui_name: "Set Default Hydride"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "hydride_cell"
-      property_type_id: "enum"
-    - key: "step_duration"
+    - key: channel
+      group_name: hydride_cell
+      property_type_id: enum
+    - key: step_duration
       default_value: "0"
-      property_type_id: "time"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: time
+    - key: comment
+      property_type_id: string

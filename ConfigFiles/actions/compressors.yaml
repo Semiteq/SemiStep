@@ -1,19 +1,19 @@
-- id: 1200
+1200:
   ui_name: "Start"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "compressor"
-      property_type_id: "enum"
-    - key: "comment"
-      property_type_id: "string"
+    - key: channel
+      group_name: compressor
+      property_type_id: enum
+    - key: comment
+      property_type_id: string
 
-- id: 1210
+1210:
   ui_name: "Stop"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "compressor_with_heater"
-      property_type_id: "enum"
-    - key: "comment"
-      property_type_id: "string"
+    - key: channel
+      group_name: compressor_with_heater
+      property_type_id: enum
+    - key: comment
+      property_type_id: string

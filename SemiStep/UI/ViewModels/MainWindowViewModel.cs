@@ -58,10 +58,6 @@ public class MainWindowViewModel : ReactiveObject
 
 	public IGroupRegistry GroupRegistry => _groupRegistry;
 
-	public IColumnRegistry ColumnRegistry => _columnRegistry;
-
-	public CellStateResolver CellStateResolver => _cellStateResolver;
-
 	public IGridStyleProvider GridStyleProvider => _gridStyleProvider;
 
 	public ObservableCollection<RecipeRowViewModel> RecipeRows { get; }
@@ -166,7 +162,6 @@ public class MainWindowViewModel : ReactiveObject
 				action,
 				_groupRegistry,
 				_columnRegistry,
-				_cellStateResolver,
 				OnCellValueChanged,
 				OnActionChanged);
 			RecipeRows.Add(rowVm);
@@ -201,7 +196,7 @@ public class MainWindowViewModel : ReactiveObject
 		}
 	}
 
-	private void OnActionChanged(int stepIndex, short newActionId)
+	private void OnActionChanged(int stepIndex, int newActionId)
 	{
 		try
 		{

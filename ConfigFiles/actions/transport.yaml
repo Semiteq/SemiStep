@@ -1,42 +1,42 @@
-# Перегрузка манипулятором
-- id: 600
+# Manipulator transport
+600:
   ui_name: "Transport"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "transport"
-      property_type_id: "enum"
-    - key: "mode"
-      group_name: "gas"
-      property_type_id: "enum"
-    - key: "target_value"
+    - key: channel
+      group_name: transport
+      property_type_id: enum
+    - key: mode
+      group_name: gas
+      property_type_id: enum
+    - key: target_value
       default_value: "0"
-      property_type_id: "flow"
-    - key: "step_duration"
+      property_type_id: flow
+    - key: step_duration
       default_value: "0"
-      property_type_id: "time"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
 
-- id: 610
+610:
   ui_name: "Wait Transport"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "transport"
-      property_type_id: "enum"
-    - key: "comment"
-      property_type_id: "string"
+    - key: channel
+      group_name: transport
+      property_type_id: enum
+    - key: comment
+      property_type_id: string
 
-- id: 620
+620:
   ui_name: "Set Default Transport"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "transport"
-      property_type_id: "enum"
-    - key: "step_duration"
+    - key: channel
+      group_name: transport
+      property_type_id: enum
+    - key: step_duration
       default_value: "0"
-      property_type_id: "time"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: time
+    - key: comment
+      property_type_id: string

@@ -1,76 +1,76 @@
-- property_type_id: "int"
-  system_type: "int"  
-  format_kind: "numeric"
+int:
+  system_type: int
+  format_kind: numeric
   units: ""
 
-- property_type_id: "float"
-  system_type: "float"
-  format_kind: "numeric"
+float:
+  system_type: float
+  format_kind: numeric
   units: ""
 
-- property_type_id: "string"
-  system_type: "string"
-  format_kind: "numeric"
+string:
+  system_type: string
+  format_kind: numeric
   units: ""
   max_length: 255
 
-- property_type_id: "enum"
-  system_type: "int"
-  format_kind: "numeric"
+enum:
+  system_type: int
+  format_kind: numeric
   units: ""
 
-- property_type_id: "flow"
-  system_type: "float"
-  format_kind: "numeric"
+flow:
+  system_type: float
+  format_kind: numeric
   units: "см³/мин"
   min: 0
   max: 100000
 
-- property_type_id: "percent"
-  system_type: "float"
-  format_kind: "numeric"
+percent:
+  system_type: float
+  format_kind: numeric
   units: "%"
   min: 0
   max: 100
 
-- property_type_id: "power_speed"
-  system_type: "float"
-  format_kind: "numeric"
+power_speed:
+  system_type: float
+  format_kind: numeric
   units: "%/мин"
   min: -100
   max: 100
 
-- property_type_id: "pressure_pa"
-  system_type: "float"
-  format_kind: "numeric"
+pressure_pa:
+  system_type: float
+  format_kind: numeric
   units: "Па"
   min: -200000
   max: 200000
 
-- property_type_id: "pressure_bar"
-  system_type: "float"
-  format_kind: "numeric"
+pressure_bar:
+  system_type: float
+  format_kind: numeric
   units: "мбар"
   min: -2000
   max: 2000
 
-- property_type_id: "temp"
-  system_type: "float"
-  format_kind: "numeric"
+temp:
+  system_type: float
+  format_kind: numeric
   units: "°C"
   min: 0
   max: 2000
 
-- property_type_id: "temp_speed"
-  system_type: "float"
-  format_kind: "numeric"
+temp_speed:
+  system_type: float
+  format_kind: numeric
   units: "°C/мин"
   min: -1000
   max: 1000
 
-- property_type_id: "time"
-  system_type: "float"
-  format_kind: "time_hms"
+time:
+  system_type: float
+  format_kind: time_hms
   units: "с"
   min: 0
   max: 86400

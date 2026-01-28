@@ -1,7 +1,7 @@
 ﻿namespace Shared.Entities;
 
 public sealed record ActionDefinition(
-	short Id,
+	int Id,
 	string UiName,
 	string DeployDuration,
 	IReadOnlyList<ActionColumnDefinition> Columns);

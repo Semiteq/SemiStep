@@ -30,11 +30,9 @@
                   Background="White"
                   SelectionChanged="OnSelectionChanged" />
 
-        <controls:ValidationErrorsPanel Grid.Row="2"
-                                        x:Name="ValidationPanel" />
+        <controls:ValidationErrorsPanel Grid.Row="2" x:Name="ValidationPanel" />
 
-        <controls:AppStatusBar Grid.Row="3"
-                               x:Name="StatusBar" />
+        <controls:AppStatusBar Grid.Row="3" x:Name="StatusBar" />
 
     </Grid>
 

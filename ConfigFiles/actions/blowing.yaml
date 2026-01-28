@@ -1,43 +1,42 @@
-## Продувка газовой магистрали
-
-- id: 700
+# Gas line blowing
+700:
   ui_name: "Blowing"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "blowing"
-      property_type_id: "enum"
-    - key: "mode"
-      group_name: "gas"
-      property_type_id: "enum"
-    - key: "target_value"
+    - key: channel
+      group_name: blowing
+      property_type_id: enum
+    - key: mode
+      group_name: gas
+      property_type_id: enum
+    - key: target_value
       default_value: "0"
-      property_type_id: "flow"
-    - key: "step_duration"
+      property_type_id: flow
+    - key: step_duration
       default_value: "0"
-      property_type_id: "time"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
 
-- id: 710
+710:
   ui_name: "Wait Blowing"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "blowing"
-      property_type_id: "enum"
-    - key: "comment"
-      property_type_id: "string"
+    - key: channel
+      group_name: blowing
+      property_type_id: enum
+    - key: comment
+      property_type_id: string
 
-- id: 720
+720:
   ui_name: "Set Default Blowing"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "channel"
-      group_name: "blowing"
-      property_type_id: "enum"
-    - key: "step_duration"
+    - key: channel
+      group_name: blowing
+      property_type_id: enum
+    - key: step_duration
       default_value: "0"
-      property_type_id: "time"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: time
+    - key: comment
+      property_type_id: string

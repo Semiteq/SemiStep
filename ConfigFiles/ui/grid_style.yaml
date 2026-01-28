@@ -20,7 +20,7 @@ layout:
 colors:
   selection:
     background: "#0078D7"
-    foreground: "#FFFFFF"
+    foreground: "#0078D7"
   cells:
     enabled:
       normal: "#FFFFFF"

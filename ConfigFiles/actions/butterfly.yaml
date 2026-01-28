@@ -1,27 +1,26 @@
-# Управление шибером по давлению или положению
-
-- id: 900
+# Butterfly valve control by pressure or position
+900:
   ui_name: "Butterfly P"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "target_value"
+    - key: target_value
       default_value: "0"
-      property_type_id: "pressure_bar"
-    - key: "step_duration"
+      property_type_id: pressure_bar
+    - key: step_duration
       default_value: "0"
-      property_type_id: "time"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
 
-- id: 910
+910:
   ui_name: "Butterfly %"
-  deploy_duration: "immediate"
+  deploy_duration: immediate
   columns:
-    - key: "target_value"
+    - key: target_value
       default_value: "0"
-      property_type_id: "percent"
-    - key: "step_duration"
+      property_type_id: percent
+    - key: step_duration
       default_value: "0"
-      property_type_id: "time"
-    - key: "comment"
-      property_type_id: "string"
+      property_type_id: time
+    - key: comment
+      property_type_id: string

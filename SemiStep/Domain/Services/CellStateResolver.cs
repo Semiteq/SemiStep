@@ -1,13 +1,16 @@
-﻿using Recipe.Entities;
-
-using Shared.Entities;
+﻿using Shared.Entities;
 
 namespace Domain.Services;
 
 public sealed class CellStateResolver
 {
-	public CellState GetCellState(Step step, GridColumnDefinition column, ActionDefinition action)
+	public static CellState GetCellState(GridColumnDefinition column, ActionDefinition action)
 	{
+		if (column.Key is "action")
+		{
+			return CellState.Enabled;
+		}
+
 		if (!IsPropertyPresentInAction(column.Key, action))
 		{
 			return CellState.Disabled;

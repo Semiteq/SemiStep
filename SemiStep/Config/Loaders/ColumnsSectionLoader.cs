@@ -40,20 +40,27 @@ public sealed class ColumnsSectionLoader : ISectionLoader<List<ColumnDto>>
 			try
 			{
 				var content = await File.ReadAllTextAsync(file);
-				var columns = _deserializer.Deserialize<List<ColumnDto>>(content);
+				var columnsDict = _deserializer.Deserialize<Dictionary<string, ColumnDto>>(content);
 
-				if (columns == null)
+				if (columnsDict == null || columnsDict.Count == 0)
 				{
 					context.AddWarning($"Empty or invalid YAML file: {Path.GetFileName(file)}", file);
 					continue;
 				}
 
-				foreach (var column in columns)
+				foreach (var (key, columnContent) in columnsDict)
 				{
-					ValidateColumn(column, file, context, seenKeys);
-				}
+					var column = new ColumnDto
+					{
+						Key = key,
+						ColumnType = columnContent.ColumnType,
+						Ui = columnContent.Ui,
+						BusinessLogic = columnContent.BusinessLogic
+					};
 
-				allColumns.AddRange(columns);
+					ValidateColumn(column, file, context, seenKeys);
+					allColumns.Add(column);
+				}
 			}
 			catch (Exception ex)
 			{

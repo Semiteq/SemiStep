@@ -11,12 +11,12 @@ public sealed class CoreFacade(
 	RecipeAnalyzer analyzer,
 	FormulaApplicationCoordinator formulaCoordinator)
 {
-	public RecipeResult Analyze(Recipe recipe)
+	public RecipeSnapshot Analyze(Recipe recipe)
 	{
 		return analyzer.Analyze(recipe);
 	}
 
-	public RecipeResult AddStep(
+	public RecipeSnapshot AppendStep(
 		Recipe recipe,
 		ActionDefinition action,
 		IReadOnlyList<PropertyDefinition> properties)
@@ -25,7 +25,7 @@ public sealed class CoreFacade(
 		return analyzer.Analyze(newRecipe);
 	}
 
-	public RecipeResult InsertStep(
+	public RecipeSnapshot InsertStep(
 		Recipe recipe,
 		int stepIndex,
 		ActionDefinition action,
@@ -41,7 +41,7 @@ public sealed class CoreFacade(
 		return analyzer.Analyze(newRecipe);
 	}
 
-	public RecipeResult RemoveStep(Recipe recipe, int stepIndex)
+	public RecipeSnapshot RemoveStep(Recipe recipe, int stepIndex)
 	{
 		if (stepIndex < 0 || stepIndex >= recipe.Steps.Count)
 		{
@@ -53,7 +53,7 @@ public sealed class CoreFacade(
 		return analyzer.Analyze(newRecipe);
 	}
 
-	public RecipeResult ChangeStepAction(
+	public RecipeSnapshot ChangeStepAction(
 		Recipe recipe,
 		int stepIndex,
 		ActionDefinition newAction,
@@ -69,7 +69,7 @@ public sealed class CoreFacade(
 		return analyzer.Analyze(newRecipe);
 	}
 
-	public RecipeResult UpdateProperty(
+	public RecipeSnapshot UpdateProperty(
 		Recipe recipe,
 		int stepIndex,
 		ColumnId columnId,

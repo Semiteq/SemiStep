@@ -92,7 +92,7 @@ public class MainWindowViewModel : ReactiveObject
 			return;
 		}
 
-		_domainFacade.Core.AddStep(firstAction.Id);
+		_domainFacade.Core.AppendStep(firstAction.Id);
 		RefreshRecipeRows();
 		this.RaisePropertyChanged(nameof(IsDirty));
 		this.RaisePropertyChanged(nameof(StatusText));
@@ -172,7 +172,7 @@ public class MainWindowViewModel : ReactiveObject
 		}
 
 		var result = _domainFacade.Core.UpdateProperty(stepIndex, columnKey, value);
-		if (!result.CanProceed)
+		if (!result.IsValid)
 		{
 			foreach (var error in result.Errors)
 			{

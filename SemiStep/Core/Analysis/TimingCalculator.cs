@@ -4,18 +4,18 @@ namespace Core.Analysis;
 
 public sealed class TimingCalculator
 {
-	private static readonly ColumnId _durationColumn = new("duration");
+	private static readonly ColumnId _durationColumn = new("step_duration");
 
-	public TimingResult Calculate(Entities.Recipe recipe, IReadOnlyList<LoopInfo> loops)
+	public (IReadOnlyDictionary<int, TimeSpan> StepStartTimes, TimeSpan TotalDuration) Calculate(
+		Recipe recipe,
+		IReadOnlyList<LoopInfo> loops)
 	{
 		var startTimes = new Dictionary<int, TimeSpan>(recipe.Steps.Count);
 		var accumulated = TimeSpan.Zero;
 
-		var loopByEnd = loops
-			.Where(l => l.EndIndex.HasValue && l.Status == LoopStatus.Valid)
-			.ToDictionary(l => l.EndIndex!.Value, l => l);
+		var loopByEnd = loops.ToDictionary(l => l.EndIndex, l => l);
 
-		for (int i = 0; i < recipe.Steps.Count; i++)
+		for (var i = 0; i < recipe.Steps.Count; i++)
 		{
 			startTimes[i] = accumulated;
 
@@ -31,9 +31,11 @@ public sealed class TimingCalculator
 				var bodyStartTime = startTimes[loopInfo.StartIndex];
 				var singleDuration = accumulated - bodyStartTime;
 				if (singleDuration.Ticks < 0)
+				{
 					singleDuration = TimeSpan.Zero;
+				}
 
-				var extraIterations = loopInfo.IterationCount - 1;
+				var extraIterations = loopInfo.Iterations - 1;
 				if (extraIterations > 0)
 				{
 					accumulated += TimeSpan.FromTicks(singleDuration.Ticks * extraIterations);
@@ -41,40 +43,15 @@ public sealed class TimingCalculator
 			}
 		}
 
-		return new TimingResult(startTimes, accumulated);
-	}
-
-	public IReadOnlyList<LoopInfo> EnrichLoopsWithDuration(
-		IReadOnlyList<LoopInfo> loops,
-		IReadOnlyDictionary<int, TimeSpan> startTimes)
-	{
-		var result = new List<LoopInfo>(loops.Count);
-
-		foreach (var loop in loops)
-		{
-			if (loop.EndIndex.HasValue && loop.Status == LoopStatus.Valid)
-			{
-				var bodyStartTime = startTimes[loop.StartIndex];
-				var endStartTime = startTimes[loop.EndIndex.Value];
-				var singleDuration = endStartTime - bodyStartTime;
-				if (singleDuration.Ticks < 0)
-					singleDuration = TimeSpan.Zero;
-
-				result.Add(loop with { SingleIterationDuration = singleDuration });
-			}
-			else
-			{
-				result.Add(loop);
-			}
-		}
-
-		return result;
+		return (startTimes, accumulated);
 	}
 
 	private static TimeSpan ExtractStepDuration(Step step)
 	{
 		if (!step.Properties.TryGetValue(_durationColumn, out var durationProperty))
+		{
 			return TimeSpan.Zero;
+		}
 
 		return durationProperty.Type switch
 		{

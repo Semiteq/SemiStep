@@ -1,4 +1,4 @@
-﻿using Core;
+﻿using Core.Analysis;
 using Core.Entities;
 using Core.Services;
 
@@ -17,25 +17,28 @@ public sealed class CoreService(
 	IColumnRegistry columnRegistry)
 {
 	public Recipe CurrentRecipe => stateManager.Current;
+	public RecipeSnapshot? LastSnapshot => stateManager.LastSnapshot;
 	public bool IsDirty => stateManager.IsDirty;
 	public bool IsValid => stateManager.IsValid;
 
-	public RecipeResult NewRecipe()
+	public RecipeSnapshot NewRecipe()
 	{
+		var result = coreFacade.Analyze(Recipe.Empty);
 		stateManager.Reset();
-		return RecipeResult.Empty;
+		stateManager.Update(result);
+		return result;
 	}
 
-	public RecipeResult AddStep(int actionId)
+	public RecipeSnapshot AppendStep(int actionId)
 	{
 		var action = actionRegistry.GetAction(actionId);
 		var properties = ResolvePropertiesForAction(action);
-		var result = coreFacade.AddStep(stateManager.Current, action, properties);
+		var result = coreFacade.AppendStep(stateManager.Current, action, properties);
 		ApplyResult(result);
 		return result;
 	}
 
-	public RecipeResult InsertStep(int index, int actionId)
+	public RecipeSnapshot InsertStep(int index, int actionId)
 	{
 		var action = actionRegistry.GetAction(actionId);
 		var properties = ResolvePropertiesForAction(action);
@@ -44,7 +47,7 @@ public sealed class CoreService(
 		return result;
 	}
 
-	public RecipeResult ChangeStepAction(int stepIndex, int newActionId)
+	public RecipeSnapshot ChangeStepAction(int stepIndex, int newActionId)
 	{
 		var newAction = actionRegistry.GetAction(newActionId);
 		var properties = ResolvePropertiesForAction(newAction);
@@ -53,14 +56,14 @@ public sealed class CoreService(
 		return result;
 	}
 
-	public RecipeResult RemoveStep(int index)
+	public RecipeSnapshot RemoveStep(int index)
 	{
 		var result = coreFacade.RemoveStep(stateManager.Current, index);
 		ApplyResult(result);
 		return result;
 	}
 
-	public RecipeResult UpdateProperty(int stepIndex, string columnKey, object value)
+	public RecipeSnapshot UpdateProperty(int stepIndex, string columnKey, object value)
 	{
 		var columnDef = columnRegistry.GetColumn(columnKey);
 		var property = propertyRegistry.GetProperty(columnDef.PropertyTypeId);
@@ -85,7 +88,7 @@ public sealed class CoreService(
 		return result;
 	}
 
-	public RecipeResult LoadRecipe(Recipe recipe)
+	public RecipeSnapshot LoadRecipe(Recipe recipe)
 	{
 		var result = coreFacade.Analyze(recipe);
 		stateManager.Load(result);
@@ -97,9 +100,9 @@ public sealed class CoreService(
 		stateManager.MarkSaved();
 	}
 
-	private void ApplyResult(RecipeResult result)
+	private void ApplyResult(RecipeSnapshot snapshot)
 	{
-		stateManager.Update(result);
+		stateManager.Update(snapshot);
 	}
 
 	private IReadOnlyList<PropertyDefinition> ResolvePropertiesForAction(ActionDefinition action)

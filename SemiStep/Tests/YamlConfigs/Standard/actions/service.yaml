@@ -1,0 +1,39 @@
+# Service actions for testing (Wait, ForLoop, EndForLoop, Pause)
+
+# Wait by time
+10:
+  ui_name: "Wait"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+# ForLoop start
+20:
+  ui_name: "For"
+  deploy_duration: immediate
+  columns:
+    - key: task
+      default_value: "1"
+      property_type_id: float
+    - key: comment
+      property_type_id: string
+
+# ForLoop end
+30:
+  ui_name: "EndFor"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string
+
+# Pause
+40:
+  ui_name: "Pause"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string

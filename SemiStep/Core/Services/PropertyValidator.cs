@@ -22,19 +22,16 @@ public sealed class PropertyValidator
 
 	private static void TryValidateRange(PropertyDefinition property, object convertedValue)
 	{
-		if (convertedValue is not IComparable comparable)
-		{
-			throw new InvalidCastException(
-				$"Value of type {convertedValue.GetType().Name} does not implement IComparable.");
-		}
+		// Convert to double for comparison since Min/Max are defined as double
+		var asDouble = Convert.ToDouble(convertedValue);
 
-		if (property.Min.HasValue && comparable.CompareTo(property.Min.Value) < 0)
+		if (property.Min.HasValue && asDouble < property.Min.Value)
 		{
 			throw new ValueOutOfRangeException(
 				$"Value {convertedValue} is lower than {property.Min.Value} at {property.PropertyTypeId}");
 		}
 
-		if (property.Max.HasValue && comparable.CompareTo(property.Max.Value) > 0)
+		if (property.Max.HasValue && asDouble > property.Max.Value)
 		{
 			throw new ValueOutOfRangeException(
 				$"Value {convertedValue} is greater than {property.Max.Value} at {property.PropertyTypeId}");

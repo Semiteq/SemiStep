@@ -4,45 +4,41 @@ using Shared.Reasons;
 
 namespace Core.Analysis;
 
-public sealed class RecipeAnalyzer(LoopParser loopParser, TimingCalculator timingCalculator)
+public sealed class RecipeAnalyzer(TimingCalculator timingCalculator, ColumnId iterationColumnName)
 {
-	private const int MaxLoopDepth = 10;
+	private const int MaxLoopDepth = 3;
 
-	public RecipeResult Analyze(Recipe recipe)
+	public RecipeSnapshot Analyze(Recipe recipe)
 	{
 		if (recipe.Steps.Count == 0)
 		{
-			return RecipeResult.WithReasons(
+			return RecipeSnapshot.Create(
 				recipe,
-				LoopStructure.Empty,
-				TimingResult.Empty,
+				TimeSpan.Zero,
+				new Dictionary<int, TimeSpan>(),
+				[],
 				[new EmptyRecipeWarning("Recipe is empty")]);
 		}
 
-		var loopParse = loopParser.Parse(recipe);
-
-		var timing = timingCalculator.Calculate(recipe, loopParse.Loops);
-		var enrichedLoops = timingCalculator.EnrichLoopsWithDuration(loopParse.Loops, timing.StepStartTimes);
-		var loopStructure = LoopStructure.Create(enrichedLoops);
-
+		var loopParse = LoopParser.Parse(recipe, iterationColumnName);
 		var reasons = new List<AbstractReason>(loopParse.Reasons);
 
-		if (loopParse.HasIntegrityIssues)
-		{
-			reasons.Add(new LoopIntegrityError("Loop structure has integrity issues (unmatched For/EndFor)"));
-		}
+		var (stepStartTimes, totalDuration) = timingCalculator.Calculate(recipe, loopParse.Loops);
 
-		var maxDepth = enrichedLoops
-			.Where(l => l.Status == LoopStatus.Valid)
-			.Select(l => l.NestingDepth)
-			.DefaultIfEmpty(0)
-			.Max();
+		var maxDepth = loopParse.Loops.Count > 0
+			? loopParse.Loops.Max(l => l.Depth)
+			: 0;
 
 		if (maxDepth > MaxLoopDepth)
 		{
-			reasons.Add(new LoopNestingDepthError($"Maximum loop nesting depth ({maxDepth}) exceeded"));
+			reasons.Add(new LoopNestingDepthError($"Maximum loop nesting depth ({MaxLoopDepth}) exceeded: {maxDepth}"));
 		}
 
-		return RecipeResult.WithReasons(recipe, loopStructure, timing, reasons);
+		return RecipeSnapshot.Create(
+			recipe,
+			totalDuration,
+			stepStartTimes,
+			loopParse.Loops,
+			reasons);
 	}
 }

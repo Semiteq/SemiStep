@@ -2,8 +2,6 @@
 
 public sealed record LoopInfo(
 	int StartIndex,
-	int? EndIndex,
-	int NestingDepth,
-	int IterationCount,
-	TimeSpan? SingleIterationDuration,
-	LoopStatus Status);
+	int EndIndex,
+	int Depth,
+	int Iterations);

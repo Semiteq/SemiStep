@@ -1,4 +1,4 @@
-﻿using Core;
+﻿using Core.Analysis;
 using Core.Entities;
 
 namespace Domain.State;
@@ -7,30 +7,30 @@ public sealed class RecipeStateManager
 {
 	private Recipe _lastValid = Recipe.Empty;
 
-	public RecipeResult? LastResult { get; private set; }
-	public Recipe Current => LastResult?.Recipe ?? Recipe.Empty;
+	public RecipeSnapshot? LastSnapshot { get; private set; }
+	public Recipe Current => LastSnapshot?.Recipe ?? Recipe.Empty;
 	public bool IsDirty { get; private set; }
-	public bool IsValid => LastResult?.CanProceed ?? false;
+	public bool IsValid => LastSnapshot?.IsValid ?? false;
 
-	public void Update(RecipeResult result)
+	public void Update(RecipeSnapshot snapshot)
 	{
-		LastResult = result;
+		LastSnapshot = snapshot;
 		IsDirty = true;
 
-		if (result.CanProceed)
+		if (snapshot.IsValid)
 		{
-			_lastValid = result.Recipe;
+			_lastValid = snapshot.Recipe;
 		}
 	}
 
-	public void Load(RecipeResult result)
+	public void Load(RecipeSnapshot snapshot)
 	{
-		LastResult = result;
+		LastSnapshot = snapshot;
 		IsDirty = false;
 
-		if (result.CanProceed)
+		if (snapshot.IsValid)
 		{
-			_lastValid = result.Recipe;
+			_lastValid = snapshot.Recipe;
 		}
 	}
 
@@ -41,7 +41,7 @@ public sealed class RecipeStateManager
 
 	public void Reset()
 	{
-		LastResult = RecipeResult.Empty;
+		LastSnapshot = RecipeSnapshot.Empty;
 		_lastValid = Recipe.Empty;
 		IsDirty = false;
 	}

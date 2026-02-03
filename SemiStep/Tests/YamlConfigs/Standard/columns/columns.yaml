@@ -1,0 +1,45 @@
+# Minimal column definitions for testing
+
+action:
+  column_type: action_combo_box
+  ui:
+    ui_name: "Action"
+    width: 150
+  business_logic:
+    property_type_id: enum
+    plc_data_type: int
+    read_only: false
+    save_to_csv: true
+
+step_duration:
+  column_type: property_field
+  ui:
+    ui_name: "Duration"
+    width: 120
+  business_logic:
+    property_type_id: time
+    plc_data_type: float
+    read_only: false
+    save_to_csv: true
+
+task:
+  column_type: property_field
+  ui:
+    ui_name: "Task"
+    width: 100
+  business_logic:
+    property_type_id: float
+    plc_data_type: float
+    read_only: false
+    save_to_csv: true
+
+comment:
+  column_type: text_field
+  ui:
+    ui_name: "Comment"
+    width: -1
+  business_logic:
+    property_type_id: string
+    plc_data_type: none
+    save_to_csv: true
+    read_only: false

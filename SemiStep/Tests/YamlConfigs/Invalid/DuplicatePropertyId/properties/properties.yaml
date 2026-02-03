@@ -1,0 +1,11 @@
+# First set of properties
+
+int:
+  system_type: int
+  format_kind: numeric
+  units: ""
+
+float:
+  system_type: float
+  format_kind: numeric
+  units: ""

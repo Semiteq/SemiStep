@@ -1,0 +1,11 @@
+# Invalid: action references unknown column 'nonexistent_column'
+
+10:
+  ui_name: "Wait"
+  deploy_duration: longlasting
+  columns:
+    - key: nonexistent_column
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string

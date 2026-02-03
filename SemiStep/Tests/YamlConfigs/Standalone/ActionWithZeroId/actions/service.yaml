@@ -1,0 +1,7 @@
+# Action with Id = 0 - should cause error
+0:
+  ui_name: "Test"
+  deploy_duration: immediate
+  columns:
+    - key: action
+      property_type_id: int

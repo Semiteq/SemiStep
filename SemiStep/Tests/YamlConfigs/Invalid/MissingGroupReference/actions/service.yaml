@@ -1,0 +1,12 @@
+# Invalid: action column references unknown group_name 'nonexistent_group'
+
+10:
+  ui_name: "Wait"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+      group_name: nonexistent_group
+    - key: comment
+      property_type_id: string

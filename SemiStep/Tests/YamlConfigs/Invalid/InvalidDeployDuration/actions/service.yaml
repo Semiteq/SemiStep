@@ -1,0 +1,11 @@
+# Invalid: deploy_duration 'invalid' is not valid (must be immediate or longlasting)
+
+10:
+  ui_name: "Wait"
+  deploy_duration: invalid
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string

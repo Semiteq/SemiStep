@@ -1,0 +1,6 @@
+# Action with column missing property_type_id - should cause error
+10:
+  ui_name: "Test"
+  deploy_duration: immediate
+  columns:
+    - key: action

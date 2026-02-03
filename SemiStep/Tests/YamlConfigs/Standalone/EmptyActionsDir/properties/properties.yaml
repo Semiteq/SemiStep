@@ -1,0 +1,4 @@
+# Minimal property definition for testing
+int:
+  system_type: int
+  format_kind: numeric

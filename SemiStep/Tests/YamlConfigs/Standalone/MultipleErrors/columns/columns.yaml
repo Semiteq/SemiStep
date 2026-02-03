@@ -1,0 +1,11 @@
+# Column referencing broken1 property
+action:
+  column_type: action_combo_box
+  ui:
+    ui_name: "Action"
+    width: 100
+  business_logic:
+    property_type_id: broken1
+    plc_data_type: int
+    read_only: false
+    save_to_csv: true

@@ -1,0 +1,4 @@
+# Property without system_type - should cause error
+broken:
+  format_kind: numeric
+  units: ""

@@ -1,0 +1,29 @@
+# Invalid: Min (100) is greater than Max (10)
+
+int:
+  system_type: int
+  format_kind: numeric
+  units: ""
+
+float:
+  system_type: float
+  format_kind: numeric
+  units: ""
+
+string:
+  system_type: string
+  format_kind: numeric
+  units: ""
+  max_length: 255
+
+enum:
+  system_type: int
+  format_kind: numeric
+  units: ""
+
+time:
+  system_type: float
+  format_kind: time_hms
+  units: "s"
+  min: 100
+  max: 10

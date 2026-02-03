@@ -1,0 +1,10 @@
+# Multiple validation issues: invalid system_type AND min > max
+broken1:
+  system_type: invalid_type
+  format_kind: numeric
+
+broken2:
+  system_type: int
+  format_kind: numeric
+  min: 100
+  max: 10

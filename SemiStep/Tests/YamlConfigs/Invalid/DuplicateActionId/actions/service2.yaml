@@ -1,0 +1,15 @@
+# Second file - contains duplicate action Id 10
+
+10:
+  ui_name: "Wait Duplicate"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string
+
+30:
+  ui_name: "EndFor"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string

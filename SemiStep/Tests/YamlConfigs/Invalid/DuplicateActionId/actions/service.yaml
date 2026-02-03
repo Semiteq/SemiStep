@@ -1,0 +1,17 @@
+# First set of actions
+
+10:
+  ui_name: "Wait"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+
+20:
+  ui_name: "For"
+  deploy_duration: immediate
+  columns:
+    - key: task
+      default_value: "1"
+      property_type_id: float

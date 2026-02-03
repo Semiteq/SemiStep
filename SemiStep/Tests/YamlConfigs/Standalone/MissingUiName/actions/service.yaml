@@ -1,0 +1,6 @@
+# Action without ui_name - should cause error
+10:
+  deploy_duration: immediate
+  columns:
+    - key: action
+      property_type_id: int

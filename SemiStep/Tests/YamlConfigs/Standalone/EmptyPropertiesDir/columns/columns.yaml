@@ -1,0 +1,6 @@
+# Minimal column definition for testing
+action:
+  column_type: action_combo_box
+  ui:
+    ui_name: "Action"
+    width: 100

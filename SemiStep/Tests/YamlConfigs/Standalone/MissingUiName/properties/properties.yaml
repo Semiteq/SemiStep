@@ -1,0 +1,4 @@
+int:
+  system_type: int
+  format_kind: numeric
+  units: ""

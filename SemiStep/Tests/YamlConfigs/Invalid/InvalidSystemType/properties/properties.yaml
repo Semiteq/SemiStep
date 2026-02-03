@@ -1,0 +1,11 @@
+# Invalid: system_type 'boolean' is not valid (must be int, float, or string)
+
+int:
+  system_type: int
+  format_kind: numeric
+  units: ""
+
+invalid_type:
+  system_type: boolean
+  format_kind: numeric
+  units: ""

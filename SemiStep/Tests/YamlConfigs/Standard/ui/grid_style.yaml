@@ -1,0 +1,7 @@
+# Default grid style options for tests
+fonts:
+  header_size: 12
+  cell_size: 11
+
+layout:
+  row_height: 24

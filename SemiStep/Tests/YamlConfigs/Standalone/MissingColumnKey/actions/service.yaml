@@ -1,0 +1,6 @@
+# Action with column missing key - should cause error
+10:
+  ui_name: "Test"
+  deploy_duration: immediate
+  columns:
+    - property_type_id: int

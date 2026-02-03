@@ -1,0 +1,5 @@
+# Minimal action definition for testing
+10:
+  ui_name: "Test"
+  deploy_duration: immediate
+  columns: []

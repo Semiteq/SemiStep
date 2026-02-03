@@ -31,6 +31,7 @@ public sealed class ConfigFacade(ILogger? logger = null)
 
 		if (!Directory.Exists(configDirectory))
 		{
+			context.AddError($"Configuration directory not found: {configDirectory}");
 			return context;
 		}
 

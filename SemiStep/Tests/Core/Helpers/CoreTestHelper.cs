@@ -6,6 +6,7 @@ using Core;
 using Domain;
 using Domain.Facade;
 using Domain.Services;
+using Domain.State;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,7 +14,7 @@ namespace Tests.Core.Helpers;
 
 public static class CoreTestHelper
 {
-	public static async Task<(IServiceProvider Services, CoreService Core)> BuildAsync(
+	public static async Task<(IServiceProvider Services, DomainFacade Facade)> BuildAsync(
 		string configName = "Standard")
 	{
 		var configDir = GetConfigDirectory(configName);
@@ -36,8 +37,7 @@ public static class CoreTestHelper
 		var domainFacade = services.GetRequiredService<DomainFacade>();
 		domainFacade.Initialize(context.Configuration);
 
-		var coreService = services.GetRequiredService<CoreService>();
-		return (services, coreService);
+		return (services, domainFacade);
 	}
 
 	private static string GetConfigDirectory(string configName)

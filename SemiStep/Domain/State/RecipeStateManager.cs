@@ -23,17 +23,6 @@ public sealed class RecipeStateManager
 		}
 	}
 
-	public void Load(RecipeSnapshot snapshot)
-	{
-		LastSnapshot = snapshot;
-		IsDirty = false;
-
-		if (snapshot.IsValid)
-		{
-			_lastValid = snapshot.Recipe;
-		}
-	}
-
 	public void MarkSaved()
 	{
 		IsDirty = false;

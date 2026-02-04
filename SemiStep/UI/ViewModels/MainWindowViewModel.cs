@@ -36,11 +36,12 @@ public class MainWindowViewModel : ReactiveObject
 		ValidationErrors = new ObservableCollection<string>();
 		ValidationErrors.CollectionChanged += OnValidationErrorsChanged;
 
-		AddStepCommand = ReactiveCommand.Create(AddStep);
 		DeleteStepCommand = ReactiveCommand.Create<int>(DeleteStep);
 		SaveRecipeCommand = ReactiveCommand.Create(SaveRecipe);
 		LoadRecipeCommand = ReactiveCommand.Create(LoadRecipe);
 		NewRecipeCommand = ReactiveCommand.Create(NewRecipe);
+		UndoCommand = ReactiveCommand.Create(Undo);
+		RedoCommand = ReactiveCommand.Create(Redo);
 		ExitCommand = ReactiveCommand.Create(Exit);
 	}
 
@@ -54,8 +55,6 @@ public class MainWindowViewModel : ReactiveObject
 
 	public AppConfiguration? Configuration { get; private set; }
 
-	public ReactiveCommand<Unit, Unit> AddStepCommand { get; }
-
 	public ReactiveCommand<int, Unit> DeleteStepCommand { get; }
 
 	public ReactiveCommand<Unit, Unit> SaveRecipeCommand { get; }
@@ -64,11 +63,19 @@ public class MainWindowViewModel : ReactiveObject
 
 	public ReactiveCommand<Unit, Unit> NewRecipeCommand { get; }
 
+	public ReactiveCommand<Unit, Unit> UndoCommand { get; }
+
+	public ReactiveCommand<Unit, Unit> RedoCommand { get; }
+
 	public ReactiveCommand<Unit, Unit> ExitCommand { get; }
 
 	public string WindowTitle => "SemiStep - Core Editor";
 
-	public bool IsDirty => _domainFacade.Core.IsDirty;
+	public bool IsDirty => _domainFacade.IsDirty;
+
+	public bool CanUndo => _domainFacade.CanUndo;
+
+	public bool CanRedo => _domainFacade.CanRedo;
 
 	public bool IsConnectedToPlc => false;
 
@@ -84,20 +91,6 @@ public class MainWindowViewModel : ReactiveObject
 		RefreshRecipeRows();
 	}
 
-	private void AddStep()
-	{
-		var firstAction = _actionRegistry.GetAll().FirstOrDefault();
-		if (firstAction is null)
-		{
-			return;
-		}
-
-		_domainFacade.Core.AppendStep(firstAction.Id);
-		RefreshRecipeRows();
-		this.RaisePropertyChanged(nameof(IsDirty));
-		this.RaisePropertyChanged(nameof(StatusText));
-	}
-
 	private void DeleteStep(int stepIndex)
 	{
 		if (stepIndex < 0 || stepIndex >= RecipeRows.Count)
@@ -105,38 +98,54 @@ public class MainWindowViewModel : ReactiveObject
 			return;
 		}
 
-		_domainFacade.Core.RemoveStep(stepIndex);
+		_domainFacade.RemoveStep(stepIndex);
 		RefreshRecipeRows();
-		this.RaisePropertyChanged(nameof(IsDirty));
-		this.RaisePropertyChanged(nameof(StatusText));
+		RaiseStateChanged();
 	}
 
 	private void SaveRecipe()
 	{
-		_domainFacade.Core.MarkSaved();
-		this.RaisePropertyChanged(nameof(IsDirty));
-		this.RaisePropertyChanged(nameof(StatusText));
+		_domainFacade.SaveRecipe();
+		RaiseStateChanged();
 	}
 
 	private void LoadRecipe()
 	{
-		_domainFacade.Core.NewRecipe();
+		_domainFacade.LoadRecipe();
 		RefreshRecipeRows();
-		this.RaisePropertyChanged(nameof(IsDirty));
-		this.RaisePropertyChanged(nameof(StatusText));
+		RaiseStateChanged();
 	}
 
 	private void NewRecipe()
 	{
-		_domainFacade.Core.NewRecipe();
+		_domainFacade.NewRecipe();
 		RefreshRecipeRows();
-		this.RaisePropertyChanged(nameof(IsDirty));
-		this.RaisePropertyChanged(nameof(StatusText));
+		RaiseStateChanged();
+	}
+
+	private void Undo()
+	{
+		var snapshot = _domainFacade.Undo();
+		if (snapshot is not null)
+		{
+			RefreshRecipeRows();
+			RaiseStateChanged();
+		}
+	}
+
+	private void Redo()
+	{
+		var snapshot = _domainFacade.Redo();
+		if (snapshot is not null)
+		{
+			RefreshRecipeRows();
+			RaiseStateChanged();
+		}
 	}
 
 	private void RefreshRecipeRows()
 	{
-		var recipe = _domainFacade.Core.CurrentRecipe;
+		var recipe = _domainFacade.CurrentRecipe;
 		RecipeRows.Clear();
 		ValidationErrors.Clear();
 
@@ -171,28 +180,26 @@ public class MainWindowViewModel : ReactiveObject
 			return;
 		}
 
-		var result = _domainFacade.Core.UpdateProperty(stepIndex, columnKey, value);
-		if (!result.IsValid)
+		try
 		{
-			foreach (var error in result.Errors)
-			{
-				ValidationErrors.Add($"Step {stepIndex + 1}: {error.Message}");
-			}
+			_domainFacade.UpdateStepProperty(stepIndex, columnKey, value);
+		}
+		catch (Exception ex)
+		{
+			ValidationErrors.Add($"Step {stepIndex + 1}: {ex.Message}");
 		}
 
 		RefreshRecipeRows();
-		this.RaisePropertyChanged(nameof(IsDirty));
-		this.RaisePropertyChanged(nameof(StatusText));
+		RaiseStateChanged();
 	}
 
 	private void OnActionChanged(int stepIndex, int newActionId)
 	{
 		try
 		{
-			_domainFacade.Core.ChangeStepAction(stepIndex, newActionId);
+			_domainFacade.ChangeStepAction(stepIndex, newActionId);
 			RefreshRecipeRows();
-			this.RaisePropertyChanged(nameof(IsDirty));
-			this.RaisePropertyChanged(nameof(StatusText));
+			RaiseStateChanged();
 		}
 		catch (Exception ex)
 		{
@@ -203,5 +210,13 @@ public class MainWindowViewModel : ReactiveObject
 	private void OnValidationErrorsChanged(object? sender, NotifyCollectionChangedEventArgs e)
 	{
 		this.RaisePropertyChanged(nameof(HasValidationErrors));
+	}
+
+	private void RaiseStateChanged()
+	{
+		this.RaisePropertyChanged(nameof(IsDirty));
+		this.RaisePropertyChanged(nameof(StatusText));
+		this.RaisePropertyChanged(nameof(CanUndo));
+		this.RaisePropertyChanged(nameof(CanRedo));
 	}
 }

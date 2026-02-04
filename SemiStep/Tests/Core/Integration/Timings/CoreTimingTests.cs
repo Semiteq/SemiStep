@@ -1,4 +1,8 @@
-﻿using FluentAssertions;
+﻿using Domain.State;
+
+using FluentAssertions;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using Tests.Core.Helpers;
 
@@ -14,10 +18,10 @@ public sealed class CoreTimingTests
 	[Fact]
 	public async Task EmptyRecipe_ZeroDuration()
 	{
-		var (services, core) = await CoreTestHelper.BuildAsync();
+		var (services, facade) = await CoreTestHelper.BuildAsync();
 		using var _ = services as IDisposable;
 
-		var driver = new RecipeTestDriver(core);
+		var driver = new RecipeTestDriver(facade);
 
 		// NewRecipe already called by DomainFacade.Initialize
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.Zero);
@@ -26,12 +30,12 @@ public sealed class CoreTimingTests
 	[Fact]
 	public async Task SingleWaitStep_TotalDurationMatchesStepDuration()
 	{
-		var (services, core) = await CoreTestHelper.BuildAsync();
+		var (services, facade) = await CoreTestHelper.BuildAsync();
 		using var _ = services as IDisposable;
 
 		const float Duration = 15f;
 
-		var driver = new RecipeTestDriver(core);
+		var driver = new RecipeTestDriver(facade);
 		driver.AddWait(Duration);
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(Duration));
@@ -40,10 +44,10 @@ public sealed class CoreTimingTests
 	[Fact]
 	public async Task MultipleWaitSteps_TotalDurationIsCumulative()
 	{
-		var (services, core) = await CoreTestHelper.BuildAsync();
+		var (services, facade) = await CoreTestHelper.BuildAsync();
 		using var _ = services as IDisposable;
 
-		var driver = new RecipeTestDriver(core);
+		var driver = new RecipeTestDriver(facade);
 		driver.AddWait(10f).AddWait(20f).AddWait(30f);
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(60));
@@ -52,10 +56,10 @@ public sealed class CoreTimingTests
 	[Fact]
 	public async Task StepStartTimes_AccumulateCorrectly()
 	{
-		var (services, core) = await CoreTestHelper.BuildAsync();
+		var (services, facade) = await CoreTestHelper.BuildAsync();
 		using var _ = services as IDisposable;
 
-		var driver = new RecipeTestDriver(core);
+		var driver = new RecipeTestDriver(facade);
 		driver.AddWait(10f).AddWait(20f).AddWait(30f);
 
 		var startTimes = driver.Snapshot.StepStartTimes;
@@ -68,10 +72,10 @@ public sealed class CoreTimingTests
 	[Fact]
 	public async Task ImmediateAction_ZeroDuration()
 	{
-		var (services, core) = await CoreTestHelper.BuildAsync();
+		var (services, facade) = await CoreTestHelper.BuildAsync();
 		using var _ = services as IDisposable;
 
-		var driver = new RecipeTestDriver(core);
+		var driver = new RecipeTestDriver(facade);
 		driver.AddPause();
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.Zero);
@@ -80,10 +84,10 @@ public sealed class CoreTimingTests
 	[Fact]
 	public async Task MixedActions_OnlyLongLastingContributeToTotalDuration()
 	{
-		var (services, core) = await CoreTestHelper.BuildAsync();
+		var (services, facade) = await CoreTestHelper.BuildAsync();
 		using var _ = services as IDisposable;
 
-		var driver = new RecipeTestDriver(core);
+		var driver = new RecipeTestDriver(facade);
 
 		// Pause (immediate) + Wait (longlasting) + ForLoop (immediate)
 		driver.AddPause().AddWait(15f).AddFor(3);
@@ -94,10 +98,10 @@ public sealed class CoreTimingTests
 	[Fact]
 	public async Task UpdateDuration_RecalculatesTotal()
 	{
-		var (services, core) = await CoreTestHelper.BuildAsync();
+		var (services, facade) = await CoreTestHelper.BuildAsync();
 		using var _ = services as IDisposable;
 
-		var driver = new RecipeTestDriver(core);
+		var driver = new RecipeTestDriver(facade);
 		driver.AddWait(10f).AddWait(10f);
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(20));
@@ -110,10 +114,10 @@ public sealed class CoreTimingTests
 	[Fact]
 	public async Task RemoveStep_RecalculatesTotalDuration()
 	{
-		var (services, core) = await CoreTestHelper.BuildAsync();
+		var (services, facade) = await CoreTestHelper.BuildAsync();
 		using var _ = services as IDisposable;
 
-		var driver = new RecipeTestDriver(core);
+		var driver = new RecipeTestDriver(facade);
 		driver.AddWait(10f).AddWait(20f).AddWait(30f);
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(60));

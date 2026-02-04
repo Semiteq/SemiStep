@@ -31,11 +31,7 @@ public sealed class CoreFacade(
 		ActionDefinition action,
 		IReadOnlyList<PropertyDefinition> properties)
 	{
-		if (stepIndex < 0 || stepIndex >= recipe.Steps.Count)
-		{
-			throw new IndexOutOfRangeException(
-				$"Index {stepIndex} is out of range for recipe with {recipe.Steps.Count} steps.");
-		}
+		ValidateIndexOrThrow(recipe, stepIndex);
 
 		var newRecipe = mutator.InsertStep(recipe, stepIndex, action, properties);
 		return analyzer.Analyze(newRecipe);
@@ -43,11 +39,7 @@ public sealed class CoreFacade(
 
 	public RecipeSnapshot RemoveStep(Recipe recipe, int stepIndex)
 	{
-		if (stepIndex < 0 || stepIndex >= recipe.Steps.Count)
-		{
-			throw new IndexOutOfRangeException(
-				$"Index {stepIndex} is out of range for recipe with {recipe.Steps.Count} steps.");
-		}
+		ValidateIndexOrThrow(recipe, stepIndex);
 
 		var newRecipe = mutator.RemoveStep(recipe, stepIndex);
 		return analyzer.Analyze(newRecipe);
@@ -59,11 +51,7 @@ public sealed class CoreFacade(
 		ActionDefinition newAction,
 		IReadOnlyList<PropertyDefinition> properties)
 	{
-		if (stepIndex < 0 || stepIndex >= recipe.Steps.Count)
-		{
-			throw new IndexOutOfRangeException(
-				$"Index {stepIndex} is out of range for recipe with {recipe.Steps.Count} steps.");
-		}
+		ValidateIndexOrThrow(recipe, stepIndex);
 
 		var newRecipe = mutator.ChangeStepAction(recipe, stepIndex, newAction, properties);
 		return analyzer.Analyze(newRecipe);
@@ -78,11 +66,7 @@ public sealed class CoreFacade(
 		ActionDefinition actionDefinition,
 		FormulaDefinition? formulaDefinition = null)
 	{
-		if (stepIndex < 0 || stepIndex >= recipe.Steps.Count)
-		{
-			throw new IndexOutOfRangeException(
-				$"Index {stepIndex} is out of range for recipe with {recipe.Steps.Count} steps.");
-		}
+		ValidateIndexOrThrow(recipe, stepIndex);
 
 		PropertyValidator.ThrowIfInvalid(propertyDefinition, value.Value);
 		var mutatedRecipe = mutator.UpdateProperty(recipe, stepIndex, columnId, value);
@@ -99,5 +83,14 @@ public sealed class CoreFacade(
 		};
 
 		return analyzer.Analyze(recalculatedRecipe);
+	}
+
+	private static void ValidateIndexOrThrow(Recipe recipe, int index)
+	{
+		if (index < 0 || index >= recipe.Steps.Count)
+		{
+			throw new IndexOutOfRangeException(
+				$"Index {index} is out of range for recipe with {recipe.Steps.Count} steps.");
+		}
 	}
 }

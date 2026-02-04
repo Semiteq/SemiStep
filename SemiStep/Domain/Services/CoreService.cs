@@ -16,54 +16,50 @@ public sealed class CoreService(
 	IPropertyRegistry propertyRegistry,
 	IColumnRegistry columnRegistry)
 {
-	public Recipe CurrentRecipe => stateManager.Current;
-	public RecipeSnapshot? LastSnapshot => stateManager.LastSnapshot;
-	public bool IsDirty => stateManager.IsDirty;
-	public bool IsValid => stateManager.IsValid;
-
 	public RecipeSnapshot NewRecipe()
 	{
-		var result = coreFacade.Analyze(Recipe.Empty);
+		var recipeSnapshot = coreFacade.Analyze(Recipe.Empty);
 		stateManager.Reset();
-		stateManager.Update(result);
-		return result;
+		stateManager.Update(recipeSnapshot);
+		return recipeSnapshot;
+	}
+
+	public RecipeSnapshot AnalyzeRecipe(Recipe recipe)
+	{
+		return coreFacade.Analyze(recipe);
 	}
 
 	public RecipeSnapshot AppendStep(int actionId)
 	{
 		var action = actionRegistry.GetAction(actionId);
 		var properties = ResolvePropertiesForAction(action);
-		var result = coreFacade.AppendStep(stateManager.Current, action, properties);
-		ApplyResult(result);
-		return result;
+		var recipeSnapshot = coreFacade.AppendStep(stateManager.Current, action, properties);
+		return recipeSnapshot;
 	}
 
 	public RecipeSnapshot InsertStep(int index, int actionId)
 	{
 		var action = actionRegistry.GetAction(actionId);
 		var properties = ResolvePropertiesForAction(action);
-		var result = coreFacade.InsertStep(stateManager.Current, index, action, properties);
-		ApplyResult(result);
-		return result;
+		var recipeSnapshot = coreFacade.InsertStep(stateManager.Current, index, action, properties);
+		return recipeSnapshot;
 	}
 
 	public RecipeSnapshot ChangeStepAction(int stepIndex, int newActionId)
 	{
 		var newAction = actionRegistry.GetAction(newActionId);
 		var properties = ResolvePropertiesForAction(newAction);
-		var result = coreFacade.ChangeStepAction(stateManager.Current, stepIndex, newAction, properties);
-		ApplyResult(result);
-		return result;
+		var recipeSnapshot = coreFacade.ChangeStepAction(stateManager.Current, stepIndex, newAction, properties);
+		return recipeSnapshot;
 	}
 
 	public RecipeSnapshot RemoveStep(int index)
 	{
-		var result = coreFacade.RemoveStep(stateManager.Current, index);
-		ApplyResult(result);
-		return result;
+		var recipeSnapshot = coreFacade.RemoveStep(stateManager.Current, index);
+		return recipeSnapshot;
 	}
 
-	public RecipeSnapshot UpdateProperty(int stepIndex, string columnKey, object value)
+	public RecipeSnapshot UpdateStepProperty(int stepIndex, string columnKey, object value)
 	{
 		var columnDef = columnRegistry.GetColumn(columnKey);
 		var property = propertyRegistry.GetProperty(columnDef.PropertyTypeId);
@@ -84,25 +80,7 @@ public sealed class CoreService(
 			action,
 			formulaDefinition: null);
 
-		ApplyResult(result);
 		return result;
-	}
-
-	public RecipeSnapshot LoadRecipe(Recipe recipe)
-	{
-		var result = coreFacade.Analyze(recipe);
-		stateManager.Load(result);
-		return result;
-	}
-
-	public void MarkSaved()
-	{
-		stateManager.MarkSaved();
-	}
-
-	private void ApplyResult(RecipeSnapshot snapshot)
-	{
-		stateManager.Update(snapshot);
 	}
 
 	private IReadOnlyList<PropertyDefinition> ResolvePropertiesForAction(ActionDefinition action)

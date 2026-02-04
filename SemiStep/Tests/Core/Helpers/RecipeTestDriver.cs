@@ -1,7 +1,7 @@
 ﻿using Core.Analysis;
 using Core.Entities;
 
-using Domain.Services;
+using Domain.Facade;
 
 namespace Tests.Core.Helpers;
 
@@ -9,30 +9,23 @@ namespace Tests.Core.Helpers;
 /// Fluent test driver for building and manipulating recipes in tests.
 /// Wraps CoreService to provide convenient methods for common test scenarios.
 /// </summary>
-public sealed class RecipeTestDriver
+public sealed class RecipeTestDriver(DomainFacade domainFacade)
 {
-	private readonly CoreService _core;
-
-	public RecipeTestDriver(CoreService core)
-	{
-		_core = core;
-	}
 
 	/// <summary>
 	/// Gets the current recipe snapshot.
 	/// </summary>
-	public RecipeSnapshot Snapshot => _core.LastSnapshot
-		?? throw new InvalidOperationException("No snapshot available. Call a mutation method first.");
+	public RecipeSnapshot Snapshot => domainFacade.Snapshot;
 
 	/// <summary>
 	/// Gets the current recipe.
 	/// </summary>
-	public Recipe Recipe => _core.CurrentRecipe;
+	public Recipe Recipe => domainFacade.CurrentRecipe;
 
 	/// <summary>
 	/// Gets whether the current recipe is valid.
 	/// </summary>
-	public bool IsValid => _core.IsValid;
+	public bool IsValid => domainFacade.IsValid;
 
 	/// <summary>
 	/// Gets the step count of the current recipe.
@@ -63,9 +56,9 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver AddWait(float durationSeconds = 10f)
 	{
-		_core.AppendStep(WaitActionId);
+		domainFacade.AppendStep(WaitActionId);
 		var lastIndex = Recipe.StepCount - 1;
-		_core.UpdateProperty(lastIndex, StepDurationColumn, durationSeconds);
+		domainFacade.UpdateStepProperty(lastIndex, StepDurationColumn, durationSeconds);
 		return this;
 	}
 
@@ -74,9 +67,9 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver AddFor(int iterations)
 	{
-		_core.AppendStep(ForLoopActionId);
+		domainFacade.AppendStep(ForLoopActionId);
 		var lastIndex = Recipe.StepCount - 1;
-		_core.UpdateProperty(lastIndex, TaskColumn, (float)iterations);
+		domainFacade.UpdateStepProperty(lastIndex, TaskColumn, (float)iterations);
 		return this;
 	}
 
@@ -85,7 +78,7 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver AddEndFor()
 	{
-		_core.AppendStep(EndForLoopActionId);
+		domainFacade.AppendStep(EndForLoopActionId);
 		return this;
 	}
 
@@ -94,7 +87,7 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver AddPause()
 	{
-		_core.AppendStep(PauseActionId);
+		domainFacade.AppendStep(PauseActionId);
 		return this;
 	}
 
@@ -103,7 +96,7 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver AddStep(int actionId)
 	{
-		_core.AppendStep(actionId);
+		domainFacade.AppendStep(actionId);
 		return this;
 	}
 
@@ -116,8 +109,8 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver InsertWait(int index, float durationSeconds = 10f)
 	{
-		_core.InsertStep(index, WaitActionId);
-		_core.UpdateProperty(index, StepDurationColumn, durationSeconds);
+		domainFacade.InsertStep(index, WaitActionId);
+		domainFacade.UpdateStepProperty(index, StepDurationColumn, durationSeconds);
 		return this;
 	}
 
@@ -126,8 +119,8 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver InsertFor(int index, int iterations)
 	{
-		_core.InsertStep(index, ForLoopActionId);
-		_core.UpdateProperty(index, TaskColumn, (float)iterations);
+		domainFacade.InsertStep(index, ForLoopActionId);
+		domainFacade.UpdateStepProperty(index, TaskColumn, (float)iterations);
 		return this;
 	}
 
@@ -136,7 +129,7 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver InsertEndFor(int index)
 	{
-		_core.InsertStep(index, EndForLoopActionId);
+		domainFacade.InsertStep(index, EndForLoopActionId);
 		return this;
 	}
 
@@ -149,7 +142,7 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver SetDuration(int index, float seconds)
 	{
-		_core.UpdateProperty(index, StepDurationColumn, seconds);
+		domainFacade.UpdateStepProperty(index, StepDurationColumn, seconds);
 		return this;
 	}
 
@@ -158,7 +151,7 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver SetTask(int index, float value)
 	{
-		_core.UpdateProperty(index, TaskColumn, value);
+		domainFacade.UpdateStepProperty(index, TaskColumn, value);
 		return this;
 	}
 
@@ -167,7 +160,7 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver ReplaceAction(int index, int actionId)
 	{
-		_core.ChangeStepAction(index, actionId);
+		domainFacade.ChangeStepAction(index, actionId);
 		return this;
 	}
 
@@ -176,7 +169,7 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver RemoveStep(int index)
 	{
-		_core.RemoveStep(index);
+		domainFacade.RemoveStep(index);
 		return this;
 	}
 
@@ -189,7 +182,7 @@ public sealed class RecipeTestDriver
 	/// </summary>
 	public RecipeTestDriver NewRecipe()
 	{
-		_core.NewRecipe();
+		domainFacade.NewRecipe();
 		return this;
 	}
 

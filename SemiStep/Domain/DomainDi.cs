@@ -26,6 +26,7 @@ public static class DomainDi
 		services.AddSingleton<IGroupRegistry, GroupRegistry>();
 		services.AddSingleton<CellStateResolver>();
 		services.AddSingleton<RecipeStateManager>();
+		services.AddSingleton<RecipeHistoryManager>();
 		services.AddSingleton<CoreService>();
 		services.AddSingleton<DomainFacade>();
 

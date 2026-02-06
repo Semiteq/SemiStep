@@ -16,7 +16,8 @@ public sealed class DomainFacade(
 	IGroupRegistry groupRegistry,
 	CoreService coreService,
 	RecipeStateManager stateManager,
-	RecipeHistoryManager historyManager)
+	RecipeHistoryManager historyManager,
+	PlcSyncService plcSyncService)
 	: IDisposable
 {
 	private bool _disposed;
@@ -82,10 +83,6 @@ public sealed class DomainFacade(
 		stateManager.Update(snapshot);
 	}
 
-	/// <summary>
-	/// Reverts to the previous recipe state.
-	/// </summary>
-	/// <returns>The restored snapshot, or null if nothing to undo.</returns>
 	public RecipeSnapshot? Undo()
 	{
 		var previous = historyManager.Undo(stateManager.Current);
@@ -99,10 +96,6 @@ public sealed class DomainFacade(
 		return snapshot;
 	}
 
-	/// <summary>
-	/// Reapplies a previously undone state.
-	/// </summary>
-	/// <returns>The restored snapshot, or null if nothing to redo.</returns>
 	public RecipeSnapshot? Redo()
 	{
 		var next = historyManager.Redo(stateManager.Current);
@@ -118,8 +111,16 @@ public sealed class DomainFacade(
 
 	public void LoadRecipe()
 	{
-		// Note: LoadRecipe() preserves history per design decision
 		throw new NotImplementedException();
+	}
+
+	public async Task LoadFromPlcAsync(CancellationToken ct = default)
+	{
+		var recipe = await plcSyncService.LoadRecipeAsync(ct);
+		historyManager.Clear();
+		var snapshot = coreService.AnalyzeRecipe(recipe);
+		stateManager.Update(snapshot);
+		stateManager.MarkSaved();
 	}
 
 	public void SaveRecipe()

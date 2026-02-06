@@ -1,4 +1,6 @@
-﻿using Domain.Facade;
+﻿using Converter;
+
+using Domain.Facade;
 using Domain.Registries;
 using Domain.Services;
 using Domain.State;
@@ -20,6 +22,8 @@ public static class DomainDi
 			services.AddSingleton(logger);
 		}
 
+		services.AddConverter();
+
 		services.AddSingleton<IActionRegistry, ActionRegistry>();
 		services.AddSingleton<IPropertyRegistry, PropertyRegistry>();
 		services.AddSingleton<IColumnRegistry, ColumnRegistry>();
@@ -28,6 +32,9 @@ public static class DomainDi
 		services.AddSingleton<RecipeStateManager>();
 		services.AddSingleton<RecipeHistoryManager>();
 		services.AddSingleton<CoreService>();
+		services.AddSingleton<PlcConnectionManager>();
+		services.AddSingleton<PlcSyncService>();
+		services.AddSingleton<PlcSyncCoordinator>();
 		services.AddSingleton<DomainFacade>();
 
 		return services;

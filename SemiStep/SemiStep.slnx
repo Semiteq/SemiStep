@@ -1,11 +1,12 @@
 <Solution>
-  <Project Path="Application/Application.csproj" />
-  <Project Path="S7/S7.csproj" />
-  <Project Path="Shared/Shared.csproj" />
-  <Project Path="Config/Config.csproj" />
-  <Project Path="Core/Core.csproj" />
-  <Project Path="Csv/Csv.csproj" />
-  <Project Path="Domain/Domain.csproj" />
-  <Project Path="Tests/Tests.csproj" />
-  <Project Path="UI/UI.csproj" />
+    <Project Path="Application/Application.csproj" />
+    <Project Path="S7/S7.csproj" />
+    <Project Path="Shared/Shared.csproj" />
+    <Project Path="Config/Config.csproj" />
+    <Project Path="Core/Core.csproj" />
+    <Project Path="Csv/Csv.csproj" />
+    <Project Path="Domain/Domain.csproj" />
+    <Project Path="Tests/Tests.csproj" />
+    <Project Path="UI/UI.csproj" />
+    <Project Path="Converter/Converter.csproj" />
 </Solution>

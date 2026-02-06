@@ -5,10 +5,16 @@ using Core;
 
 using Domain;
 using Domain.Facade;
+using Domain.Ports;
 using Domain.Services;
 using Domain.State;
 
 using Microsoft.Extensions.DependencyInjection;
+
+using Serilog;
+using Serilog.Core;
+
+using Tests.Helpers;
 
 namespace Tests.Core.Helpers;
 
@@ -19,10 +25,14 @@ public static class CoreTestHelper
 	{
 		var configDir = GetConfigDirectory(configName);
 
+		var silentLogger = new LoggerConfiguration().CreateLogger();
+
 		var services = new ServiceCollection()
+			.AddSingleton<ILogger>(silentLogger)
 			.AddRecipe()
 			.AddConfig()
 			.AddDomain()
+			.AddSingleton<IPlcConnection, StubPlcConnection>()
 			.BuildServiceProvider();
 
 		var configFacade = services.GetRequiredService<ConfigFacade>();

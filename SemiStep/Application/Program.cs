@@ -8,6 +8,8 @@ using Domain.Facade;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using S7;
+
 using Serilog;
 
 using Shared;
@@ -53,6 +55,7 @@ public class Program
 		services.AddRecipe(logger);
 		services.AddConfig(logger);
 		services.AddDomain(logger);
+		services.AddS7();
 		services.AddUi(logger);
 
 		return services.BuildServiceProvider();
@@ -62,7 +65,7 @@ public class Program
 	{
 		var configLoader = services.GetRequiredService<ConfigFacade>();
 
-		const string ConfigDirectory = @"C:\Users\admin\Projects\git\SemiStep\ConfigFiles";
+		const string ConfigDirectory = @"C:\Users\admin\projects\SemiStep\ConfigFiles";
 
 		var context = await configLoader.LoadAsync(ConfigDirectory);
 

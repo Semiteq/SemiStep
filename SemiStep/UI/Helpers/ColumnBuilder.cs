@@ -36,7 +36,7 @@ public sealed class ColumnBuilder(
 	{
 		grid.Columns.Add(new DataGridTextColumn
 		{
-			Header = "No",
+			Header = "№",
 			Binding = new Binding("StepNumber"),
 			IsReadOnly = true,
 			Width = DataGridLength.Auto,

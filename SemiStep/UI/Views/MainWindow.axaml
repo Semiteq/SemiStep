@@ -30,7 +30,7 @@
                   ItemsSource="{Binding RecipeRows}"
                   SelectedIndex="{Binding SelectedRowIndex}"
                   AutoGenerateColumns="False"
-                  CanUserReorderColumns="True"
+                  CanUserReorderColumns="False"
                   CanUserResizeColumns="True"
                   IsReadOnly="False"
                   GridLinesVisibility="All"

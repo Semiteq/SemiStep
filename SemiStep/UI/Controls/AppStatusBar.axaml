@@ -14,6 +14,8 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
@@ -31,11 +33,56 @@
                     Background="#C0C0C0"
                     Margin="12,2" />
 
+            <!-- Error/Warning counts - clickable to toggle log panel -->
+            <Button Grid.Column="2"
+                    Command="{Binding ToggleLogPanelCommand}"
+                    IsVisible="{Binding HasStatusErrors}"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="4,2"
+                    VerticalAlignment="Center"
+                    Cursor="Hand">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <!-- Error count -->
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="4"
+                                IsVisible="{Binding HasErrors}">
+                        <Ellipse Width="8" Height="8"
+                                 Fill="#D32F2F"
+                                 VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding ErrorCountText}"
+                                   FontSize="12"
+                                   Foreground="#D32F2F"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Warning count -->
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="4"
+                                IsVisible="{Binding HasWarnings}">
+                        <Ellipse Width="8" Height="8"
+                                 Fill="#F57C00"
+                                 VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding WarningCountText}"
+                                   FontSize="12"
+                                   Foreground="#F57C00"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+            </Button>
+
+            <!-- Separator (only if errors visible) -->
+            <Border Grid.Column="3"
+                    Width="1"
+                    Background="#C0C0C0"
+                    Margin="12,2"
+                    IsVisible="{Binding HasStatusErrors}" />
+
             <!-- Spacer -->
-            <Panel Grid.Column="2" />
+            <Panel Grid.Column="4" />
 
             <!-- Connection Status -->
-            <StackPanel Grid.Column="3"
+            <StackPanel Grid.Column="5"
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
                 <Ellipse Width="8"

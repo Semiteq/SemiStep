@@ -2,6 +2,7 @@
 
 using Serilog;
 
+using UI.Services;
 using UI.ViewModels;
 
 namespace UI;
@@ -15,6 +16,8 @@ public static class UiDi
 			services.AddSingleton(logger);
 		}
 
+		services.AddSingleton<NotificationService>();
+		services.AddSingleton<INotificationService>(sp => sp.GetRequiredService<NotificationService>());
 		services.AddSingleton<MainWindowViewModel>();
 
 		return services;

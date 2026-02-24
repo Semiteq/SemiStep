@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="clr-namespace:UI.Models"
+             xmlns:converters="clr-namespace:UI.Converters"
+             mc:Ignorable="d"
+             x:Class="UI.Controls.NotificationLogPanel">
+
+    <UserControl.Resources>
+        <converters:LogSeverityToBrushConverter x:Key="SeverityToBrush" />
+    </UserControl.Resources>
+
+    <Border Background="#F8F8F8"
+            BorderBrush="#D0D0D0"
+            BorderThickness="0,1,0,0"
+            MaxHeight="200">
+
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- Header with counts and clear button -->
+            <Border Grid.Row="0"
+                    Background="#EEEEEE"
+                    Padding="8,4">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                Spacing="12"
+                                VerticalAlignment="Center">
+
+                        <!-- Error count -->
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="4"
+                                    IsVisible="{Binding HasErrors}">
+                            <Ellipse Width="8" Height="8"
+                                     Fill="#D32F2F"
+                                     VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ErrorCountText}"
+                                       FontSize="12"
+                                       Foreground="#D32F2F"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <!-- Warning count -->
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="4"
+                                    IsVisible="{Binding HasWarnings}">
+                            <Ellipse Width="8" Height="8"
+                                     Fill="#F57C00"
+                                     VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding WarningCountText}"
+                                       FontSize="12"
+                                       Foreground="#F57C00"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                            Content="Clear"
+                            Command="{Binding ClearLogCommand}"
+                            FontSize="11"
+                            Padding="8,2"
+                            VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Log entries list -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          MaxHeight="160">
+                <ItemsControl ItemsSource="{Binding LogEntries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="models:LogEntry">
+                            <Border Padding="8,3"
+                                    BorderBrush="#E0E0E0"
+                                    BorderThickness="0,0,0,1">
+                                <Grid ColumnDefinitions="16,Auto,*">
+
+                                    <!-- Severity dot -->
+                                    <Ellipse Grid.Column="0"
+                                             Width="8" Height="8"
+                                             Fill="{Binding Severity, Converter={StaticResource SeverityToBrush}}"
+                                             VerticalAlignment="Center"
+                                             HorizontalAlignment="Center" />
+
+                                    <!-- Source label -->
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Source}"
+                                               FontSize="11"
+                                               Foreground="#888888"
+                                               Margin="6,0,8,0"
+                                               VerticalAlignment="Center" />
+
+                                    <!-- Message -->
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Message}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               VerticalAlignment="Center" />
+
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+        </Grid>
+    </Border>
+
+</UserControl>

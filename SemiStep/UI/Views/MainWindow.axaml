@@ -40,7 +40,9 @@
                   Background="White"
                   SelectionChanged="OnSelectionChanged" />
 
-        <controls:ValidationErrorsPanel Grid.Row="2" x:Name="ValidationPanel" />
+        <controls:NotificationLogPanel Grid.Row="2"
+                                        x:Name="LogPanel"
+                                        IsVisible="{Binding ShowLogPanel}" />
 
         <controls:AppStatusBar Grid.Row="3" x:Name="StatusBar" />
 

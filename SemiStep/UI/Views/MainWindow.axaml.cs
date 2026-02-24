@@ -3,9 +3,12 @@
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using ReactiveUI;
 
 using UI.Helpers;
+using UI.Services;
 using UI.ViewModels;
 
 namespace UI.Views;
@@ -69,6 +72,10 @@ public partial class MainWindow : Window
 		{
 			return;
 		}
+
+		// Initialize toast notification manager
+		var notificationService = App.ServiceProvider?.GetService<NotificationService>();
+		notificationService?.SetHostWindow(this);
 
 		// Register file dialog interaction handlers
 		viewModel.OpenFileInteraction.RegisterHandler(HandleOpenFileDialogAsync);

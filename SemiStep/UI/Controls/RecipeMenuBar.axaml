@@ -40,8 +40,8 @@
                       InputGesture="Ctrl+Shift+Z" />
         </MenuItem>
         <MenuItem Header="_View">
-            <MenuItem Header="_Validation Errors"
-                      IsEnabled="False" />
+            <MenuItem Header="_Notification Log"
+                      Command="{Binding ToggleLogPanelCommand}" />
         </MenuItem>
 
         <MenuItem Header="_Help">

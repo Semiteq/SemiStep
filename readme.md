@@ -7,34 +7,12 @@
 ![License](https://img.shields.io/badge/license-BUSL%201.1-red)
 ![Status](https://img.shields.io/badge/status-Prototype-blueviolet)
 
+SemiStep — a standalone SCADA-independent tool for industrial recipe control.
 
-![logo](./logo.png)
+Industrial recipe editor and runtime for PLC-based systems.
 
-> SemiStep — a standalone SCADA-independent tool for industrial recipe control.
+<div align="center">
+    <img src=./logo.png width=400 />
+</div>
 
-**Industrial recipe editor and runtime for PLC-based systems.**  
-Create, validate, transfer, and execute industrial recipes in real time via S7.
-
----
-
-## Features
-
-- Table-based recipe editor
-- Classic & transposed views
-- Online execution monitoring
-- PLC-driven configuration
-- Multi-window workflow
-
----
-
-## Use Cases
-
-- Process engineering  
-- PLC integration & diagnostics  
-- Operator runtime control  
-
----
-
-## License
-
-Business Source License 1.1 (BUSL)
+Documents may be found [here](./Docs/01-overview.md).

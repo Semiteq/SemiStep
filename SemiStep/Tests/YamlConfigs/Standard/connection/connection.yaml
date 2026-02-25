@@ -1,0 +1,76 @@
+connection_file_version: 1.0
+
+# -- Connection info --
+ip: "192.168.0.150:102"
+connection_protocol: "S7"
+plc_rack: 0
+plc_slot: 1
+
+# -- Protocol settings --
+max_retries_attempts: 3
+polling_interval_ms: 100
+writing_timeout_ms: 5000
+commit_timeout_ms: 5000
+
+# -- Header DB --
+header_db_number: 1
+magic_number_offset: 0
+word_order_offset: 2
+protocol_version_offset: 4
+
+managing_db_number_offset: 6
+
+int_db_number_offset: 8
+float_db_number_offset: 10
+string_db_number_offset: 12
+execution_db_number_offset: 14
+
+header_db_total_size: 16
+
+# -- Managing DB --
+managing_db_number: 2
+pc_status_offset: 0
+pc_transaction_id_offset: 2
+pc_checksum_int_offset: 6
+pc_checksum_float_offset: 10
+pc_checksum_string_offset: 14
+pc_recipe_lines_offset: 18
+plc_status_offset: 22
+plc_error_offset: 24
+plc_stored_id_offset: 26
+plc_checksum_int_offset: 30
+plc_checksum_float_offset: 34
+plc_checksum_string_offset: 38
+
+managing_db_total_size: 42
+managing_pc_data_size: 22
+
+# -- Int DB --
+int_db_number: 3
+int_db_total_capacity_offset: 0
+int_db_current_size_offset: 2
+int_db_data_offset: 4
+
+# -- Float DB --
+float_db_number: 4
+float_db_total_capacity_offset: 0
+float_db_current_size_offset: 2
+float_db_data_offset: 4
+
+# -- String DB --
+string_db_number: 5
+string_db_total_capacity_offset: 0
+string_db_current_size_offset: 2
+string_db_data_offset: 4
+
+# -- Execution DB --
+execution_db_number: 6
+recipe_active_offset: 0
+actual_line_offset: 2
+step_current_time_offset: 6
+
+for_loop_count1_offset: 10
+for_loop_count2_offset: 14
+for_loop_count3_offset: 18
+
+execution_db_total_size: 22

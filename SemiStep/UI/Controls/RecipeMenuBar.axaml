@@ -15,6 +15,9 @@
             <MenuItem Header="_Save Recipe"
                       Command="{Binding SaveRecipeCommand}"
                       InputGesture="Ctrl+S" />
+            <MenuItem Header="Save Recipe _As..."
+                      Command="{Binding SaveAsRecipeCommand}"
+                      InputGesture="Ctrl+Shift+S" />
             <Separator />
             <MenuItem Header="E_xit"
                       Command="{Binding ExitCommand}"

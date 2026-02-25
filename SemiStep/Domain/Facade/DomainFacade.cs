@@ -1,6 +1,7 @@
 ﻿using Core.Analysis;
 using Core.Entities;
 
+using Domain.Ports;
 using Domain.Services;
 using Domain.State;
 
@@ -17,7 +18,7 @@ public sealed class DomainFacade(
 	CoreService coreService,
 	RecipeStateManager stateManager,
 	RecipeHistoryManager historyManager,
-	PlcSyncService plcSyncService)
+	IRecipeRepository recipeRepository)
 	: IDisposable
 {
 	private bool _disposed;
@@ -122,23 +123,19 @@ public sealed class DomainFacade(
 		return snapshot;
 	}
 
-	public void LoadRecipe()
+	public async Task LoadRecipeAsync(string filePath, CancellationToken ct = default)
 	{
-		throw new NotImplementedException();
-	}
-
-	public async Task LoadFromPlcAsync(CancellationToken ct = default)
-	{
-		var recipe = await plcSyncService.LoadRecipeAsync(ct);
+		var recipe = await recipeRepository.LoadAsync(filePath, ct);
 		historyManager.Clear();
 		var snapshot = coreService.AnalyzeRecipe(recipe);
 		stateManager.Update(snapshot);
 		stateManager.MarkSaved();
 	}
 
-	public void SaveRecipe()
+	public async Task SaveRecipeAsync(string filePath, CancellationToken ct = default)
 	{
-		throw new NotImplementedException();
+		await recipeRepository.SaveAsync(stateManager.Current, filePath, ct);
+		stateManager.MarkSaved();
 	}
 
 	public void MarkSaved()
@@ -153,4 +150,5 @@ public sealed class DomainFacade(
 			historyManager.Push(stateManager.Current);
 		}
 	}
+
 }

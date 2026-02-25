@@ -22,9 +22,9 @@ namespace UI.ViewModels;
 public class MainWindowViewModel : ReactiveObject
 {
 	private readonly IColumnRegistry _columnRegistry;
-	private readonly string? _currentFileName;
 	private readonly DomainFacade _domainFacade;
 	private readonly INotificationService _notificationService;
+	private string? _currentFilePath;
 	private int _selectedRowIndex = -1;
 	private bool _isLogPanelVisible = true;
 
@@ -53,6 +53,7 @@ public class MainWindowViewModel : ReactiveObject
 		AddStepCommand = ReactiveCommand.Create(AddStep);
 		DeleteStepCommand = ReactiveCommand.Create(DeleteStep);
 		SaveRecipeCommand = ReactiveCommand.CreateFromTask(SaveRecipeAsync);
+		SaveAsRecipeCommand = ReactiveCommand.CreateFromTask(SaveAsRecipeAsync);
 		LoadRecipeCommand = ReactiveCommand.CreateFromTask(LoadRecipeAsync);
 		NewRecipeCommand = ReactiveCommand.Create(NewRecipe);
 		UndoCommand = ReactiveCommand.Create(Undo);
@@ -61,7 +62,7 @@ public class MainWindowViewModel : ReactiveObject
 		ClearLogCommand = ReactiveCommand.Create(ClearLog);
 		ToggleLogPanelCommand = ReactiveCommand.Create(ToggleLogPanel);
 
-		_currentFileName = "New Recipe";
+		_currentFilePath = null;
 	}
 
 	public IActionRegistry ActionRegistry { get; }
@@ -87,6 +88,8 @@ public class MainWindowViewModel : ReactiveObject
 
 	public ReactiveCommand<Unit, Unit> SaveRecipeCommand { get; }
 
+	public ReactiveCommand<Unit, Unit> SaveAsRecipeCommand { get; }
+
 	public ReactiveCommand<Unit, Unit> LoadRecipeCommand { get; }
 
 	public ReactiveCommand<Unit, Unit> NewRecipeCommand { get; }
@@ -105,7 +108,9 @@ public class MainWindowViewModel : ReactiveObject
 	{
 		get
 		{
-			var fileName = _currentFileName ?? "Untitled";
+			var fileName = _currentFilePath is not null
+				? Path.GetFileNameWithoutExtension(_currentFilePath)
+				: "New Recipe";
 			var dirtyIndicator = IsDirty ? " *" : "";
 
 			return $"SemiStep - {fileName}{dirtyIndicator}";
@@ -238,37 +243,72 @@ public class MainWindowViewModel : ReactiveObject
 
 	private async Task SaveRecipeAsync()
 	{
-		// Show save file dialog
-		var filePath = await SaveFileInteraction.Handle(null);
-		if (filePath is null)
+		if (_currentFilePath is not null)
 		{
-			return; // User cancelled
+			await SaveToFileAsync(_currentFilePath);
+			return;
 		}
 
-		// TODO: Implement file saving when backend is ready
-		// For now, show "Not implemented" message
-		await ShowMessageInteraction.Handle(("Save Recipe",
-			"File saving is not yet implemented.\n\nSelected path: " + filePath));
+		await SaveAsRecipeAsync();
+	}
+
+	private async Task SaveAsRecipeAsync()
+	{
+		var suggestedName = _currentFilePath is not null
+			? Path.GetFileNameWithoutExtension(_currentFilePath)
+			: null;
+
+		var filePath = await SaveFileInteraction.Handle(suggestedName);
+		if (filePath is null)
+		{
+			return;
+		}
+
+		await SaveToFileAsync(filePath);
+	}
+
+	private async Task SaveToFileAsync(string filePath)
+	{
+		try
+		{
+			await _domainFacade.SaveRecipeAsync(filePath);
+			_currentFilePath = filePath;
+			RaiseStateChanged();
+			_notificationService.ShowSuccess($"Saved: {Path.GetFileName(filePath)}");
+		}
+		catch (Exception ex)
+		{
+			_notificationService.ShowError($"Failed to save recipe: {ex.Message}");
+		}
 	}
 
 	private async Task LoadRecipeAsync()
 	{
-		// Show open file dialog
 		var filePath = await OpenFileInteraction.Handle(Unit.Default);
 		if (filePath is null)
 		{
-			return; // User cancelled
+			return;
 		}
 
-		// TODO: Implement file loading when backend is ready
-		// For now, show "Not implemented" message
-		await ShowMessageInteraction.Handle(("Open Recipe",
-			"File loading is not yet implemented.\n\nSelected path: " + filePath));
+		try
+		{
+			await _domainFacade.LoadRecipeAsync(filePath);
+			_currentFilePath = filePath;
+			RefreshRecipeRows();
+			RefreshReasons();
+			RaiseStateChanged();
+			_notificationService.ShowSuccess($"Loaded: {Path.GetFileName(filePath)}");
+		}
+		catch (Exception ex)
+		{
+			_notificationService.ShowError($"Failed to load recipe: {ex.Message}");
+		}
 	}
 
 	private void NewRecipe()
 	{
 		_domainFacade.NewRecipe();
+		_currentFilePath = null;
 		LogEntries.Clear();
 		RefreshRecipeRows();
 		RefreshReasons();

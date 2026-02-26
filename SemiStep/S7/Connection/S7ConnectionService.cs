@@ -1,12 +1,13 @@
 ﻿using Domain.Ports;
 
 using Serilog;
+using Serilog.Core;
 
 using Shared.Entities;
 
 namespace S7.Connection;
 
-public sealed class S7ConnectionService(PlcTransport transport, ILogger logger) : IAsyncDisposable, IS7ConnectionService
+public sealed class S7ConnectionService(PlcTransport transport, Logger logger) : IAsyncDisposable, IS7ConnectionService
 {
 	private readonly Lock _stateLock = new();
 	private bool _autoReconnectEnabled;

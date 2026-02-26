@@ -18,15 +18,7 @@ public static class RecipeDi
 		ILogger? logger = null,
 		string? iterationColumnName = null)
 	{
-		if (logger is not null)
-		{
-			services.AddSingleton(logger);
-		}
-
-		// Iteration column configuration for loop parsing
-		var columnName = iterationColumnName ?? DefaultIterationColumnName;
-		var iterationColumn = new ColumnId(columnName);
-		services.AddSingleton(typeof(ColumnId), iterationColumn);
+		services.AddSingleton<CoreConfig>();
 
 		// Core services
 		services.AddSingleton<StepFactory>();

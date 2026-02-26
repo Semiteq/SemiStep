@@ -8,13 +8,8 @@ namespace Csv;
 
 public static class CsvDi
 {
-	public static IServiceCollection AddCsv(this IServiceCollection services, ILogger? logger = null)
+	public static IServiceCollection AddCsv(this IServiceCollection services)
 	{
-		if (logger is not null)
-		{
-			services.AddSingleton(logger);
-		}
-
 		services.AddSingleton<CsvSerializer>();
 		services.AddSingleton<ICsvService, CsvCsvService>();
 

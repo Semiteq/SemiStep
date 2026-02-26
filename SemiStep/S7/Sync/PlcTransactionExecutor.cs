@@ -3,6 +3,7 @@ using S7.Protocol;
 using S7.Serialization;
 
 using Serilog;
+using Serilog.Core;
 
 using Shared.Entities;
 
@@ -13,7 +14,7 @@ public sealed class PlcTransactionExecutor
 	private readonly ArrayCodec _arrayCodec;
 	private readonly ExecutionStateCodec _executionCodec;
 	private readonly PlcProtocolLayout _layout;
-	private readonly ILogger _logger;
+	private readonly Logger _logger;
 	private readonly ManagingAreaCodec _managingCodec;
 	private readonly PlcProtocolSettings _protocolSettings;
 	private readonly RecipeConverter _converter;
@@ -23,7 +24,7 @@ public sealed class PlcTransactionExecutor
 		PlcTransport transport,
 		RecipeConverter converter,
 		PlcConfiguration plcConfiguration,
-		ILogger logger)
+		Logger logger)
 	{
 		_transport = transport;
 		_converter = converter;

@@ -6,6 +6,7 @@ using S7.Connection;
 using S7.Protocol;
 
 using Serilog;
+using Serilog.Core;
 
 namespace S7.Sync;
 
@@ -14,7 +15,7 @@ public sealed class PlcSyncCoordinator : IDisposable
 	private const int DebounceDelayMs = 1000;
 	private readonly S7ConnectionService _connectionManager;
 	private readonly Lock _lock = new();
-	private readonly ILogger _logger;
+	private readonly Logger _logger;
 	private readonly RecipeStateManager _stateManager;
 	private readonly PlcTransactionExecutor _transactionExecutor;
 
@@ -29,7 +30,7 @@ public sealed class PlcSyncCoordinator : IDisposable
 		PlcTransactionExecutor transactionExecutor,
 		S7ConnectionService connectionManager,
 		RecipeStateManager stateManager,
-		ILogger logger)
+		Logger logger)
 	{
 		_transactionExecutor = transactionExecutor;
 		_connectionManager = connectionManager;

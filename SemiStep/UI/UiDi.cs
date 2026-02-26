@@ -9,15 +9,9 @@ namespace UI;
 
 public static class UiDi
 {
-	public static IServiceCollection AddUi(this IServiceCollection services, ILogger? logger = null)
+	public static IServiceCollection AddUi(this IServiceCollection services)
 	{
-		if (logger is not null)
-		{
-			services.AddSingleton(logger);
-		}
-
-		services.AddSingleton<NotificationService>();
-		services.AddSingleton<INotificationService>(sp => sp.GetRequiredService<NotificationService>());
+		services.AddSingleton<INotificationService, NotificationService>();
 		services.AddSingleton<MainWindowViewModel>();
 
 		return services;

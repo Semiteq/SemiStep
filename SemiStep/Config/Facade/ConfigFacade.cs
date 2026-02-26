@@ -4,12 +4,13 @@ using Config.Models;
 using Config.Validation;
 
 using Serilog;
+using Serilog.Core;
 
 using Shared;
 
 namespace Config.Facade;
 
-public sealed class ConfigFacade(ILogger? logger = null)
+public sealed class ConfigFacade(Logger logger)
 {
 	public async Task<ConfigContext> LoadAsync(string configDirectory)
 	{

@@ -14,13 +14,8 @@ namespace Domain;
 
 public static class DomainDi
 {
-	public static IServiceCollection AddDomain(this IServiceCollection services, ILogger? logger = null)
+	public static IServiceCollection AddDomain(this IServiceCollection services)
 	{
-		if (logger is not null)
-		{
-			services.AddSingleton(logger);
-		}
-
 		services.AddSingleton<IActionRegistry, ActionRegistry>();
 		services.AddSingleton<IPropertyRegistry, PropertyRegistry>();
 		services.AddSingleton<IColumnRegistry, ColumnRegistry>();

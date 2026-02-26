@@ -36,13 +36,14 @@ public static class Program
 		{
 			var services = new ServiceCollection();
 
-			services.AddSingleton(logger);
-			services.AddRecipe(logger);
-			services.AddConfig(logger);
-			services.AddDomain(logger);
-			services.AddS7(logger);
-			services.AddCsv(logger);
-			services.AddUi(logger);
+			services
+				.AddRecipe()
+				.AddConfig()
+				.AddDomain()
+				.AddS7()
+				.AddCsv()
+				.AddUi()
+				.AddSingleton(logger);
 
 			var configuration = LoadConfigurationAsync(services).GetAwaiter().GetResult();
 

@@ -5,11 +5,11 @@ using Core.Entities;
 
 using Domain.Ports;
 
-using Serilog;
+using Serilog.Core;
 
 namespace Csv;
 
-public sealed class CsvCsvService(CsvSerializer csvSerializer, ILogger logger) : ICsvService
+public sealed class CsvCsvService(CsvSerializer csvSerializer, Logger logger) : ICsvService
 {
 	private static readonly Encoding _fileEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
 

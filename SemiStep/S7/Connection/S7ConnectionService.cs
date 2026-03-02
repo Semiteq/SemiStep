@@ -1,13 +1,12 @@
 ﻿using Domain.Ports;
 
 using Serilog;
-using Serilog.Core;
 
 using Shared.Entities;
 
 namespace S7.Connection;
 
-public sealed class S7ConnectionService(PlcTransport transport, Logger logger) : IAsyncDisposable, IS7ConnectionService
+public sealed class S7ConnectionService(PlcTransport transport) : IAsyncDisposable, IS7ConnectionService
 {
 	private readonly Lock _stateLock = new();
 	private bool _autoReconnectEnabled;
@@ -68,13 +67,13 @@ public sealed class S7ConnectionService(PlcTransport transport, Logger logger) :
 		}
 
 		State = PlcConnectionState.Disconnected;
-		logger.Information("Disconnected from PLC");
+		Log.Information("Disconnected from PLC");
 	}
 
 	internal void OnConnectionLost()
 	{
 		State = PlcConnectionState.Disconnected;
-		logger.Warning("PLC connection lost");
+		Log.Warning("PLC connection lost");
 
 		if (_autoReconnectEnabled && _settings is not null)
 		{
@@ -90,18 +89,18 @@ public sealed class S7ConnectionService(PlcTransport transport, Logger logger) :
 		}
 
 		State = PlcConnectionState.Connecting;
-		logger.Information("Connecting to PLC at {IpAddress}...", _settings.IpAddress);
+		Log.Information("Connecting to PLC at {IpAddress}...", _settings.IpAddress);
 
 		try
 		{
 			await transport.ConnectAsync(_settings, ct);
 			State = PlcConnectionState.Connected;
-			logger.Information("Connected to PLC at {IpAddress}", _settings.IpAddress);
+			Log.Information("Connected to PLC at {IpAddress}", _settings.IpAddress);
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
 			State = PlcConnectionState.Disconnected;
-			logger.Error(ex, "Failed to connect to PLC at {IpAddress}", _settings.IpAddress);
+			Log.Error(ex, "Failed to connect to PLC at {IpAddress}", _settings.IpAddress);
 
 			throw;
 		}
@@ -148,7 +147,7 @@ public sealed class S7ConnectionService(PlcTransport transport, Logger logger) :
 			}
 			catch (Exception ex)
 			{
-				logger.Warning(ex, "Reconnection attempt failed, retrying in {Delay}s", delay.TotalSeconds);
+				Log.Warning(ex, "Reconnection attempt failed, retrying in {Delay}s", delay.TotalSeconds);
 				delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, maxDelay.TotalSeconds));
 			}
 		}

@@ -1,7 +1,11 @@
-﻿namespace UI.Services;
+﻿using Avalonia.Controls;
+
+namespace UI.Services;
 
 public interface INotificationService
 {
+	void SetHostWindow(TopLevel topLevel);
+
 	void ShowError(string message, TimeSpan? expiration = null);
 
 	void ShowWarning(string message, TimeSpan? expiration = null);

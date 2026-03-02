@@ -5,11 +5,11 @@ using Core.Entities;
 
 using Domain.Ports;
 
-using Serilog.Core;
+using Serilog;
 
 namespace Csv;
 
-public sealed class CsvCsvService(CsvSerializer csvSerializer, Logger logger) : ICsvService
+public sealed class CsvCsvService(CsvSerializer csvSerializer) : ICsvService
 {
 	private static readonly Encoding _fileEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
 
@@ -29,7 +29,7 @@ public sealed class CsvCsvService(CsvSerializer csvSerializer, Logger logger) : 
 
 		VerifyRowCount(metadata, recipe.StepCount, filePath);
 
-		logger.Information("Loaded recipe from {FilePath}: {StepCount} steps", filePath, recipe.StepCount);
+		Log.Information("Loaded recipe from {FilePath}: {StepCount} steps", filePath, recipe.StepCount);
 
 		return recipe;
 	}
@@ -73,12 +73,7 @@ public sealed class CsvCsvService(CsvSerializer csvSerializer, Logger logger) : 
 			}
 		}
 
-		logger.Information("Saved recipe to {FilePath}: {StepCount} steps", filePath, recipe.StepCount);
-	}
-
-	public bool CanHandle(string filePath)
-	{
-		return filePath.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+		Log.Information("Saved recipe to {FilePath}: {StepCount} steps", filePath, recipe.StepCount);
 	}
 
 	private static string ExtractBody(string fullText, int metadataLines)
@@ -97,11 +92,11 @@ public sealed class CsvCsvService(CsvSerializer csvSerializer, Logger logger) : 
 		return reader.ReadToEnd();
 	}
 
-	private void VerifyRowCount(CsvMetadata metadata, int actualCount, string filePath)
+	private static void VerifyRowCount(CsvMetadata metadata, int actualCount, string filePath)
 	{
 		if (metadata.Rows > 0 && metadata.Rows != actualCount)
 		{
-			logger.Warning(
+			Log.Warning(
 				"Row count mismatch in {FilePath}: metadata says {Expected}, actual is {Actual}",
 				filePath, metadata.Rows, actualCount);
 		}

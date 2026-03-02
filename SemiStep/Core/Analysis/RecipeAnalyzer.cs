@@ -4,7 +4,7 @@ using Shared.Reasons;
 
 namespace Core.Analysis;
 
-public sealed class RecipeAnalyzer(TimingCalculator timingCalculator, ColumnId iterationColumnName)
+public sealed class RecipeAnalyzer(TimingCalculator timingCalculator, LoopParser loopParser)
 {
 	private const int MaxLoopDepth = 3;
 
@@ -20,7 +20,7 @@ public sealed class RecipeAnalyzer(TimingCalculator timingCalculator, ColumnId i
 				[new EmptyRecipeWarning("Recipe is empty")]);
 		}
 
-		var loopParse = LoopParser.Parse(recipe, iterationColumnName);
+		var loopParse = loopParser.Parse(recipe);
 		var reasons = new List<AbstractReason>(loopParse.Reasons);
 
 		var (stepStartTimes, totalDuration) = timingCalculator.Calculate(recipe, loopParse.Loops);

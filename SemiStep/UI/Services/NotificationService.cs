@@ -11,15 +11,6 @@ public sealed class NotificationService : INotificationService
 
 	private WindowNotificationManager? _manager;
 
-	public void SetHostWindow(TopLevel topLevel)
-	{
-		_manager = new WindowNotificationManager(topLevel)
-		{
-			Position = NotificationPosition.BottomRight,
-			MaxItems = 3
-		};
-	}
-
 	public void ShowError(string message, TimeSpan? expiration = null)
 	{
 		Show("Error", message, NotificationType.Error, expiration ?? _defaultErrorExpiration);
@@ -38,6 +29,15 @@ public sealed class NotificationService : INotificationService
 	public void ShowSuccess(string message, TimeSpan? expiration = null)
 	{
 		Show("Success", message, NotificationType.Success, expiration ?? _defaultInfoExpiration);
+	}
+
+	public void SetHostWindow(TopLevel topLevel)
+	{
+		_manager = new WindowNotificationManager(topLevel)
+		{
+			Position = NotificationPosition.BottomRight,
+			MaxItems = 3
+		};
 	}
 
 	private void Show(string title, string message, NotificationType type, TimeSpan expiration)

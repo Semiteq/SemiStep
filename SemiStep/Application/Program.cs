@@ -1,4 +1,6 @@
-﻿using Config;
+﻿using System.Globalization;
+
+using Config;
 using Config.Facade;
 
 using Core;
@@ -14,97 +16,99 @@ using S7;
 
 using Serilog;
 
-using Shared;
-using Shared.Reasons;
-
 using UI;
 
 namespace Application;
 
 public static class Program
 {
-	public static void Main()
-	{
-		var logger = new LoggerConfiguration()
-			.MinimumLevel.Debug()
-			.WriteTo.Console()
-			.CreateLogger();
+	private const string ConfigDir = @"C:\DISTR\Config\Semistep\ConfigFiles";
+	private const string LogFilePath = @"C:\DISTR\Logs\semistep.log";
 
-		Log.Logger = logger;
+	public static async Task Main()
+	{
+		CreateLogger(LogFilePath);
 
 		try
 		{
-			var services = new ServiceCollection();
+			var configuration = await ConfigFacade.LoadAndValidateAsync(ConfigDir);
 
-			services
-				.AddRecipe()
-				.AddConfig()
-				.AddDomain()
-				.AddS7()
-				.AddCsv()
-				.AddUi()
-				.AddSingleton(logger);
-
-			var configuration = LoadConfigurationAsync(services).GetAwaiter().GetResult();
-
-			services.AddSingleton(configuration.PlcConfiguration);
+			var services =
+				new ServiceCollection()
+					.AddSingleton(configuration)
+					.AddRecipe()
+					.AddConfig()
+					.AddDomain()
+					.AddS7()
+					.AddCsv()
+					.AddUi();
 
 			var provider = services.BuildServiceProvider();
 
-			InitializeServices(provider, configuration);
+			InitializeServices(provider);
 
-			RunAvaloniaApp(provider, configuration);
+			App.Run(provider);
 		}
 		catch (Exception ex)
 		{
-			logger.Fatal(ex, "Application terminated unexpectedly");
+			Log.Fatal(ex, "Application terminated unexpectedly");
 		}
 		finally
 		{
-			Log.CloseAndFlush();
+			await Log.CloseAndFlushAsync();
 		}
 	}
 
-	private static async Task<AppConfiguration> LoadConfigurationAsync(ServiceCollection services)
-	{
-		var tempProvider = services.BuildServiceProvider();
-		var configLoader = tempProvider.GetRequiredService<ConfigFacade>();
-
-		const string ConfigDirectory = @"C:\Users\admin\projects\SemiStep\ConfigFiles";
-
-		var context = await configLoader.LoadAsync(ConfigDirectory);
-
-		if (context.HasErrors)
-		{
-			foreach (var error in context.Errors)
-			{
-				var location = error is ConfigLoadError configError ? configError.Location : null;
-				Log.Error("Error: {Message} at {Location}", error.Message, location ?? "unknown");
-			}
-
-			throw new InvalidOperationException("Configuration loading failed with errors");
-		}
-
-		if (context.Configuration is null)
-		{
-			Log.Error("Configuration is null after successful loading");
-
-			throw new InvalidOperationException("Configuration is null");
-		}
-
-		Log.Information("Configuration loaded successfully");
-
-		return context.Configuration;
-	}
-
-	private static void InitializeServices(IServiceProvider provider, AppConfiguration configuration)
+	private static void InitializeServices(IServiceProvider provider)
 	{
 		var domainFacade = provider.GetRequiredService<DomainFacade>();
-		domainFacade.Initialize(configuration);
+		domainFacade.Initialize();
 	}
 
-	private static void RunAvaloniaApp(IServiceProvider services, AppConfiguration configuration)
+	private static void CreateLogger(string logFilePath)
 	{
-		App.Run(services, configuration);
+		const string Template = "{Timestamp:O} [{Level:u3}] {Message:lj}{NewLine}{Exception}";
+		var invariant = CultureInfo.InvariantCulture;
+
+		if (!EnsureLogDirExists(logFilePath))
+		{
+			return;
+		}
+
+		var config =
+			new LoggerConfiguration()
+				.MinimumLevel.Verbose()
+				.Enrich.FromLogContext()
+				.WriteTo.Console();
+
+		config = config.WriteTo.File(
+			path: logFilePath,
+			rollingInterval: RollingInterval.Infinite,
+			fileSizeLimitBytes: 5 * 1024 * 1024,
+			rollOnFileSizeLimit: true,
+			retainedFileCountLimit: 5,
+			shared: true,
+			outputTemplate: Template,
+			formatProvider: invariant);
+
+		Log.Logger = config.CreateLogger();
+	}
+
+	private static bool EnsureLogDirExists(string filePath)
+	{
+		try
+		{
+			var directory = Path.GetDirectoryName(filePath);
+			if (directory is not null)
+			{
+				Directory.CreateDirectory(directory);
+			}
+
+			return true;
+		}
+		catch
+		{
+			return false;
+		}
 	}
 }

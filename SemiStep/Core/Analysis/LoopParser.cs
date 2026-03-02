@@ -1,12 +1,14 @@
 ﻿using Core.Entities;
+using Core.Exceptions;
 
 using Shared.Reasons;
 
 namespace Core.Analysis;
 
-public sealed class LoopParser
+public sealed class LoopParser(CoreConfig config)
 {
-	public static LoopParseResult Parse(Recipe recipe, ColumnId iterationColumnName)
+	private readonly ColumnId _iterationColumnName = config.IterationColumnId;
+	public LoopParseResult Parse(Recipe recipe)
 	{
 		var validLoops = new List<LoopInfo>();
 		var reasons = new List<AbstractReason>();
@@ -21,7 +23,7 @@ public sealed class LoopParser
 			{
 				case (int)ServiceActionId.ForLoop:
 				{
-					var iterations = ExtractIterationCountOrThrow(step, iterationColumnName);
+					var iterations = ExtractIterationCountOrThrow(step);
 					var depth = stack.Count + 1;
 
 					stack.Push(new ForFrame(i, iterations, depth));
@@ -58,9 +60,9 @@ public sealed class LoopParser
 		return new LoopParseResult(validLoops, reasons);
 	}
 
-	private static int ExtractIterationCountOrThrow(Step step, ColumnId iterationColumnName)
+	private int ExtractIterationCountOrThrow(Step step)
 	{
-		if (!step.Properties.TryGetValue(iterationColumnName, out var iterationProperty))
+		if (!step.Properties.TryGetValue(_iterationColumnName, out var iterationProperty))
 		{
 			return 1;
 		}

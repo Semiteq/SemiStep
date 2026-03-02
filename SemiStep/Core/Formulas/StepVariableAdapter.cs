@@ -1,4 +1,5 @@
 ﻿using Core.Entities;
+using Core.Exceptions;
 
 namespace Core.Formulas;
 

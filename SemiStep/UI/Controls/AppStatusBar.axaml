@@ -5,9 +5,19 @@
              mc:Ignorable="d"
              x:Class="UI.Controls.AppStatusBar">
 
+    <UserControl.Styles>
+        <!-- Connection indicator color via style class binding -->
+        <Style Selector="Ellipse.connection-dot">
+            <Setter Property="Fill" Value="{DynamicResource DisconnectedBrush}" />
+        </Style>
+        <Style Selector="Ellipse.connection-dot.connected">
+            <Setter Property="Fill" Value="{DynamicResource ConnectedBrush}" />
+        </Style>
+    </UserControl.Styles>
+
     <Border Name="StatusBarBorder"
-            Background="#F0F0F0"
-            BorderBrush="#D0D0D0"
+            Background="{DynamicResource StatusBarBackgroundBrush}"
+            BorderBrush="{DynamicResource SubtleBorderBrush}"
             BorderThickness="0,1,0,0"
             Padding="8,4">
         <Grid>
@@ -30,13 +40,13 @@
             <!-- Separator -->
             <Border Grid.Column="1"
                     Width="1"
-                    Background="#C0C0C0"
+                    Background="{DynamicResource SeparatorBrush}"
                     Margin="12,2" />
 
             <!-- Error/Warning counts - clickable to toggle log panel -->
             <Button Grid.Column="2"
-                    Command="{Binding ToggleLogPanelCommand}"
-                    IsVisible="{Binding HasStatusErrors}"
+                    Command="{Binding LogPanel.ToggleCommand}"
+                    IsVisible="{Binding LogPanel.HasStatusErrors}"
                     Background="Transparent"
                     BorderThickness="0"
                     Padding="4,2"
@@ -46,26 +56,26 @@
                     <!-- Error count -->
                     <StackPanel Orientation="Horizontal"
                                 Spacing="4"
-                                IsVisible="{Binding HasErrors}">
+                                IsVisible="{Binding LogPanel.HasErrors}">
                         <Ellipse Width="8" Height="8"
-                                 Fill="#D32F2F"
+                                 Fill="{DynamicResource ErrorBrush}"
                                  VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding ErrorCountText}"
+                        <TextBlock Text="{Binding LogPanel.ErrorCountText}"
                                    FontSize="12"
-                                   Foreground="#D32F2F"
+                                   Foreground="{DynamicResource ErrorBrush}"
                                    VerticalAlignment="Center" />
                     </StackPanel>
 
                     <!-- Warning count -->
                     <StackPanel Orientation="Horizontal"
                                 Spacing="4"
-                                IsVisible="{Binding HasWarnings}">
+                                IsVisible="{Binding LogPanel.HasWarnings}">
                         <Ellipse Width="8" Height="8"
-                                 Fill="#F57C00"
+                                 Fill="{DynamicResource WarningBrush}"
                                  VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding WarningCountText}"
+                        <TextBlock Text="{Binding LogPanel.WarningCountText}"
                                    FontSize="12"
-                                   Foreground="#F57C00"
+                                   Foreground="{DynamicResource WarningBrush}"
                                    VerticalAlignment="Center" />
                     </StackPanel>
                 </StackPanel>
@@ -74,9 +84,9 @@
             <!-- Separator (only if errors visible) -->
             <Border Grid.Column="3"
                     Width="1"
-                    Background="#C0C0C0"
+                    Background="{DynamicResource SeparatorBrush}"
                     Margin="12,2"
-                    IsVisible="{Binding HasStatusErrors}" />
+                    IsVisible="{Binding LogPanel.HasStatusErrors}" />
 
             <!-- Spacer -->
             <Panel Grid.Column="4" />
@@ -88,13 +98,9 @@
                 <Ellipse Width="8"
                          Height="8"
                          Margin="0,0,6,0"
-                         VerticalAlignment="Center">
-                    <Ellipse.Styles>
-                        <Style Selector="Ellipse">
-                            <Setter Property="Fill" Value="#FF4444" />
-                        </Style>
-                    </Ellipse.Styles>
-                </Ellipse>
+                         VerticalAlignment="Center"
+                         Classes="connection-dot"
+                         Classes.connected="{Binding IsConnectedToPlc}" />
                 <TextBlock Name="ConnectionText"
                            Text="{Binding ConnectionStatus}"
                            VerticalAlignment="Center"

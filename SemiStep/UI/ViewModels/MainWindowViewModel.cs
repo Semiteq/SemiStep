@@ -1,17 +1,14 @@
 ﻿using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Reactive;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
-
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
+using System.Reactive.Subjects;
 
 using Domain.Facade;
 
 using ReactiveUI;
 
 using Shared;
-using Shared.Reasons;
 using Shared.Registries;
 
 using UI.Models;
@@ -19,53 +16,117 @@ using UI.Services;
 
 namespace UI.ViewModels;
 
-public class MainWindowViewModel : ReactiveObject
+public class MainWindowViewModel : ReactiveObject, IDisposable
 {
 	private readonly IColumnRegistry _columnRegistry;
 	private readonly DomainFacade _domainFacade;
 	private readonly INotificationService _notificationService;
+	private readonly Action _shutdownApplication;
+	private readonly CompositeDisposable _disposables = new();
+	private readonly Subject<Unit> _stateChanged = new();
 	private string? _currentFilePath;
 	private int _selectedRowIndex = -1;
-	private bool _isLogPanelVisible = true;
-	private int _errorCount;
-	private int _warningCount;
-	private bool _suppressLogNotifications;
+
+	private readonly ObservableAsPropertyHelper<bool> _isDirty;
+	private readonly ObservableAsPropertyHelper<bool> _canUndo;
+	private readonly ObservableAsPropertyHelper<bool> _canRedo;
+	private readonly ObservableAsPropertyHelper<bool> _canDeleteStep;
+	private readonly ObservableAsPropertyHelper<string> _statusText;
+	private readonly ObservableAsPropertyHelper<string> _windowTitle;
 
 	public MainWindowViewModel(
+		AppConfiguration configuration,
 		DomainFacade domainFacade,
 		IActionRegistry actionRegistry,
 		IGroupRegistry groupRegistry,
 		IColumnRegistry columnRegistry,
-		INotificationService notificationService)
+		INotificationService notificationService,
+		Action shutdownApplication)
 	{
+		Configuration = configuration;
 		_domainFacade = domainFacade;
 		ActionRegistry = actionRegistry;
 		GroupRegistry = groupRegistry;
 		_columnRegistry = columnRegistry;
 		_notificationService = notificationService;
+		_shutdownApplication = shutdownApplication;
 
 		RecipeRows = new ObservableCollection<RecipeRowViewModel>();
-		LogEntries = new ObservableCollection<LogEntry>();
-		LogEntries.CollectionChanged += OnLogEntriesChanged;
+		LogPanel = new LogPanelViewModel();
 
-		// File dialog interactions
 		OpenFileInteraction = new Interaction<Unit, string?>();
 		SaveFileInteraction = new Interaction<string?, string?>();
 		ShowMessageInteraction = new Interaction<(string Title, string Message), Unit>();
 
+		_canDeleteStep = this
+			.WhenAnyValue(x => x.SelectedRowIndex)
+			.Select(index => index >= 0)
+			.ToProperty(this, x => x.CanDeleteStep)
+			.DisposeWith(_disposables);
+
+		var stateObservable = _stateChanged
+			.ObserveOn(RxApp.MainThreadScheduler)
+			.Publish()
+			.RefCount();
+
+		_isDirty = stateObservable
+			.Select(_ => _domainFacade.IsDirty)
+			.ToProperty(this, x => x.IsDirty)
+			.DisposeWith(_disposables);
+
+		_canUndo = stateObservable
+			.Select(_ => _domainFacade.CanUndo)
+			.ToProperty(this, x => x.CanUndo)
+			.DisposeWith(_disposables);
+
+		_canRedo = stateObservable
+			.Select(_ => _domainFacade.CanRedo)
+			.ToProperty(this, x => x.CanRedo)
+			.DisposeWith(_disposables);
+
+		_statusText = stateObservable
+			.Select(_ => _domainFacade.IsDirty ? "Modified" : "Saved")
+			.ToProperty(this, x => x.StatusText, initialValue: "Saved")
+			.DisposeWith(_disposables);
+
+		_windowTitle = stateObservable
+			.Select(_ => BuildWindowTitle())
+			.ToProperty(this, x => x.WindowTitle, initialValue: BuildWindowTitle())
+			.DisposeWith(_disposables);
+
+		var canUndo = this.WhenAnyValue(x => x.CanUndo);
+		var canRedo = this.WhenAnyValue(x => x.CanRedo);
+
 		AddStepCommand = ReactiveCommand.Create(AddStep);
-		DeleteStepCommand = ReactiveCommand.Create(DeleteStep);
+		DeleteStepCommand = ReactiveCommand.Create(DeleteStep, this.WhenAnyValue(x => x.CanDeleteStep));
 		SaveRecipeCommand = ReactiveCommand.CreateFromTask(SaveRecipeAsync);
 		SaveAsRecipeCommand = ReactiveCommand.CreateFromTask(SaveAsRecipeAsync);
 		LoadRecipeCommand = ReactiveCommand.CreateFromTask(LoadRecipeAsync);
 		NewRecipeCommand = ReactiveCommand.Create(NewRecipe);
-		UndoCommand = ReactiveCommand.Create(Undo);
-		RedoCommand = ReactiveCommand.Create(Redo);
-		ExitCommand = ReactiveCommand.Create(Exit);
-		ClearLogCommand = ReactiveCommand.Create(ClearLog);
-		ToggleLogPanelCommand = ReactiveCommand.Create(ToggleLogPanel);
+		UndoCommand = ReactiveCommand.Create(Undo, canUndo);
+		RedoCommand = ReactiveCommand.Create(Redo, canRedo);
+		ExitCommand = ReactiveCommand.Create(ExecuteExit);
 
 		_currentFilePath = null;
+
+		Observable.FromEvent(
+				handler => _domainFacade.ConnectionStateChanged += handler,
+				handler => _domainFacade.ConnectionStateChanged -= handler)
+			.ObserveOn(RxApp.MainThreadScheduler)
+			.Subscribe(_ =>
+			{
+				this.RaisePropertyChanged(nameof(IsConnectedToPlc));
+				this.RaisePropertyChanged(nameof(ConnectionStatus));
+
+				if (_domainFacade.LastConnectionError is not null)
+				{
+					_notificationService.ShowError(
+						$"PLC connection failed: {_domainFacade.LastConnectionError}");
+				}
+			})
+			.DisposeWith(_disposables);
+
+		_stateChanged.DisposeWith(_disposables);
 	}
 
 	public IActionRegistry ActionRegistry { get; }
@@ -74,11 +135,10 @@ public class MainWindowViewModel : ReactiveObject
 
 	public ObservableCollection<RecipeRowViewModel> RecipeRows { get; }
 
-	public ObservableCollection<LogEntry> LogEntries { get; }
+	public LogPanelViewModel LogPanel { get; }
 
-	public AppConfiguration? Configuration { get; private set; }
+	public AppConfiguration Configuration { get; }
 
-	// File dialog interactions - handled by the View
 	public Interaction<Unit, string?> OpenFileInteraction { get; }
 
 	public Interaction<string?, string?> SaveFileInteraction { get; }
@@ -103,28 +163,13 @@ public class MainWindowViewModel : ReactiveObject
 
 	public ReactiveCommand<Unit, Unit> ExitCommand { get; }
 
-	public ReactiveCommand<Unit, Unit> ClearLogCommand { get; }
+	public string WindowTitle => _windowTitle.Value;
 
-	public ReactiveCommand<Unit, Unit> ToggleLogPanelCommand { get; }
+	public bool IsDirty => _isDirty.Value;
 
-	public string WindowTitle
-	{
-		get
-		{
-			var fileName = _currentFilePath is not null
-				? Path.GetFileNameWithoutExtension(_currentFilePath)
-				: "New Recipe";
-			var dirtyIndicator = IsDirty ? " *" : "";
+	public bool CanUndo => _canUndo.Value;
 
-			return $"SemiStep - {fileName}{dirtyIndicator}";
-		}
-	}
-
-	public bool IsDirty => _domainFacade.IsDirty;
-
-	public bool CanUndo => _domainFacade.CanUndo;
-
-	public bool CanRedo => _domainFacade.CanRedo;
+	public bool CanRedo => _canRedo.Value;
 
 	public int SelectedRowIndex
 	{
@@ -132,66 +177,29 @@ public class MainWindowViewModel : ReactiveObject
 		set => this.RaiseAndSetIfChanged(ref _selectedRowIndex, value);
 	}
 
-	public bool CanDeleteStep => SelectedRowIndex >= 0;
+	public bool CanDeleteStep => _canDeleteStep.Value;
 
-	public bool IsConnectedToPlc => false;
+	public bool IsConnectedToPlc => _domainFacade.IsConnected;
 
-	public string StatusText => IsDirty ? "Modified" : "Saved";
+	public string StatusText => _statusText.Value;
 
 	public string ConnectionStatus => IsConnectedToPlc ? "Connected" : "Disconnected";
 
-	public bool HasLogEntries => LogEntries.Count > 0;
-
-	public bool HasErrors => _errorCount > 0;
-
-	public bool HasWarnings => _warningCount > 0;
-
-	public int ErrorCount => _errorCount;
-
-	public int WarningCount => _warningCount;
-
-	public string ErrorCountText => $"{ErrorCount} {(ErrorCount == 1 ? "Error" : "Errors")}";
-
-	public string WarningCountText => $"{WarningCount} {(WarningCount == 1 ? "Warning" : "Warnings")}";
-
-	public string StatusErrorSummary
+	public void Initialize()
 	{
-		get
-		{
-			var parts = new List<string>();
-			if (ErrorCount > 0)
-			{
-				parts.Add(ErrorCountText);
-			}
-
-			if (WarningCount > 0)
-			{
-				parts.Add(WarningCountText);
-			}
-
-			return parts.Count > 0 ? string.Join(", ", parts) : string.Empty;
-		}
-	}
-
-	public bool HasStatusErrors => ErrorCount > 0 || WarningCount > 0;
-
-	public bool IsLogPanelVisible
-	{
-		get => _isLogPanelVisible;
-		set
-		{
-			this.RaiseAndSetIfChanged(ref _isLogPanelVisible, value);
-			this.RaisePropertyChanged(nameof(ShowLogPanel));
-		}
-	}
-
-	public bool ShowLogPanel => HasLogEntries && IsLogPanelVisible;
-
-	public void Initialize(AppConfiguration configuration)
-	{
-		Configuration = configuration;
 		RefreshRecipeRows();
-		RefreshReasons();
+		LogPanel.RefreshReasons(_domainFacade.Snapshot.Reasons);
+		NotifyStateChanged();
+	}
+
+	public void Dispose()
+	{
+		_disposables.Dispose();
+
+		foreach (var row in RecipeRows)
+		{
+			row.Dispose();
+		}
 	}
 
 	private void AddStep()
@@ -201,21 +209,17 @@ public class MainWindowViewModel : ReactiveObject
 
 		if (SelectedRowIndex >= 0)
 		{
-			// Insert after selected row
 			newRowIndex = SelectedRowIndex + 1;
 			_domainFacade.InsertStep(newRowIndex, firstAction.Id);
 		}
 		else
 		{
-			// Append to end
-			newRowIndex = RecipeRows.Count; // Current count = index of new row after refresh
+			newRowIndex = RecipeRows.Count;
 			_domainFacade.AppendStep(firstAction.Id);
 		}
 
-		RefreshRecipeRows();
+		RefreshAfterMutation();
 		SelectedRowIndex = newRowIndex;
-		RefreshReasons();
-		RaiseStateChanged();
 	}
 
 	private void DeleteStep()
@@ -228,9 +232,8 @@ public class MainWindowViewModel : ReactiveObject
 		var indexToDelete = SelectedRowIndex;
 		_domainFacade.RemoveStep(indexToDelete);
 
-		RefreshRecipeRows();
+		RefreshAfterMutation();
 
-		// Keep selection at same position if possible, otherwise select the new last row
 		if (RecipeRows.Count > 0)
 		{
 			SelectedRowIndex = Math.Min(indexToDelete, RecipeRows.Count - 1);
@@ -239,9 +242,6 @@ public class MainWindowViewModel : ReactiveObject
 		{
 			SelectedRowIndex = -1;
 		}
-
-		RefreshReasons();
-		RaiseStateChanged();
 	}
 
 	private async Task SaveRecipeAsync()
@@ -249,6 +249,7 @@ public class MainWindowViewModel : ReactiveObject
 		if (_currentFilePath is not null)
 		{
 			await SaveToFileAsync(_currentFilePath);
+
 			return;
 		}
 
@@ -276,7 +277,7 @@ public class MainWindowViewModel : ReactiveObject
 		{
 			await _domainFacade.SaveRecipeAsync(filePath);
 			_currentFilePath = filePath;
-			RaiseStateChanged();
+			NotifyStateChanged();
 			_notificationService.ShowSuccess($"Saved: {Path.GetFileName(filePath)}");
 		}
 		catch (Exception ex)
@@ -297,9 +298,7 @@ public class MainWindowViewModel : ReactiveObject
 		{
 			await _domainFacade.LoadRecipeAsync(filePath);
 			_currentFilePath = filePath;
-			RefreshRecipeRows();
-			RefreshReasons();
-			RaiseStateChanged();
+			RefreshAfterMutation();
 			_notificationService.ShowSuccess($"Loaded: {Path.GetFileName(filePath)}");
 		}
 		catch (Exception ex)
@@ -313,15 +312,8 @@ public class MainWindowViewModel : ReactiveObject
 		_domainFacade.NewRecipe();
 		_currentFilePath = null;
 
-		_suppressLogNotifications = true;
-		LogEntries.Clear();
-		_errorCount = 0;
-		_warningCount = 0;
-		_suppressLogNotifications = false;
-
-		RefreshRecipeRows();
-		RefreshReasons();
-		RaiseStateChanged();
+		LogPanel.Clear();
+		RefreshAfterMutation();
 	}
 
 	private void Undo()
@@ -329,9 +321,7 @@ public class MainWindowViewModel : ReactiveObject
 		var snapshot = _domainFacade.Undo();
 		if (snapshot is not null)
 		{
-			RefreshRecipeRows();
-			RefreshReasons();
-			RaiseStateChanged();
+			RefreshAfterMutation();
 		}
 	}
 
@@ -340,17 +330,26 @@ public class MainWindowViewModel : ReactiveObject
 		var snapshot = _domainFacade.Redo();
 		if (snapshot is not null)
 		{
-			RefreshRecipeRows();
-			RefreshReasons();
-			RaiseStateChanged();
+			RefreshAfterMutation();
 		}
+	}
+
+	private void ExecuteExit()
+	{
+		_shutdownApplication();
+	}
+
+	private void RefreshAfterMutation()
+	{
+		RefreshRecipeRows();
+		LogPanel.RefreshReasons(_domainFacade.Snapshot.Reasons);
+		NotifyStateChanged();
 	}
 
 	private void RefreshRecipeRows()
 	{
 		var recipe = _domainFacade.CurrentRecipe;
 
-		// Dispose old rows to unsubscribe event handlers
 		foreach (var row in RecipeRows)
 		{
 			row.Dispose();
@@ -374,69 +373,6 @@ public class MainWindowViewModel : ReactiveObject
 		}
 	}
 
-	private void RefreshReasons()
-	{
-		_suppressLogNotifications = true;
-
-		// Remove previous structural reason entries and adjust counters
-		for (var i = LogEntries.Count - 1; i >= 0; i--)
-		{
-			var entry = LogEntries[i];
-			if (entry.IsStructural)
-			{
-				AdjustCountersForRemoval(entry);
-				LogEntries.RemoveAt(i);
-			}
-		}
-
-		// Add current snapshot reasons
-		var snapshot = _domainFacade.Snapshot;
-		foreach (var reason in snapshot.Reasons)
-		{
-			var severity = reason is AbstractError ? LogSeverity.Error : LogSeverity.Warning;
-			var entry = new LogEntry(severity, reason.Message, LogEntry.StructuralSource, DateTime.Now);
-			AdjustCountersForAddition(entry);
-			LogEntries.Add(entry);
-		}
-
-		_suppressLogNotifications = false;
-
-		// Raise all log-related notifications once after batch completes
-		RaiseLogStateChanged();
-	}
-
-	private void ClearLog()
-	{
-		_suppressLogNotifications = true;
-
-		// Remove only non-structural entries; structural ones are managed by RefreshReasons
-		for (var i = LogEntries.Count - 1; i >= 0; i--)
-		{
-			var entry = LogEntries[i];
-			if (!entry.IsStructural)
-			{
-				AdjustCountersForRemoval(entry);
-				LogEntries.RemoveAt(i);
-			}
-		}
-
-		_suppressLogNotifications = false;
-		RaiseLogStateChanged();
-	}
-
-	private void ToggleLogPanel()
-	{
-		IsLogPanelVisible = !IsLogPanelVisible;
-	}
-
-	private static void Exit()
-	{
-		if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
-		{
-			lifetime.Shutdown();
-		}
-	}
-
 	private void OnCellValueChanged(int stepIndex, string columnKey, object? value)
 	{
 		if (value is null)
@@ -448,8 +384,6 @@ public class MainWindowViewModel : ReactiveObject
 		{
 			_domainFacade.UpdateStepProperty(stepIndex, columnKey, value);
 
-			// After domain mutation, update the row VM's step reference
-			// so GetPropertyValue reads from the latest immutable step
 			var updatedStep = _domainFacade.CurrentRecipe.Steps[stepIndex];
 			RecipeRows[stepIndex].UpdateStep(updatedStep);
 		}
@@ -458,8 +392,8 @@ public class MainWindowViewModel : ReactiveObject
 			_notificationService.ShowError($"Step {stepIndex + 1}: {ex.Message}");
 		}
 
-		RefreshReasons();
-		RaiseStateChanged();
+		LogPanel.RefreshReasons(_domainFacade.Snapshot.Reasons);
+		NotifyStateChanged();
 	}
 
 	private void OnActionChanged(int stepIndex, int newActionId)
@@ -471,92 +405,26 @@ public class MainWindowViewModel : ReactiveObject
 		}
 		catch (Exception ex)
 		{
-			_notificationService.ShowError($"Step {stepIndex + 1}: Failed to change action - {ex.Message}");
+			_notificationService.ShowError(
+				$"Step {stepIndex + 1}: Failed to change action - {ex.Message}");
 		}
 
-		RefreshReasons();
-		RaiseStateChanged();
+		LogPanel.RefreshReasons(_domainFacade.Snapshot.Reasons);
+		NotifyStateChanged();
 	}
 
-	private void OnLogEntriesChanged(object? sender, NotifyCollectionChangedEventArgs e)
+	private void NotifyStateChanged()
 	{
-		// When batch operations suppress notifications, counters are maintained manually
-		if (_suppressLogNotifications)
-		{
-			return;
-		}
-
-		// For individual (non-batch) adds/removes, update counters incrementally
-		if (e.NewItems is not null)
-		{
-			foreach (LogEntry entry in e.NewItems)
-			{
-				AdjustCountersForAddition(entry);
-			}
-		}
-
-		if (e.OldItems is not null)
-		{
-			foreach (LogEntry entry in e.OldItems)
-			{
-				AdjustCountersForRemoval(entry);
-			}
-		}
-
-		if (e.Action == NotifyCollectionChangedAction.Reset)
-		{
-			_errorCount = 0;
-			_warningCount = 0;
-		}
-
-		RaiseLogStateChanged();
+		_stateChanged.OnNext(Unit.Default);
 	}
 
-	private void AdjustCountersForAddition(LogEntry entry)
+	private string BuildWindowTitle()
 	{
-		if (entry.Severity == LogSeverity.Error)
-		{
-			_errorCount++;
-		}
-		else if (entry.Severity == LogSeverity.Warning)
-		{
-			_warningCount++;
-		}
-	}
+		var fileName = _currentFilePath is not null
+			? Path.GetFileNameWithoutExtension(_currentFilePath)
+			: "New Recipe";
+		var dirtyIndicator = _domainFacade.IsDirty ? " *" : "";
 
-	private void AdjustCountersForRemoval(LogEntry entry)
-	{
-		if (entry.Severity == LogSeverity.Error)
-		{
-			_errorCount = Math.Max(0, _errorCount - 1);
-		}
-		else if (entry.Severity == LogSeverity.Warning)
-		{
-			_warningCount = Math.Max(0, _warningCount - 1);
-		}
-	}
-
-	private void RaiseLogStateChanged()
-	{
-		this.RaisePropertyChanged(nameof(HasLogEntries));
-		this.RaisePropertyChanged(nameof(ShowLogPanel));
-		this.RaisePropertyChanged(nameof(HasErrors));
-		this.RaisePropertyChanged(nameof(HasWarnings));
-		this.RaisePropertyChanged(nameof(ErrorCount));
-		this.RaisePropertyChanged(nameof(WarningCount));
-		this.RaisePropertyChanged(nameof(ErrorCountText));
-		this.RaisePropertyChanged(nameof(WarningCountText));
-		this.RaisePropertyChanged(nameof(StatusErrorSummary));
-		this.RaisePropertyChanged(nameof(HasStatusErrors));
-	}
-
-	private void RaiseStateChanged()
-	{
-		this.RaisePropertyChanged(nameof(IsDirty));
-		this.RaisePropertyChanged(nameof(StatusText));
-		this.RaisePropertyChanged(nameof(CanUndo));
-		this.RaisePropertyChanged(nameof(CanRedo));
-		this.RaisePropertyChanged(nameof(CanDeleteStep));
-		this.RaisePropertyChanged(nameof(WindowTitle));
+		return $"SemiStep - {fileName}{dirtyIndicator}";
 	}
 }

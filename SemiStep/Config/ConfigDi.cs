@@ -2,8 +2,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Serilog;
-
 namespace Config;
 
 public static class ConfigDi

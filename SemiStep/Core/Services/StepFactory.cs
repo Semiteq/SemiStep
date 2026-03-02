@@ -3,27 +3,65 @@
 using Core.Entities;
 
 using Shared.Entities;
+using Shared.Registries;
 
 namespace Core.Services;
 
 public sealed class StepFactory
 {
-	public Step Create(ActionDefinition action, IReadOnlyList<PropertyDefinition> properties)
+	public static Step Create(
+		ActionDefinition action,
+		IPropertyRegistry propertyRegistry,
+		IGroupRegistry groupRegistry)
 	{
-		var propertyValues = properties
+		var propertyValues = action.Columns
 			.ToImmutableDictionary(
-				p => new ColumnId(p.PropertyTypeId),
-				CreateDefaultValue);
+				col => new ColumnId(col.Key),
+				col => ResolveValue(col, propertyRegistry, groupRegistry));
 
 		return new Step(action.Id, propertyValues);
 	}
 
-	private static PropertyValue CreateDefaultValue(PropertyDefinition property)
+	private static PropertyValue ResolveValue(
+		ActionColumnDefinition column,
+		IPropertyRegistry propertyRegistry,
+		IGroupRegistry groupRegistry)
 	{
-		var type = ParsePropertyType(property.SystemType);
-		var defaultValue = GetDefaultForType(type);
+		var propertyDefinition = propertyRegistry.GetProperty(column.PropertyTypeId);
+		var propertyType = ParsePropertyType(propertyDefinition.SystemType);
 
-		return new PropertyValue(defaultValue, type);
+		if (!string.IsNullOrEmpty(column.DefaultValue))
+		{
+			return ParseValue(column.DefaultValue, propertyType);
+		}
+
+		if (column.GroupName is not null && groupRegistry.GroupExists(column.GroupName))
+		{
+			var group = groupRegistry.GetGroup(column.GroupName);
+			if (group.Items.Count > 0)
+			{
+				var firstKey = group.Items.Keys.Min();
+				return new PropertyValue(firstKey, PropertyType.Int);
+			}
+		}
+
+		return new PropertyValue(GetDefaultForType(propertyType), propertyType);
+	}
+
+	private static PropertyValue ParseValue(string rawValue, PropertyType propertyType)
+	{
+		return propertyType switch
+		{
+			PropertyType.Int when int.TryParse(rawValue, out var intResult)
+				=> new PropertyValue(intResult, PropertyType.Int),
+			PropertyType.Float when float.TryParse(
+				rawValue,
+				System.Globalization.NumberStyles.Float,
+				System.Globalization.CultureInfo.InvariantCulture,
+				out var floatResult)
+				=> new PropertyValue(floatResult, PropertyType.Float),
+			_ => new PropertyValue(rawValue, PropertyType.String)
+		};
 	}
 
 	private static PropertyType ParsePropertyType(string systemType)

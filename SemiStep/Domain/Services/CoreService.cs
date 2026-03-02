@@ -14,6 +14,7 @@ public sealed class CoreService(
 	RecipeStateManager stateManager,
 	IActionRegistry actionRegistry,
 	IPropertyRegistry propertyRegistry,
+	IGroupRegistry groupRegistry,
 	IColumnRegistry columnRegistry)
 {
 	public RecipeSnapshot NewRecipe()
@@ -33,8 +34,7 @@ public sealed class CoreService(
 	public RecipeSnapshot AppendStep(int actionId)
 	{
 		var action = actionRegistry.GetAction(actionId);
-		var properties = ResolvePropertiesForAction(action);
-		var recipeSnapshot = coreFacade.AppendStep(stateManager.Current, action, properties);
+		var recipeSnapshot = coreFacade.AppendStep(stateManager.Current, action, propertyRegistry, groupRegistry);
 
 		return recipeSnapshot;
 	}
@@ -42,8 +42,7 @@ public sealed class CoreService(
 	public RecipeSnapshot InsertStep(int index, int actionId)
 	{
 		var action = actionRegistry.GetAction(actionId);
-		var properties = ResolvePropertiesForAction(action);
-		var recipeSnapshot = coreFacade.InsertStep(stateManager.Current, index, action, properties);
+		var recipeSnapshot = coreFacade.InsertStep(stateManager.Current, index, action, propertyRegistry, groupRegistry);
 
 		return recipeSnapshot;
 	}
@@ -51,8 +50,7 @@ public sealed class CoreService(
 	public RecipeSnapshot ChangeStepAction(int stepIndex, int newActionId)
 	{
 		var newAction = actionRegistry.GetAction(newActionId);
-		var properties = ResolvePropertiesForAction(newAction);
-		var recipeSnapshot = coreFacade.ChangeStepAction(stateManager.Current, stepIndex, newAction, properties);
+		var recipeSnapshot = coreFacade.ChangeStepAction(stateManager.Current, stepIndex, newAction, propertyRegistry, groupRegistry);
 
 		return recipeSnapshot;
 	}
@@ -86,13 +84,6 @@ public sealed class CoreService(
 			formulaDefinition: null);
 
 		return result;
-	}
-
-	private IReadOnlyList<PropertyDefinition> ResolvePropertiesForAction(ActionDefinition action)
-	{
-		return action.Columns
-			.Select(col => propertyRegistry.GetProperty(col.PropertyTypeId))
-			.ToList();
 	}
 
 	private static PropertyValue CreatePropertyValue(object value)

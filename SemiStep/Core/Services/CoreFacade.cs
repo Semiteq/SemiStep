@@ -3,6 +3,7 @@ using Core.Entities;
 using Core.Formulas;
 
 using Shared.Entities;
+using Shared.Registries;
 
 namespace Core.Services;
 
@@ -19,9 +20,10 @@ public sealed class CoreFacade(
 	public RecipeSnapshot AppendStep(
 		Recipe recipe,
 		ActionDefinition action,
-		IReadOnlyList<PropertyDefinition> properties)
+		IPropertyRegistry propertyRegistry,
+		IGroupRegistry groupRegistry)
 	{
-		var newRecipe = mutator.AddStep(recipe, action, properties);
+		var newRecipe = mutator.AddStep(recipe, action, propertyRegistry, groupRegistry);
 
 		return analyzer.Analyze(newRecipe);
 	}
@@ -30,11 +32,12 @@ public sealed class CoreFacade(
 		Recipe recipe,
 		int stepIndex,
 		ActionDefinition action,
-		IReadOnlyList<PropertyDefinition> properties)
+		IPropertyRegistry propertyRegistry,
+		IGroupRegistry groupRegistry)
 	{
 		ValidateIndexOrThrow(recipe, stepIndex);
 
-		var newRecipe = mutator.InsertStep(recipe, stepIndex, action, properties);
+		var newRecipe = mutator.InsertStep(recipe, stepIndex, action, propertyRegistry, groupRegistry);
 
 		return analyzer.Analyze(newRecipe);
 	}
@@ -52,11 +55,12 @@ public sealed class CoreFacade(
 		Recipe recipe,
 		int stepIndex,
 		ActionDefinition newAction,
-		IReadOnlyList<PropertyDefinition> properties)
+		IPropertyRegistry propertyRegistry,
+		IGroupRegistry groupRegistry)
 	{
 		ValidateIndexOrThrow(recipe, stepIndex);
 
-		var newRecipe = mutator.ChangeStepAction(recipe, stepIndex, newAction, properties);
+		var newRecipe = mutator.ChangeStepAction(recipe, stepIndex, newAction, propertyRegistry, groupRegistry);
 
 		return analyzer.Analyze(newRecipe);
 	}

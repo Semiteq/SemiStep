@@ -4,7 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         x:Class="UI.Views.MessageDialog"
-        Title="{Binding Title}"
+        Title="Message"
         Width="400"
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"

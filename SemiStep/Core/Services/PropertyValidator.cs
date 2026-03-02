@@ -1,4 +1,6 @@
-﻿using Shared.Entities;
+﻿using Core.Exceptions;
+
+using Shared.Entities;
 
 namespace Core.Services;
 

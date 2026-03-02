@@ -19,19 +19,13 @@ public class RecipeRowViewModel(
 	Action<int, int> onActionChanged)
 	: ReactiveObject, IDisposable
 {
-	private Step _step = step;
 	private readonly List<Action> _cleanupActions = [];
 	private IReadOnlyDictionary<string, CellState>? _cellStatesCache;
 	private bool _disposed;
 	private bool _isExecuting;
-	private bool _isSelected;
+	private Step _step = step;
 
 	public int StepNumber { get; } = stepNumber;
-
-	public void UpdateStep(Step newStep)
-	{
-		_step = newStep;
-	}
 
 	public int ActionId => _step.ActionKey;
 
@@ -41,18 +35,6 @@ public class RecipeRowViewModel(
 	{
 		get => _isExecuting;
 		set => this.RaiseAndSetIfChanged(ref _isExecuting, value);
-	}
-
-	public bool IsSelected
-	{
-		get => _isSelected;
-		set
-		{
-			if (this.RaiseAndSetIfChanged(ref _isSelected, value))
-			{
-				this.RaisePropertyChanged(nameof(CellStates));
-			}
-		}
 	}
 
 	public IReadOnlyDictionary<string, CellState> CellStates
@@ -103,6 +85,11 @@ public class RecipeRowViewModel(
 		}
 
 		_cleanupActions.Clear();
+	}
+
+	public void UpdateStep(Step newStep)
+	{
+		_step = newStep;
 	}
 
 	public object? GetPropertyValue(string columnKey)

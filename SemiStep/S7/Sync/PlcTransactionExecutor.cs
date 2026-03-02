@@ -3,7 +3,6 @@ using S7.Protocol;
 using S7.Serialization;
 
 using Serilog;
-using Serilog.Core;
 
 using Shared.Entities;
 
@@ -14,7 +13,6 @@ public sealed class PlcTransactionExecutor
 	private readonly ArrayCodec _arrayCodec;
 	private readonly ExecutionStateCodec _executionCodec;
 	private readonly PlcProtocolLayout _layout;
-	private readonly Logger _logger;
 	private readonly ManagingAreaCodec _managingCodec;
 	private readonly PlcProtocolSettings _protocolSettings;
 	private readonly RecipeConverter _converter;
@@ -23,12 +21,10 @@ public sealed class PlcTransactionExecutor
 	public PlcTransactionExecutor(
 		PlcTransport transport,
 		RecipeConverter converter,
-		PlcConfiguration plcConfiguration,
-		Logger logger)
+		PlcConfiguration plcConfiguration)
 	{
 		_transport = transport;
 		_converter = converter;
-		_logger = logger;
 		_layout = plcConfiguration.Layout;
 		_protocolSettings = plcConfiguration.ProtocolSettings;
 		_arrayCodec = new ArrayCodec(_layout.IntDb, _layout.FloatDb, _layout.StringDb);
@@ -115,7 +111,7 @@ public sealed class PlcTransactionExecutor
 			try
 			{
 				await WriteRecipeDataAsync(recipeData, ct);
-				_logger.Information(
+				Log.Information(
 					"Recipe synced to PLC successfully ({StepCount} steps)",
 					recipe.StepCount);
 
@@ -123,7 +119,7 @@ public sealed class PlcTransactionExecutor
 			}
 			catch (PlcSyncException ex) when (attempt < _protocolSettings.MaxRetryAttempts && IsRetryableError(ex.ErrorCode))
 			{
-				_logger.Warning(
+				Log.Warning(
 					"Sync attempt {Attempt} failed with {Error}, retrying...",
 					attempt,
 					ex.ErrorCode);

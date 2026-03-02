@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿using Config.Facade;
+
+using FluentAssertions;
 
 using Tests.Config.Helpers;
 
@@ -17,7 +19,7 @@ public class FileSystemErrorTests
 		var facade = ConfigTestHelper.CreateFacade();
 		var nonExistentPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
-		var context = await facade.LoadAsync(nonExistentPath);
+		var context = await ConfigFacade.LoadAsync(nonExistentPath);
 
 		context.HasErrors.Should().BeTrue();
 		context.Errors.Should().Contain(e =>
@@ -108,7 +110,7 @@ public class FileSystemErrorTests
 		var facade = ConfigTestHelper.CreateFacade();
 		var nonExistentPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
-		var context = await facade.LoadAsync(nonExistentPath);
+		var context = await ConfigFacade.LoadAsync(nonExistentPath);
 
 		context.HasErrors.Should().BeTrue();
 		context.Configuration.Should().BeNull(

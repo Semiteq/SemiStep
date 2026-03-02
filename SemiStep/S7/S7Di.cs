@@ -13,7 +13,6 @@ public static class S7Di
 	public static IServiceCollection AddS7(this IServiceCollection services)
 	{
 		services.AddSingleton<PlcTransport>();
-		services.AddSingleton<S7ConnectionService>();
 		services.AddSingleton<RecipeConverter>();
 		services.AddSingleton<PlcTransactionExecutor>();
 		services.AddSingleton<PlcSyncCoordinator>();

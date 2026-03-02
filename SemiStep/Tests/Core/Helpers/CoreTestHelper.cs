@@ -9,8 +9,6 @@ using Domain.Ports;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Serilog;
-
 using Tests.Helpers;
 
 namespace Tests.Core.Helpers;
@@ -22,28 +20,19 @@ public static class CoreTestHelper
 	{
 		var configDir = GetConfigDirectory(configName);
 
-		var silentLogger = new LoggerConfiguration().CreateLogger();
+		var configuration = await ConfigFacade.LoadAndValidateAsync(configDir);
 
 		var services = new ServiceCollection()
-			.AddSingleton(silentLogger)
+			.AddSingleton(configuration)
 			.AddRecipe()
 			.AddConfig()
 			.AddDomain()
 			.AddSingleton<ICsvService, StubCsvService>()
+			.AddSingleton<IS7ConnectionService, StubS7ConnectionService>()
 			.BuildServiceProvider();
 
-		var configFacade = services.GetRequiredService<ConfigFacade>();
-		var context = await configFacade.LoadAsync(configDir);
-
-		if (context.HasErrors || context.Configuration is null)
-		{
-			var errors = string.Join("; ", context.Errors.Select(e => e.Message));
-
-			throw new InvalidOperationException($"Failed to load config '{configName}': {errors}");
-		}
-
 		var domainFacade = services.GetRequiredService<DomainFacade>();
-		domainFacade.Initialize(context.Configuration);
+		domainFacade.Initialize();
 
 		return (services, domainFacade);
 	}

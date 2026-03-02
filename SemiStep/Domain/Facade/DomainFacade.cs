@@ -5,7 +5,7 @@ using Domain.Ports;
 using Domain.Services;
 using Domain.State;
 
-using Serilog.Core;
+using Serilog;
 
 using Shared;
 using Shared.Entities;
@@ -14,6 +14,7 @@ using Shared.Registries;
 namespace Domain.Facade;
 
 public sealed class DomainFacade(
+	AppConfiguration appConfiguration,
 	IActionRegistry actionRegistry,
 	IPropertyRegistry propertyRegistry,
 	IColumnRegistry columnRegistry,
@@ -22,11 +23,11 @@ public sealed class DomainFacade(
 	RecipeStateManager stateManager,
 	RecipeHistoryManager historyManager,
 	ICsvService csvService,
-	IS7ConnectionService connectionService,
-	Logger logger)
+	IS7ConnectionService connectionService)
 	: IDisposable
 {
 	private bool _disposed;
+	private Action<PlcConnectionState>? _connectionStateChangedRelay;
 
 	public Recipe CurrentRecipe => stateManager.Current;
 
@@ -37,6 +38,9 @@ public sealed class DomainFacade(
 	public bool CanUndo => historyManager.CanUndo;
 	public bool CanRedo => historyManager.CanRedo;
 
+	public bool IsConnected => connectionService.IsConnected;
+	public string? LastConnectionError { get; private set; }
+
 	public void Dispose()
 	{
 		if (_disposed)
@@ -45,18 +49,27 @@ public sealed class DomainFacade(
 		}
 
 		_disposed = true;
+
+		if (_connectionStateChangedRelay is not null)
+		{
+			connectionService.StateChanged -= _connectionStateChangedRelay;
+		}
 	}
 
-	public void Initialize(AppConfiguration appConfig)
+	public event Action? ConnectionStateChanged;
+
+	public void Initialize()
 	{
-		actionRegistry.Initialize(appConfig.Actions);
-		propertyRegistry.Initialize(appConfig.Properties);
-		columnRegistry.Initialize(appConfig.Columns);
-		groupRegistry.Initialize(appConfig.Groups);
+		actionRegistry.Initialize(appConfiguration.Actions);
+		propertyRegistry.Initialize(appConfiguration.Properties);
+		columnRegistry.Initialize(appConfiguration.Columns);
+		groupRegistry.Initialize(appConfiguration.Groups);
 
 		coreService.NewRecipe();
 
-		StartPlcConnection(appConfig.PlcConfiguration);
+		_connectionStateChangedRelay = _ => ConnectionStateChanged?.Invoke();
+		connectionService.StateChanged += _connectionStateChangedRelay;
+		StartPlcConnection(appConfiguration.PlcConfiguration);
 	}
 
 	public void NewRecipe()
@@ -150,18 +163,50 @@ public sealed class DomainFacade(
 		stateManager.MarkSaved();
 	}
 
-	private void StartPlcConnection(
+	public void StartPlcConnection(
 		PlcConfiguration plcConfiguration)
 	{
-		_ = Task.Run(async () =>
+		if (IsConnected)
+		{
+			Log.Warning("PLC connection is already established");
+
+			return;
+		}
+
+		Task.Run(async () =>
 		{
 			try
 			{
+				LastConnectionError = null;
 				await connectionService.ConnectAsync(plcConfiguration.Connection);
 			}
 			catch (Exception ex)
 			{
-				logger.Warning(ex, "Initial PLC connection failed, auto-reconnect will retry");
+				LastConnectionError = ex.Message;
+				Log.Warning(ex, "Initial PLC connection failed, auto-reconnect will retry");
+			}
+		});
+	}
+
+	public void StopPlcConnection()
+	{
+		if (!IsConnected)
+		{
+			Log.Warning("PLC connection is not established");
+
+			return;
+		}
+
+		Task.Run(async () =>
+		{
+			try
+			{
+				await connectionService.DisconnectAsync();
+				await connectionService.DisposeAsync();
+			}
+			catch (Exception ex)
+			{
+				Log.Warning(ex, "Error while disconnecting PLC");
 			}
 		});
 	}
@@ -173,5 +218,4 @@ public sealed class DomainFacade(
 			historyManager.Push(stateManager.Current);
 		}
 	}
-
 }

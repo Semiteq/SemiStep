@@ -11,12 +11,7 @@ namespace Core;
 
 public static class RecipeDi
 {
-	private const string DefaultIterationColumnName = "task";
-
-	public static IServiceCollection AddRecipe(
-		this IServiceCollection services,
-		ILogger? logger = null,
-		string? iterationColumnName = null)
+	public static IServiceCollection AddRecipe(this IServiceCollection services)
 	{
 		services.AddSingleton<CoreConfig>();
 
@@ -28,6 +23,7 @@ public static class RecipeDi
 		// Analysis
 		services.AddSingleton<TimingCalculator>();
 		services.AddSingleton<RecipeAnalyzer>();
+		services.AddSingleton<LoopParser>();
 
 		// Formulas (placeholder - empty formulas dictionary for now)
 		services.AddSingleton<IReadOnlyDictionary<int, CompiledFormula>>(_ => new Dictionary<int, CompiledFormula>());

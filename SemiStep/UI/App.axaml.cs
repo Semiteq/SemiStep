@@ -7,8 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using ReactiveUI;
 
-using Shared;
-
+using UI.Services;
 using UI.ViewModels;
 using UI.Views;
 
@@ -17,8 +16,6 @@ namespace UI;
 public class App : Application
 {
 	public static IServiceProvider? ServiceProvider { get; private set; }
-
-	public static AppConfiguration? Configuration { get; private set; }
 
 	public override void Initialize()
 	{
@@ -34,16 +31,14 @@ public class App : Application
 				throw new InvalidOperationException("ServiceProvider not set. Call Run() before starting the app.");
 			}
 
-			if (Configuration is null)
-			{
-				throw new InvalidOperationException(
-					"Configuration not set. Call Run() with configuration before starting the app.");
-			}
-
 			var mainWindowViewModel = ServiceProvider.GetRequiredService<MainWindowViewModel>();
-			mainWindowViewModel.Initialize(Configuration);
+			mainWindowViewModel.Initialize();
 
-			desktop.MainWindow = new MainWindow { DataContext = mainWindowViewModel };
+			var mainWindow = new MainWindow { DataContext = mainWindowViewModel };
+			desktop.MainWindow = mainWindow;
+
+			var notificationService = ServiceProvider.GetRequiredService<INotificationService>();
+			notificationService.SetHostWindow(mainWindow);
 		}
 
 		base.OnFrameworkInitializationCompleted();
@@ -58,10 +53,9 @@ public class App : Application
 			.LogToTrace();
 	}
 
-	public static void Run(IServiceProvider serviceProvider, AppConfiguration configuration)
+	public static void Run(IServiceProvider serviceProvider)
 	{
 		ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-		Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 		RxApp.MainThreadScheduler = AvaloniaScheduler.Instance;
 		BuildAvaloniaApp().StartWithClassicDesktopLifetime([]);
 	}

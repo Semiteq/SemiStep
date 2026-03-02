@@ -38,11 +38,12 @@
                   BorderThickness="1"
                   BorderBrush="Gray"
                   Background="White"
-                  SelectionChanged="OnSelectionChanged" />
+                   SelectionMode="Single" />
 
         <controls:NotificationLogPanel Grid.Row="2"
-                                        x:Name="LogPanel"
-                                        IsVisible="{Binding ShowLogPanel}" />
+                                       x:Name="LogPanel"
+                                       DataContext="{Binding LogPanel}"
+                                       IsVisible="{Binding ShowPanel}" />
 
         <controls:AppStatusBar Grid.Row="3" x:Name="StatusBar" />
 

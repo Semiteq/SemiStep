@@ -1,4 +1,6 @@
-﻿namespace Core.Formulas;
+﻿using Core.Exceptions;
+
+namespace Core.Formulas;
 
 public sealed class CompiledFormula(
 	IReadOnlyList<string> recalcOrder,

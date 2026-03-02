@@ -1,22 +1,17 @@
 ﻿using Config.Facade;
 using Config.Models;
 
-using Serilog;
-using Serilog.Core;
-
 using Shared;
 
 namespace Tests.Config.Helpers;
 
 public static class ConfigTestHelper
 {
-	private static Logger LoggerStub { get; } = new LoggerConfiguration().CreateLogger();
-
 	public static async Task<AppConfiguration> LoadValidCaseAsync(string caseName = "Standard")
 	{
 		using var tempDir = TestDataCopier.PrepareValidCase(caseName);
-		var facade = new ConfigFacade(LoggerStub);
-		var context = await facade.LoadAsync(tempDir.Path);
+		var facade = new ConfigFacade();
+		var context = await ConfigFacade.LoadAsync(tempDir.Path);
 
 		if (context.HasErrors || context.Configuration is null)
 		{
@@ -31,9 +26,9 @@ public static class ConfigTestHelper
 	public static async Task<ConfigContext> LoadInvalidCaseAsync(string invalidCaseName)
 	{
 		using var tempDir = TestDataCopier.PrepareInvalidCase(invalidCaseName);
-		var facade = new ConfigFacade(LoggerStub);
+		var facade = new ConfigFacade();
 
-		return await facade.LoadAsync(tempDir.Path);
+		return await ConfigFacade.LoadAsync(tempDir.Path);
 	}
 
 	public static async Task LoadExpectingErrorAsync(
@@ -62,21 +57,21 @@ public static class ConfigTestHelper
 
 	public static async Task<ConfigContext> LoadFromTempDirAsync(TempDirectory tempDir)
 	{
-		var facade = new ConfigFacade(LoggerStub);
+		var facade = new ConfigFacade();
 
-		return await facade.LoadAsync(tempDir.Path);
+		return await ConfigFacade.LoadAsync(tempDir.Path);
 	}
 
 	public static async Task<ConfigContext> LoadStandaloneCaseAsync(string caseName)
 	{
 		using var tempDir = TestDataCopier.PrepareStandaloneCase(caseName);
-		var facade = new ConfigFacade(LoggerStub);
+		var facade = new ConfigFacade();
 
-		return await facade.LoadAsync(tempDir.Path);
+		return await ConfigFacade.LoadAsync(tempDir.Path);
 	}
 
 	public static ConfigFacade CreateFacade()
 	{
-		return new ConfigFacade(LoggerStub);
+		return new ConfigFacade();
 	}
 }

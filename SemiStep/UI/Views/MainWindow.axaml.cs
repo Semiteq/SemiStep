@@ -1,19 +1,19 @@
 ﻿using System.Reactive;
+using System.Reactive.Disposables;
 
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
-
-using Microsoft.Extensions.DependencyInjection;
+using Avalonia.ReactiveUI;
 
 using ReactiveUI;
 
 using UI.Helpers;
-using UI.Services;
+using UI.Models;
 using UI.ViewModels;
 
 namespace UI.Views;
 
-public partial class MainWindow : Window
+public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 {
 	private ColumnBuilder? _columnBuilder;
 	private bool _forceClose;
@@ -21,8 +21,31 @@ public partial class MainWindow : Window
 	public MainWindow()
 	{
 		InitializeComponent();
-		DataContextChanged += OnDataContextChanged;
+
 		Closing += OnWindowClosing;
+
+		this.WhenActivated(disposables =>
+		{
+			if (ViewModel is null)
+			{
+				return;
+			}
+
+			ViewModel.OpenFileInteraction
+				.RegisterHandler(HandleOpenFileDialogAsync)
+				.DisposeWith(disposables);
+
+			ViewModel.SaveFileInteraction
+				.RegisterHandler(HandleSaveFileDialogAsync)
+				.DisposeWith(disposables);
+
+			ViewModel.ShowMessageInteraction
+				.RegisterHandler(HandleShowMessageAsync)
+				.DisposeWith(disposables);
+
+			_columnBuilder = new ColumnBuilder(ViewModel.ActionRegistry);
+			BuildGrid();
+		});
 	}
 
 	private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
@@ -32,21 +55,20 @@ public partial class MainWindow : Window
 			return;
 		}
 
-		if (DataContext is not MainWindowViewModel viewModel || !viewModel.IsDirty)
+		if (ViewModel is not { IsDirty: true })
 		{
 			return;
 		}
 
-		// Cancel the close and show confirmation dialog
 		e.Cancel = true;
 
 		var dialog = new ExitConfirmationDialog();
-		await dialog.ShowDialog(this);
+		var result = await dialog.ShowDialog<ExitConfirmationResult>(this);
 
-		switch (dialog.Result)
+		switch (result)
 		{
 			case ExitConfirmationResult.Save:
-				viewModel.SaveRecipeCommand.Execute().Subscribe(_ =>
+				ViewModel.SaveRecipeCommand.Execute().Subscribe(_ =>
 				{
 					_forceClose = true;
 					Close();
@@ -61,31 +83,8 @@ public partial class MainWindow : Window
 				break;
 
 			case ExitConfirmationResult.Cancel:
-				// Do nothing, stay open
 				break;
 		}
-	}
-
-	private void OnDataContextChanged(object? sender, EventArgs e)
-	{
-		if (DataContext is not MainWindowViewModel viewModel || viewModel.Configuration is null)
-		{
-			return;
-		}
-
-		// Initialize toast notification manager
-		var notificationService = App.ServiceProvider?.GetService<NotificationService>();
-		notificationService?.SetHostWindow(this);
-
-		// Register file dialog interaction handlers
-		viewModel.OpenFileInteraction.RegisterHandler(HandleOpenFileDialogAsync);
-		viewModel.SaveFileInteraction.RegisterHandler(HandleSaveFileDialogAsync);
-		viewModel.ShowMessageInteraction.RegisterHandler(HandleShowMessageAsync);
-
-		_columnBuilder = new ColumnBuilder(
-			viewModel.ActionRegistry);
-
-		BuildGrid();
 	}
 
 	private async Task HandleOpenFileDialogAsync(IInteractionContext<Unit, string?> context)
@@ -133,33 +132,13 @@ public partial class MainWindow : Window
 
 	private void BuildGrid()
 	{
-		if (_columnBuilder is null || DataContext is not MainWindowViewModel viewModel ||
-			viewModel.Configuration is null)
+		if (_columnBuilder is null || ViewModel is null)
 		{
 			return;
 		}
 
-		_columnBuilder.BuildColumnsFromConfiguration(RecipeGrid, viewModel.Configuration);
+		_columnBuilder.BuildColumnsFromConfiguration(RecipeGrid, ViewModel.Configuration);
 	}
 
-	private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
-	{
-		// Only toggle the rows that actually changed selection, instead of iterating all rows.
-		// This reduces PropertyChanged notifications from O(N) to O(changed-count).
-		foreach (var item in e.RemovedItems)
-		{
-			if (item is RecipeRowViewModel deselected)
-			{
-				deselected.IsSelected = false;
-			}
-		}
 
-		foreach (var item in e.AddedItems)
-		{
-			if (item is RecipeRowViewModel selected)
-			{
-				selected.IsSelected = true;
-			}
-		}
-	}
 }

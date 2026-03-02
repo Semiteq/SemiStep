@@ -6,8 +6,6 @@ using Domain.State;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Serilog;
-
 using Shared.Registries;
 
 namespace Domain;

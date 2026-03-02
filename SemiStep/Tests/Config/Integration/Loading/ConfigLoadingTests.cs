@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿using Config.Facade;
+
+using FluentAssertions;
 
 using Tests.Config.Helpers;
 
@@ -140,7 +142,7 @@ public class ConfigLoadingTests
 		using var tempDir = TestDataCopier.PrepareValidCase();
 		var facade = ConfigTestHelper.CreateFacade();
 
-		var context = await facade.LoadAsync(tempDir.Path);
+		var context = await ConfigFacade.LoadAsync(tempDir.Path);
 
 		context.HasErrors.Should().BeFalse(
 			$"expected no errors but got: {string.Join(", ", context.Errors.Select(e => e.Message))}");
@@ -152,7 +154,7 @@ public class ConfigLoadingTests
 		using var tempDir = TestDataCopier.PrepareValidCase();
 		var facade = ConfigTestHelper.CreateFacade();
 
-		var context = await facade.LoadAsync(tempDir.Path);
+		var context = await ConfigFacade.LoadAsync(tempDir.Path);
 
 		context.HasWarnings.Should().BeFalse(
 			$"expected no warnings but got: {string.Join(", ", context.Warnings.Select(w => w.Message))}");

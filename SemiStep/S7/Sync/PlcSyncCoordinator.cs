@@ -1,21 +1,19 @@
 ﻿using Core.Entities;
 
+using Domain.Ports;
 using Domain.State;
 
-using S7.Connection;
 using S7.Protocol;
 
 using Serilog;
-using Serilog.Core;
 
 namespace S7.Sync;
 
 public sealed class PlcSyncCoordinator : IDisposable
 {
 	private const int DebounceDelayMs = 1000;
-	private readonly S7ConnectionService _connectionManager;
+	private readonly IS7ConnectionService _connectionService;
 	private readonly Lock _lock = new();
-	private readonly Logger _logger;
 	private readonly RecipeStateManager _stateManager;
 	private readonly PlcTransactionExecutor _transactionExecutor;
 
@@ -28,14 +26,12 @@ public sealed class PlcSyncCoordinator : IDisposable
 
 	public PlcSyncCoordinator(
 		PlcTransactionExecutor transactionExecutor,
-		S7ConnectionService connectionManager,
-		RecipeStateManager stateManager,
-		Logger logger)
+		IS7ConnectionService connectionService,
+		RecipeStateManager stateManager)
 	{
 		_transactionExecutor = transactionExecutor;
-		_connectionManager = connectionManager;
+		_connectionService = connectionService;
 		_stateManager = stateManager;
-		_logger = logger;
 
 		_stateManager.RecipeChanged += OnRecipeChanged;
 	}
@@ -131,7 +127,7 @@ public sealed class PlcSyncCoordinator : IDisposable
 
 			if (_syncTask is not null && !_syncTask.IsCompleted)
 			{
-				_logger.Debug("Sync in progress, queueing new snapshot");
+				Log.Debug("Sync in progress, queueing new snapshot");
 
 				return;
 			}
@@ -174,9 +170,9 @@ public sealed class PlcSyncCoordinator : IDisposable
 			return;
 		}
 
-		if (!_connectionManager.IsConnected)
+		if (!_connectionService.IsConnected)
 		{
-			_logger.Debug("Skipping sync: not connected to PLC");
+			Log.Debug("Skipping sync: not connected to PLC");
 
 			return;
 		}
@@ -188,7 +184,7 @@ public sealed class PlcSyncCoordinator : IDisposable
 			{
 				Status = SyncStatus.BlockedByExecution;
 				LastError = "Recipe is being executed on PLC";
-				_logger.Warning("Sync blocked: recipe is being executed on PLC");
+				Log.Warning("Sync blocked: recipe is being executed on PLC");
 
 				return;
 			}
@@ -210,7 +206,7 @@ public sealed class PlcSyncCoordinator : IDisposable
 		{
 			Status = SyncStatus.Failed;
 			LastError = ex.Message;
-			_logger.Error(ex, "Sync failed: {Message}", ex.Message);
+			Log.Error(ex, "Sync failed: {Message}", ex.Message);
 		}
 		catch (PlcNotConnectedException)
 		{
@@ -221,7 +217,7 @@ public sealed class PlcSyncCoordinator : IDisposable
 		{
 			Status = SyncStatus.Failed;
 			LastError = ex.Message;
-			_logger.Error(ex, "Unexpected error during sync");
+			Log.Error(ex, "Unexpected error during sync");
 		}
 		finally
 		{
@@ -233,7 +229,7 @@ public sealed class PlcSyncCoordinator : IDisposable
 
 			if (nextSnapshot is not null)
 			{
-				_logger.Debug("Changes occurred during sync, starting new debounce");
+				Log.Debug("Changes occurred during sync, starting new debounce");
 				StartDebounce(nextSnapshot);
 			}
 		}

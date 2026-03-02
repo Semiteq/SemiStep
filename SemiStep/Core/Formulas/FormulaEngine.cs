@@ -1,4 +1,6 @@
-﻿namespace Core.Formulas;
+﻿using Core.Exceptions;
+
+namespace Core.Formulas;
 
 public sealed class FormulaEngine(
 	IReadOnlyDictionary<int, CompiledFormula> compiledFormulas) : IFormulaEngine

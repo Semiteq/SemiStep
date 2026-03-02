@@ -6,7 +6,9 @@ public sealed record LogEntry(
 	string Source,
 	DateTime Timestamp)
 {
-	public bool IsStructural => Source == StructuralSource;
-
 	internal const string StructuralSource = "Recipe";
+	public bool IsStructural => Source == StructuralSource;
+	public bool IsError => Severity == LogSeverity.Error;
+	public bool IsWarning => Severity == LogSeverity.Warning;
+	public bool IsInfo => Severity == LogSeverity.Info;
 }

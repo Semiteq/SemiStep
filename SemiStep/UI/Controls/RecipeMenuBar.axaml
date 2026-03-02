@@ -30,21 +30,18 @@
                       InputGesture="Ctrl+N" />
             <MenuItem Header="_Delete Step"
                       Command="{Binding DeleteStepCommand}"
-                      IsEnabled="{Binding CanDeleteStep}"
                       InputGesture="Delete" />
             <Separator />
             <MenuItem Header="_Undo"
                       Command="{Binding UndoCommand}"
-                      IsEnabled="{Binding CanUndo}"
                       InputGesture="Ctrl+Z" />
             <MenuItem Header="_Redo"
                       Command="{Binding RedoCommand}"
-                      IsEnabled="{Binding CanRedo}"
                       InputGesture="Ctrl+Shift+Z" />
         </MenuItem>
         <MenuItem Header="_View">
             <MenuItem Header="_Notification Log"
-                      Command="{Binding ToggleLogPanelCommand}" />
+                      Command="{Binding LogPanel.ToggleCommand}" />
         </MenuItem>
 
         <MenuItem Header="_Help">

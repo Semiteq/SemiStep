@@ -1,160 +1,58 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:UI.Controls">
 
     <!-- Base DataGrid styles -->
     <Style Selector="DataGrid">
         <Setter Property="BorderBrush" Value="Gray" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="GridLinesVisibility" Value="All" />
-        <Setter Property="HorizontalGridLinesBrush" Value="#E0E0E0" />
-        <Setter Property="VerticalGridLinesBrush" Value="#E0E0E0" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
+        <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
     </Style>
 
     <!-- ============================================== -->
-    <!-- TextBlock Cell Styles                          -->
+    <!-- CellPresenter: base cell-state styles          -->
     <!-- ============================================== -->
 
-    <!-- Enabled cell - normal state -->
-    <Style Selector="TextBlock.cell-enabled">
-        <Setter Property="Background" Value="#FFFFFF" />
-        <Setter Property="Foreground" Value="#000000" />
+    <Style Selector="controls|CellPresenter:cell-enabled">
+        <Setter Property="Background" Value="{DynamicResource CellEnabledBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource CellEnabledForegroundBrush}" />
     </Style>
 
-    <!-- Enabled cell - selected state -->
-    <Style Selector="TextBlock.cell-enabled.selected">
-        <Setter Property="Background" Value="#0078D7" />
-        <Setter Property="Foreground" Value="#FFFFFF" />
+    <Style Selector="controls|CellPresenter:cell-readonly">
+        <Setter Property="Background" Value="{DynamicResource CellReadonlyBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource CellEnabledForegroundBrush}" />
     </Style>
 
-    <!-- Readonly cell - normal state -->
-    <Style Selector="TextBlock.cell-readonly">
-        <Setter Property="Background" Value="#F5F5F5" />
-        <Setter Property="Foreground" Value="#000000" />
-    </Style>
-
-    <!-- Readonly cell - selected state -->
-    <Style Selector="TextBlock.cell-readonly.selected">
-        <Setter Property="Background" Value="#5A9ED7" />
-        <Setter Property="Foreground" Value="#FFFFFF" />
-    </Style>
-
-    <!-- Disabled cell - normal state -->
-    <Style Selector="TextBlock.cell-disabled">
-        <Setter Property="Background" Value="#E0E0E0" />
-        <Setter Property="Foreground" Value="#808080" />
-    </Style>
-
-    <!-- Disabled cell - selected state -->
-    <Style Selector="TextBlock.cell-disabled.selected">
-        <Setter Property="Background" Value="#89B4D7" />
-        <Setter Property="Foreground" Value="#FFFFFF" />
+    <Style Selector="controls|CellPresenter:cell-disabled">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource CellDisabledForegroundBrush}" />
     </Style>
 
     <!-- ============================================== -->
-    <!-- TextBox Cell Styles                            -->
+    <!-- Selected row: override CellPresenter colors    -->
+    <!-- Uses DataGrid's native :selected on DataGridRow -->
     <!-- ============================================== -->
 
-    <!-- Enabled cell - normal state -->
-    <Style Selector="TextBox.cell-enabled">
-        <Setter Property="Background" Value="#FFFFFF" />
-        <Setter Property="Foreground" Value="#000000" />
-        <Setter Property="BorderThickness" Value="0" />
+    <Style Selector="DataGridRow:selected controls|CellPresenter:cell-enabled">
+        <Setter Property="Background" Value="{DynamicResource CellEnabledSelectedBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}" />
     </Style>
 
-    <!-- Enabled cell - selected state -->
-    <Style Selector="TextBox.cell-enabled.selected">
-        <Setter Property="Background" Value="#0078D7" />
-        <Setter Property="Foreground" Value="#FFFFFF" />
+    <Style Selector="DataGridRow:selected controls|CellPresenter:cell-readonly">
+        <Setter Property="Background" Value="{DynamicResource CellReadonlySelectedBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}" />
     </Style>
 
-    <!-- Readonly cell - normal state -->
-    <Style Selector="TextBox.cell-readonly">
-        <Setter Property="Background" Value="#F5F5F5" />
-        <Setter Property="Foreground" Value="#000000" />
-        <Setter Property="BorderThickness" Value="0" />
+    <Style Selector="DataGridRow:selected controls|CellPresenter:cell-disabled">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}" />
     </Style>
 
-    <!-- Readonly cell - selected state -->
-    <Style Selector="TextBox.cell-readonly.selected">
-        <Setter Property="Background" Value="#5A9ED7" />
-        <Setter Property="Foreground" Value="#FFFFFF" />
-    </Style>
-
-    <!-- Disabled cell - normal state -->
-    <Style Selector="TextBox.cell-disabled">
-        <Setter Property="Background" Value="#E0E0E0" />
-        <Setter Property="Foreground" Value="#808080" />
-        <Setter Property="BorderThickness" Value="0" />
-    </Style>
-
-    <!-- Disabled cell - selected state -->
-    <Style Selector="TextBox.cell-disabled.selected">
-        <Setter Property="Background" Value="#89B4D7" />
-        <Setter Property="Foreground" Value="#FFFFFF" />
-    </Style>
-
-    <!-- ============================================== -->
-    <!-- Border wrapper for ComboBox cells              -->
-    <!-- ============================================== -->
-
-    <!-- Enabled cell - normal state -->
-    <Style Selector="Border.cell-enabled">
-        <Setter Property="Background" Value="#FFFFFF" />
-    </Style>
-
-    <!-- Enabled cell - selected state -->
-    <Style Selector="Border.cell-enabled.selected">
-        <Setter Property="Background" Value="#0078D7" />
-    </Style>
-
-    <!-- Readonly cell - normal state -->
-    <Style Selector="Border.cell-readonly">
-        <Setter Property="Background" Value="#F5F5F5" />
-    </Style>
-
-    <!-- Readonly cell - selected state -->
-    <Style Selector="Border.cell-readonly.selected">
-        <Setter Property="Background" Value="#5A9ED7" />
-    </Style>
-
-    <!-- Disabled cell - normal state -->
-    <Style Selector="Border.cell-disabled">
-        <Setter Property="Background" Value="#E0E0E0" />
-    </Style>
-
-    <!-- Disabled cell - selected state -->
-    <Style Selector="Border.cell-disabled.selected">
-        <Setter Property="Background" Value="#89B4D7" />
-    </Style>
-
-    <!-- ComboBox inside Border - foreground colors -->
-    <Style Selector="Border.cell-enabled ComboBox">
-        <Setter Property="Foreground" Value="#000000" />
-    </Style>
-
-    <Style Selector="Border.cell-enabled.selected ComboBox">
-        <Setter Property="Foreground" Value="#FFFFFF" />
-    </Style>
-
-    <Style Selector="Border.cell-readonly ComboBox">
-        <Setter Property="Foreground" Value="#000000" />
-    </Style>
-
-    <Style Selector="Border.cell-readonly.selected ComboBox">
-        <Setter Property="Foreground" Value="#FFFFFF" />
-    </Style>
-
-    <Style Selector="Border.cell-disabled ComboBox">
-        <Setter Property="Foreground" Value="#808080" />
-    </Style>
-
-    <Style Selector="Border.cell-disabled.selected ComboBox">
-        <Setter Property="Foreground" Value="#FFFFFF" />
-    </Style>
-
-    <!-- ComboBox with direct cell-disabled class (for disabled dropdown styling) -->
+    <!-- ComboBox disabled foreground -->
     <Style Selector="ComboBox.cell-disabled">
-        <Setter Property="Foreground" Value="#808080" />
+        <Setter Property="Foreground" Value="{DynamicResource CellDisabledForegroundBrush}" />
     </Style>
 
 </Styles>

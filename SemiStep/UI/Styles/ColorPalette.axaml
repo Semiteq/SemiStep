@@ -1,0 +1,71 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Accent / Selection -->
+    <Color x:Key="AccentColor">#0078D7</Color>
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+
+    <!-- Cell State: Enabled -->
+    <Color x:Key="CellEnabledBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="CellEnabledForegroundColor">#000000</Color>
+    <SolidColorBrush x:Key="CellEnabledBackgroundBrush" Color="{StaticResource CellEnabledBackgroundColor}" />
+    <SolidColorBrush x:Key="CellEnabledForegroundBrush" Color="{StaticResource CellEnabledForegroundColor}" />
+
+    <!-- Cell State: Enabled + Selected -->
+    <Color x:Key="CellEnabledSelectedBackgroundColor">#0078D7</Color>
+    <SolidColorBrush x:Key="CellEnabledSelectedBackgroundBrush" Color="{StaticResource CellEnabledSelectedBackgroundColor}" />
+
+    <!-- Cell State: Readonly -->
+    <Color x:Key="CellReadonlyBackgroundColor">#F5F5F5</Color>
+    <SolidColorBrush x:Key="CellReadonlyBackgroundBrush" Color="{StaticResource CellReadonlyBackgroundColor}" />
+
+    <!-- Cell State: Readonly + Selected -->
+    <Color x:Key="CellReadonlySelectedBackgroundColor">#5A9ED7</Color>
+    <SolidColorBrush x:Key="CellReadonlySelectedBackgroundBrush" Color="{StaticResource CellReadonlySelectedBackgroundColor}" />
+
+    <!-- Cell State: Disabled -->
+    <Color x:Key="CellDisabledBackgroundColor">#E0E0E0</Color>
+    <Color x:Key="CellDisabledForegroundColor">#808080</Color>
+    <SolidColorBrush x:Key="CellDisabledBackgroundBrush" Color="{StaticResource CellDisabledBackgroundColor}" />
+    <SolidColorBrush x:Key="CellDisabledForegroundBrush" Color="{StaticResource CellDisabledForegroundColor}" />
+
+    <!-- Cell State: Disabled + Selected -->
+    <Color x:Key="CellDisabledSelectedBackgroundColor">#89B4D7</Color>
+    <SolidColorBrush x:Key="CellDisabledSelectedBackgroundBrush" Color="{StaticResource CellDisabledSelectedBackgroundColor}" />
+
+    <!-- Selected text foreground (white-on-accent) -->
+    <Color x:Key="TextOnAccentColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="TextOnAccentBrush" Color="{StaticResource TextOnAccentColor}" />
+
+    <!-- Grid lines -->
+    <SolidColorBrush x:Key="GridLineBrush" Color="{StaticResource CellDisabledBackgroundColor}" />
+
+    <!-- Severity indicators -->
+    <Color x:Key="ErrorColor">#D32F2F</Color>
+    <Color x:Key="WarningColor">#F57C00</Color>
+    <Color x:Key="InfoColor">#1976D2</Color>
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+    <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
+
+    <!-- Connection status -->
+    <Color x:Key="ConnectedColor">#44BB44</Color>
+    <Color x:Key="DisconnectedColor">#FF4444</Color>
+    <SolidColorBrush x:Key="ConnectedBrush" Color="{StaticResource ConnectedColor}" />
+    <SolidColorBrush x:Key="DisconnectedBrush" Color="{StaticResource DisconnectedColor}" />
+
+    <!-- Chrome / Layout -->
+    <Color x:Key="StatusBarBackgroundColor">#F0F0F0</Color>
+    <Color x:Key="PanelBackgroundColor">#F8F8F8</Color>
+    <Color x:Key="PanelHeaderBackgroundColor">#EEEEEE</Color>
+    <Color x:Key="SubtleBorderColor">#D0D0D0</Color>
+    <Color x:Key="SeparatorColor">#C0C0C0</Color>
+    <Color x:Key="SecondaryForegroundColor">#888888</Color>
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="{StaticResource StatusBarBackgroundColor}" />
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="{StaticResource PanelBackgroundColor}" />
+    <SolidColorBrush x:Key="PanelHeaderBackgroundBrush" Color="{StaticResource PanelHeaderBackgroundColor}" />
+    <SolidColorBrush x:Key="SubtleBorderBrush" Color="{StaticResource SubtleBorderColor}" />
+    <SolidColorBrush x:Key="SeparatorBrush" Color="{StaticResource SeparatorColor}" />
+    <SolidColorBrush x:Key="SecondaryForegroundBrush" Color="{StaticResource SecondaryForegroundColor}" />
+
+</ResourceDictionary>

@@ -4,22 +4,48 @@ using Config.Models;
 using Config.Validation;
 
 using Serilog;
-using Serilog.Core;
 
 using Shared;
+using Shared.Reasons;
 
 namespace Config.Facade;
 
-public sealed class ConfigFacade(Logger logger)
+public sealed class ConfigFacade
 {
-	public async Task<ConfigContext> LoadAsync(string configDirectory)
+	public static async Task<AppConfiguration> LoadAndValidateAsync(string configDirectory)
+	{
+		var context = await LoadAsync(configDirectory);
+
+		if (context.HasErrors)
+		{
+			foreach (var error in context.Errors)
+			{
+				var location = error is ConfigLoadError configError ? configError.Location : null;
+				Log.Error("Configuration error: {Message} at {Location}", error.Message, location ?? "unknown");
+			}
+
+			throw new InvalidOperationException("Configuration loading failed with errors.");
+		}
+
+		if (context.Configuration is null)
+		{
+			Log.Error("Configuration is null after successful loading");
+			throw new InvalidOperationException("Configuration is null after successful loading.");
+		}
+
+		Log.Information("Configuration loaded successfully");
+
+		return context.Configuration;
+	}
+
+	public static async Task<ConfigContext> LoadAsync(string configDirectory)
 	{
 		var context = new ConfigContext { FilePaths = [configDirectory] };
 
 		if (!Directory.Exists(configDirectory))
 		{
-			context.AddError($"Configuration directory not found: {configDirectory}");
-			logger?.Error("Configuration directory not found: {ConfigDirectory}", configDirectory);
+			context.AddError($"Configuration directory not found", configDirectory);
+			Log.Error("Configuration directory not found: {ConfigDirectory}", configDirectory);
 
 			return context;
 		}
@@ -44,7 +70,7 @@ public sealed class ConfigFacade(Logger logger)
 		}
 		catch (Exception ex)
 		{
-			logger?.Error("Failed to map configuration to domain: {message}", ex.Message);
+			Log.Error("Failed to map configuration to domain: {message}", ex.Message);
 			context.AddError($"Failed to map configuration to domain: {ex.Message}");
 		}
 

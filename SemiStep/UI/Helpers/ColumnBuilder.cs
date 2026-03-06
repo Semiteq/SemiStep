@@ -10,12 +10,14 @@ namespace UI.Helpers;
 public sealed class ColumnBuilder(
 	IActionRegistry actionRegistry,
 	IGroupRegistry groupRegistry,
-	GridStyleOptions gridStyle)
+	GridStyleOptions gridStyle,
+	IPropertyRegistry propertyRegistry,
+	IColumnRegistry columnRegistry)
 {
 	private const string ActionColumnKey = "action";
 	private const string ActionTargetComboBoxType = "action_target_combo_box";
 
-	private readonly TextCellFactory _textCellFactory = new();
+	private readonly TextCellFactory _textCellFactory = new(propertyRegistry, columnRegistry);
 	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(actionRegistry);
 	private readonly ColumnWidthCalculator _widthCalculator = new(actionRegistry, groupRegistry, gridStyle);
 

@@ -46,7 +46,9 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 			_columnBuilder = new ColumnBuilder(
 				ViewModel.ActionRegistry,
 				ViewModel.GroupRegistry,
-				ViewModel.Configuration.GridStyle);
+				ViewModel.Configuration.GridStyle,
+				ViewModel.PropertyRegistry,
+				ViewModel.ColumnRegistry);
 			BuildGrid();
 		});
 	}

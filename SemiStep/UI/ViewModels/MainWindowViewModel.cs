@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -135,6 +136,10 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	public IActionRegistry ActionRegistry { get; }
 
 	public IGroupRegistry GroupRegistry { get; }
+
+	public IPropertyRegistry PropertyRegistry => _propertyRegistry;
+
+	public IColumnRegistry ColumnRegistry => _columnRegistry;
 
 	public ObservableCollection<RecipeRowViewModel> RecipeRows { get; }
 
@@ -439,10 +444,10 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		var stepStartTimes = _domainFacade.Snapshot.StepStartTimes;
 		for (var i = 0; i < RecipeRows.Count; i++)
 		{
-			var formattedTime = stepStartTimes.TryGetValue(i, out var time)
-				? time.ToString(@"hh\:mm\:ss")
+			var rawSeconds = stepStartTimes.TryGetValue(i, out var time)
+				? time.TotalSeconds.ToString(CultureInfo.InvariantCulture)
 				: string.Empty;
-			RecipeRows[i].UpdateStepStartTime(formattedTime);
+			RecipeRows[i].UpdateStepStartTime(rawSeconds);
 		}
 	}
 

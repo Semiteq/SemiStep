@@ -126,6 +126,7 @@ public class RecipeRowViewModel(
 	public void UpdateStepStartTime(string? formattedTime)
 	{
 		StepStartTime = formattedTime;
+		this.RaisePropertyChanged("Item[]");
 	}
 
 	public object? GetPropertyValue(string columnKey)
@@ -195,9 +196,25 @@ public class RecipeRowViewModel(
 			return null;
 		}
 
-		var units = propertyRegistry.GetProperty(actionColumn.PropertyTypeId).Units;
+		var propDef = propertyRegistry.GetProperty(actionColumn.PropertyTypeId);
+		return propDef.Units;
+	}
 
-		return string.IsNullOrEmpty(units) ? null : units;
+	public string GetFormatKindForColumn(string columnKey)
+	{
+		var actionColumn = _action.Columns.FirstOrDefault(c => c.Key == columnKey);
+		if (actionColumn is null)
+		{
+			return "numeric";
+		}
+
+		if (!propertyRegistry.PropertyExists(actionColumn.PropertyTypeId))
+		{
+			return "numeric";
+		}
+
+		var propDef = propertyRegistry.GetProperty(actionColumn.PropertyTypeId);
+		return propDef.FormatKind;
 	}
 
 	public void InvalidateCellStates()

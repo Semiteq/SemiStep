@@ -11,6 +11,11 @@ public sealed class CellStateResolver
 			return CellState.Enabled;
 		}
 
+		if (column.ColumnType is "step_start_time_field")
+		{
+			return CellState.Readonly;
+		}
+
 		if (!IsPropertyPresentInAction(column.Key, action))
 		{
 			return CellState.Disabled;

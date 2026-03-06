@@ -1,18 +1,19 @@
 ﻿using Core.Entities;
 
+using Domain.Models;
 using Domain.Ports;
 
 namespace Tests.Helpers;
 
 public sealed class StubCsvService : ICsvService
 {
-	public Task<Recipe> LoadAsync(string filePath, CancellationToken cancellationToken = default)
+	public Task<CsvLoadResult> LoadAsync(string filePath, CancellationToken cancellationToken = default)
 	{
-		throw new NotSupportedException("StubRecipeRepository does not support loading.");
+		throw new NotSupportedException("StubCsvService does not support loading.");
 	}
 
 	public Task SaveAsync(Recipe recipe, string filePath, CancellationToken cancellationToken = default)
 	{
-		throw new NotSupportedException("StubRecipeRepository does not support saving.");
+		throw new NotSupportedException("StubCsvService does not support saving.");
 	}
 }

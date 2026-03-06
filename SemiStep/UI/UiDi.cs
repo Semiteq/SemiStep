@@ -32,6 +32,7 @@ public static class UiDi
 				sp.GetRequiredService<IActionRegistry>(),
 				sp.GetRequiredService<IGroupRegistry>(),
 				sp.GetRequiredService<IColumnRegistry>(),
+				sp.GetRequiredService<IPropertyRegistry>(),
 				sp.GetRequiredService<INotificationService>(),
 				shutdownApplication);
 		});

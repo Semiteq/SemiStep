@@ -39,20 +39,6 @@ public static class CoreTestHelper
 
 	private static string GetConfigDirectory(string configName)
 	{
-		var baseDir = AppContext.BaseDirectory;
-
-		for (var i = 0; i < 10 && !string.IsNullOrEmpty(baseDir); i++)
-		{
-			var probe = Path.Combine(baseDir, "YamlConfigs", configName);
-			if (Directory.Exists(probe))
-			{
-				return probe;
-			}
-
-			baseDir = Directory.GetParent(baseDir)?.FullName ?? string.Empty;
-		}
-
-		throw new DirectoryNotFoundException(
-			$"Config directory '{configName}' not found. Expected 'YamlConfigs/{configName}' in or above the test output directory.");
+		return TestConfigLocator.GetConfigDirectory(configName);
 	}
 }

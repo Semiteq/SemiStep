@@ -1,4 +1,6 @@
-﻿using Core.Analysis;
+﻿using System.Globalization;
+
+using Core.Analysis;
 using Core.Entities;
 
 using Domain.Facade;
@@ -49,7 +51,7 @@ public sealed class RecipeTestDriver(DomainFacade domainFacade)
 	{
 		domainFacade.AppendStep(WaitActionId);
 		var lastIndex = Recipe.StepCount - 1;
-		domainFacade.UpdateStepProperty(lastIndex, StepDurationColumn, durationSeconds);
+		domainFacade.UpdateStepProperty(lastIndex, StepDurationColumn, durationSeconds.ToString(CultureInfo.InvariantCulture));
 
 		return this;
 	}
@@ -58,7 +60,7 @@ public sealed class RecipeTestDriver(DomainFacade domainFacade)
 	{
 		domainFacade.AppendStep(ForLoopActionId);
 		var lastIndex = Recipe.StepCount - 1;
-		domainFacade.UpdateStepProperty(lastIndex, TaskColumn, (float)iterations);
+		domainFacade.UpdateStepProperty(lastIndex, TaskColumn, ((float)iterations).ToString(CultureInfo.InvariantCulture));
 
 		return this;
 	}
@@ -91,7 +93,7 @@ public sealed class RecipeTestDriver(DomainFacade domainFacade)
 	public RecipeTestDriver InsertWait(int index, float durationSeconds = 10f)
 	{
 		domainFacade.InsertStep(index, WaitActionId);
-		domainFacade.UpdateStepProperty(index, StepDurationColumn, durationSeconds);
+		domainFacade.UpdateStepProperty(index, StepDurationColumn, durationSeconds.ToString(CultureInfo.InvariantCulture));
 
 		return this;
 	}
@@ -99,7 +101,7 @@ public sealed class RecipeTestDriver(DomainFacade domainFacade)
 	public RecipeTestDriver InsertFor(int index, int iterations)
 	{
 		domainFacade.InsertStep(index, ForLoopActionId);
-		domainFacade.UpdateStepProperty(index, TaskColumn, (float)iterations);
+		domainFacade.UpdateStepProperty(index, TaskColumn, ((float)iterations).ToString(CultureInfo.InvariantCulture));
 
 		return this;
 	}
@@ -117,14 +119,14 @@ public sealed class RecipeTestDriver(DomainFacade domainFacade)
 
 	public RecipeTestDriver SetDuration(int index, float seconds)
 	{
-		domainFacade.UpdateStepProperty(index, StepDurationColumn, seconds);
+		domainFacade.UpdateStepProperty(index, StepDurationColumn, seconds.ToString(CultureInfo.InvariantCulture));
 
 		return this;
 	}
 
 	public RecipeTestDriver SetTask(int index, float value)
 	{
-		domainFacade.UpdateStepProperty(index, TaskColumn, value);
+		domainFacade.UpdateStepProperty(index, TaskColumn, value.ToString(CultureInfo.InvariantCulture));
 
 		return this;
 	}

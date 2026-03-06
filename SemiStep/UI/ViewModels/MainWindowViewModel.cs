@@ -19,6 +19,7 @@ namespace UI.ViewModels;
 public class MainWindowViewModel : ReactiveObject, IDisposable
 {
 	private readonly IColumnRegistry _columnRegistry;
+	private readonly IPropertyRegistry _propertyRegistry;
 	private readonly DomainFacade _domainFacade;
 	private readonly INotificationService _notificationService;
 	private readonly Action _shutdownApplication;
@@ -40,6 +41,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		IActionRegistry actionRegistry,
 		IGroupRegistry groupRegistry,
 		IColumnRegistry columnRegistry,
+		IPropertyRegistry propertyRegistry,
 		INotificationService notificationService,
 		Action shutdownApplication)
 	{
@@ -48,6 +50,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		ActionRegistry = actionRegistry;
 		GroupRegistry = groupRegistry;
 		_columnRegistry = columnRegistry;
+		_propertyRegistry = propertyRegistry;
 		_notificationService = notificationService;
 		_shutdownApplication = shutdownApplication;
 
@@ -189,6 +192,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	{
 		RebuildAllRows(_domainFacade.CurrentRecipe);
 		LogPanel.RefreshReasons(_domainFacade.Snapshot.Reasons);
+		RefreshStepStartTimes();
 		NotifyStateChanged();
 	}
 
@@ -223,6 +227,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		}
 
 		LogPanel.RefreshReasons(_domainFacade.Snapshot.Reasons);
+		RefreshStepStartTimes();
 		NotifyStateChanged();
 		SelectedRowIndex = newRowIndex;
 	}
@@ -239,6 +244,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		RemoveRow(indexToDelete);
 
 		LogPanel.RefreshReasons(_domainFacade.Snapshot.Reasons);
+		RefreshStepStartTimes();
 		NotifyStateChanged();
 
 		if (RecipeRows.Count > 0)
@@ -303,10 +309,19 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 		try
 		{
-			await _domainFacade.LoadRecipeAsync(filePath);
+			var result = await _domainFacade.LoadRecipeAsync(filePath);
+			if (!result.IsSuccess)
+			{
+				var errorMessages = string.Join(Environment.NewLine,
+					result.Reasons.OfType<Shared.Reasons.AbstractError>().Select(e => e.Message));
+				_notificationService.ShowError($"Failed to load recipe:{Environment.NewLine}{errorMessages}");
+				return;
+			}
+
 			_currentFilePath = filePath;
 			RebuildAllRows(_domainFacade.CurrentRecipe);
 			LogPanel.RefreshReasons(_domainFacade.Snapshot.Reasons);
+			RefreshStepStartTimes();
 			NotifyStateChanged();
 			_notificationService.ShowSuccess($"Loaded: {Path.GetFileName(filePath)}");
 		}
@@ -324,6 +339,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		LogPanel.Clear();
 		RebuildAllRows(_domainFacade.CurrentRecipe);
 		LogPanel.RefreshReasons(_domainFacade.Snapshot.Reasons);
+		RefreshStepStartTimes();
 		NotifyStateChanged();
 	}
 
@@ -334,6 +350,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		{
 			RebuildAllRows(snapshot.Recipe);
 			LogPanel.RefreshReasons(snapshot.Reasons);
+			RefreshStepStartTimes();
 			NotifyStateChanged();
 		}
 	}
@@ -345,6 +362,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		{
 			RebuildAllRows(snapshot.Recipe);
 			LogPanel.RefreshReasons(snapshot.Reasons);
+			RefreshStepStartTimes();
 			NotifyStateChanged();
 		}
 	}
@@ -354,7 +372,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		_shutdownApplication();
 	}
 
-	private void OnCellValueChanged(RecipeRowViewModel row, string columnKey, object? value)
+	private void OnCellValueChanged(RecipeRowViewModel row, string columnKey, string? value)
 	{
 		if (value is null)
 		{
@@ -380,6 +398,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		}
 
 		LogPanel.RefreshReasons(_domainFacade.Snapshot.Reasons);
+		RefreshStepStartTimes();
 		NotifyStateChanged();
 	}
 
@@ -406,12 +425,25 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		}
 
 		LogPanel.RefreshReasons(_domainFacade.Snapshot.Reasons);
+		RefreshStepStartTimes();
 		NotifyStateChanged();
 	}
 
 	private void NotifyStateChanged()
 	{
 		_stateChanged.OnNext(Unit.Default);
+	}
+
+	private void RefreshStepStartTimes()
+	{
+		var stepStartTimes = _domainFacade.Snapshot.StepStartTimes;
+		for (var i = 0; i < RecipeRows.Count; i++)
+		{
+			var formattedTime = stepStartTimes.TryGetValue(i, out var time)
+				? time.ToString(@"hh\:mm\:ss")
+				: string.Empty;
+			RecipeRows[i].UpdateStepStartTime(formattedTime);
+		}
 	}
 
 	private string BuildWindowTitle()
@@ -435,6 +467,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			action,
 			GroupRegistry,
 			_columnRegistry,
+			_propertyRegistry,
 			OnCellValueChanged,
 			OnActionChanged);
 	}

@@ -9,43 +9,37 @@ using Shared.Registries;
 
 namespace UI.ViewModels;
 
-public class RecipeRowViewModel : ReactiveObject, IDisposable
+public class RecipeRowViewModel(
+	int stepNumber,
+	Step step,
+	ActionDefinition action,
+	IGroupRegistry groupRegistry,
+	IColumnRegistry columnRegistry,
+	IPropertyRegistry propertyRegistry,
+	Action<RecipeRowViewModel, string, string?> onPropertyChanged,
+	Action<RecipeRowViewModel, int> onActionChanged)
+	: ReactiveObject, IDisposable
 {
 	private readonly List<Action> _cleanupActions = [];
-	private readonly IGroupRegistry _groupRegistry;
-	private readonly IColumnRegistry _columnRegistry;
-	private readonly Action<RecipeRowViewModel, string, object?> _onPropertyChanged;
-	private readonly Action<RecipeRowViewModel, int> _onActionChanged;
 
-	private ActionDefinition _action;
+	private ActionDefinition _action = action;
 	private IReadOnlyDictionary<string, CellState>? _cellStatesCache;
 	private bool _disposed;
 	private bool _isExecuting;
-	private int _stepNumber;
-	private Step _step;
-
-	public RecipeRowViewModel(
-		int stepNumber,
-		Step step,
-		ActionDefinition action,
-		IGroupRegistry groupRegistry,
-		IColumnRegistry columnRegistry,
-		Action<RecipeRowViewModel, string, object?> onPropertyChanged,
-		Action<RecipeRowViewModel, int> onActionChanged)
-	{
-		_stepNumber = stepNumber;
-		_step = step;
-		_action = action;
-		_groupRegistry = groupRegistry;
-		_columnRegistry = columnRegistry;
-		_onPropertyChanged = onPropertyChanged;
-		_onActionChanged = onActionChanged;
-	}
+	private int _stepNumber = stepNumber;
+	private string? _stepStartTime;
+	private Step _step = step;
 
 	public int StepNumber
 	{
 		get => _stepNumber;
 		private set => this.RaiseAndSetIfChanged(ref _stepNumber, value);
+	}
+
+	public string? StepStartTime
+	{
+		get => _stepStartTime;
+		private set => this.RaiseAndSetIfChanged(ref _stepStartTime, value);
 	}
 
 	public int ActionId => _step.ActionKey;
@@ -68,7 +62,7 @@ public class RecipeRowViewModel : ReactiveObject, IDisposable
 			}
 
 			var states = new Dictionary<string, CellState>();
-			foreach (var columnDef in _columnRegistry.GetAll())
+			foreach (var columnDef in columnRegistry.GetAll())
 			{
 				states[columnDef.Key] = CellStateResolver.GetCellState(columnDef, _action);
 			}
@@ -82,7 +76,7 @@ public class RecipeRowViewModel : ReactiveObject, IDisposable
 	public object? this[string columnKey]
 	{
 		get => GetPropertyValue(columnKey);
-		set => SetPropertyValue(columnKey, value);
+		set => SetPropertyValue(columnKey, value?.ToString());
 	}
 
 	public void Dispose()
@@ -129,11 +123,21 @@ public class RecipeRowViewModel : ReactiveObject, IDisposable
 		StepNumber = newNumber;
 	}
 
+	public void UpdateStepStartTime(string? formattedTime)
+	{
+		StepStartTime = formattedTime;
+	}
+
 	public object? GetPropertyValue(string columnKey)
 	{
 		if (columnKey is "action")
 		{
 			return ActionId;
+		}
+
+		if (columnKey is "step_start_time")
+		{
+			return StepStartTime;
 		}
 
 		var columnId = new ColumnId(columnKey);
@@ -145,19 +149,19 @@ public class RecipeRowViewModel : ReactiveObject, IDisposable
 		return null;
 	}
 
-	public void SetPropertyValue(string columnKey, object? value)
+	public void SetPropertyValue(string columnKey, string? value)
 	{
 		if (columnKey == "action")
 		{
-			if (value is int actionId)
+			if (int.TryParse(value, out var actionId))
 			{
-				_onActionChanged(this, actionId);
+				onActionChanged(this, actionId);
 			}
 
 			return;
 		}
 
-		_onPropertyChanged(this, columnKey, value);
+		onPropertyChanged(this, columnKey, value);
 		this.RaisePropertyChanged(columnKey);
 		this.RaisePropertyChanged("Item[]");
 	}
@@ -170,12 +174,30 @@ public class RecipeRowViewModel : ReactiveObject, IDisposable
 			return null;
 		}
 
-		if (!_groupRegistry.GroupExists(actionColumn.GroupName))
+		if (!groupRegistry.GroupExists(actionColumn.GroupName))
 		{
 			return null;
 		}
 
-		return _groupRegistry.GetGroup(actionColumn.GroupName).Items;
+		return groupRegistry.GetGroup(actionColumn.GroupName).Items;
+	}
+
+	public string? GetUnitsForColumn(string columnKey)
+	{
+		var actionColumn = _action.Columns.FirstOrDefault(c => c.Key == columnKey);
+		if (actionColumn is null)
+		{
+			return null;
+		}
+
+		if (!propertyRegistry.PropertyExists(actionColumn.PropertyTypeId))
+		{
+			return null;
+		}
+
+		var units = propertyRegistry.GetProperty(actionColumn.PropertyTypeId).Units;
+
+		return string.IsNullOrEmpty(units) ? null : units;
 	}
 
 	public void InvalidateCellStates()

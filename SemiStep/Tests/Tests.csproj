@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj"/>
     <ProjectReference Include="..\Config\Config.csproj"/>
+    <ProjectReference Include="..\Csv\Csv.csproj"/>
     <ProjectReference Include="..\Domain\Domain.csproj"/>
     <ProjectReference Include="..\Shared\Shared.csproj"/>
   </ItemGroup>

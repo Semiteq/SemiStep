@@ -70,6 +70,12 @@ public sealed class TextCellFactory
 		{
 			var value = row.GetPropertyValue(columnKey);
 			var displayText = value?.ToString() ?? string.Empty;
+			var units = row.GetUnitsForColumn(columnKey);
+			if (!string.IsNullOrEmpty(displayText) && !string.IsNullOrEmpty(units))
+			{
+				displayText = $"{displayText} {units}";
+			}
+
 			presenter.Content = new TextBlock
 			{
 				Text = displayText,

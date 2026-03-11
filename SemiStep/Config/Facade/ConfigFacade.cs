@@ -10,9 +10,9 @@ using Shared.Config;
 
 namespace Config.Facade;
 
-public sealed class ConfigFacade
+public static class ConfigFacade
 {
-	public static async Task<AppConfiguration> LoadAndValidateAsync(string configDirectory)
+	public static async Task<ConfigLoadResult> LoadAndValidateAsync(string configDirectory)
 	{
 		var context = await LoadAsync(configDirectory);
 
@@ -23,19 +23,20 @@ public sealed class ConfigFacade
 				Log.Error("Configuration error: {Error}", error);
 			}
 
-			throw new InvalidOperationException("Configuration loading failed with errors.");
+			return ConfigLoadResult.Failure(context.Errors);
 		}
 
 		if (context.Configuration is null)
 		{
-			Log.Error("Configuration is null after successful loading");
+			const string NullConfigurationError = "Configuration is null after successful loading.";
+			Log.Error(NullConfigurationError);
 
-			throw new InvalidOperationException("Configuration is null after successful loading.");
+			return ConfigLoadResult.Failure([NullConfigurationError]);
 		}
 
 		Log.Information("Configuration loaded successfully");
 
-		return context.Configuration;
+		return ConfigLoadResult.Success(context.Configuration);
 	}
 
 	internal static async Task<ConfigContext> LoadAsync(string configDirectory)

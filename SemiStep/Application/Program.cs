@@ -31,11 +31,18 @@ public static class Program
 
 		try
 		{
-			var configuration = await ConfigFacade.LoadAndValidateAsync(ConfigDir);
+			var result = await ConfigFacade.LoadAndValidateAsync(ConfigDir);
+
+			if (!result.IsSuccess)
+			{
+				Log.Error("Application startup failed: configuration loading produced {ErrorCount} error(s)", result.Errors.Count);
+				App.RunErrorWindow(result.Errors);
+				return;
+			}
 
 			var services =
 				new ServiceCollection()
-					.AddSingleton(configuration)
+					.AddSingleton(result.Configuration!)
 					.AddRecipe()
 					.AddConfig()
 					.AddDomain()

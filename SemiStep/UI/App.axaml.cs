@@ -10,12 +10,14 @@ using ReactiveUI;
 using UI.Services;
 using UI.ViewModels;
 using UI.Views;
+using UI.Windows;
 
 namespace UI;
 
 public class App : Application
 {
-	public static IServiceProvider? ServiceProvider { get; private set; }
+	private IServiceProvider? _serviceProvider;
+	private IReadOnlyList<string>? _startupErrors;
 
 	public override void Initialize()
 	{
@@ -26,19 +28,26 @@ public class App : Application
 	{
 		if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 		{
-			if (ServiceProvider is null)
+			if (_startupErrors is not null)
 			{
-				throw new InvalidOperationException("ServiceProvider not set. Call Run() before starting the app.");
+				desktop.MainWindow = new ErrorWindow(_startupErrors);
 			}
+			else
+			{
+				if (_serviceProvider is null)
+				{
+					throw new InvalidOperationException("ServiceProvider not set. Call Run() before starting the app.");
+				}
 
-			var mainWindowViewModel = ServiceProvider.GetRequiredService<MainWindowViewModel>();
-			mainWindowViewModel.Initialize();
+				var mainWindowViewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
+				mainWindowViewModel.Initialize();
 
-			var mainWindow = new MainWindow { DataContext = mainWindowViewModel };
-			desktop.MainWindow = mainWindow;
+				var mainWindow = new MainWindow { DataContext = mainWindowViewModel };
+				desktop.MainWindow = mainWindow;
 
-			var notificationService = ServiceProvider.GetRequiredService<INotificationService>();
-			notificationService.SetHostWindow(mainWindow);
+				var notificationService = _serviceProvider.GetRequiredService<INotificationService>();
+				notificationService.SetHostWindow(mainWindow);
+			}
 		}
 
 		base.OnFrameworkInitializationCompleted();
@@ -55,8 +64,25 @@ public class App : Application
 
 	public static void Run(IServiceProvider serviceProvider)
 	{
-		ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+		ArgumentNullException.ThrowIfNull(serviceProvider);
 		RxApp.MainThreadScheduler = AvaloniaScheduler.Instance;
-		BuildAvaloniaApp().StartWithClassicDesktopLifetime([]);
+		BuildAvaloniaApp()
+			.AfterSetup(builder =>
+			{
+				var app = (App)builder.Instance!;
+				app._serviceProvider = serviceProvider;
+			})
+			.StartWithClassicDesktopLifetime([]);
+	}
+
+	public static void RunErrorWindow(IReadOnlyList<string> errors)
+	{
+		BuildAvaloniaApp()
+			.AfterSetup(builder =>
+			{
+				var app = (App)builder.Instance!;
+				app._startupErrors = errors;
+			})
+			.StartWithClassicDesktopLifetime([]);
 	}
 }

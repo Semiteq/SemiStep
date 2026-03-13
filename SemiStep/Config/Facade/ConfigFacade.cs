@@ -3,16 +3,17 @@ using Config.Mapping;
 using Config.Models;
 using Config.Validation;
 
+using FluentResults;
+
 using Serilog;
 
-using Shared;
 using Shared.Config;
 
 namespace Config.Facade;
 
 public static class ConfigFacade
 {
-	public static async Task<ConfigLoadResult> LoadAndValidateAsync(string configDirectory)
+	public static async Task<Result<AppConfiguration>> LoadAndValidateAsync(string configDirectory)
 	{
 		var context = await LoadAsync(configDirectory);
 
@@ -23,7 +24,7 @@ public static class ConfigFacade
 				Log.Error("Configuration error: {Error}", error);
 			}
 
-			return ConfigLoadResult.Failure(context.Errors);
+			return Result.Fail<AppConfiguration>(context.Errors.Select(e => new Error(e)));
 		}
 
 		if (context.Configuration is null)
@@ -31,12 +32,12 @@ public static class ConfigFacade
 			const string NullConfigurationError = "Configuration is null after successful loading.";
 			Log.Error(NullConfigurationError);
 
-			return ConfigLoadResult.Failure([NullConfigurationError]);
+			return Result.Fail<AppConfiguration>(NullConfigurationError);
 		}
 
 		Log.Information("Configuration loaded successfully");
 
-		return ConfigLoadResult.Success(context.Configuration);
+		return Result.Ok(context.Configuration);
 	}
 
 	internal static async Task<ConfigContext> LoadAsync(string configDirectory)

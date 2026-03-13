@@ -1,12 +1,13 @@
-﻿using Shared.Core;
-using Shared.Csv;
+﻿using FluentResults;
+
+using Shared.Core;
 using Shared.ServiceContracts;
 
 namespace Tests.Helpers;
 
 public sealed class StubCsvService : ICsvService
 {
-	public Task<CsvLoadResult> LoadAsync(string filePath, CancellationToken cancellationToken = default)
+	public Task<Result<Recipe>> LoadAsync(string filePath, CancellationToken cancellationToken = default)
 	{
 		throw new NotSupportedException("StubCsvService does not support loading.");
 	}

@@ -5,7 +5,6 @@ using Domain.State;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Shared;
 using Shared.Config;
 using Shared.Config.Contracts;
 using Shared.ServiceContracts;

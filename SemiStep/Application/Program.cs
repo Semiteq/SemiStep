@@ -1,6 +1,5 @@
 ﻿using System.Globalization;
 
-using Config;
 using Config.Facade;
 
 using Core;
@@ -9,6 +8,8 @@ using Csv;
 
 using Domain;
 using Domain.Facade;
+
+using FluentResults;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -33,18 +34,18 @@ public static class Program
 		{
 			var result = await ConfigFacade.LoadAndValidateAsync(ConfigDir);
 
-			if (!result.IsSuccess)
+			if (result.IsFailed)
 			{
-				Log.Error("Application startup failed: configuration loading produced {ErrorCount} error(s)", result.Errors.Count);
-				App.RunErrorWindow(result.Errors);
+				var errors = result.Errors.Select(e => e.Message).ToList();
+				Log.Error("Application startup failed: configuration loading produced {ErrorCount} error(s)", errors.Count);
+				App.RunErrorWindow(errors);
 				return;
 			}
 
 			var services =
 				new ServiceCollection()
-					.AddSingleton(result.Configuration!)
+					.AddSingleton(result.Value)
 					.AddRecipe()
-					.AddConfig()
 					.AddDomain()
 					.AddS7()
 					.AddCsv()

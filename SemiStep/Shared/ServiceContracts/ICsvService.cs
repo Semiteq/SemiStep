@@ -1,11 +1,12 @@
-﻿using Shared.Core;
-using Shared.Csv;
+﻿using FluentResults;
+
+using Shared.Core;
 
 namespace Shared.ServiceContracts;
 
 public interface ICsvService
 {
-	Task<CsvLoadResult> LoadAsync(string filePath, CancellationToken cancellationToken = default);
+	Task<Result<Recipe>> LoadAsync(string filePath, CancellationToken cancellationToken = default);
 
 	Task SaveAsync(Recipe recipe, string filePath, CancellationToken cancellationToken = default);
 }

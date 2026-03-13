@@ -21,9 +21,11 @@ public sealed class CoreFixture : IAsyncLifetime
 		Facade = facade;
 	}
 
-	public Task DisposeAsync()
+	public async Task DisposeAsync()
 	{
-		(_services as IDisposable)?.Dispose();
-		return Task.CompletedTask;
+		if (_services is IAsyncDisposable asyncDisposable)
+		{
+			await asyncDisposable.DisposeAsync();
+		}
 	}
 }

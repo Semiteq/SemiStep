@@ -1,4 +1,5 @@
-﻿using Csv.Services;
+﻿using Csv.ClipboardService;
+using Csv.FsService;
 
 using Xunit;
 
@@ -6,20 +7,24 @@ namespace Tests.Csv.Helpers;
 
 public sealed class CsvFixture : IAsyncLifetime
 {
-	internal CsvSerializer Serializer { get; private set; } = null!;
+	internal CsvFileSerializer FileSerializer { get; private set; } = null!;
+	internal CsvClipboardSerializer ClipboardSerializer { get; private set; } = null!;
 
 	private IServiceProvider? _services;
 
 	public async Task InitializeAsync()
 	{
-		var (serializer, services) = await CsvTestHelper.BuildAsync();
-		Serializer = serializer;
+		var (serializer, clipboardSerializer, services) = await CsvTestHelper.BuildAsync();
+		FileSerializer = serializer;
+		ClipboardSerializer = clipboardSerializer;
 		_services = services;
 	}
 
-	public Task DisposeAsync()
+	public async Task DisposeAsync()
 	{
-		(_services as IDisposable)?.Dispose();
-		return Task.CompletedTask;
+		if (_services is IAsyncDisposable asyncDisposable)
+		{
+			await asyncDisposable.DisposeAsync();
+		}
 	}
 }

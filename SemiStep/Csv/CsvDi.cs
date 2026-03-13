@@ -1,5 +1,6 @@
-﻿using Csv.Facade;
-using Csv.Services;
+﻿using Csv.ClipboardService;
+using Csv.Facade;
+using Csv.FsService;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,8 +12,10 @@ public static class CsvDi
 {
 	public static IServiceCollection AddCsv(this IServiceCollection services)
 	{
-		services.AddSingleton<CsvSerializer>();
+		services.AddSingleton<CsvFileSerializer>();
+		services.AddSingleton<CsvClipboardSerializer>();
 		services.AddSingleton<ICsvService, CsvService>();
+		services.AddSingleton<ICsvClipboardService, CsvClipboard>();
 
 		return services;
 	}

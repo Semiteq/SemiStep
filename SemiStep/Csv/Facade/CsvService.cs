@@ -1,25 +1,27 @@
 ﻿using System.Collections.Immutable;
 using System.Text;
 
-using Csv.Services;
+using Csv.FsService;
+
+using FluentResults;
 
 using Serilog;
 
 using Shared.Core;
-using Shared.Csv;
+using Shared.Results;
 using Shared.ServiceContracts;
 
 namespace Csv.Facade;
 
-internal sealed class CsvService(CsvSerializer csvSerializer) : ICsvService
+internal sealed class CsvService(CsvFileSerializer csvFileSerializer) : ICsvService
 {
 	private static readonly Encoding _fileEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
 
-	public async Task<CsvLoadResult> LoadAsync(string filePath, CancellationToken cancellationToken = default)
+	public async Task<Result<Recipe>> LoadAsync(string filePath, CancellationToken cancellationToken = default)
 	{
 		if (!File.Exists(filePath))
 		{
-			return CsvLoadResult.Failure([$"Recipe file not found: {filePath}"]);
+			return Result.Fail<Recipe>($"Recipe file not found: {filePath}");
 		}
 
 		var fullText = await File.ReadAllTextAsync(filePath, _fileEncoding, cancellationToken);
@@ -27,29 +29,29 @@ internal sealed class CsvService(CsvSerializer csvSerializer) : ICsvService
 		var (metadata, linesConsumed) = CsvMetadata.Deserialize(fullText);
 		var bodyText = ExtractBody(fullText, linesConsumed);
 
-		var result = csvSerializer.Deserialize(bodyText);
+		var result = csvFileSerializer.Deserialize(bodyText);
 
-		if (!result.IsSuccess)
+		if (result.IsFailed)
 		{
 			return result;
 		}
 
-		var warnings = new List<string>(result.Warnings);
+		var warnings = new List<string>();
 
-		if (metadata.Rows > 0 && metadata.Rows != result.Recipe!.StepCount)
+		if (metadata.Rows > 0 && metadata.Rows != result.Value.StepCount)
 		{
 			warnings.Add(
-				$"Row count mismatch in '{filePath}': metadata says {metadata.Rows}, actual is {result.Recipe.StepCount}");
+				$"Row count mismatch in '{filePath}': metadata says {metadata.Rows}, actual is {result.Value.StepCount}");
 		}
 
-		Log.Information("Loaded recipe from {FilePath}: {StepCount} steps", filePath, result.Recipe!.StepCount);
+		Log.Information("Loaded recipe from {FilePath}: {StepCount} steps", filePath, result.Value.StepCount);
 
-		return CsvLoadResult.Success(result.Recipe, warnings);
+		return Result.Ok(result.Value).WithWarnings(warnings);
 	}
 
 	public async Task SaveAsync(Recipe recipe, string filePath, CancellationToken cancellationToken = default)
 	{
-		var csvBody = csvSerializer.Serialize(recipe);
+		var csvBody = csvFileSerializer.Serialize(recipe);
 		var dataRowCount = CountDataRows(csvBody);
 
 		var metadata = new CsvMetadata(

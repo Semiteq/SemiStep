@@ -21,12 +21,11 @@ public static class CoreTestHelper
 	{
 		var configDir = GetConfigDirectory(configName);
 
-		var configuration = await ConfigFacade.LoadAndValidateAsync(configDir);
+		var configLoadResult = await ConfigFacade.LoadAndValidateAsync(configDir);
 
 		var services = new ServiceCollection()
-			.AddSingleton(configuration)
+			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
-			.AddConfig()
 			.AddDomain()
 			.AddSingleton<ICsvService, StubCsvService>()
 			.AddSingleton<IS7ConnectionService, StubS7ConnectionService>()

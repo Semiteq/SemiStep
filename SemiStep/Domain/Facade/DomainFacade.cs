@@ -1,4 +1,6 @@
-﻿using Domain.Services;
+﻿using System.Collections.Immutable;
+
+using Domain.Services;
 using Domain.State;
 
 using FluentResults;
@@ -18,6 +20,7 @@ public sealed class DomainFacade : IDisposable
 {
 	private readonly IActionRegistry _actionRegistry;
 	private readonly AppConfiguration _appConfiguration;
+	private readonly ICsvClipboardService _clipboardService;
 	private readonly IColumnRegistry _columnRegistry;
 	private readonly IS7ConnectionService _connectionService;
 	private readonly CoreService _coreService;
@@ -41,7 +44,8 @@ public sealed class DomainFacade : IDisposable
 		RecipeStateManager stateManager,
 		RecipeHistoryManager historyManager,
 		ICsvService csvService,
-		IS7ConnectionService connectionService)
+		IS7ConnectionService connectionService,
+		ICsvClipboardService clipboardService)
 	{
 		_appConfiguration = appConfiguration;
 		_actionRegistry = actionRegistry;
@@ -53,6 +57,7 @@ public sealed class DomainFacade : IDisposable
 		_historyManager = historyManager;
 		_csvService = csvService;
 		_connectionService = connectionService;
+		_clipboardService = clipboardService;
 	}
 
 	public Recipe CurrentRecipe => _stateManager.Current;
@@ -220,6 +225,18 @@ public sealed class DomainFacade : IDisposable
 	{
 		await _csvService.SaveAsync(_stateManager.Current, filePath, ct);
 		_stateManager.MarkSaved();
+	}
+
+	public string SerializeStepsForClipboard(IReadOnlyList<Step> steps)
+	{
+		var recipe = new Recipe(steps.ToImmutableList());
+
+		return _clipboardService.SerializeSteps(recipe);
+	}
+
+	public Result<Recipe> DeserializeStepsFromClipboard(string csvBody)
+	{
+		return _clipboardService.DeserializeSteps(csvBody);
 	}
 
 	public void MarkSaved()

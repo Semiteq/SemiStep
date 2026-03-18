@@ -30,6 +30,7 @@ internal static class CsvTestHelper
 			.AddRecipe()
 			.AddDomain()
 			.AddSingleton<ICsvService, StubCsvService>()
+			.AddSingleton<ICsvClipboardService, StubCsvClipboardService>()
 			.AddSingleton<IS7ConnectionService, StubS7ConnectionService>()
 			.AddSingleton<CsvFileSerializer>()
 			.AddSingleton<CsvClipboardSerializer>()

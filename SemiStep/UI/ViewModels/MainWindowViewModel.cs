@@ -1,23 +1,14 @@
-﻿using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Reactive;
+﻿using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
-using Avalonia.Input.Platform;
-
 using Domain.Facade;
-
-using FluentResults;
 
 using ReactiveUI;
 
-using Shared;
 using Shared.Config;
 using Shared.Config.Contracts;
-using Shared.Core;
-using Shared.ServiceContracts;
 
 using UI.Services;
 
@@ -25,23 +16,16 @@ namespace UI.ViewModels;
 
 public class MainWindowViewModel : ReactiveObject, IDisposable
 {
-	private readonly ObservableAsPropertyHelper<bool> _canDeleteStep;
 	private readonly ObservableAsPropertyHelper<bool> _canRedo;
 	private readonly ObservableAsPropertyHelper<bool> _canUndo;
-	private readonly ICsvClipboardService _csvClipboardService;
 	private readonly CompositeDisposable _disposables = new();
 	private readonly DomainFacade _domainFacade;
 
 	private readonly ObservableAsPropertyHelper<bool> _isDirty;
-	private readonly INotificationService _notificationService;
 	private readonly IShutdownService _shutdownService;
 	private readonly Subject<Unit> _stateChanged = new();
 	private readonly ObservableAsPropertyHelper<string> _statusText;
 	private readonly ObservableAsPropertyHelper<string> _windowTitle;
-	private string? _currentFilePath;
-	private IClipboard? _clipboard;
-	private int _selectedRowIndex = -1;
-	private IReadOnlyList<int> _selectedRowIndices = [];
 
 	public MainWindowViewModel(
 		AppConfiguration configuration,
@@ -50,32 +34,35 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		IGroupRegistry groupRegistry,
 		IColumnRegistry columnRegistry,
 		IPropertyRegistry propertyRegistry,
-		ICsvClipboardService csvClipboardService,
 		INotificationService notificationService,
 		IShutdownService shutdownService)
 	{
 		Configuration = configuration;
 		_domainFacade = domainFacade;
-		ActionRegistry = actionRegistry;
-		GroupRegistry = groupRegistry;
-		ColumnRegistry = columnRegistry;
-		PropertyRegistry = propertyRegistry;
-		_csvClipboardService = csvClipboardService;
-		_notificationService = notificationService;
+		var notificationService1 = notificationService;
 		_shutdownService = shutdownService;
 
-		RecipeRows = new ObservableCollection<RecipeRowViewModel>();
 		LogPanel = new LogPanelViewModel();
-
-		OpenFileInteraction = new Interaction<Unit, string?>();
-		SaveFileInteraction = new Interaction<string?, string?>();
 		ShowMessageInteraction = new Interaction<(string Title, string Message), Unit>();
 
-		_canDeleteStep = this
-			.WhenAnyValue(x => x.SelectedRowIndices)
-			.Select(indices => indices.Count > 0)
-			.ToProperty(this, x => x.CanDeleteStep)
-			.DisposeWith(_disposables);
+		RecipeGrid = new RecipeGridViewModel(
+			domainFacade,
+			actionRegistry,
+			groupRegistry,
+			columnRegistry,
+			propertyRegistry,
+			LogPanel,
+			notificationService,
+			NotifyStateChanged);
+
+		Clipboard = new ClipboardViewModel(domainFacade, RecipeGrid, notificationService);
+
+		RecipeFile = new RecipeFileViewModel(
+			domainFacade,
+			RecipeGrid,
+			LogPanel,
+			notificationService,
+			NotifyStateChanged);
 
 		var stateObservable = _stateChanged
 			.ObserveOn(RxApp.MainThreadScheduler)
@@ -107,55 +94,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			.ToProperty(this, x => x.WindowTitle, initialValue: BuildWindowTitle())
 			.DisposeWith(_disposables);
 
-		var canUndo = this.WhenAnyValue(x => x.CanUndo);
-		var canRedo = this.WhenAnyValue(x => x.CanRedo);
-
-		AddStepCommand = ReactiveCommand.Create(AddStep);
-		DeleteStepCommand = ReactiveCommand.Create(DeleteStep, this.WhenAnyValue(x => x.CanDeleteStep));
-		SaveRecipeCommand = ReactiveCommand.CreateFromTask(SaveRecipeAsync);
-		SaveAsRecipeCommand = ReactiveCommand.CreateFromTask(SaveAsRecipeAsync);
-		LoadRecipeCommand = ReactiveCommand.CreateFromTask(LoadRecipeAsync);
-		NewRecipeCommand = ReactiveCommand.Create(NewRecipe);
-		UndoCommand = ReactiveCommand.Create(Undo, canUndo);
-		RedoCommand = ReactiveCommand.Create(Redo, canRedo);
 		ExitCommand = ReactiveCommand.Create(ExecuteExit);
-
-		var canCopyOrCut = this.WhenAnyValue(x => x.CanDeleteStep);
-		CopyStepCommand = ReactiveCommand.CreateFromTask(CopyStepsAsync, canCopyOrCut);
-		CutStepCommand = ReactiveCommand.CreateFromTask(CutStepsAsync, canCopyOrCut);
-		PasteStepCommand = ReactiveCommand.CreateFromTask(PasteStepsAsync);
-
-		SaveRecipeCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
-			.Subscribe(ex => _notificationService.ShowError($"Save failed: {ex.Message}"))
-			.DisposeWith(_disposables);
-
-		SaveAsRecipeCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
-			.Subscribe(ex => _notificationService.ShowError($"Save As failed: {ex.Message}"))
-			.DisposeWith(_disposables);
-
-		LoadRecipeCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
-			.Subscribe(ex => _notificationService.ShowError($"Load failed: {ex.Message}"))
-			.DisposeWith(_disposables);
-
-		CopyStepCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
-			.Subscribe(ex => _notificationService.ShowError($"Copy failed: {ex.Message}"))
-			.DisposeWith(_disposables);
-
-		CutStepCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
-			.Subscribe(ex => _notificationService.ShowError($"Cut failed: {ex.Message}"))
-			.DisposeWith(_disposables);
-
-		PasteStepCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
-			.Subscribe(ex => _notificationService.ShowError($"Paste failed: {ex.Message}"))
-			.DisposeWith(_disposables);
-
-		_currentFilePath = null;
 
 		Observable.FromEvent(
 				handler => _domainFacade.ConnectionStateChanged += handler,
@@ -168,7 +107,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 				if (_domainFacade.LastConnectionError is not null)
 				{
-					_notificationService.ShowError(
+					notificationService1.ShowError(
 						$"PLC connection failed: {_domainFacade.LastConnectionError}");
 				}
 			})
@@ -177,49 +116,19 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		_stateChanged.DisposeWith(_disposables);
 	}
 
-	public IActionRegistry ActionRegistry { get; }
+	public RecipeGridViewModel RecipeGrid { get; }
 
-	public IGroupRegistry GroupRegistry { get; }
+	public ClipboardViewModel Clipboard { get; }
 
-	public IPropertyRegistry PropertyRegistry { get; }
-
-	public IColumnRegistry ColumnRegistry { get; }
-
-	public ObservableCollection<RecipeRowViewModel> RecipeRows { get; }
+	public RecipeFileViewModel RecipeFile { get; }
 
 	public LogPanelViewModel LogPanel { get; }
 
 	public AppConfiguration Configuration { get; }
 
-	public Interaction<Unit, string?> OpenFileInteraction { get; }
-
-	public Interaction<string?, string?> SaveFileInteraction { get; }
-
 	public Interaction<(string Title, string Message), Unit> ShowMessageInteraction { get; }
 
-	public ReactiveCommand<Unit, Unit> AddStepCommand { get; }
-
-	public ReactiveCommand<Unit, Unit> DeleteStepCommand { get; }
-
-	public ReactiveCommand<Unit, Unit> SaveRecipeCommand { get; }
-
-	public ReactiveCommand<Unit, Unit> SaveAsRecipeCommand { get; }
-
-	public ReactiveCommand<Unit, Unit> LoadRecipeCommand { get; }
-
-	public ReactiveCommand<Unit, Unit> NewRecipeCommand { get; }
-
-	public ReactiveCommand<Unit, Unit> UndoCommand { get; }
-
-	public ReactiveCommand<Unit, Unit> RedoCommand { get; }
-
 	public ReactiveCommand<Unit, Unit> ExitCommand { get; }
-
-	public ReactiveCommand<Unit, Unit> CopyStepCommand { get; }
-
-	public ReactiveCommand<Unit, Unit> CutStepCommand { get; }
-
-	public ReactiveCommand<Unit, Unit> PasteStepCommand { get; }
 
 	public string WindowTitle => _windowTitle.Value;
 
@@ -229,25 +138,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public bool CanRedo => _canRedo.Value;
 
-	public int SelectedRowIndex
-	{
-		get => _selectedRowIndex;
-		set => this.RaiseAndSetIfChanged(ref _selectedRowIndex, value);
-	}
-
-	public IReadOnlyList<int> SelectedRowIndices
-	{
-		get => _selectedRowIndices;
-		set => this.RaiseAndSetIfChanged(ref _selectedRowIndices, value);
-	}
-
-	public void SetClipboard(IClipboard? clipboard)
-	{
-		_clipboard = clipboard;
-	}
-
-	public bool CanDeleteStep => _canDeleteStep.Value;
-
 	public bool IsConnectedToPlc => _domainFacade.IsConnected;
 
 	public string StatusText => _statusText.Value;
@@ -256,277 +146,17 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public void Dispose()
 	{
+		RecipeGrid.Dispose();
+		Clipboard.Dispose();
+		RecipeFile.Dispose();
 		_disposables.Dispose();
-
-		foreach (var row in RecipeRows)
-		{
-			row.Dispose();
-		}
+		GC.SuppressFinalize(this);
 	}
 
 	public void Initialize()
 	{
-		RebuildAllRows(_domainFacade.CurrentRecipe);
-		LogPanel.RefreshReasons(_domainFacade.Snapshot.Errors, _domainFacade.Snapshot.Warnings);
-		RefreshStepStartTimes();
+		RecipeGrid.Initialize();
 		NotifyStateChanged();
-	}
-
-	private void AddStep()
-	{
-		var firstAction = ActionRegistry.GetAll().First();
-		int newRowIndex;
-
-		if (SelectedRowIndex >= 0)
-		{
-			newRowIndex = SelectedRowIndex + 1;
-			_domainFacade.InsertStep(newRowIndex, firstAction.Id);
-			var insertedStep = _domainFacade.CurrentRecipe.Steps[newRowIndex];
-			InsertRow(newRowIndex, insertedStep);
-		}
-		else
-		{
-			newRowIndex = RecipeRows.Count;
-			_domainFacade.AppendStep(firstAction.Id);
-			var appendedStep = _domainFacade.CurrentRecipe.Steps[newRowIndex];
-			AppendRow(appendedStep);
-		}
-
-		LogPanel.RefreshReasons(_domainFacade.Snapshot.Errors, _domainFacade.Snapshot.Warnings);
-		RefreshStepStartTimes();
-		NotifyStateChanged();
-		SelectedRowIndex = newRowIndex;
-	}
-
-	private void DeleteStep()
-	{
-		var indices = _selectedRowIndices;
-		if (indices.Count == 0)
-		{
-			return;
-		}
-
-		var sortedDesc = indices.OrderByDescending(i => i).ToList();
-
-		if (indices.Count == 1)
-		{
-			var indexToDelete = indices[0];
-			_domainFacade.RemoveStep(indexToDelete);
-			RemoveRow(indexToDelete);
-		}
-		else
-		{
-			_domainFacade.RemoveSteps(indices);
-			foreach (var i in sortedDesc)
-			{
-				RecipeRows[i].Dispose();
-				RecipeRows.RemoveAt(i);
-			}
-
-			RenumberRowsFrom(0);
-		}
-
-		LogPanel.RefreshReasons(_domainFacade.Snapshot.Errors, _domainFacade.Snapshot.Warnings);
-		RefreshStepStartTimes();
-		NotifyStateChanged();
-
-		var firstDeleted = sortedDesc[^1];
-		if (RecipeRows.Count > 0)
-		{
-			SelectedRowIndex = Math.Min(firstDeleted, RecipeRows.Count - 1);
-		}
-		else
-		{
-			SelectedRowIndex = -1;
-		}
-	}
-
-	private async Task CopyStepsAsync()
-	{
-		if (_clipboard is null || _selectedRowIndices.Count == 0)
-		{
-			return;
-		}
-
-		var steps = CollectSelectedSteps();
-		var csvText = _csvClipboardService.SerializeSteps(steps);
-		await _clipboard.SetTextAsync(csvText);
-	}
-
-	private async Task CutStepsAsync()
-	{
-		if (_clipboard is null || _selectedRowIndices.Count == 0)
-		{
-			return;
-		}
-
-		var steps = CollectSelectedSteps();
-		var csvText = _csvClipboardService.SerializeSteps(steps);
-		await _clipboard.SetTextAsync(csvText);
-
-		DeleteStep();
-	}
-
-	private async Task PasteStepsAsync()
-	{
-		if (_clipboard is null)
-		{
-			return;
-		}
-
-		var csvText = await _clipboard.GetTextAsync();
-		if (string.IsNullOrWhiteSpace(csvText))
-		{
-			return;
-		}
-
-		var stepsResult = _csvClipboardService.DeserializeSteps(csvText);
-		if (stepsResult.IsFailed)
-		{
-			return;
-		}
-
-		var steps = stepsResult.Value;
-		var insertIndex = _selectedRowIndices.Count > 0
-			? _selectedRowIndices.Max() + 1
-			: RecipeRows.Count;
-
-		_domainFacade.InsertSteps(insertIndex, steps);
-
-		for (var i = 0; i < steps.Count; i++)
-		{
-			var step = _domainFacade.CurrentRecipe.Steps[insertIndex + i];
-			var action = ActionRegistry.GetAction(step.ActionKey);
-			var rowVm = CreateRowViewModel(step, action, insertIndex + i + 1);
-			RecipeRows.Insert(insertIndex + i, rowVm);
-		}
-
-		RenumberRowsFrom(insertIndex + steps.Count);
-		LogPanel.RefreshReasons(_domainFacade.Snapshot.Errors, _domainFacade.Snapshot.Warnings);
-		RefreshStepStartTimes();
-		NotifyStateChanged();
-
-		SelectedRowIndex = insertIndex;
-	}
-
-	private List<Step> CollectSelectedSteps()
-	{
-		var recipe = _domainFacade.CurrentRecipe;
-
-		return _selectedRowIndices
-			.OrderBy(i => i)
-			.Select(i => recipe.Steps[i])
-			.ToList();
-	}
-
-	private async Task SaveRecipeAsync()
-	{
-		if (_currentFilePath is not null)
-		{
-			await SaveToFileAsync(_currentFilePath);
-
-			return;
-		}
-
-		await SaveAsRecipeAsync();
-	}
-
-	private async Task SaveAsRecipeAsync()
-	{
-		var suggestedName = _currentFilePath is not null
-			? Path.GetFileNameWithoutExtension(_currentFilePath)
-			: null;
-
-		var filePath = await SaveFileInteraction.Handle(suggestedName);
-		if (filePath is null)
-		{
-			return;
-		}
-
-		await SaveToFileAsync(filePath);
-	}
-
-	private async Task SaveToFileAsync(string filePath)
-	{
-		try
-		{
-			await _domainFacade.SaveRecipeAsync(filePath);
-			_currentFilePath = filePath;
-			NotifyStateChanged();
-			_notificationService.ShowSuccess($"Saved: {Path.GetFileName(filePath)}");
-		}
-		catch (Exception ex)
-		{
-			_notificationService.ShowError($"Failed to save recipe: {ex.Message}");
-		}
-	}
-
-	private async Task LoadRecipeAsync()
-	{
-		var filePath = await OpenFileInteraction.Handle(Unit.Default);
-		if (filePath is null)
-		{
-			return;
-		}
-
-		try
-		{
-			var result = await _domainFacade.LoadRecipeAsync(filePath);
-			if (result.IsFailed)
-			{
-				var errorMessages = string.Join(Environment.NewLine, result.Errors.Select(e => e.Message));
-				_notificationService.ShowError($"Failed to load recipe:{Environment.NewLine}{errorMessages}");
-
-				return;
-			}
-
-			_currentFilePath = filePath;
-			RebuildAllRows(_domainFacade.CurrentRecipe);
-			LogPanel.RefreshReasons(_domainFacade.Snapshot.Errors, _domainFacade.Snapshot.Warnings);
-			RefreshStepStartTimes();
-			NotifyStateChanged();
-			_notificationService.ShowSuccess($"Loaded: {Path.GetFileName(filePath)}");
-		}
-		catch (Exception ex)
-		{
-			_notificationService.ShowError($"Failed to load recipe: {ex.Message}");
-		}
-	}
-
-	private void NewRecipe()
-	{
-		_domainFacade.NewRecipe();
-		_currentFilePath = null;
-
-		LogPanel.Clear();
-		RebuildAllRows(_domainFacade.CurrentRecipe);
-		LogPanel.RefreshReasons(_domainFacade.Snapshot.Errors, _domainFacade.Snapshot.Warnings);
-		RefreshStepStartTimes();
-		NotifyStateChanged();
-	}
-
-	private void Undo()
-	{
-		var snapshot = _domainFacade.Undo();
-		if (snapshot is not null)
-		{
-			RebuildAllRows(snapshot.Recipe);
-			LogPanel.RefreshReasons(snapshot.Errors, snapshot.Warnings);
-			RefreshStepStartTimes();
-			NotifyStateChanged();
-		}
-	}
-
-	private void Redo()
-	{
-		var snapshot = _domainFacade.Redo();
-		if (snapshot is not null)
-		{
-			RebuildAllRows(snapshot.Recipe);
-			LogPanel.RefreshReasons(snapshot.Errors, snapshot.Warnings);
-			RefreshStepStartTimes();
-			NotifyStateChanged();
-		}
 	}
 
 	private void ExecuteExit()
@@ -534,148 +164,18 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		_shutdownService.Shutdown();
 	}
 
-	private void OnCellValueChanged(RecipeRowViewModel row, string columnKey, string? value)
-	{
-		if (value is null)
-		{
-			return;
-		}
-
-		var stepIndex = RecipeRows.IndexOf(row);
-		if (stepIndex < 0)
-		{
-			return;
-		}
-
-		try
-		{
-			_domainFacade.UpdateStepProperty(stepIndex, columnKey, value);
-
-			var updatedStep = _domainFacade.CurrentRecipe.Steps[stepIndex];
-			RecipeRows[stepIndex].UpdateStep(updatedStep);
-		}
-		catch (Exception ex)
-		{
-			_notificationService.ShowError($"Step {stepIndex + 1}: {ex.Message}");
-		}
-
-		LogPanel.RefreshReasons(_domainFacade.Snapshot.Errors, _domainFacade.Snapshot.Warnings);
-		RefreshStepStartTimes();
-		NotifyStateChanged();
-	}
-
-	private void OnActionChanged(RecipeRowViewModel row, int newActionId)
-	{
-		var stepIndex = RecipeRows.IndexOf(row);
-		if (stepIndex < 0)
-		{
-			return;
-		}
-
-		try
-		{
-			_domainFacade.ChangeStepAction(stepIndex, newActionId);
-			var updatedStep = _domainFacade.CurrentRecipe.Steps[stepIndex];
-			var newAction = ActionRegistry.GetAction(newActionId);
-			RecipeRows[stepIndex].Dispose();
-			RecipeRows[stepIndex] = CreateRowViewModel(updatedStep, newAction, stepIndex + 1);
-		}
-		catch (Exception ex)
-		{
-			_notificationService.ShowError(
-				$"Step {stepIndex + 1}: Failed to change action - {ex.Message}");
-		}
-
-		LogPanel.RefreshReasons(_domainFacade.Snapshot.Errors, _domainFacade.Snapshot.Warnings);
-		RefreshStepStartTimes();
-		NotifyStateChanged();
-	}
-
 	private void NotifyStateChanged()
 	{
 		_stateChanged.OnNext(Unit.Default);
 	}
 
-	private void RefreshStepStartTimes()
-	{
-		var stepStartTimes = _domainFacade.Snapshot.StepStartTimes;
-		for (var i = 0; i < RecipeRows.Count; i++)
-		{
-			var rawSeconds = stepStartTimes.TryGetValue(i, out var time)
-				? time.TotalSeconds.ToString(CultureInfo.InvariantCulture)
-				: string.Empty;
-			RecipeRows[i].UpdateStepStartTime(rawSeconds);
-		}
-	}
-
 	private string BuildWindowTitle()
 	{
-		var fileName = _currentFilePath is not null
-			? Path.GetFileNameWithoutExtension(_currentFilePath)
+		var fileName = RecipeFile.CurrentFilePath is not null
+			? Path.GetFileNameWithoutExtension(RecipeFile.CurrentFilePath)
 			: "New Recipe";
 		var dirtyIndicator = _domainFacade.IsDirty ? " *" : "";
 
 		return $"SemiStep - {fileName}{dirtyIndicator}";
-	}
-
-	private RecipeRowViewModel CreateRowViewModel(
-		Step step,
-		ActionDefinition action,
-		int stepNumber)
-	{
-		return new RecipeRowViewModel(
-			stepNumber,
-			step,
-			action,
-			GroupRegistry,
-			ColumnRegistry,
-			PropertyRegistry,
-			OnCellValueChanged,
-			OnActionChanged);
-	}
-
-	private void AppendRow(Step step)
-	{
-		var action = ActionRegistry.GetAction(step.ActionKey);
-		RecipeRows.Add(CreateRowViewModel(step, action, RecipeRows.Count + 1));
-	}
-
-	private void InsertRow(int index, Step step)
-	{
-		var action = ActionRegistry.GetAction(step.ActionKey);
-		RecipeRows.Insert(index, CreateRowViewModel(step, action, index + 1));
-		RenumberRowsFrom(index + 1);
-	}
-
-	private void RemoveRow(int index)
-	{
-		RecipeRows[index].Dispose();
-		RecipeRows.RemoveAt(index);
-		RenumberRowsFrom(index);
-	}
-
-	private void RenumberRowsFrom(int startIndex)
-	{
-		for (var i = startIndex; i < RecipeRows.Count; i++)
-		{
-			RecipeRows[i].UpdateStepNumber(i + 1);
-		}
-	}
-
-	private void RebuildAllRows(Recipe recipe)
-	{
-		foreach (var row in RecipeRows)
-		{
-			row.Dispose();
-		}
-
-		RecipeRows.Clear();
-
-		for (var i = 0; i < recipe.StepCount; i++)
-		{
-			var step = recipe.Steps[i];
-			var action = ActionRegistry.GetAction(step.ActionKey);
-			RecipeRows.Add(CreateRowViewModel(step, action, i + 1));
-		}
 	}
 }

@@ -11,8 +11,7 @@ internal sealed class CoreService(
 	RecipeStateManager stateManager,
 	IActionRegistry actionRegistry,
 	IPropertyRegistry propertyRegistry,
-	IGroupRegistry groupRegistry,
-	IColumnRegistry columnRegistry)
+	IGroupRegistry groupRegistry)
 {
 	public RecipeSnapshot NewRecipe()
 	{
@@ -77,11 +76,12 @@ internal sealed class CoreService(
 
 	public RecipeSnapshot UpdateStepProperty(int stepIndex, string columnKey, string value)
 	{
-		var columnDef = columnRegistry.GetColumn(columnKey);
-		var property = propertyRegistry.GetProperty(columnDef.PropertyTypeId);
-
 		var step = stateManager.Current.Steps[stepIndex];
 		var action = actionRegistry.GetAction(step.ActionKey);
+
+		var actionColumn = action.Columns.FirstOrDefault(c => c.Key == columnKey)
+			?? throw new KeyNotFoundException($"Column '{columnKey}' is not defined for action '{action.Id}'");
+		var property = propertyRegistry.GetProperty(actionColumn.PropertyTypeId);
 
 		var columnId = new ColumnId(columnKey);
 

@@ -9,12 +9,12 @@ namespace Csv.Facade;
 
 internal sealed class CsvClipboard(CsvClipboardSerializer clipboardSerializer) : ICsvClipboardService
 {
-	public string SerializeSteps(IReadOnlyList<Step> steps)
+	public string SerializeSteps(Recipe recipe)
 	{
-		return clipboardSerializer.SerializeSteps(steps);
+		return clipboardSerializer.SerializeSteps(recipe);
 	}
 
-	public Result<IReadOnlyList<Step>> DeserializeSteps(string csvBody)
+	public Result<Recipe> DeserializeSteps(string csvBody)
 	{
 		return clipboardSerializer.DeserializeSteps(csvBody);
 	}

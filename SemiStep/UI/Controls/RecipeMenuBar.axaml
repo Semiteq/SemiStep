@@ -8,15 +8,15 @@
     <Menu>
         <MenuItem Header="_File">
             <MenuItem Header="_New Recipe"
-                      Command="{Binding NewRecipeCommand}" />
+                      Command="{Binding RecipeFile.NewRecipeCommand}" />
             <MenuItem Header="_Open Recipe..."
-                      Command="{Binding LoadRecipeCommand}"
+                      Command="{Binding RecipeFile.LoadRecipeCommand}"
                       InputGesture="Ctrl+O" />
             <MenuItem Header="_Save Recipe"
-                      Command="{Binding SaveRecipeCommand}"
+                      Command="{Binding RecipeFile.SaveRecipeCommand}"
                       InputGesture="Ctrl+S" />
             <MenuItem Header="Save Recipe _As..."
-                      Command="{Binding SaveAsRecipeCommand}"
+                      Command="{Binding RecipeFile.SaveAsRecipeCommand}"
                       InputGesture="Ctrl+Shift+S" />
             <Separator />
             <MenuItem Header="E_xit"
@@ -26,27 +26,27 @@
 
         <MenuItem Header="_Edit">
             <MenuItem Header="_Add Step"
-                      Command="{Binding AddStepCommand}"
+                      Command="{Binding RecipeGrid.AddStepCommand}"
                       InputGesture="Ctrl+N" />
             <MenuItem Header="_Delete Step"
-                      Command="{Binding DeleteStepCommand}"
+                      Command="{Binding RecipeGrid.DeleteStepCommand}"
                       InputGesture="Delete" />
             <Separator />
             <MenuItem Header="Cop_y Steps"
-                      Command="{Binding CopyStepCommand}"
+                      Command="{Binding Clipboard.CopyStepCommand}"
                       InputGesture="Ctrl+C" />
             <MenuItem Header="Cu_t Steps"
-                      Command="{Binding CutStepCommand}"
+                      Command="{Binding Clipboard.CutStepCommand}"
                       InputGesture="Ctrl+X" />
             <MenuItem Header="_Paste Steps"
-                      Command="{Binding PasteStepCommand}"
+                      Command="{Binding Clipboard.PasteStepCommand}"
                       InputGesture="Ctrl+V" />
             <Separator />
             <MenuItem Header="_Undo"
-                      Command="{Binding UndoCommand}"
+                      Command="{Binding RecipeGrid.UndoCommand}"
                       InputGesture="Ctrl+Z" />
             <MenuItem Header="_Redo"
-                      Command="{Binding RedoCommand}"
+                      Command="{Binding RecipeGrid.RedoCommand}"
                       InputGesture="Ctrl+Shift+Z" />
         </MenuItem>
         <MenuItem Header="_View">

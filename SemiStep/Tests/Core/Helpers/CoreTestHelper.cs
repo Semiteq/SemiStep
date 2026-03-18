@@ -28,6 +28,7 @@ public static class CoreTestHelper
 			.AddRecipe()
 			.AddDomain()
 			.AddSingleton<ICsvService, StubCsvService>()
+			.AddSingleton<ICsvClipboardService, StubCsvClipboardService>()
 			.AddSingleton<IS7ConnectionService, StubS7ConnectionService>()
 			.BuildServiceProvider();
 

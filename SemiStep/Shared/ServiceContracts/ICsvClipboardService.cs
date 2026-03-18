@@ -6,7 +6,7 @@ namespace Shared.ServiceContracts;
 
 public interface ICsvClipboardService
 {
-	string SerializeSteps(IReadOnlyList<Step> steps);
+	string SerializeSteps(Recipe recipe);
 
-	Result<IReadOnlyList<Step>> DeserializeSteps(string csvBody);
+	Result<Recipe> DeserializeSteps(string csvBody);
 }

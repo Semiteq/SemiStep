@@ -14,7 +14,7 @@ using UI.ViewModels;
 
 namespace UI.Views;
 
-public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
+internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 {
 	private ColumnBuilder? _columnBuilder;
 	private bool _forceClose;
@@ -33,13 +33,13 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 				return;
 			}
 
-			ViewModel.SetClipboard(Clipboard);
+			ViewModel.Clipboard.SetClipboard(Clipboard);
 
-			ViewModel.OpenFileInteraction
+			ViewModel.RecipeFile.OpenFileInteraction
 				.RegisterHandler(HandleOpenFileDialogAsync)
 				.DisposeWith(disposables);
 
-			ViewModel.SaveFileInteraction
+			ViewModel.RecipeFile.SaveFileInteraction
 				.RegisterHandler(HandleSaveFileDialogAsync)
 				.DisposeWith(disposables);
 
@@ -48,11 +48,11 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 				.DisposeWith(disposables);
 
 			_columnBuilder = new ColumnBuilder(
-				ViewModel.ActionRegistry,
-				ViewModel.GroupRegistry,
+				ViewModel.RecipeGrid.ActionRegistry,
+				ViewModel.RecipeGrid.GroupRegistry,
 				ViewModel.Configuration.GridStyle,
-				ViewModel.PropertyRegistry,
-				ViewModel.ColumnRegistry);
+				ViewModel.RecipeGrid.PropertyRegistry,
+				ViewModel.RecipeGrid.ColumnRegistry);
 			BuildGrid();
 
 			RecipeGrid.BeginningEdit += OnBeginningEdit;
@@ -82,25 +82,25 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 			switch (e.Key)
 			{
 				case Key.Delete:
-					ViewModel.DeleteStepCommand.Execute().Subscribe();
+					ViewModel.RecipeGrid.DeleteStepCommand.Execute().Subscribe();
 					e.Handled = true;
 
 					return;
 
 				case Key.C when e.KeyModifiers == KeyModifiers.Control:
-					ViewModel.CopyStepCommand.Execute().Subscribe();
+					ViewModel.Clipboard.CopyStepCommand.Execute().Subscribe();
 					e.Handled = true;
 
 					return;
 
 				case Key.X when e.KeyModifiers == KeyModifiers.Control:
-					ViewModel.CutStepCommand.Execute().Subscribe();
+					ViewModel.Clipboard.CutStepCommand.Execute().Subscribe();
 					e.Handled = true;
 
 					return;
 
 				case Key.V when e.KeyModifiers == KeyModifiers.Control:
-					ViewModel.PasteStepCommand.Execute().Subscribe();
+					ViewModel.Clipboard.PasteStepCommand.Execute().Subscribe();
 					e.Handled = true;
 
 					return;
@@ -132,7 +132,7 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 		{
 			if (item is RecipeRowViewModel row)
 			{
-				var index = ViewModel.RecipeRows.IndexOf(row);
+				var index = ViewModel.RecipeGrid.RecipeRows.IndexOf(row);
 				if (index >= 0)
 				{
 					indices.Add(index);
@@ -141,7 +141,7 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 		}
 
 		indices.Sort();
-		ViewModel.SelectedRowIndices = indices;
+		ViewModel.RecipeGrid.SelectedRowIndices = indices;
 	}
 
 	private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
@@ -164,7 +164,7 @@ public partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 		switch (result)
 		{
 			case ExitConfirmationResult.Save:
-				ViewModel.SaveRecipeCommand.Execute().Subscribe(_ =>
+				ViewModel.RecipeFile.SaveRecipeCommand.Execute().Subscribe(_ =>
 				{
 					_forceClose = true;
 					Close();

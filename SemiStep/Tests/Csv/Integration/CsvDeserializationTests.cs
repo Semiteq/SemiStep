@@ -72,17 +72,18 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 			.Add(new ColumnId("comment"), PropertyValue.FromString("second")));
 
 		var steps = new List<Step> { step1, step2 };
+		var recipe = new Recipe(steps.ToImmutableList());
 
-		var csv = fixture.ClipboardSerializer.SerializeSteps(steps);
+		var csv = fixture.ClipboardSerializer.SerializeSteps(recipe);
 		csv.Should().Contain("\t");
 		csv.Should().NotContain(";");
 
 		var result = fixture.ClipboardSerializer.DeserializeSteps(csv);
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Count.Should().Be(2);
-		result.Value[0].ActionKey.Should().Be(10);
-		result.Value[1].ActionKey.Should().Be(10);
+		result.Value.Steps.Count.Should().Be(2);
+		result.Value.Steps[0].ActionKey.Should().Be(10);
+		result.Value.Steps[1].ActionKey.Should().Be(10);
 	}
 
 	[Fact]
@@ -108,5 +109,27 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 		var result = fixture.ClipboardSerializer.DeserializeSteps(malformed);
 
 		result.IsFailed.Should().BeTrue();
+	}
+
+	[Fact]
+	public void ClipboardDeserialize_FewerColumnsThanExpected_SucceedsWithMissingFieldsTreatedAsEmpty()
+	{
+		var fewerColumns = "10\t5.0";
+		var result = fixture.ClipboardSerializer.DeserializeSteps(fewerColumns);
+
+		result.IsSuccess.Should().BeTrue();
+		result.Value.Steps.Should().HaveCount(1);
+		result.Value.Steps[0].ActionKey.Should().Be(10);
+	}
+
+	[Fact]
+	public void ClipboardDeserialize_MoreColumnsThanExpected_ReturnsColumnCountMismatch()
+	{
+		var tooManyColumns = "10\t5.0\t0\ttest\textra";
+		var result = fixture.ClipboardSerializer.DeserializeSteps(tooManyColumns);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().ContainSingle()
+			.Which.Message.Should().Contain("Column count mismatch");
 	}
 }

@@ -13,11 +13,11 @@
         Height="800">
 
     <Window.KeyBindings>
-        <KeyBinding Gesture="Ctrl+O" Command="{Binding LoadRecipeCommand}" />
-        <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveRecipeCommand}" />
-        <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}" />
-        <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}" />
-        <KeyBinding Gesture="Ctrl+N" Command="{Binding AddStepCommand}" />
+        <KeyBinding Gesture="Ctrl+O" Command="{Binding RecipeFile.LoadRecipeCommand}" />
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding RecipeFile.SaveRecipeCommand}" />
+        <KeyBinding Gesture="Ctrl+Z" Command="{Binding RecipeGrid.UndoCommand}" />
+        <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RecipeGrid.RedoCommand}" />
+        <KeyBinding Gesture="Ctrl+N" Command="{Binding RecipeGrid.AddStepCommand}" />
     </Window.KeyBindings>
 
     <Grid RowDefinitions="Auto,*,Auto,Auto">
@@ -26,8 +26,8 @@
 
         <DataGrid Grid.Row="1"
                   x:Name="RecipeGrid"
-                  ItemsSource="{Binding RecipeRows}"
-                  SelectedIndex="{Binding SelectedRowIndex}"
+                  ItemsSource="{Binding RecipeGrid.RecipeRows}"
+                  SelectedIndex="{Binding RecipeGrid.SelectedRowIndex}"
                   AutoGenerateColumns="False"
                   CanUserReorderColumns="False"
                   CanUserResizeColumns="True"
@@ -42,16 +42,16 @@
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Add Step"
-                              Command="{Binding AddStepCommand}" />
+                              Command="{Binding RecipeGrid.AddStepCommand}" />
                     <MenuItem Header="Delete Step"
-                              Command="{Binding DeleteStepCommand}" />
+                              Command="{Binding RecipeGrid.DeleteStepCommand}" />
                     <Separator />
                     <MenuItem Header="Copy Steps"
-                              Command="{Binding CopyStepCommand}" />
+                              Command="{Binding Clipboard.CopyStepCommand}" />
                     <MenuItem Header="Cut Steps"
-                              Command="{Binding CutStepCommand}" />
+                              Command="{Binding Clipboard.CutStepCommand}" />
                     <MenuItem Header="Paste Steps"
-                              Command="{Binding PasteStepCommand}" />
+                              Command="{Binding Clipboard.PasteStepCommand}" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
         </DataGrid>

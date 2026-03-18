@@ -33,7 +33,8 @@ public static class DomainDi
 				sp.GetRequiredService<RecipeStateManager>(),
 				sp.GetRequiredService<RecipeHistoryManager>(),
 				sp.GetRequiredService<ICsvService>(),
-				sp.GetRequiredService<IS7ConnectionService>())
+				sp.GetRequiredService<IS7ConnectionService>(),
+				sp.GetRequiredService<ICsvClipboardService>())
 			);
 
 		return services;

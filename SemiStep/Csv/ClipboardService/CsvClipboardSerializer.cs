@@ -1,7 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Globalization;
 
-using Csv.FsService;
+using Csv.Helpers;
 
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -20,17 +20,16 @@ internal sealed class CsvClipboardSerializer(
 	IPropertyRegistry propertyRegistry)
 {
 	private const char ClipboardSeparator = '\t';
-	private const string ActionColumnKey = "action";
 
-	internal string SerializeSteps(IReadOnlyList<Step> steps)
+	internal string SerializeSteps(Recipe recipe)
 	{
-		var csvColumns = GetCsvColumns();
+		var csvColumns = CsvStepWriter.GetCsvColumns(columnRegistry);
 		using var stringWriter = new StringWriter();
 		using var csvWriter = CreateClipboardWriter(stringWriter);
 
-		foreach (var step in steps)
+		foreach (var step in recipe.Steps)
 		{
-			WriteStep(csvWriter, step, csvColumns);
+			CsvStepWriter.WriteStep(csvWriter, step, csvColumns);
 		}
 
 		csvWriter.Flush();
@@ -38,54 +37,134 @@ internal sealed class CsvClipboardSerializer(
 		return stringWriter.ToString();
 	}
 
-	internal Result<IReadOnlyList<Step>> DeserializeSteps(string csvBody)
+	internal Result<Recipe> DeserializeSteps(string csvBody)
 	{
-		var csvColumns = GetCsvColumns();
-
-		using var stringReader = new StringReader(csvBody);
-		using var csvReader = CreateClipboardReader(stringReader);
-
 		try
 		{
-			var steps = new List<Step>();
-			var rowNumber = 0;
-			var errors = new List<IError>();
+			var csvColumns = CsvStepWriter.GetCsvColumns(columnRegistry);
+			var columnIndexMap = BuildColumnIndexMap(csvColumns);
 
-			while (csvReader.Read())
+			var actionColumnIndex = FindActionColumnIndex(csvColumns);
+			if (actionColumnIndex < 0)
 			{
-				rowNumber++;
-				var stepResult = TryParseStepByIndex(csvReader, csvColumns, rowNumber);
-				if (stepResult.IsFailed)
-				{
-					errors.AddRange(stepResult.Errors);
-					continue;
-				}
-				steps.Add(stepResult.Value);
+				return Result.Fail("Action column not found in configuration");
 			}
 
-			if (errors.Count > 0)
-			{
-				return Result.Fail<IReadOnlyList<Step>>(errors);
-			}
+			using var stringReader = new StringReader(csvBody);
+			using var csvReader = CreateClipboardReader(stringReader);
 
-			if (steps.Count == 0)
-			{
-				return Result.Fail<IReadOnlyList<Step>>("No valid steps found in clipboard data");
-			}
-
-			return Result.Ok<IReadOnlyList<Step>>(steps);
+			return ReadAllSteps(csvReader, csvColumns, columnIndexMap, actionColumnIndex);
 		}
 		catch (Exception ex)
 		{
-			return Result.Fail<IReadOnlyList<Step>>($"Failed to parse clipboard data: {ex.Message}");
+			return Result.Fail($"Failed to parse clipboard data: {ex.Message}");
 		}
 	}
 
-	private IReadOnlyList<GridColumnDefinition> GetCsvColumns()
+	private Result<Recipe> ReadAllSteps(
+		CsvReader csvReader,
+		IReadOnlyList<GridColumnDefinition> csvColumns,
+		Dictionary<string, int> columnIndexMap,
+		int actionColumnIndex)
 	{
-		return columnRegistry.GetAll()
-			.Where(c => c.SaveToCsv)
-			.ToList();
+		var expectedColumnCount = CountColumns_IntendedForUserInput(csvColumns);
+		var errors = new List<IError>();
+		var steps = new List<Step>();
+		var rowNumber = 0;
+
+		while (csvReader.Read())
+		{
+			rowNumber++;
+
+			var actualColumnCount = csvReader.ColumnCount;
+			if (actualColumnCount > expectedColumnCount)
+			{
+				return Result.Fail(
+					$"Column count mismatch on row {rowNumber}: expected {expectedColumnCount}, got {actualColumnCount}. " +
+					"The clipboard data does not match the current configuration.");
+			}
+
+			var stepResult = TryParseStep(csvReader, csvColumns, columnIndexMap, actionColumnIndex, rowNumber);
+			if (stepResult.IsFailed)
+			{
+				errors.AddRange(stepResult.Errors);
+				continue;
+			}
+
+			steps.Add(stepResult.Value);
+		}
+
+		if (errors.Count > 0)
+		{
+			return Result.Fail(errors);
+		}
+
+		if (steps.Count == 0)
+		{
+			return Result.Fail("No valid steps found in clipboard data");
+		}
+
+		return new Recipe(steps.ToImmutableList());
+	}
+
+	private static int CountColumns_IntendedForUserInput(IReadOnlyList<GridColumnDefinition> columns)
+	{
+		return columns.Count(t => t.SaveToCsv);
+	}
+
+	private Result<Step> TryParseStep(
+		CsvReader csvReader,
+		IReadOnlyList<GridColumnDefinition> csvColumns,
+		Dictionary<string, int> columnIndexMap,
+		int actionColumnIndex,
+		int rowNumber)
+	{
+		var rawAction = csvReader.GetField(actionColumnIndex);
+		var actionResult = CsvStepReader.TryParseActionValue(rawAction, rowNumber, actionRegistry);
+		if (actionResult.IsFailed)
+		{
+			return actionResult.ToResult<Step>();
+		}
+
+		var actionKey = actionResult.Value;
+		var actionColumnKeys = CsvStepReader.GetActionColumnKeys(actionKey, actionRegistry);
+		var properties = CsvStepReader.ParseProperties(
+			csvColumns, actionColumnKeys, rowNumber, propertyRegistry,
+			column => columnIndexMap.TryGetValue(column.Key, out var index)
+				? csvReader.GetField(index)
+				: null);
+
+		if (properties.IsFailed)
+		{
+			return properties.ToResult<Step>();
+		}
+
+		return new Step(actionKey, properties.Value);
+	}
+
+	private static int FindActionColumnIndex(IReadOnlyList<GridColumnDefinition> columns)
+	{
+		for (var i = 0; i < columns.Count; i++)
+		{
+			if (columns[i].Key == CsvStepWriter.ActionColumnKey)
+			{
+				return i;
+			}
+		}
+
+		return -1;
+	}
+
+	private static Dictionary<string, int> BuildColumnIndexMap(IReadOnlyList<GridColumnDefinition> columns)
+	{
+		var map = new Dictionary<string, int>(columns.Count);
+
+		for (var i = 0; i < columns.Count; i++)
+		{
+			map[columns[i].Key] = i;
+		}
+
+		return map;
 	}
 
 	private static CsvWriter CreateClipboardWriter(TextWriter textWriter)
@@ -94,7 +173,7 @@ internal sealed class CsvClipboardSerializer(
 		{
 			Delimiter = ClipboardSeparator.ToString(),
 			HasHeaderRecord = false,
-			TrimOptions = TrimOptions.Trim,
+			TrimOptions = TrimOptions.Trim
 		};
 
 		return new CsvWriter(textWriter, config);
@@ -107,100 +186,9 @@ internal sealed class CsvClipboardSerializer(
 			Delimiter = ClipboardSeparator.ToString(),
 			HasHeaderRecord = false,
 			TrimOptions = TrimOptions.Trim,
-			MissingFieldFound = null,
+			MissingFieldFound = null
 		};
 
 		return new CsvReader(textReader, config);
-	}
-
-	private static void WriteStep(CsvWriter csvWriter, Step step, IReadOnlyList<GridColumnDefinition> columns)
-	{
-		foreach (var column in columns)
-		{
-			var value = StepValueParser.FormatStepValue(step, column);
-			csvWriter.WriteField(value);
-		}
-
-		csvWriter.NextRecord();
-	}
-
-	private Result<Step> TryParseStepByIndex(
-		CsvReader csvReader,
-		IReadOnlyList<GridColumnDefinition> columns,
-		int rowNumber)
-	{
-		var actionColumnIndex = -1;
-		for (var i = 0; i < columns.Count; i++)
-		{
-			if (columns[i].Key == ActionColumnKey)
-			{
-				actionColumnIndex = i;
-
-				break;
-			}
-		}
-
-		if (actionColumnIndex < 0)
-		{
-			return Result.Fail($"Row {rowNumber}: action column not found in configuration");
-		}
-
-		var rawAction = csvReader.GetField(actionColumnIndex);
-		if (string.IsNullOrWhiteSpace(rawAction) ||
-			!int.TryParse(rawAction, NumberStyles.Integer, CultureInfo.InvariantCulture, out var actionKey))
-		{
-			return Result.Fail($"Row {rowNumber}: cannot parse action value '{rawAction}' as integer");
-		}
-
-		if (!actionRegistry.ActionExists(actionKey))
-		{
-			return Result.Fail($"Row {rowNumber}: unknown action ID '{actionKey}'");
-		}
-
-		var action = actionRegistry.GetAction(actionKey);
-		var actionColumnKeys = action.Columns
-			.Select(c => c.Key)
-			.ToHashSet();
-
-		var errors = new List<IError>();
-		var properties = ImmutableDictionary.CreateBuilder<ColumnId, PropertyValue>();
-
-		for (var i = 0; i < columns.Count; i++)
-		{
-			var column = columns[i];
-			if (column.Key == ActionColumnKey)
-			{
-				continue;
-			}
-
-			var rawValue = csvReader.GetField(i);
-			if (string.IsNullOrWhiteSpace(rawValue))
-			{
-				continue;
-			}
-
-			if (!actionColumnKeys.Contains(column.Key))
-			{
-				continue;
-			}
-
-			var propertyDef = propertyRegistry.GetProperty(column.PropertyTypeId);
-			var propertyResult = StepValueParser.TryParsePropertyValue(rawValue, propertyDef, column.Key, rowNumber);
-			if (propertyResult.IsFailed)
-			{
-				errors.AddRange(propertyResult.Errors);
-			}
-			else
-			{
-				properties.Add(new ColumnId(column.Key), propertyResult.Value);
-			}
-		}
-
-		if (errors.Count > 0)
-		{
-			return Result.Fail(errors);
-		}
-
-		return new Step(actionKey, properties.ToImmutable());
 	}
 }

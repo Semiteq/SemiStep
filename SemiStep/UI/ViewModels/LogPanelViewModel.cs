@@ -8,7 +8,7 @@ using UI.Models;
 
 namespace UI.ViewModels;
 
-public class LogPanelViewModel : ReactiveObject
+public class LogPanelViewModel : ReactiveObject, IDisposable
 {
 	private int _errorCount;
 	private bool _isVisible = true;
@@ -17,7 +17,7 @@ public class LogPanelViewModel : ReactiveObject
 
 	public LogPanelViewModel()
 	{
-		Entries = new ObservableCollection<LogEntry>();
+		Entries = [];
 		Entries.CollectionChanged += OnEntriesChanged;
 
 		ClearCommand = ReactiveCommand.Create(ClearNonStructural);
@@ -127,6 +127,14 @@ public class LogPanelViewModel : ReactiveObject
 		RaiseAllChanged();
 	}
 
+	public void Dispose()
+	{
+		Entries.CollectionChanged -= OnEntriesChanged;
+		ToggleCommand.Dispose();
+		ClearCommand.Dispose();
+		GC.SuppressFinalize(this);
+	}
+
 	private void ClearNonStructural()
 	{
 		_suppressNotifications = true;
@@ -184,13 +192,15 @@ public class LogPanelViewModel : ReactiveObject
 
 	private void AdjustCountersForAddition(LogEntry entry)
 	{
-		if (entry.Severity == LogSeverity.Error)
+		switch (entry.Severity)
 		{
-			ErrorCount++;
-		}
-		else if (entry.Severity == LogSeverity.Warning)
-		{
-			WarningCount++;
+			case LogSeverity.Error:
+				ErrorCount++;
+				break;
+
+			case LogSeverity.Warning:
+				WarningCount++;
+				break;
 		}
 	}
 

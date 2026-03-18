@@ -1,5 +1,7 @@
 ﻿using System.Globalization;
 
+using Csv.Helpers;
+
 using FluentResults;
 
 using Shared.Config;
@@ -9,11 +11,9 @@ namespace Csv.FsService;
 
 internal static class StepValueParser
 {
-	private const string ActionColumnKey = "action";
-
 	internal static string FormatStepValue(Step step, GridColumnDefinition column)
 	{
-		if (column.Key == ActionColumnKey)
+		if (column.Key == CsvStepWriter.ActionColumnKey)
 		{
 			return step.ActionKey.ToString(CultureInfo.InvariantCulture);
 		}

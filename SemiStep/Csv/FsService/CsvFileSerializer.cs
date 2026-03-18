@@ -1,6 +1,8 @@
 ﻿using System.Collections.Immutable;
 using System.Globalization;
 
+using Csv.Helpers;
+
 using CsvHelper;
 using CsvHelper.Configuration;
 
@@ -18,16 +20,19 @@ internal sealed class CsvFileSerializer(
 	IPropertyRegistry propertyRegistry)
 {
 	private const char Separator = ';';
-	private const string ActionColumnKey = "action";
 
 	public string Serialize(Recipe recipe)
 	{
-		var csvColumns = GetCsvColumns();
+		var csvColumns = CsvStepWriter.GetCsvColumns(columnRegistry);
 		using var stringWriter = new StringWriter();
 		using var csvWriter = CreateWriter(stringWriter);
 
 		WriteHeader(csvWriter, csvColumns);
-		WriteSteps(csvWriter, recipe, csvColumns);
+
+		foreach (var step in recipe.Steps)
+		{
+			CsvStepWriter.WriteStep(csvWriter, step, csvColumns);
+		}
 
 		csvWriter.Flush();
 
@@ -36,7 +41,7 @@ internal sealed class CsvFileSerializer(
 
 	public Result<Recipe> Deserialize(string csvBody)
 	{
-		var csvColumns = GetCsvColumns();
+		var csvColumns = CsvStepWriter.GetCsvColumns(columnRegistry);
 
 		using var stringReader = new StringReader(csvBody);
 		using var csvReader = CreateReader(stringReader);
@@ -75,9 +80,7 @@ internal sealed class CsvFileSerializer(
 			return Result.Fail<Recipe>(allErrors);
 		}
 
-		var recipe = new Recipe(steps.ToImmutableList());
-
-		return Result.Ok(recipe);
+		return new Recipe(steps.ToImmutableList());
 	}
 
 	private Result<Step> TryParseStep(
@@ -85,108 +88,25 @@ internal sealed class CsvFileSerializer(
 		IReadOnlyList<GridColumnDefinition> columns,
 		int rowNumber)
 	{
-		var actionKeyResult = TryParseActionKey(csvReader, rowNumber)
-			.Bind(ValidateActionKey);
-
-		if (actionKeyResult.IsFailed)
+		var rawAction = csvReader.GetField(CsvStepWriter.ActionColumnKey);
+		var actionResult = CsvStepReader.TryParseActionValue(rawAction, rowNumber, actionRegistry);
+		if (actionResult.IsFailed)
 		{
-			return actionKeyResult.ToResult<Step>();
+			return actionResult.ToResult<Step>();
 		}
 
-		var actionKey = actionKeyResult.Value;
-		var actionColumnKeys = GetActionColumnKeys(actionKey);
-		var properties = ParseProperties(csvReader, columns, actionColumnKeys, rowNumber);
+		var actionKey = actionResult.Value;
+		var actionColumnKeys = CsvStepReader.GetActionColumnKeys(actionKey, actionRegistry);
+		var properties = CsvStepReader.ParseProperties(
+			columns, actionColumnKeys, rowNumber, propertyRegistry,
+			column => csvReader.GetField(column.Key));
 
 		if (properties.IsFailed)
 		{
 			return properties.ToResult<Step>();
 		}
 
-		return Result.Ok(new Step(actionKey, properties.Value));
-	}
-
-	private Result<ImmutableDictionary<ColumnId, PropertyValue>> ParseProperties(
-		CsvReader csvReader,
-		IReadOnlyList<GridColumnDefinition> columns,
-		HashSet<string> actionColumnKeys,
-		int rowNumber)
-	{
-
-		var errors = new List<IError>();
-		var properties = ImmutableDictionary.CreateBuilder<ColumnId, PropertyValue>();
-
-		foreach (var column in columns)
-		{
-			if (column.Key == ActionColumnKey)
-			{
-				continue;
-			}
-
-			var rawValue = csvReader.GetField(column.Key);
-			if (string.IsNullOrWhiteSpace(rawValue))
-			{
-				continue;
-			}
-
-			if (!actionColumnKeys.Contains(column.Key))
-			{
-				continue;
-			}
-
-			var propertyDef = propertyRegistry.GetProperty(column.PropertyTypeId);
-			var propertyResult = StepValueParser.TryParsePropertyValue(rawValue, propertyDef, column.Key, rowNumber);
-			if (propertyResult.IsFailed)
-			{
-				errors.AddRange(propertyResult.Errors);
-			}
-			else
-			{
-				properties.Add(new ColumnId(column.Key), propertyResult.Value);
-			}
-		}
-
-		if (errors.Count > 0)
-		{
-			return Result.Fail(errors);
-		}
-
-		return properties.ToImmutable();
-	}
-
-	private HashSet<string> GetActionColumnKeys(int actionKey)
-	{
-		var action = actionRegistry.GetAction(actionKey);
-
-		return action.Columns
-			.Select(c => c.Key)
-			.ToHashSet();
-	}
-
-	private Result<int> ValidateActionKey(int actionKey)
-	{
-		if (!actionRegistry.ActionExists(actionKey))
-		{
-			return Result.Fail($"Unknown action ID '{actionKey}'");
-		}
-
-		return actionKey;
-	}
-
-	private static Result<int> TryParseActionKey(CsvReader csvReader, int rowNumber)
-	{
-		var rawAction = csvReader.GetField(ActionColumnKey);
-
-		if (string.IsNullOrWhiteSpace(rawAction))
-		{
-			return Result.Fail($"Row {rowNumber}: action column is empty");
-		}
-
-		if (!int.TryParse(rawAction, NumberStyles.Integer, CultureInfo.InvariantCulture, out var actionKey))
-		{
-			return Result.Fail($"Row {rowNumber}: cannot parse action value '{rawAction}' as integer");
-		}
-
-		return actionKey;
+		return new Step(actionKey, properties.Value);
 	}
 
 	private static Result ValidateHeader(
@@ -212,13 +132,6 @@ internal sealed class CsvFileSerializer(
 		}
 
 		return Result.Ok();
-	}
-
-	private IReadOnlyList<GridColumnDefinition> GetCsvColumns()
-	{
-		return columnRegistry.GetAll()
-			.Where(c => c.SaveToCsv)
-			.ToList();
 	}
 
 	private static CsvWriter CreateWriter(TextWriter textWriter)
@@ -251,25 +164,6 @@ internal sealed class CsvFileSerializer(
 		foreach (var column in columns)
 		{
 			csvWriter.WriteField(column.Key);
-		}
-
-		csvWriter.NextRecord();
-	}
-
-	private static void WriteSteps(CsvWriter csvWriter, Recipe recipe, IReadOnlyList<GridColumnDefinition> columns)
-	{
-		foreach (var step in recipe.Steps)
-		{
-			WriteStep(csvWriter, step, columns);
-		}
-	}
-
-	private static void WriteStep(CsvWriter csvWriter, Step step, IReadOnlyList<GridColumnDefinition> columns)
-	{
-		foreach (var column in columns)
-		{
-			var value = StepValueParser.FormatStepValue(step, column);
-			csvWriter.WriteField(value);
 		}
 
 		csvWriter.NextRecord();

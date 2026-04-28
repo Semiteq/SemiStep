@@ -1,21 +1,15 @@
 ﻿using System.Globalization;
 
-using ClipBoard;
-
-using Config.Facade;
-
-using Core;
-
-using Csv;
-
-using Domain;
-using Domain.Facade;
-
 using FluentResults;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using S7;
+using SemiStep.Core.Configuration.Facade;
+using SemiStep.Core.Plc;
+using SemiStep.Core.Plc.S7;
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Clipboard;
+using SemiStep.Core.Recipes.Import;
 
 using Serilog;
 
@@ -76,7 +70,6 @@ public static class Program
 			new ServiceCollection()
 				.AddSingleton(result.Value)
 				.AddRecipe()
-				.AddDomain()
 				.AddS7()
 				.AddCsv()
 				.AddClipboard()

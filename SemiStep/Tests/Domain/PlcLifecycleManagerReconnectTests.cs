@@ -1,28 +1,19 @@
 ﻿using System.Collections.Immutable;
 
-using ClipBoard;
-
-using Config;
-using Config.Facade;
-
-using Core;
-
-using Csv;
-
-using Domain;
-using Domain.Facade;
-using Domain.Plc;
-
 using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Tests.Helpers;
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Configuration.Facade;
+using SemiStep.Core.Plc;
+using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.State;
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Clipboard;
+using SemiStep.Core.Recipes.Import;
 
-using TypesShared.Config;
-using TypesShared.Core;
-using TypesShared.Domain;
-using TypesShared.Plc;
+using Tests.Helpers;
 
 using Xunit;
 
@@ -30,27 +21,28 @@ namespace Tests.Domain;
 
 [Trait("Component", "Domain")]
 [Trait("Area", "Reconnect")]
-[Trait("Category", "Unit")]
+[Trait("Category", "Integration")]
 public sealed class PlcLifecycleManagerReconnectTests
 {
 	private const int WaitActionId = 10;
 
-	private static async Task<(PlcLifecycleManager Plc, RecipeWorkspace Workspace, RecipeEditor Editor, StubIs7Service S7Service, StubPlcSyncService SyncService)>
+	private static async Task<(PlcLifecycleManager Plc, RecipeWorkspace Workspace, RecipeEditor Editor, StubS7Service S7Service, StubPlcSyncService SyncService)>
 		BuildAsync()
 	{
 		var configDir = TestConfigLocator.GetConfigDirectory("Standard");
 		var configLoadResult = await ConfigFacade.LoadAndValidateAsync(configDir);
 
-		var s7Service = new StubIs7Service();
+		var s7Service = new StubS7Service();
 		var syncService = new StubPlcSyncService();
 
 		var services = new ServiceCollection()
 			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
-			.AddDomain()
 			.AddCsv()
 			.AddClipboard()
-			.AddSingleton<IS7Service>(s7Service)
+			.AddSingleton<IS7Connection>(s7Service)
+			.AddSingleton<IS7Reader>(s7Service)
+			.AddSingleton<IS7ExecutionStream>(s7Service)
 			.AddSingleton<IPlcSyncService>(syncService)
 			.BuildServiceProvider();
 

@@ -1,19 +1,16 @@
-﻿using ClipBoard;
-
-using Csv;
-
-using Domain;
-using Domain.Facade;
-using Domain.Helpers;
-
-using FluentAssertions;
+﻿using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Plc;
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Clipboard;
+using SemiStep.Core.Recipes.Helpers;
+using SemiStep.Core.Recipes.Import;
+
 using Tests.Core.Helpers;
 using Tests.Helpers;
-
-using TypesShared.Config;
 
 using UI.Coordinator;
 using UI.MessageService;
@@ -44,9 +41,9 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_plc = plc;
 		_configRegistry = services.GetRequiredService<ConfigRegistry>();
 		_panel = new MessagePanelViewModel();
-		var clipboardService = services.GetRequiredService<ClipboardService>();
+		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
-		var queryService = new RecipeQueryService(_workspace, _plc, clipboardService, importedRecipeValidator, _configRegistry);
+		var queryService = new RecipeQueryService(_workspace, _plc, clipboardSerializer, importedRecipeValidator, _configRegistry);
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
 		var csvService = services.GetRequiredService<CsvService>();
 		_coordinator = new RecipeMutationCoordinator(
@@ -54,7 +51,6 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 			_editor,
 			_plc,
 			csvService,
-			clipboardService,
 			importedRecipeValidator,
 			appConfiguration,
 			queryService,

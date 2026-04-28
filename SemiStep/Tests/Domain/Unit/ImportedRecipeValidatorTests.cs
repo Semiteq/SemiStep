@@ -1,13 +1,12 @@
 ﻿using System.Collections.Immutable;
 
-using Domain.Helpers;
-
 using FluentAssertions;
 
-using TypesShared.Config;
-using TypesShared.Core;
-using TypesShared.Plc;
-using TypesShared.Style;
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.State;
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Helpers;
 
 using Xunit;
 

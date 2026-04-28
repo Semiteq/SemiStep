@@ -1,5 +1,5 @@
-﻿using Domain;
-using Domain.Facade;
+﻿using SemiStep.Core.Plc;
+using SemiStep.Core.Recipes;
 
 using Tests.Helpers;
 

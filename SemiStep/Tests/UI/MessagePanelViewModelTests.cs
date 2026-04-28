@@ -4,7 +4,7 @@ using FluentAssertions;
 
 using FluentResults;
 
-using TypesShared.Results;
+using SemiStep.Core.Shared;
 
 using UI.MessageService;
 

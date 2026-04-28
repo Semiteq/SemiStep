@@ -1,4 +1,4 @@
-﻿using S7;
+﻿using SemiStep.Core.Plc.S7;
 
 namespace Tests.S7.Helpers;
 

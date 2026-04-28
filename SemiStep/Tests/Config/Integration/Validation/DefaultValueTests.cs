@@ -1,9 +1,9 @@
 ﻿using FluentAssertions;
 
+using SemiStep.Core.Shared;
+
 using Tests.Config.Helpers;
 using Tests.Helpers;
-
-using TypesShared.Results;
 
 using Xunit;
 

@@ -2,9 +2,9 @@
 
 using FluentAssertions;
 
-using Tests.Core.Helpers;
+using SemiStep.Core.Recipes;
 
-using TypesShared.Core;
+using Tests.Core.Helpers;
 
 using Xunit;
 

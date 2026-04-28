@@ -1,6 +1,6 @@
-﻿using S7;
-
-using TypesShared.Plc;
+﻿using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.S7;
+using SemiStep.Core.Plc.State;
 
 namespace Tests.S7.Helpers;
 

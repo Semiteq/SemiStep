@@ -1,9 +1,8 @@
-﻿using Domain.Helpers;
+﻿using FluentAssertions;
 
-using FluentAssertions;
-
-using TypesShared.Config;
-using TypesShared.Core;
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Helpers;
 
 using Xunit;
 

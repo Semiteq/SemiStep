@@ -1,11 +1,11 @@
 ﻿using System.Reactive.Subjects;
 
-using Domain.Plc;
-
 using FluentResults;
 
-using TypesShared.Core;
-using TypesShared.Plc;
+using SemiStep.Core.Plc;
+using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.State;
+using SemiStep.Core.Recipes;
 
 namespace Tests.Helpers;
 
@@ -13,6 +13,8 @@ public sealed class StubPlcSyncService : IPlcSyncService
 {
 	private readonly BehaviorSubject<Result<PlcSessionSnapshot>> _plcStateSubject = new(
 		PlcSessionSnapshot.InitialState);
+
+	public bool IsSyncEnabled { get; private set; }
 
 	public PlcSyncStatus Status => PlcSyncStatus.Idle;
 
@@ -44,6 +46,7 @@ public sealed class StubPlcSyncService : IPlcSyncService
 
 	public void SetSyncEnabled(bool value)
 	{
+		IsSyncEnabled = value;
 	}
 
 	public void UpdateConnectionState(PlcConnectionState state)

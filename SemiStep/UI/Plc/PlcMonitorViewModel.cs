@@ -3,7 +3,8 @@ using System.Reactive.Linq;
 
 using ReactiveUI;
 
-using TypesShared.Plc;
+using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.State;
 
 using UI.Coordinator;
 

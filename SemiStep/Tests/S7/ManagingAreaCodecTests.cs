@@ -2,10 +2,9 @@
 
 using FluentAssertions;
 
-using S7.Protocol;
-using S7.Serialization;
-
-using TypesShared.Plc.Memory;
+using SemiStep.Core.Plc.Configuration.Memory;
+using SemiStep.Core.Plc.S7.Protocol;
+using SemiStep.Core.Plc.S7.Serialization;
 
 using Xunit;
 

@@ -1,8 +1,7 @@
-﻿using Config.Facade;
+﻿using FluentResults;
 
-using FluentResults;
-
-using TypesShared.Config;
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Configuration.Facade;
 
 namespace Tests.Config.Helpers;
 

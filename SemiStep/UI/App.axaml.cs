@@ -3,9 +3,9 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
 
-using Domain;
-
 using Microsoft.Extensions.DependencyInjection;
+
+using SemiStep.Core.Recipes;
 
 using UI.Coordinator;
 using UI.Dialogs;

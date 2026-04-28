@@ -3,8 +3,7 @@
 using Avalonia.Controls;
 using Avalonia.Media;
 
-using TypesShared.Config;
-using TypesShared.Style;
+using SemiStep.Core.Configuration;
 
 namespace UI.RecipeGrid;
 

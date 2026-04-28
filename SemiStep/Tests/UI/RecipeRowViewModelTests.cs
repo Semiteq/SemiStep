@@ -1,14 +1,12 @@
-﻿using Domain;
-using Domain.Helpers;
-
-using FluentAssertions;
+﻿using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Tests.Core.Helpers;
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Helpers;
 
-using TypesShared.Config;
-using TypesShared.Core;
+using Tests.Core.Helpers;
 
 using UI.RecipeGrid;
 

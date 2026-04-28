@@ -1,23 +1,21 @@
 ﻿using System.Collections.Immutable;
 
-using ClipBoard;
-
-using Domain;
-using Domain.Facade;
-using Domain.Helpers;
-
 using FluentResults;
 
-using TypesShared.Config;
-using TypesShared.Core;
-using TypesShared.Plc;
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Plc;
+using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.State;
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Clipboard;
+using SemiStep.Core.Recipes.Helpers;
 
 namespace UI.Coordinator;
 
 public sealed class RecipeQueryService(
 	RecipeWorkspace workspace,
 	PlcLifecycleManager plcLifecycleManager,
-	ClipboardService clipboardService,
+	ClipboardSerializer clipboardSerializer,
 	ImportedRecipeValidator importedRecipeValidator,
 	ConfigRegistry configRegistry)
 {
@@ -52,12 +50,12 @@ public sealed class RecipeQueryService(
 	public string SerializeStepsForClipboard(IReadOnlyList<Step> steps)
 	{
 		var recipe = new Recipe(steps.ToImmutableList());
-		return clipboardService.SerializeSteps(recipe);
+		return clipboardSerializer.SerializeSteps(recipe);
 	}
 
 	public Result<Recipe> DeserializeStepsFromClipboard(string csv)
 	{
-		var result = clipboardService.DeserializeSteps(csv);
+		var result = clipboardSerializer.DeserializeSteps(csv);
 		if (result.IsFailed)
 		{
 			return result;

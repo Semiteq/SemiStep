@@ -1,8 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Data;
 
-using TypesShared.Config;
-using TypesShared.Style;
+using SemiStep.Core.Configuration;
 
 namespace UI.RecipeGrid;
 

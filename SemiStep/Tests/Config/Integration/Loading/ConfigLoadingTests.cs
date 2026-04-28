@@ -1,10 +1,9 @@
-﻿using Config.Facade;
+﻿using FluentAssertions;
 
-using FluentAssertions;
+using SemiStep.Core.Configuration.Facade;
+using SemiStep.Core.Shared;
 
 using Tests.Config.Helpers;
-
-using TypesShared.Results;
 
 using Xunit;
 

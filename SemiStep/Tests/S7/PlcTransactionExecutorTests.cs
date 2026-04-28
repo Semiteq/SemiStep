@@ -4,17 +4,16 @@ using FluentAssertions;
 
 using FluentResults;
 
-using S7.Protocol;
-using S7.Serialization;
-using S7.Sync;
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.Configuration.Memory;
+using SemiStep.Core.Plc.S7.Protocol;
+using SemiStep.Core.Plc.S7.Serialization;
+using SemiStep.Core.Plc.State;
+using SemiStep.Core.Plc.Sync;
+using SemiStep.Core.Recipes;
 
 using Tests.S7.Helpers;
-
-using TypesShared.Config;
-using TypesShared.Core;
-using TypesShared.Plc;
-using TypesShared.Plc.Memory;
-using TypesShared.Style;
 
 using Xunit;
 

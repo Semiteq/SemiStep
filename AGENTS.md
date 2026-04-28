@@ -42,9 +42,32 @@ asserting on `MessagePanelViewModel` state to flush the pending Avalonia dispatc
 
 ### File Layout
 
-- One class per file. File-scoped namespaces: `namespace Domain.Services;`
+- One class per file. File-scoped namespaces: `namespace SemiStep.Core.Recipes.Analysis;`
 - `using` directives above the namespace. `System` namespaces first, blank line, then others.
 - Never inline full namespace paths — use `using` directives.
+
+#### Project structure (post-refactor)
+
+`SemiStep.Core` is organized by feature, not by technical layer:
+
+- `SemiStep/Core/Recipes/` — recipe model, analysis, formulas, state, helpers, CSV import/export, clipboard
+  - Namespaces: `SemiStep.Core.Recipes`, `SemiStep.Core.Recipes.Analysis`, `SemiStep.Core.Recipes.Formulas`,
+    `SemiStep.Core.Recipes.State`, `SemiStep.Core.Recipes.Helpers`, `SemiStep.Core.Recipes.Import`,
+    `SemiStep.Core.Recipes.Clipboard`
+- `SemiStep/Core/Plc/` — PLC lifecycle, sync, S7 driver, configuration, runtime state
+  - Namespaces: `SemiStep.Core.Plc`, `SemiStep.Core.Plc.Configuration`,
+    `SemiStep.Core.Plc.Configuration.Memory`, `SemiStep.Core.Plc.State`, `SemiStep.Core.Plc.Sync`,
+    `SemiStep.Core.Plc.S7`, `SemiStep.Core.Plc.S7.Protocol`, `SemiStep.Core.Plc.S7.Serialization`
+- `SemiStep/Core/Configuration/` — YAML configuration loading, mapping, validation, DTOs
+  - Namespaces: `SemiStep.Core.Configuration`, `SemiStep.Core.Configuration.Loaders`,
+    `SemiStep.Core.Configuration.Mapping`, `SemiStep.Core.Configuration.Validation`,
+    `SemiStep.Core.Configuration.Facade`, `SemiStep.Core.Configuration.Dto`
+- `SemiStep/Core/Shared/` — cross-cutting types (Warning, ResultWarningExtensions)
+  - Namespace: `SemiStep.Core.Shared`
+
+The `Recipes` folder uses the plural form to avoid a name collision between the `Recipe` type
+and a hypothetical `Recipe` namespace (the C# compiler resolves unqualified `Recipe` to the
+sibling namespace, not the imported type).
 
 ### Size Limits
 
@@ -52,14 +75,14 @@ asserting on `MessagePanelViewModel` state to flush the pending Avalonia dispatc
 
 ### Naming
 
-| Element                           | Convention                     | Example                      |
-| --------------------------------- | ------------------------------ | ---------------------------- |
-| Public types, methods, properties | PascalCase                     | `CoreService`, `LoadAsync()` |
-| Interfaces                        | I-prefix                       | `IRecipeRepository`          |
-| Private fields                    | `_camelCase`                   | `_recipeService`             |
-| Class instance fields             | `_className` (no abbreviation) | `_domainFacade`              |
-| Constants                         | PascalCase                     | `MaxStepCount`               |
-| Local variables                   | camelCase                      | `stepIndex`                  |
+| Element                           | Convention                     | Example                            |
+| --------------------------------- | ------------------------------ | ---------------------------------- |
+| Public types, methods, properties | PascalCase                     | `RecipeEditor`, `LoadAsync()`      |
+| Interfaces                        | I-prefix                       | `IRecipeRepository`                |
+| Private fields                    | `_camelCase`                   | `_recipeService`                   |
+| Class instance fields             | `_className` (no abbreviation) | `_recipeEditor`, `_plcLifecycleManager` |
+| Constants                         | PascalCase                     | `MaxStepCount`                     |
+| Local variables                   | camelCase                      | `stepIndex`                        |
 
 No abbreviations in names.
 
@@ -82,7 +105,7 @@ No abbreviations in names.
 ### Dependency Injection
 
 - Constructor injection only (primary constructors preferred). No property injection, no service locator.
-- Register services in extension methods: `AddDomain()`, `AddConfig()`, `AddRecipe()`.
+- Register services in extension methods: `AddRecipe()`, `AddS7()`, `AddCsv()`, `AddClipboard()`, `AddUi()`.
 - Avoid mutable static state.
 
 ### Interface Design
@@ -94,14 +117,28 @@ No abbreviations in names.
 
 ### Threading
 
-- `MessagePanelViewModel` is self-marshalling. Every public mutating method (`AddError`,
-  `AddWarning`, `AddInfo`, `RefreshReasons`, `Clear`) dispatches to the UI thread internally
-  via `PostOnUiThread()` (`Dispatcher.UIThread.CheckAccess()` / `Post`). Do NOT wrap calls
-  to `MessagePanelViewModel` in `Dispatcher.UIThread.Post` at the call site -- doing so is
-  redundant and obscures intent.
-- Event handlers that fire `Subject.OnNext` into the Avalonia binding system (e.g.,
-  `OnPlcRecipeConflictDetected` in `RecipeMutationCoordinator`) must still dispatch via
-  `Dispatcher.UIThread.Post` independently of any message panel calls.
+Two patterns only. Do not introduce a third.
+
+- **Pattern A (default) - `.ObserveOn(RxApp.MainThreadScheduler)` at the subscription site.**
+  The standard ReactiveUI way: producers (`Subject<T>.OnNext`, `IObservable<T>` streams) emit
+  on whatever thread their work runs on; consumers (ViewModels) declare their UI-thread
+  requirement at subscription. Used in `MainWindowViewModel`, `RecipeFileViewModel`,
+  `RecipeCommandsViewModel`, `RecipeGridViewModel`, `ClipboardViewModel`,
+  `PlcMonitorViewModel`, `RecipeMutationCoordinator`. New observable subscriptions that bind
+  to the UI must follow this pattern.
+- **Pattern B (exception) - self-marshalling inside the callee.** Reserved for VMs/services
+  that are widely called from mixed thread contexts where pushing the marshalling
+  responsibility onto every caller would be worse. `MessagePanelViewModel` is the only
+  example: every public mutating method (`AddError`, `AddWarning`, `AddInfo`,
+  `RefreshReasons`, `Clear`) dispatches via `PostOnUiThread()`
+  (`Dispatcher.UIThread.CheckAccess()` / `Post`). Do NOT wrap calls to
+  `MessagePanelViewModel` in `Dispatcher.UIThread.Post` at the call site - it is redundant
+  and obscures intent.
+- **Do not introduce ad-hoc `Dispatcher.UIThread.Post` calls at producer sites.** A producer
+  that wraps its own `Subject.OnNext` in `Dispatcher.UIThread.Post` violates Pattern A by
+  forcing every observer onto the UI thread regardless of the observer's actual needs, and
+  duplicates marshalling already declared by Pattern A subscribers. If a consumer needs
+  UI-thread delivery, use `.ObserveOn(RxApp.MainThreadScheduler)` at its subscription.
 
 ### Comments
 

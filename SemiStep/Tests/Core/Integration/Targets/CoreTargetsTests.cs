@@ -4,9 +4,9 @@ using FluentResults;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Tests.Core.Helpers;
+using SemiStep.Core.Configuration;
 
-using TypesShared.Config;
+using Tests.Core.Helpers;
 
 using Xunit;
 

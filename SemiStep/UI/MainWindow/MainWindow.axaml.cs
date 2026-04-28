@@ -8,7 +8,7 @@ using Avalonia.ReactiveUI;
 
 using ReactiveUI;
 
-using TypesShared.Core;
+using SemiStep.Core.Recipes;
 
 using UI.RecipeGrid;
 using UI.ShutdownService;

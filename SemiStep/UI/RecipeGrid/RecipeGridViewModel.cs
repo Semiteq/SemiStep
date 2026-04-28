@@ -6,9 +6,10 @@ using System.Reactive.Linq;
 
 using ReactiveUI;
 
-using TypesShared.Config;
-using TypesShared.Core;
-using TypesShared.Plc;
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.State;
+using SemiStep.Core.Recipes;
 
 using UI.Coordinator;
 using UI.MessageService;

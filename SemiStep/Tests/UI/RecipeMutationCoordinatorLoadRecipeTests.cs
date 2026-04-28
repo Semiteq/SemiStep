@@ -1,27 +1,19 @@
 ﻿using Avalonia.Threading;
 
-using ClipBoard;
-
-using Config.Facade;
-
-using Core;
-
-using Csv;
-
-using Domain;
-using Domain.Facade;
-using Domain.Helpers;
-using Domain.Plc;
-
 using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Configuration.Facade;
+using SemiStep.Core.Plc;
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Clipboard;
+using SemiStep.Core.Recipes.Helpers;
+using SemiStep.Core.Recipes.Import;
+
 using Tests.Core.Helpers;
 using Tests.Helpers;
-
-using TypesShared.Config;
-using TypesShared.Domain;
 
 using UI.Coordinator;
 using UI.MessageService;
@@ -172,6 +164,34 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		}
 	}
 
+	[Fact]
+	public async Task SaveRecipeAsync_IoException_ConvertsToFailedResult()
+	{
+		var (coordinator, panel) = await BuildCoordinatorWithCsvAsync();
+
+		// Use an existing file as the directory portion of the target path.
+		// File.Move into a "directory" that is actually a file throws an IOException
+		// from inside CsvFileIo.WriteRecipeFileAsync — exercises the catch block in CsvService.SaveAsync.
+		var blockingFile = Path.Combine(Path.GetTempPath(), $"{TempFilePrefix}.{Guid.NewGuid():N}.blocker");
+		await File.WriteAllTextAsync(blockingFile, "blocker");
+		var unwritablePath = Path.Combine(blockingFile, "child.csv");
+
+		try
+		{
+			var result = await coordinator.SaveRecipeAsync(unwritablePath);
+			Dispatcher.UIThread.RunJobs(null);
+
+			result.IsFailed.Should().BeTrue(
+				"a real IOException from the underlying file system must be converted to Result.Fail by CsvService.SaveAsync");
+		}
+		finally
+		{
+			coordinator.Dispose();
+			panel.Dispose();
+			File.Delete(blockingFile);
+		}
+	}
+
 	private static async Task<(RecipeMutationCoordinator Coordinator, MessagePanelViewModel Panel)>
 		BuildCoordinatorWithThrowingCsvAsync()
 	{
@@ -192,9 +212,11 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		var serviceCollection = new ServiceCollection()
 			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
-			.AddDomain()
 			.AddClipboard()
-			.AddSingleton<IS7Service, StubIs7Service>()
+			.AddSingleton<StubS7Service>()
+			.AddSingleton<IS7Connection>(sp => sp.GetRequiredService<StubS7Service>())
+			.AddSingleton<IS7Reader>(sp => sp.GetRequiredService<StubS7Service>())
+			.AddSingleton<IS7ExecutionStream>(sp => sp.GetRequiredService<StubS7Service>())
 			.AddSingleton<IPlcSyncService, StubPlcSyncService>();
 
 		registerCsvService(serviceCollection);
@@ -209,9 +231,9 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 
 		var configRegistry = services.GetRequiredService<ConfigRegistry>();
 		var panel = new MessagePanelViewModel();
-		var clipboardService = services.GetRequiredService<ClipboardService>();
+		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
-		var queryService = new RecipeQueryService(workspace, plc, clipboardService, importedRecipeValidator, configRegistry);
+		var queryService = new RecipeQueryService(workspace, plc, clipboardSerializer, importedRecipeValidator, configRegistry);
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
 		var csvService = services.GetRequiredService<CsvService>();
 		var coordinator = new RecipeMutationCoordinator(
@@ -219,7 +241,6 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 			editor,
 			plc,
 			csvService,
-			clipboardService,
 			importedRecipeValidator,
 			appConfiguration,
 			queryService,

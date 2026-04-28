@@ -1,23 +1,18 @@
 ﻿using Avalonia.Threading;
 
-using ClipBoard;
-
-using Config;
-
-using Csv;
-
-using Domain;
-using Domain.Facade;
-using Domain.Helpers;
-
 using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Plc;
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Clipboard;
+using SemiStep.Core.Recipes.Helpers;
+using SemiStep.Core.Recipes.Import;
+
 using Tests.Core.Helpers;
 using Tests.Helpers;
-
-using TypesShared.Config;
 
 using UI.Coordinator;
 using UI.MessageService;
@@ -45,9 +40,9 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		_plc = plc;
 		var configRegistry = services.GetRequiredService<ConfigRegistry>();
 		_messagePanel = new MessagePanelViewModel();
-		var clipboardService = services.GetRequiredService<ClipboardService>();
+		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
-		var queryService = new RecipeQueryService(_workspace, _plc, clipboardService, importedRecipeValidator, configRegistry);
+		var queryService = new RecipeQueryService(_workspace, _plc, clipboardSerializer, importedRecipeValidator, configRegistry);
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
 		var csvService = services.GetRequiredService<CsvService>();
 		_coordinator = new RecipeMutationCoordinator(
@@ -55,7 +50,6 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 			_editor,
 			_plc,
 			csvService,
-			clipboardService,
 			importedRecipeValidator,
 			appConfiguration,
 			queryService,

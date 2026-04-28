@@ -9,7 +9,7 @@ using FluentResults;
 
 using ReactiveUI;
 
-using TypesShared.Results;
+using SemiStep.Core.Shared;
 
 namespace UI.MessageService;
 

@@ -4,17 +4,16 @@ using FluentAssertions;
 
 using FluentResults;
 
-using S7.Serialization;
-using S7.Sync;
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Plc;
+using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.Configuration.Memory;
+using SemiStep.Core.Plc.S7.Serialization;
+using SemiStep.Core.Plc.State;
+using SemiStep.Core.Plc.Sync;
+using SemiStep.Core.Recipes;
 
 using Tests.S7.Helpers;
-
-using TypesShared.Config;
-using TypesShared.Core;
-using TypesShared.Domain;
-using TypesShared.Plc;
-using TypesShared.Plc.Memory;
-using TypesShared.Style;
 
 using Xunit;
 
@@ -40,13 +39,13 @@ public sealed class PlcSyncCoordinatorTests
 			layout);
 	}
 
-	private static (PlcSyncCoordinator Coordinator, FakeS7Transport Transport, StubIs7ServiceForSync ConnectionService) Build(
+	private static (PlcSyncCoordinator Coordinator, FakeS7Transport Transport, StubS7ServiceForSync ConnectionService) Build(
 		bool connected = false)
 	{
 		var transport = new FakeS7Transport();
 		transport.SetConnected(connected);
 
-		var connectionService = new StubIs7ServiceForSync(connected);
+		var connectionService = new StubS7ServiceForSync(connected);
 		var converter = new RecipeConverter(BuildEmptyConfigRegistry());
 		var configuration = BuildTestConfiguration();
 		var executor = new PlcTransactionExecutor(transport, converter, configuration);

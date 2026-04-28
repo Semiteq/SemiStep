@@ -2,7 +2,7 @@
 
 using Avalonia.Data.Converters;
 
-using TypesShared.Core;
+using SemiStep.Core.Recipes;
 
 namespace UI.RecipeGrid;
 

@@ -1,6 +1,6 @@
-﻿using ClipBoard;
+﻿using SemiStep.Core.Recipes.Clipboard;
 
-using Csv;
+using SemiStep.Core.Recipes.Import;
 
 using Xunit;
 

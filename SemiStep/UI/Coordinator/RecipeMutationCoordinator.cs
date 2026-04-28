@@ -1,23 +1,20 @@
 ﻿using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
-using ClipBoard;
-
-using Csv;
-
-using Domain;
-using Domain.Facade;
-using Domain.Helpers;
-
 using FluentResults;
 
 using ReactiveUI;
 
-using Serilog;
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Plc;
+using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.State;
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Clipboard;
+using SemiStep.Core.Recipes.Helpers;
+using SemiStep.Core.Recipes.Import;
 
-using TypesShared.Config;
-using TypesShared.Core;
-using TypesShared.Plc;
+using Serilog;
 
 using UI.MessageService;
 
@@ -26,7 +23,6 @@ namespace UI.Coordinator;
 public sealed class RecipeMutationCoordinator : IDisposable
 {
 	private readonly AppConfiguration _appConfiguration;
-	private readonly ClipboardService _clipboardService;
 	private readonly CsvService _csvService;
 	private readonly RecipeEditor _editor;
 	private readonly ImportedRecipeValidator _importedRecipeValidator;
@@ -49,7 +45,6 @@ public sealed class RecipeMutationCoordinator : IDisposable
 		RecipeEditor editor,
 		PlcLifecycleManager plc,
 		CsvService csvService,
-		ClipboardService clipboardService,
 		ImportedRecipeValidator importedRecipeValidator,
 		AppConfiguration appConfiguration,
 		RecipeQueryService queryService,
@@ -59,7 +54,6 @@ public sealed class RecipeMutationCoordinator : IDisposable
 		_editor = editor;
 		_plc = plc;
 		_csvService = csvService;
-		_clipboardService = clipboardService;
 		_importedRecipeValidator = importedRecipeValidator;
 		_appConfiguration = appConfiguration;
 		_queryService = queryService;
@@ -245,18 +239,10 @@ public sealed class RecipeMutationCoordinator : IDisposable
 		}
 		else
 		{
-			var validationResult = _importedRecipeValidator.Validate(loadResult.Value);
-			if (validationResult.IsFailed)
+			result = _workspace.LoadAsCurrentValidated(loadResult.Value, _importedRecipeValidator);
+			if (result.IsSuccess)
 			{
-				result = validationResult;
-			}
-			else
-			{
-				result = _workspace.LoadAsCurrent(loadResult.Value);
-				if (result.IsSuccess)
-				{
-					_workspace.MarkSaved();
-				}
+				_workspace.MarkSaved();
 			}
 		}
 
@@ -317,15 +303,12 @@ public sealed class RecipeMutationCoordinator : IDisposable
 
 	private void OnPlcRecipeConflictDetected(Recipe local, Recipe plc)
 	{
-		Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+		if (_disposed)
 		{
-			if (_disposed)
-			{
-				return;
-			}
+			return;
+		}
 
-			_plcRecipeConflictDetected.OnNext((local, plc));
-		});
+		_plcRecipeConflictDetected.OnNext((local, plc));
 	}
 
 	private void RebuildMessagePanel()

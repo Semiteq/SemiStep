@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-using TypesShared.Config;
+using SemiStep.Core.Configuration;
 
 using UI.Clipboard;
 using UI.Coordinator;

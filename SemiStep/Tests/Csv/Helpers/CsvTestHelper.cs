@@ -1,21 +1,13 @@
-﻿using ClipBoard;
+﻿using Microsoft.Extensions.DependencyInjection;
 
-using Config;
-using Config.Facade;
-
-using Core;
-
-using Csv;
-
-using Domain;
-using Domain.Facade;
-using Domain.Plc;
-
-using Microsoft.Extensions.DependencyInjection;
+using SemiStep.Core.Configuration.Facade;
+using SemiStep.Core.Plc;
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Clipboard;
+using SemiStep.Core.Recipes.Import;
 
 using Tests.Helpers;
 
-using TypesShared.Domain;
 
 namespace Tests.Csv.Helpers;
 
@@ -30,10 +22,12 @@ internal static class CsvTestHelper
 		var services = new ServiceCollection()
 			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
-			.AddDomain()
 			.AddCsv()
 			.AddClipboard()
-			.AddSingleton<IS7Service, StubIs7Service>()
+			.AddSingleton<StubS7Service>()
+			.AddSingleton<IS7Connection>(sp => sp.GetRequiredService<StubS7Service>())
+			.AddSingleton<IS7Reader>(sp => sp.GetRequiredService<StubS7Service>())
+			.AddSingleton<IS7ExecutionStream>(sp => sp.GetRequiredService<StubS7Service>())
 			.AddSingleton<IPlcSyncService, StubPlcSyncService>()
 			.BuildServiceProvider();
 

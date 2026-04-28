@@ -1,7 +1,7 @@
 ﻿using ReactiveUI;
 
-using TypesShared.Config;
-using TypesShared.Core;
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Recipes;
 
 namespace UI.RecipeGrid;
 

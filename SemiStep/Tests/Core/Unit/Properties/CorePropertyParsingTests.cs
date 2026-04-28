@@ -1,8 +1,6 @@
-﻿using Core.Services;
+﻿using FluentAssertions;
 
-using FluentAssertions;
-
-using TypesShared.Core;
+using SemiStep.Core.Recipes;
 
 using Xunit;
 

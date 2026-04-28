@@ -3,7 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.ReactiveUI;
 
-using Domain.Facade;
+using Domain;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -78,8 +78,8 @@ public class App : Application
 
 	private static void InitializeServices(IServiceProvider provider)
 	{
-		var domainFacade = provider.GetRequiredService<DomainFacade>();
-		domainFacade.Initialize();
+		var workspace = provider.GetRequiredService<RecipeWorkspace>();
+		workspace.Reset();
 
 		var coordinator = provider.GetRequiredService<RecipeMutationCoordinator>();
 		coordinator.Initialize();

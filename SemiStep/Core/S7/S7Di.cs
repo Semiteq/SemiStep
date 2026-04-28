@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Domain.Plc;
+
+using Microsoft.Extensions.DependencyInjection;
 
 using S7.Facade;
 using S7.Serialization;

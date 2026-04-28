@@ -9,6 +9,7 @@ using Csv;
 
 using Domain;
 using Domain.Facade;
+using Domain.Plc;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,7 +21,7 @@ namespace Tests.Core.Helpers;
 
 public static class CoreTestHelper
 {
-	public static async Task<(IServiceProvider Services, DomainFacade Facade)> BuildAsync(
+	public static async Task<(IServiceProvider Services, RecipeWorkspace Workspace, RecipeEditor Editor, PlcLifecycleManager Plc)> BuildAsync(
 		string configName = "Standard")
 	{
 		var configDir = GetConfigDirectory(configName);
@@ -37,10 +38,13 @@ public static class CoreTestHelper
 			.AddSingleton<IPlcSyncService, StubPlcSyncService>()
 			.BuildServiceProvider();
 
-		var domainFacade = services.GetRequiredService<DomainFacade>();
-		domainFacade.Initialize();
+		var workspace = services.GetRequiredService<RecipeWorkspace>();
+		var editor = services.GetRequiredService<RecipeEditor>();
+		var plc = services.GetRequiredService<PlcLifecycleManager>();
+		plc.Initialize();
+		workspace.Reset();
 
-		return (services, domainFacade);
+		return (services, workspace, editor, plc);
 	}
 
 	private static string GetConfigDirectory(string configName)

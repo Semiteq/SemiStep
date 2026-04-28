@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-using TypesShared.Domain;
-
 namespace Csv;
 
 public static class CsvDi
@@ -10,7 +8,7 @@ public static class CsvDi
 	{
 		services.AddSingleton<CsvRowConverter>();
 		services.AddSingleton<CsvFileSerializer>();
-		services.AddSingleton<ICsvService, CsvService>();
+		services.AddSingleton(sp => new CsvService(sp.GetRequiredService<CsvFileSerializer>()));
 
 		return services;
 	}

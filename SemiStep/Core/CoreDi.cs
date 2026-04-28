@@ -1,12 +1,10 @@
 ﻿using Core.Analysis;
-using Core.Facade;
 using Core.Formulas;
 using Core.Services;
 
 using Microsoft.Extensions.DependencyInjection;
 
 using TypesShared.Core;
-using TypesShared.Domain;
 
 namespace Core;
 
@@ -24,7 +22,7 @@ public static class CoreDi
 		services.AddSingleton<FormulaApplicationCoordinator>();
 
 		services.AddSingleton<IPropertyParser, PropertyParser>();
-		services.AddSingleton<ICoreService, CoreFacade>();
+
 		return services;
 	}
 }

@@ -1,5 +1,9 @@
-﻿using Domain.Facade;
+﻿using Core.Analysis;
+using Core.Formulas;
+
+using Domain.Facade;
 using Domain.Helpers;
+using Domain.Plc;
 using Domain.State;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -18,16 +22,25 @@ public static class DomainDi
 		services.AddSingleton<RecipeStateManager>();
 		services.AddSingleton<RecipeHistoryManager>();
 		services.AddSingleton<ImportedRecipeValidator>();
-		services.AddSingleton(sp => new DomainFacade(
-			sp.GetRequiredService<ConfigRegistry>(),
-			sp.GetRequiredService<ICoreService>(),
+
+		services.AddSingleton(sp => new RecipeWorkspace(
 			sp.GetRequiredService<RecipeStateManager>(),
 			sp.GetRequiredService<RecipeHistoryManager>(),
-			sp.GetRequiredService<ICsvService>(),
+			sp.GetRequiredService<RecipeAnalyzer>(),
+			sp.GetRequiredService<IPlcSyncService>()));
+
+		services.AddSingleton(sp => new RecipeEditor(
+			sp.GetRequiredService<RecipeWorkspace>(),
+			sp.GetRequiredService<ConfigRegistry>(),
+			sp.GetRequiredService<FormulaApplicationCoordinator>(),
+			sp.GetRequiredService<IPropertyParser>()));
+
+		services.AddSingleton(sp => new PlcLifecycleManager(
+			sp.GetRequiredService<RecipeWorkspace>(),
 			sp.GetRequiredService<IS7Service>(),
-			sp.GetRequiredService<IClipboardService>(),
-			sp.GetRequiredService<ImportedRecipeValidator>(),
-			sp.GetRequiredService<IPropertyParser>(),
+			sp.GetRequiredService<RecipeAnalyzer>(),
+			sp.GetRequiredService<RecipeHistoryManager>(),
+			sp.GetRequiredService<RecipeStateManager>(),
 			sp.GetRequiredService<IPlcSyncService>()));
 
 		return services;

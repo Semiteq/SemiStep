@@ -1,9 +1,10 @@
 ﻿using System.Reactive.Subjects;
 
+using Domain.Plc;
+
 using FluentResults;
 
 using TypesShared.Core;
-using TypesShared.Domain;
 using TypesShared.Plc;
 
 namespace Tests.Helpers;

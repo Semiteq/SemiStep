@@ -5,7 +5,7 @@ using TypesShared.Core;
 
 namespace Domain.Helpers;
 
-internal sealed class ImportedRecipeValidator(
+public sealed class ImportedRecipeValidator(
 	ConfigRegistry configRegistry)
 {
 	public Result Validate(Recipe recipe)

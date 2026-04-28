@@ -1,4 +1,5 @@
-﻿using Domain.Facade;
+﻿using Domain;
+using Domain.Facade;
 
 using Tests.Helpers;
 
@@ -8,7 +9,9 @@ namespace Tests.Core.Helpers;
 
 public sealed class CoreFixture : IAsyncLifetime
 {
-	public DomainFacade Facade { get; private set; } = null!;
+	public RecipeWorkspace Workspace { get; private set; } = null!;
+	public RecipeEditor Editor { get; private set; } = null!;
+	public PlcLifecycleManager Plc { get; private set; } = null!;
 
 	public IServiceProvider Services => _services!;
 
@@ -16,9 +19,11 @@ public sealed class CoreFixture : IAsyncLifetime
 
 	public async Task InitializeAsync()
 	{
-		var (services, facade) = await CoreTestHelper.BuildAsync("WithGroups");
+		var (services, workspace, editor, plc) = await CoreTestHelper.BuildAsync("WithGroups");
 		_services = services;
-		Facade = facade;
+		Workspace = workspace;
+		Editor = editor;
+		Plc = plc;
 	}
 
 	public async Task DisposeAsync()

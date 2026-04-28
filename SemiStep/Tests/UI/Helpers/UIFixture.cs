@@ -1,4 +1,10 @@
-﻿using Domain.Facade;
+﻿using ClipBoard;
+
+using Csv;
+
+using Domain;
+using Domain.Facade;
+using Domain.Helpers;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,7 +23,9 @@ namespace Tests.UI.Helpers;
 
 public sealed class UIFixture : IAsyncLifetime
 {
-	public DomainFacade Facade { get; private set; } = null!;
+	public RecipeWorkspace Workspace { get; private set; } = null!;
+	public RecipeEditor Editor { get; private set; } = null!;
+	public PlcLifecycleManager Plc { get; private set; } = null!;
 	public ConfigRegistry ConfigRegistry { get; private set; } = null!;
 	public MessagePanelViewModel MessagePanel { get; private set; } = null!;
 	public RecipeQueryService QueryService { get; private set; } = null!;
@@ -26,13 +34,27 @@ public sealed class UIFixture : IAsyncLifetime
 
 	public async Task InitializeAsync()
 	{
-		var (services, facade) = await CoreTestHelper.BuildAsync("WithGroups");
-		Facade = facade;
+		var (services, workspace, editor, plc) = await CoreTestHelper.BuildAsync("WithGroups");
+		Workspace = workspace;
+		Editor = editor;
+		Plc = plc;
 		ConfigRegistry = services.GetRequiredService<ConfigRegistry>();
 		MessagePanel = new MessagePanelViewModel();
-		QueryService = new RecipeQueryService(Facade, ConfigRegistry);
+		var clipboardService = services.GetRequiredService<ClipboardService>();
+		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
+		QueryService = new RecipeQueryService(Workspace, plc, clipboardService, importedRecipeValidator, ConfigRegistry);
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
-		Coordinator = new RecipeMutationCoordinator(Facade, appConfiguration, QueryService, MessagePanel);
+		var csvService = services.GetRequiredService<CsvService>();
+		Coordinator = new RecipeMutationCoordinator(
+			Workspace,
+			Editor,
+			Plc,
+			csvService,
+			clipboardService,
+			importedRecipeValidator,
+			appConfiguration,
+			QueryService,
+			MessagePanel);
 		Coordinator.Initialize();
 		Grid = new RecipeGridViewModel(Coordinator, ConfigRegistry, MessagePanel);
 		Grid.Initialize();

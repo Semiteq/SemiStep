@@ -1,19 +1,25 @@
 ﻿using FluentResults;
 
 using TypesShared.Core;
-using TypesShared.Domain;
 
 namespace ClipBoard;
 
-internal sealed class ClipboardService(ClipboardSerializer serializer) : IClipboardService
+public sealed class ClipboardService
 {
+	private readonly ClipboardSerializer _serializer;
+
+	internal ClipboardService(ClipboardSerializer serializer)
+	{
+		_serializer = serializer;
+	}
+
 	public string SerializeSteps(Recipe recipe)
 	{
-		return serializer.SerializeSteps(recipe);
+		return _serializer.SerializeSteps(recipe);
 	}
 
 	public Result<Recipe> DeserializeSteps(string tsvBody)
 	{
-		return serializer.DeserializeSteps(tsvBody);
+		return _serializer.DeserializeSteps(tsvBody);
 	}
 }

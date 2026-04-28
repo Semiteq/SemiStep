@@ -1,16 +1,16 @@
 ﻿using System.Linq;
 
-using Domain.Facade;
+using Domain;
 
 using FluentResults;
 
 using TypesShared.Core;
-using TypesShared.Domain;
 
 namespace UI.Coordinator;
 
 internal sealed class RecipeStepCoordinator(
-	DomainFacade domainFacade,
+	RecipeWorkspace workspace,
+	RecipeEditor editor,
 	Func<Recipe> getCurrentRecipe,
 	Action<Result> setLastRecipeResult,
 	Action<int?> setSuggestedSelection,
@@ -19,7 +19,7 @@ internal sealed class RecipeStepCoordinator(
 {
 	public Result AppendStep(int actionId)
 	{
-		var result = domainFacade.AppendStep(actionId);
+		var result = editor.AppendStep(actionId);
 		setLastRecipeResult(result);
 		rebuildMessagePanel();
 
@@ -35,7 +35,7 @@ internal sealed class RecipeStepCoordinator(
 
 	public Result InsertStep(int index, int actionId)
 	{
-		var result = domainFacade.InsertStep(index, actionId);
+		var result = editor.InsertStep(index, actionId);
 		setLastRecipeResult(result);
 		rebuildMessagePanel();
 
@@ -51,7 +51,7 @@ internal sealed class RecipeStepCoordinator(
 
 	public Result RemoveStep(int index)
 	{
-		var result = domainFacade.RemoveStep(index);
+		var result = editor.RemoveStep(index);
 		setLastRecipeResult(result);
 		rebuildMessagePanel();
 
@@ -70,7 +70,7 @@ internal sealed class RecipeStepCoordinator(
 
 	public Result RemoveSteps(IReadOnlyList<int> indices)
 	{
-		var result = domainFacade.RemoveSteps(indices);
+		var result = editor.RemoveSteps(indices);
 		setLastRecipeResult(result);
 		rebuildMessagePanel();
 
@@ -89,7 +89,7 @@ internal sealed class RecipeStepCoordinator(
 
 	public Result InsertSteps(int startIndex, IReadOnlyList<Step> steps)
 	{
-		var result = domainFacade.InsertSteps(startIndex, steps);
+		var result = editor.InsertSteps(startIndex, steps);
 		setLastRecipeResult(result);
 		rebuildMessagePanel();
 
@@ -105,7 +105,7 @@ internal sealed class RecipeStepCoordinator(
 
 	public Result ChangeStepAction(int stepIndex, int newActionId)
 	{
-		var result = domainFacade.ChangeStepAction(stepIndex, newActionId);
+		var result = editor.ChangeStepAction(stepIndex, newActionId);
 		setLastRecipeResult(result);
 		rebuildMessagePanel();
 
@@ -121,7 +121,7 @@ internal sealed class RecipeStepCoordinator(
 
 	public Result UpdateStepProperty(int stepIndex, string columnKey, string value)
 	{
-		var result = domainFacade.UpdateStepProperty(stepIndex, columnKey, value);
+		var result = editor.UpdateStepProperty(stepIndex, columnKey, value);
 		setLastRecipeResult(result);
 		rebuildMessagePanel();
 
@@ -136,7 +136,7 @@ internal sealed class RecipeStepCoordinator(
 
 	public Result Undo()
 	{
-		var result = domainFacade.Undo();
+		var result = workspace.Undo();
 		setLastRecipeResult(result);
 		rebuildMessagePanel();
 
@@ -152,7 +152,7 @@ internal sealed class RecipeStepCoordinator(
 
 	public Result Redo()
 	{
-		var result = domainFacade.Redo();
+		var result = workspace.Redo();
 		setLastRecipeResult(result);
 		rebuildMessagePanel();
 
@@ -168,7 +168,7 @@ internal sealed class RecipeStepCoordinator(
 
 	public Result NewRecipe()
 	{
-		var result = domainFacade.SetNewRecipe();
+		var result = workspace.Reset();
 		setLastRecipeResult(result);
 		rebuildMessagePanel();
 

@@ -10,6 +10,8 @@ using Csv;
 
 using Domain;
 using Domain.Facade;
+using Domain.Helpers;
+using Domain.Plc;
 
 using FluentAssertions;
 
@@ -174,7 +176,11 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		BuildCoordinatorWithThrowingCsvAsync()
 	{
 		return await BuildCoordinatorAsync(services =>
-			services.AddSingleton<ICsvService, FailingCsvService>());
+		{
+			services.AddCsv();
+			services.AddSingleton<CsvService>(sp => new ThrowingCsvService(
+				sp.GetRequiredService<CsvFileSerializer>()));
+		});
 	}
 
 	private static async Task<(RecipeMutationCoordinator Coordinator, MessagePanelViewModel Panel)>
@@ -195,14 +201,29 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 
 		var services = serviceCollection.BuildServiceProvider();
 
-		var facade = services.GetRequiredService<DomainFacade>();
-		facade.Initialize();
+		var workspace = services.GetRequiredService<RecipeWorkspace>();
+		var editor = services.GetRequiredService<RecipeEditor>();
+		var plc = services.GetRequiredService<PlcLifecycleManager>();
+		plc.Initialize();
+		workspace.Reset();
 
 		var configRegistry = services.GetRequiredService<ConfigRegistry>();
 		var panel = new MessagePanelViewModel();
-		var queryService = new RecipeQueryService(facade, configRegistry);
+		var clipboardService = services.GetRequiredService<ClipboardService>();
+		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
+		var queryService = new RecipeQueryService(workspace, plc, clipboardService, importedRecipeValidator, configRegistry);
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
-		var coordinator = new RecipeMutationCoordinator(facade, appConfiguration, queryService, panel);
+		var csvService = services.GetRequiredService<CsvService>();
+		var coordinator = new RecipeMutationCoordinator(
+			workspace,
+			editor,
+			plc,
+			csvService,
+			clipboardService,
+			importedRecipeValidator,
+			appConfiguration,
+			queryService,
+			panel);
 		coordinator.Initialize();
 
 		return (coordinator, panel);

@@ -1,5 +1,7 @@
 ﻿using System.Reactive.Subjects;
 
+using Domain.Plc;
+
 using FluentResults;
 
 using S7.Protocol;

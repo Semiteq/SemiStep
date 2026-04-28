@@ -18,8 +18,8 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	[Fact]
 	public void ClosedLoop_IsValid()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 		driver.AddFor(DefaultIterationCount).AddWait(SingleIterationDuration).AddEndFor();
 
 		driver.IsValid.Should().BeTrue();
@@ -29,8 +29,8 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	[Fact]
 	public void ClosedLoop_ComputesIterationTiming()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 		driver.AddFor(DefaultIterationCount).AddWait(SingleIterationDuration).AddEndFor();
 
 		driver.Snapshot.TotalDuration.Should()
@@ -43,8 +43,8 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	[Fact]
 	public void UnclosedLoop_ProducesWarning()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 		driver.AddFor(2).AddWait(5f);
 
 		driver.Warnings.Should().NotBeEmpty();
@@ -53,8 +53,8 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	[Fact]
 	public void UnmatchedEndFor_ProducesWarning()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 		driver.AddWait(5f).AddEndFor();
 
 		driver.Warnings.Should().NotBeEmpty();
@@ -63,8 +63,8 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	[Fact]
 	public void NestedLoops_ComputeCorrectDepth()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 
 		driver.AddFor(2);
 		driver.AddFor(3);
@@ -85,13 +85,13 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	[Fact]
 	public void NestedLoops_ComputeCorrectTiming()
 	{
-		fixture.Facade.SetNewRecipe();
+		fixture.Workspace.Reset();
 
 		const int OuterIterations = 2;
 		const int InnerIterations = 3;
 		const int StepDuration = 5;
 
-		var driver = new RecipeTestDriver(fixture.Facade);
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 		driver.AddFor(OuterIterations);
 		driver.AddFor(InnerIterations);
 		driver.AddWait(StepDuration);
@@ -104,8 +104,8 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	[Fact]
 	public void MaxDepthExceeded_RejectsMutation()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 
 		for (var i = 0; i <= MaxAllowedNestingDepth; i++)
 		{
@@ -115,7 +115,7 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 		driver.AddWait(1f);
 
 		var stepCountBeforeRejection = driver.StepCount;
-		var result = fixture.Facade.AppendStep(RecipeTestDriver.EndForLoopActionId);
+		var result = fixture.Editor.AppendStep(RecipeTestDriver.EndForLoopActionId);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().ContainSingle(e => e.Message.Contains("nesting depth", StringComparison.OrdinalIgnoreCase));
@@ -126,8 +126,8 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	[Fact]
 	public void LoopByStart_LoopByEnd_CorrectMapping()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 		driver.AddFor(2).AddWait(5f).AddEndFor();
 
 		driver.Snapshot.LoopByStart.Should().ContainKey(0);
@@ -142,8 +142,8 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	[Fact]
 	public void EnclosingLoopsMap_CorrectlyBuilt()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 
 		driver.AddFor(2).AddFor(3).AddWait(5f).AddEndFor().AddEndFor();
 
@@ -154,8 +154,8 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	[Fact]
 	public void EmptyLoop_ValidButZeroDuration()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 		driver.AddFor(5).AddEndFor();
 
 		driver.IsValid.Should().BeTrue();
@@ -165,8 +165,8 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	[Fact]
 	public void MultipleSequentialLoops_Valid()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 
 		driver.AddFor(2).AddWait(5f).AddEndFor();
 		driver.AddFor(3).AddWait(10f).AddEndFor();

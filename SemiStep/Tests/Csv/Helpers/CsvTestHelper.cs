@@ -9,6 +9,7 @@ using Csv;
 
 using Domain;
 using Domain.Facade;
+using Domain.Plc;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -36,8 +37,10 @@ internal static class CsvTestHelper
 			.AddSingleton<IPlcSyncService, StubPlcSyncService>()
 			.BuildServiceProvider();
 
-		var domainFacade = services.GetRequiredService<DomainFacade>();
-		domainFacade.Initialize();
+		var workspace = services.GetRequiredService<RecipeWorkspace>();
+		var plc = services.GetRequiredService<PlcLifecycleManager>();
+		plc.Initialize();
+		workspace.Reset();
 
 		var fileSerializer = services.GetRequiredService<CsvFileSerializer>();
 		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();

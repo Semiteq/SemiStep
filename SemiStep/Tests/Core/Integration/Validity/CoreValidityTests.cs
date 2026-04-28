@@ -14,8 +14,8 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void EmptyRecipe_IsValid_ButHasWarning()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 
 		driver.IsValid.Should().BeTrue();
 		driver.Warnings.Should().NotBeEmpty();
@@ -25,8 +25,8 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void ValidRecipe_NoErrors()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 		driver.AddWait(10f).AddWait(20f);
 
 		driver.IsValid.Should().BeTrue();
@@ -36,8 +36,8 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void RecipeWithClosedLoop_IsValid()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 		driver.AddFor(3).AddWait(10f).AddEndFor();
 
 		driver.IsValid.Should().BeTrue();
@@ -47,8 +47,8 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void UnclosedLoop_ProducesWarning()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 		driver.AddFor(3).AddWait(10f);
 
 		driver.IsValid.Should().BeTrue("unclosed loops are warnings, not errors");
@@ -58,13 +58,13 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void MaxDepth3Exceeded_RejectsMutation()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 
 		driver.AddFor(1).AddFor(1).AddFor(1).AddFor(1).AddWait(1f);
 
 		var stepCountBeforeRejection = driver.StepCount;
-		var result = fixture.Facade.AppendStep(RecipeTestDriver.EndForLoopActionId);
+		var result = fixture.Editor.AppendStep(RecipeTestDriver.EndForLoopActionId);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().ContainSingle(e => e.Message.Contains("nesting depth", StringComparison.OrdinalIgnoreCase));
@@ -75,8 +75,8 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void ExceedingMaxDepth_RejectsMutation_AndRecipeRemainsValid()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 		driver.AddWait(10f);
 
 		driver.Errors.Should().BeEmpty();
@@ -85,7 +85,7 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 		driver.AddFor(1).AddFor(1).AddFor(1).AddFor(1).AddWait(1f);
 		var stepCountBeforeRejection = driver.StepCount;
 
-		var result = fixture.Facade.AppendStep(RecipeTestDriver.EndForLoopActionId);
+		var result = fixture.Editor.AppendStep(RecipeTestDriver.EndForLoopActionId);
 
 		result.IsFailed.Should().BeTrue("exceeding max loop depth produces an error");
 		driver.IsValid.Should().BeTrue("the mutation was rejected, recipe is unchanged");
@@ -95,8 +95,8 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void WarningsDoNotAffectValidity()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 
 		driver.Warnings.Should().NotBeEmpty();
 		driver.IsValid.Should().BeTrue("warnings alone should not invalidate the recipe");
@@ -105,8 +105,8 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void MultipleWarnings_AllCaptured()
 	{
-		fixture.Facade.SetNewRecipe();
-		var driver = new RecipeTestDriver(fixture.Facade);
+		fixture.Workspace.Reset();
+		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
 
 		driver.AddFor(1).AddFor(1).AddWait(5f);
 

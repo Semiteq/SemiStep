@@ -1,4 +1,5 @@
-﻿using Domain.Facade;
+﻿using Domain;
+using Domain.Helpers;
 
 using FluentAssertions;
 
@@ -20,13 +21,15 @@ namespace Tests.UI;
 [Trait("Category", "Integration")]
 public sealed class RecipeRowViewModelTests : IAsyncLifetime
 {
-	private DomainFacade _facade = null!;
+	private RecipeWorkspace _workspace = null!;
+	private RecipeEditor _editor = null!;
 	private ConfigRegistry _configRegistry = null!;
 
 	public async Task InitializeAsync()
 	{
-		var (services, facade) = await CoreTestHelper.BuildAsync("WithGroups");
-		_facade = facade;
+		var (services, workspace, editor, _) = await CoreTestHelper.BuildAsync("WithGroups");
+		_workspace = workspace;
+		_editor = editor;
 		_configRegistry = services.GetRequiredService<ConfigRegistry>();
 	}
 
@@ -37,8 +40,8 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 
 	private RecipeRowViewModel CreateRow(int actionId = RecipeTestDriver.WaitActionId)
 	{
-		_facade.AppendStep(actionId);
-		var step = _facade.CurrentRecipe.Steps[0];
+		_editor.AppendStep(actionId);
+		var step = _workspace.CurrentRecipe.Steps[0];
 		var action = _configRegistry.GetAction(step.ActionKey).Value;
 		var cellStates = BuildCellStates(action);
 		return new RecipeRowViewModel(1, step, action, _configRegistry, cellStates);
@@ -49,7 +52,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var states = new Dictionary<string, CellState>();
 		foreach (var col in _configRegistry.GetAllColumns())
 		{
-			states[col.Key] = DomainFacade.GetCellState(col, action);
+			states[col.Key] = CellStateResolver.GetCellState(col, action);
 		}
 		return states;
 	}
@@ -57,7 +60,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void GetPropertyValue_Action_ReturnsActionId()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		var value = row.GetPropertyValue("action");
@@ -68,7 +71,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void GetPropertyValue_StepStartTime_ReturnsNull_Initially()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		var value = row.GetPropertyValue("step_start_time");
@@ -79,7 +82,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void GetPropertyValue_UnknownKey_ReturnsNull()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		var value = row.GetPropertyValue("nonexistent_column");
@@ -90,7 +93,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void GetPropertyValue_KnownColumn_ReturnsPropertyValue()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		var value = row.GetPropertyValue(RecipeTestDriver.StepDurationColumn);
@@ -101,7 +104,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void Indexer_Get_DelegatesToGetPropertyValue()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		var indexerValue = row["action"];
@@ -113,7 +116,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void SetPropertyValue_Action_FiresActionChangedEvent()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 		var receivedActionId = -1;
 		row.ActionChanged += id => receivedActionId = id;
@@ -126,7 +129,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void SetPropertyValue_Action_InvalidValue_DoesNotFireEvent()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 		var eventFired = false;
 		row.ActionChanged += _ => eventFired = true;
@@ -139,7 +142,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void SetPropertyValue_NonAction_FiresPropertyValueChangedEvent()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 		var receivedColumnKey = string.Empty;
 		row.PropertyValueChanged += (key, _) => receivedColumnKey = key;
@@ -152,12 +155,12 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void UpdateStep_RaisesItemArrayPropertyChanged()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 		var changedProperties = new List<string>();
 		row.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName ?? "");
 
-		var updatedStep = _facade.CurrentRecipe.Steps[0];
+		var updatedStep = _workspace.CurrentRecipe.Steps[0];
 		row.UpdateStep(updatedStep);
 
 		changedProperties.Should().Contain("Item[]");
@@ -166,7 +169,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void UpdateStepNumber_ChangesStepNumber()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		row.UpdateStepNumber(3);
@@ -177,7 +180,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void UpdateStepStartTime_ChangesStepStartTime()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		row.UpdateStepStartTime("123.5");
@@ -188,7 +191,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void CellStates_NotEmpty()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		row.CellStates.Count.Should().BeGreaterThan(0);
@@ -197,7 +200,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void CellStates_ActionColumn_IsEnabled()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow(RecipeTestDriver.PauseActionId);
 
 		row.CellStates["action"].Should().Be(CellState.Enabled);
@@ -206,7 +209,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void GetGroupNameForColumn_ReturnsNull_ForNonGroupColumn()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		var groupName = row.GetGroupNameForColumn(RecipeTestDriver.StepDurationColumn);
@@ -217,7 +220,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void GetGroupItemsForColumn_ReturnsNull_ForNonGroupColumn()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		var groupItems = row.GetGroupItemsForColumn(RecipeTestDriver.StepDurationColumn);
@@ -228,7 +231,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void ColumnUnits_ContainsStepStartTime_WithTimeUnits()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		row.ColumnUnits.Should().ContainKey("step_start_time")
@@ -238,7 +241,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void ColumnFormatKinds_ContainsStepStartTime_WithTimeHmsFormat()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 
 		row.ColumnFormatKinds.Should().ContainKey("step_start_time")
@@ -248,7 +251,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void ColumnUnits_ContainsActionColumnUnits()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 
 		// Wait action: step_duration -> time property -> units "s"
@@ -259,7 +262,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void ColumnFormatKinds_ContainsActionColumnFormatKind()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 
 		// Wait action: step_duration -> time property -> formatKind "time_hms"
@@ -270,7 +273,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void ColumnUnits_ColumnWithEmptyUnits_ReturnsEmptyString()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 
 		// Wait action: comment -> string property -> units ""
@@ -281,7 +284,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[Fact]
 	public void Dispose_NullsEventDelegates()
 	{
-		_facade.SetNewRecipe();
+		_workspace.Reset();
 		var row = CreateRow();
 		var handlerCalled = false;
 		row.PropertyValueChanged += (_, _) => handlerCalled = true;

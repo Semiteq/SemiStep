@@ -11,6 +11,7 @@ using Csv;
 
 using Domain;
 using Domain.Facade;
+using Domain.Plc;
 
 using FluentAssertions;
 
@@ -30,12 +31,12 @@ namespace Tests.Domain;
 [Trait("Component", "Domain")]
 [Trait("Area", "Reconnect")]
 [Trait("Category", "Unit")]
-public sealed class DomainFacadeReconnectTests
+public sealed class PlcLifecycleManagerReconnectTests
 {
 	private const int WaitActionId = 10;
 
-	private static async Task<(DomainFacade Facade, StubIs7Service S7Service, StubPlcSyncService SyncService)>
-		BuildFacadeAsync()
+	private static async Task<(PlcLifecycleManager Plc, RecipeWorkspace Workspace, RecipeEditor Editor, StubIs7Service S7Service, StubPlcSyncService SyncService)>
+		BuildAsync()
 	{
 		var configDir = TestConfigLocator.GetConfigDirectory("Standard");
 		var configLoadResult = await ConfigFacade.LoadAndValidateAsync(configDir);
@@ -53,10 +54,13 @@ public sealed class DomainFacadeReconnectTests
 			.AddSingleton<IPlcSyncService>(syncService)
 			.BuildServiceProvider();
 
-		var facade = services.GetRequiredService<DomainFacade>();
-		facade.Initialize();
+		var workspace = services.GetRequiredService<RecipeWorkspace>();
+		var editor = services.GetRequiredService<RecipeEditor>();
+		var plc = services.GetRequiredService<PlcLifecycleManager>();
+		plc.Initialize();
+		workspace.Reset();
 
-		return (facade, s7Service, syncService);
+		return (plc, workspace, editor, s7Service, syncService);
 	}
 
 	private static Recipe BuildSingleStepRecipe()
@@ -71,10 +75,10 @@ public sealed class DomainFacadeReconnectTests
 	[Fact]
 	public async Task StateChanged_Connected_WhenRecipesDiffer_FiresConflictDetected()
 	{
-		var (facade, s7Service, _) = await BuildFacadeAsync();
+		var (plc, _, editor, s7Service, _) = await BuildAsync();
 
 		// Populate local recipe so it is non-empty.
-		var appendResult = facade.AppendStep(WaitActionId);
+		var appendResult = editor.AppendStep(WaitActionId);
 		appendResult.IsSuccess.Should().BeTrue();
 
 		// Configure stub: committed=true, PLC recipe different from local.
@@ -83,15 +87,15 @@ public sealed class DomainFacadeReconnectTests
 		s7Service.RecipeToReturn = plcRecipe;
 
 		// Activate sync so the relay handles Connected events.
-		var enableResult = await facade.EnableSync(PlcConfiguration.Default);
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
 
 		Recipe? conflictLocalRecipe = null;
 		Recipe? conflictPlcRecipe = null;
-		facade.PlcRecipeConflictDetected += (local, plc) =>
+		plc.PlcRecipeConflictDetected += (local, plcRec) =>
 		{
 			conflictLocalRecipe = local;
-			conflictPlcRecipe = plc;
+			conflictPlcRecipe = plcRec;
 		};
 
 		// Simulate an auto-reconnect: StateChanged fires Connected while sync is active.
@@ -108,12 +112,12 @@ public sealed class DomainFacadeReconnectTests
 	[Fact]
 	public async Task StateChanged_Connected_WhenNotCommitted_PushesLocalRecipe()
 	{
-		var (facade, s7Service, syncService) = await BuildFacadeAsync();
+		var (plc, _, _, s7Service, syncService) = await BuildAsync();
 
 		// Configure stub: committed=false, so reconciliation should push local recipe.
 		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: false, RecipeLines: 0);
 
-		var enableResult = await facade.EnableSync(PlcConfiguration.Default);
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
 
 		// Capture the call count after EnableSync to measure only the reconnect-triggered push.
@@ -124,15 +128,15 @@ public sealed class DomainFacadeReconnectTests
 		await Task.Delay(200);
 
 		syncService.NotifyRecipeChangedCallCount.Should().BeGreaterThan(countBeforeStateChange,
-			"when committed=false the facade must push the local recipe to the PLC via NotifyRecipeChanged");
+			"when committed=false the manager must push the local recipe to the PLC via NotifyRecipeChanged");
 	}
 
 	[Fact]
 	public async Task StateChanged_Disconnected_WhenSyncEnabled_CallsReset()
 	{
-		var (facade, s7Service, syncService) = await BuildFacadeAsync();
+		var (plc, _, _, s7Service, syncService) = await BuildAsync();
 
-		var enableResult = await facade.EnableSync(PlcConfiguration.Default);
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
 
 		// Simulate a connection drop while sync is active.
@@ -145,12 +149,12 @@ public sealed class DomainFacadeReconnectTests
 	[Fact]
 	public async Task DisableSync_CallsResetOnSyncService()
 	{
-		var (facade, _, syncService) = await BuildFacadeAsync();
+		var (plc, _, _, _, syncService) = await BuildAsync();
 
-		var enableResult = await facade.EnableSync(PlcConfiguration.Default);
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
 
-		await facade.DisableSync();
+		await plc.DisableSync();
 
 		syncService.WasResetCalled.Should().BeTrue(
 			"IPlcSyncService.Reset() must be called when sync is manually disabled");

@@ -3,7 +3,7 @@
 using TypesShared.Core;
 using TypesShared.Plc;
 
-namespace TypesShared.Domain;
+namespace Domain.Plc;
 
 public interface IPlcSyncService
 {

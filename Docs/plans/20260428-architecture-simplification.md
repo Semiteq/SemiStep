@@ -264,12 +264,12 @@ appears in each phase's task block below. High-level summary:
   `TypesShared/Domain/` for now and is deleted entirely in Phase 8 (moving it just to
   delete it later would be churn).
 
-- [ ] Mark `CsvService.LoadAsync` and `CsvService.SaveAsync` as `public virtual`.
-- [ ] Create `ThrowingCsvService : CsvService` in `Tests/Helpers/`. Override `SaveAsync`
+- [x] Mark `CsvService.LoadAsync` and `CsvService.SaveAsync` as `public virtual`.
+- [x] Create `ThrowingCsvService : CsvService` in `Tests/Helpers/`. Override `SaveAsync`
       to return `Task.FromResult(Result.Fail("Simulated disk write failure."))`. Override
       `LoadAsync` to return `Task.FromResult(Result.Fail<Recipe>("ThrowingCsvService does not support loading."))`.
-- [ ] Delete `FailingCsvService.cs`.
-- [ ] Update `BuildCoordinatorWithThrowingCsvAsync` in
+- [x] Delete `FailingCsvService.cs`.
+- [x] Update `BuildCoordinatorWithThrowingCsvAsync` in
       `RecipeMutationCoordinatorLoadRecipeTests.cs`. The current setup does not call
       `AddCsv()` (it only registers stubs). After the change the setup must:
       1. call `services.AddCsv()` first — this registers `CsvFileSerializer` and the
@@ -281,18 +281,18 @@ appears in each phase's task block below. High-level summary:
       This keeps `ThrowingCsvService`'s inherited `CsvService(CsvFileSerializer)`
       constructor satisfied without any `null!` arguments or parameterless-constructor
       hacks.
-- [ ] Delete `ICsvService.cs`, `IClipboardService.cs`, `ICoreService.cs`.
-- [ ] Update `CsvService`, `ClipboardService`, `CoreFacade` to drop interface declarations
+- [x] Delete `ICsvService.cs`, `IClipboardService.cs`, `ICoreService.cs`.
+- [x] Update `CsvService`, `ClipboardService`, `CoreFacade` to drop interface declarations
       and become `public sealed` (or `public` for `CsvService` since it must allow
       subclassing for `ThrowingCsvService`).
-- [ ] Update DI registrations in `CsvDi`, `ClipboardDi`, `CoreDi` to register concrete
+- [x] Update DI registrations in `CsvDi`, `ClipboardDi`, `CoreDi` to register concrete
       classes.
-- [ ] Update `DomainFacade` constructor: `ICsvService -> CsvService`,
+- [x] Update `DomainFacade` constructor: `ICsvService -> CsvService`,
       `IClipboardService -> ClipboardService`, `ICoreService -> CoreFacade`.
-- [ ] Move `IPlcSyncService.cs` to `SemiStep/Domain/Plc/`. Update namespace and `using`
+- [x] Move `IPlcSyncService.cs` to `SemiStep/Domain/Plc/`. Update namespace and `using`
       directives in producer (`PlcSyncCoordinator.cs`) and consumers. Leave
       `IS7Service.cs` in place — Phase 8 deletes it.
-- [ ] Build green, all tests green. The `BuildCoordinatorWithThrowingCsvAsync` test path
+- [x] Build green, all tests green. The `BuildCoordinatorWithThrowingCsvAsync` test path
       should keep working with the subclass approach.
 
 ### Task 4: Pure-data Recipe; collapse delegation chains
@@ -326,7 +326,7 @@ constructed once at the top of the application graph and held by `RecipeEditor`,
   direct injection)
 - Modify: `SemiStep/Domain/DomainDi.cs` (no more `RecipeEditService` registration)
 
-- [ ] On `Recipe`, add **only** structural operations on its own data:
+- [x] On `Recipe`, add **only** structural operations on its own data:
       ```
       public Recipe AppendStep(Step step)
       public Recipe InsertStep(int index, Step step)
@@ -340,9 +340,9 @@ constructed once at the top of the application graph and held by `RecipeEditor`,
       via standard `ImmutableList` operations or guard clauses where appropriate). No
       `ConfigRegistry`. No `ActionDefinition`. No formula coordinator. Pure immutable
       record manipulation.
-- [ ] On `Step`, add `WithProperty(string key, PropertyValue value)` returning a new `Step`
+- [x] On `Step`, add `WithProperty(string key, PropertyValue value)` returning a new `Step`
       with the property dictionary updated. Used by Phase 5's `RecipeEditor.UpdateStepProperty`.
-- [ ] In `DomainFacade` (transitional only — fully removed in Phase 5): replace
+- [x] In `DomainFacade` (transitional only — fully removed in Phase 5): replace
       `_coreService.AppendStep(...)` and similar calls with their inlined equivalent. For
       example `AppendStep` becomes:
       ```
@@ -362,11 +362,11 @@ constructed once at the top of the application graph and held by `RecipeEditor`,
       methods — `InsertStep`, `RemoveStep`, `ChangeStepAction`, `UpdateStepProperty`,
       `RemoveSteps` all need an index range check before mutation, otherwise behavior
       regresses against existing tests.
-- [ ] Inject `RecipeAnalyzer`, `FormulaApplicationCoordinator`, `StepInitializer`,
+- [x] Inject `RecipeAnalyzer`, `FormulaApplicationCoordinator`, `StepInitializer`,
       `PropertyValidator`, `ConfigRegistry` directly into `DomainFacade` for the
       transition. Drop `CoreFacade`/`RecipeEditService` constructor dependencies.
-- [ ] Delete `RecipeMutator.cs`, `CoreFacade.cs`, `RecipeEditService.cs`.
-- [ ] Build green. Run `dotnet test` — `Tests/Core/Integration/Mutation/*` should pass
+- [x] Delete `RecipeMutator.cs`, `CoreFacade.cs`, `RecipeEditService.cs`.
+- [x] Build green. Run `dotnet test` — `Tests/Core/Integration/Mutation/*` should pass
       unchanged (they exercise behavior end-to-end).
 
 ### Task 5: Split DomainFacade into RecipeWorkspace + RecipeEditor + PlcLifecycleManager
@@ -415,18 +415,18 @@ Each backend class stays small and single-purpose.
 
 #### Visibility changes (all required for cross-assembly UI consumption post-Phase 2)
 
-- [ ] `RecipeWorkspace` -> `public sealed class`.
-- [ ] `RecipeEditor` -> `public sealed class`.
-- [ ] `PlcLifecycleManager` -> `public sealed class` (promoted from internal-collaborator).
-- [ ] `ImportedRecipeValidator` -> `public sealed class`.
-- [ ] Audit `RecipeStateManager`, `RecipeHistoryManager`, `RecipeAnalyzer`,
+- [x] `RecipeWorkspace` -> `public sealed class`.
+- [x] `RecipeEditor` -> `public sealed class`.
+- [x] `PlcLifecycleManager` -> `public sealed class` (promoted from internal-collaborator).
+- [x] `ImportedRecipeValidator` -> `public sealed class`.
+- [x] Audit `RecipeStateManager`, `RecipeHistoryManager`, `RecipeAnalyzer`,
       `FormulaApplicationCoordinator`, `StepInitializer`, `PropertyValidator`: each stays
       `internal sealed` if only the new trio consumes it; otherwise -> public. Most should
       stay internal — only the workspace/editor/manager need to be public surface.
 
 #### RecipeWorkspace — state holder only
 
-- [ ] Create `RecipeWorkspace`. Internal: `RecipeStateManager`, `RecipeHistoryManager`,
+- [x] Create `RecipeWorkspace`. Internal: `RecipeStateManager`, `RecipeHistoryManager`,
       `RecipeAnalyzer`, `IPlcSyncService` (only for `NotifyRecipeChanged` post-Apply).
       Public surface — **state and history, nothing else**:
       ```
@@ -474,7 +474,7 @@ Each backend class stays small and single-purpose.
 
 #### RecipeEditor — edit operations only
 
-- [ ] Create `RecipeEditor`. Internal: `RecipeWorkspace`, `ConfigRegistry`,
+- [x] Create `RecipeEditor`. Internal: `RecipeWorkspace`, `ConfigRegistry`,
       `FormulaApplicationCoordinator`, `IPropertyParser` (or `StepInitializer` if more
       convenient — check existing layering). Public surface — **mutation operations only**:
       ```
@@ -503,7 +503,7 @@ Each backend class stays small and single-purpose.
 
 #### PlcLifecycleManager — PLC orchestration only
 
-- [ ] Promote `PlcLifecycleManager` from internal-collaborator to public. Constructor
+- [x] Promote `PlcLifecycleManager` from internal-collaborator to public. Constructor
       takes `RecipeWorkspace` (to call `Apply` when reading from PLC), plus its existing
       `IS7Service`, `IPlcSyncService`, `ImportedRecipeValidator`, etc. Public surface:
       ```
@@ -525,7 +525,7 @@ Each backend class stays small and single-purpose.
 
 #### File I/O and clipboard live where they belong
 
-- [ ] `CsvService` (concrete, no interface, public) keeps `LoadAsync`, `SaveAsync`. UI's
+- [x] `CsvService` (concrete, no interface, public) keeps `LoadAsync`, `SaveAsync`. UI's
       `RecipeMutationCoordinator` orchestrates the flow:
       `csvService.LoadAsync(path) -> validator.Validate(recipe) -> workspace.Apply(recipe)`.
       The orchestration logic that currently lives in `DomainFacade.LoadRecipeAsync` (about
@@ -533,13 +533,13 @@ Each backend class stays small and single-purpose.
       either on `RecipeWorkspace` (e.g. a separate `Reset()` + `Apply(...)` flow) or as a
       thin extension method. Avoid creating a new "RecipeFileService" class — the call site
       is one place (UI coordinator).
-- [ ] `ClipboardService` (concrete, no interface, public) exposes serialize/deserialize.
+- [x] `ClipboardService` (concrete, no interface, public) exposes serialize/deserialize.
       UI calls them directly. Validation flow uses `ImportedRecipeValidator` directly.
-- [ ] Delete `DomainFacade.cs` entirely.
+- [x] Delete `DomainFacade.cs` entirely.
 
 #### UI rewiring
 
-- [ ] Update `RecipeMutationCoordinator` constructor: parameters become
+- [x] Update `RecipeMutationCoordinator` constructor: parameters become
       `RecipeWorkspace workspace`, `RecipeEditor editor`, `PlcLifecycleManager plc`,
       `CsvService csv`, `ClipboardService clipboard`, `ImportedRecipeValidator validator`,
       plus existing `AppConfiguration`, `RecipeQueryService`, `MessagePanelViewModel`.
@@ -548,9 +548,9 @@ Each backend class stays small and single-purpose.
       - undo/redo/save-marker/snapshot -> `_workspace.X()`
       - PLC -> `_plc.X()`
       - file/clipboard -> `_csv.X()` / `_clipboard.X()`
-- [ ] Update `RecipeQueryService` and `RecipeStepCoordinator` similarly: queries hit
+- [x] Update `RecipeQueryService` and `RecipeStepCoordinator` similarly: queries hit
       `RecipeWorkspace`, mutations hit `RecipeEditor`.
-- [ ] Update `DomainDi` to register `RecipeWorkspace`, `RecipeEditor`, `PlcLifecycleManager`
+- [x] Update `DomainDi` to register `RecipeWorkspace`, `RecipeEditor`, `PlcLifecycleManager`
       as singletons. Drop `DomainFacade`.
 
 #### Test rewiring
@@ -560,21 +560,21 @@ build, observe what breaks, fix the touched test setup, re-run. The items below
 enumerate the call sites known to break at compile time so the executor is not
 surprised.
 
-- [ ] `Tests/Core/Helpers/RecipeTestDriver.cs` — currently constructs `DomainFacade`
+- [x] `Tests/Core/Helpers/RecipeTestDriver.cs` — currently constructs `DomainFacade`
       directly. Retype to take `RecipeWorkspace` + `RecipeEditor`; state queries route
       to workspace, mutations route to editor.
-- [ ] `Tests/Core/Helpers/CoreFixture.cs` — build the new trio instead of `DomainFacade`.
-- [ ] `Tests/Csv/Helpers/CsvTestHelper.cs` — same DI changes.
-- [ ] `Tests/UI/RecipeMutationCoordinatorTests.cs` — constructor of the system under
+- [x] `Tests/Core/Helpers/CoreFixture.cs` — build the new trio instead of `DomainFacade`.
+- [x] `Tests/Csv/Helpers/CsvTestHelper.cs` — same DI changes.
+- [x] `Tests/UI/RecipeMutationCoordinatorTests.cs` — constructor of the system under
       test changes; setup edits expected.
-- [ ] `Tests/UI/RecipeMutationCoordinatorLoadRecipeTests.cs` — replace
+- [x] `Tests/UI/RecipeMutationCoordinatorLoadRecipeTests.cs` — replace
       `services.GetRequiredService<DomainFacade>()` calls with the new trio.
-- [ ] `Tests/Domain/DomainFacadeReconnectTests.cs` — rename to
+- [x] `Tests/Domain/DomainFacadeReconnectTests.cs` — rename to
       `PlcLifecycleManagerReconnectTests.cs`. The system under test becomes
       `PlcLifecycleManager` directly. The `StubIs7Service` property-setter pattern can
       stay — it is justified by the public-API testing surface; do not refactor it
       unless build forces it.
-- [ ] Build green. Integration test assertions should not need rewriting — only
+- [x] Build green. Integration test assertions should not need rewriting — only
       setup/wiring changes.
 
 ### Task 6: Feature-folder reorganization + Config DTO simplification

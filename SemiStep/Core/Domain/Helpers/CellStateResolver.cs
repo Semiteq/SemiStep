@@ -3,7 +3,7 @@ using TypesShared.Core;
 
 namespace Domain.Helpers;
 
-internal static class CellStateResolver
+public static class CellStateResolver
 {
 	public static CellState GetCellState(GridColumnDefinition column, ActionDefinition action)
 	{

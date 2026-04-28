@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-using TypesShared.Domain;
-
 namespace ClipBoard;
 
 public static class ClipboardDi
@@ -9,7 +7,7 @@ public static class ClipboardDi
 	public static IServiceCollection AddClipboard(this IServiceCollection services)
 	{
 		services.AddSingleton<ClipboardSerializer>();
-		services.AddSingleton<IClipboardService, ClipboardService>();
+		services.AddSingleton(sp => new ClipboardService(sp.GetRequiredService<ClipboardSerializer>()));
 
 		return services;
 	}

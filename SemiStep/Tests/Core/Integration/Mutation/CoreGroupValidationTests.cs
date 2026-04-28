@@ -14,10 +14,10 @@ public sealed class CoreGroupValidationTests(CoreFixture fixture) : IClassFixtur
 	[Fact]
 	public void UpdateProperty_ValidGroupKey_Succeeds()
 	{
-		fixture.Facade.SetNewRecipe();
-		fixture.Facade.AppendStep(RecipeTestDriver.WithGroupActionId);
+		fixture.Workspace.Reset();
+		fixture.Editor.AppendStep(RecipeTestDriver.WithGroupActionId);
 
-		var result = fixture.Facade.UpdateStepProperty(0, RecipeTestDriver.TargetColumn, "1");
+		var result = fixture.Editor.UpdateStepProperty(0, RecipeTestDriver.TargetColumn, "1");
 
 		result.IsSuccess.Should().BeTrue("key 1 is a member of the valve group");
 	}
@@ -25,10 +25,10 @@ public sealed class CoreGroupValidationTests(CoreFixture fixture) : IClassFixtur
 	[Fact]
 	public void UpdateProperty_InvalidGroupKey_ReturnsFail()
 	{
-		fixture.Facade.SetNewRecipe();
-		fixture.Facade.AppendStep(RecipeTestDriver.WithGroupActionId);
+		fixture.Workspace.Reset();
+		fixture.Editor.AppendStep(RecipeTestDriver.WithGroupActionId);
 
-		var result = fixture.Facade.UpdateStepProperty(0, RecipeTestDriver.TargetColumn, "99");
+		var result = fixture.Editor.UpdateStepProperty(0, RecipeTestDriver.TargetColumn, "99");
 
 		result.IsFailed.Should().BeTrue("key 99 is not a member of the valve group");
 	}

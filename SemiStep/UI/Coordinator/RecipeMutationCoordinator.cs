@@ -1,11 +1,19 @@
 ﻿using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
+using ClipBoard;
+
+using Csv;
+
+using Domain;
 using Domain.Facade;
+using Domain.Helpers;
 
 using FluentResults;
 
 using ReactiveUI;
+
+using Serilog;
 
 using TypesShared.Config;
 using TypesShared.Core;
@@ -17,32 +25,48 @@ namespace UI.Coordinator;
 
 public sealed class RecipeMutationCoordinator : IDisposable
 {
-	private readonly DomainFacade _domainFacade;
 	private readonly AppConfiguration _appConfiguration;
-	private readonly RecipeQueryService _queryService;
+	private readonly ClipboardService _clipboardService;
+	private readonly CsvService _csvService;
+	private readonly RecipeEditor _editor;
+	private readonly ImportedRecipeValidator _importedRecipeValidator;
 	private readonly MessagePanelViewModel _messagePanel;
-	private readonly RecipeStepCoordinator _stepCoordinator;
-	private readonly Subject<MutationSignal> _stateChanged = new();
+	private readonly PlcLifecycleManager _plc;
 	private readonly Subject<(Recipe Local, Recipe Plc)> _plcRecipeConflictDetected = new();
 	private readonly Subject<Result<PlcSessionSnapshot>> _plcStateChanged = new();
-	private Result _lastRecipeResult = Result.Ok();
-	private Result<PlcSessionSnapshot> _lastPlcState = PlcSessionSnapshot.InitialState;
-	private IDisposable? _plcStateSubscription;
-	private bool _initialized;
+	private readonly RecipeQueryService _queryService;
+	private readonly Subject<MutationSignal> _stateChanged = new();
+	private readonly RecipeStepCoordinator _stepCoordinator;
+	private readonly RecipeWorkspace _workspace;
 	private bool _disposed;
+	private bool _initialized;
+	private Result<PlcSessionSnapshot> _lastPlcState = PlcSessionSnapshot.InitialState;
+	private Result _lastRecipeResult = Result.Ok();
+	private IDisposable? _plcStateSubscription;
 
 	public RecipeMutationCoordinator(
-		DomainFacade domainFacade,
+		RecipeWorkspace workspace,
+		RecipeEditor editor,
+		PlcLifecycleManager plc,
+		CsvService csvService,
+		ClipboardService clipboardService,
+		ImportedRecipeValidator importedRecipeValidator,
 		AppConfiguration appConfiguration,
 		RecipeQueryService queryService,
 		MessagePanelViewModel messagePanel)
 	{
-		_domainFacade = domainFacade;
+		_workspace = workspace;
+		_editor = editor;
+		_plc = plc;
+		_csvService = csvService;
+		_clipboardService = clipboardService;
+		_importedRecipeValidator = importedRecipeValidator;
 		_appConfiguration = appConfiguration;
 		_queryService = queryService;
 		_messagePanel = messagePanel;
 		_stepCoordinator = new RecipeStepCoordinator(
-			domainFacade,
+			workspace,
+			editor,
 			() => _queryService.CurrentRecipe,
 			result => _lastRecipeResult = result,
 			index => SuggestedSelection = index,
@@ -80,9 +104,10 @@ public sealed class RecipeMutationCoordinator : IDisposable
 
 		_initialized = true;
 
-		_domainFacade.PlcRecipeConflictDetected += OnPlcRecipeConflictDetected;
+		_plc.PlcRecipeConflictDetected += OnPlcRecipeConflictDetected;
+		_plc.Initialize();
 
-		_plcStateSubscription = _domainFacade.PlcState
+		_plcStateSubscription = _plc.PlcState
 			.ObserveOn(RxApp.MainThreadScheduler)
 			.Subscribe(OnPlcStateChanged);
 
@@ -98,7 +123,7 @@ public sealed class RecipeMutationCoordinator : IDisposable
 
 		_disposed = true;
 
-		_domainFacade.PlcRecipeConflictDetected -= OnPlcRecipeConflictDetected;
+		_plc.PlcRecipeConflictDetected -= OnPlcRecipeConflictDetected;
 
 		_plcStateSubscription?.Dispose();
 
@@ -117,17 +142,17 @@ public sealed class RecipeMutationCoordinator : IDisposable
 
 	public Task<Result> EnableSync()
 	{
-		return _domainFacade.EnableSync(_appConfiguration.PlcConfiguration);
+		return _plc.EnableSync(_appConfiguration.PlcConfiguration);
 	}
 
 	public Task DisableSync()
 	{
-		return _domainFacade.DisableSync();
+		return _plc.DisableSync();
 	}
 
 	public async Task<Result> LoadRecipeFromPlcAsync()
 	{
-		var result = await _domainFacade.LoadRecipeFromPlcAsync();
+		var result = await _plc.LoadRecipeFromPlcAsync();
 
 		_lastRecipeResult = result;
 
@@ -146,7 +171,7 @@ public sealed class RecipeMutationCoordinator : IDisposable
 
 	public Result ResolveConflict(bool keepLocal)
 	{
-		var result = _domainFacade.ResolveConflict(keepLocal);
+		var result = _plc.ResolveConflict(keepLocal);
 
 		if (!keepLocal && result.IsSuccess)
 		{
@@ -212,7 +237,28 @@ public sealed class RecipeMutationCoordinator : IDisposable
 
 	public async Task<Result> LoadRecipeAsync(string filePath)
 	{
-		var result = await _domainFacade.LoadRecipeAsync(filePath);
+		var loadResult = await _csvService.LoadAsync(filePath);
+		Result result;
+		if (loadResult.IsFailed)
+		{
+			result = loadResult.ToResult();
+		}
+		else
+		{
+			var validationResult = _importedRecipeValidator.Validate(loadResult.Value);
+			if (validationResult.IsFailed)
+			{
+				result = validationResult;
+			}
+			else
+			{
+				result = _workspace.LoadAsCurrent(loadResult.Value);
+				if (result.IsSuccess)
+				{
+					_workspace.MarkSaved();
+				}
+			}
+		}
 
 		_lastRecipeResult = result;
 
@@ -231,7 +277,18 @@ public sealed class RecipeMutationCoordinator : IDisposable
 
 	public async Task<Result> SaveRecipeAsync(string filePath)
 	{
-		var result = await _domainFacade.SaveRecipeAsync(filePath);
+		var result = await _csvService.SaveAsync(_workspace.CurrentRecipe, filePath);
+
+		if (result.IsFailed)
+		{
+			Log.Error("Failed to save recipe to {FilePath}: {Errors}",
+				filePath,
+				string.Join("; ", result.Errors.Select(e => e.Message)));
+		}
+		else
+		{
+			_workspace.MarkSaved();
+		}
 
 		RebuildMessagePanel();
 

@@ -3,14 +3,20 @@
 using Serilog;
 
 using TypesShared.Core;
-using TypesShared.Domain;
 using TypesShared.Results;
 
 namespace Csv;
 
-internal sealed class CsvService(CsvFileSerializer csvFileSerializer) : ICsvService
+public class CsvService
 {
-	public async Task<Result<Recipe>> LoadAsync(string filePath)
+	private readonly CsvFileSerializer _csvFileSerializer;
+
+	internal CsvService(CsvFileSerializer csvFileSerializer)
+	{
+		_csvFileSerializer = csvFileSerializer;
+	}
+
+	public virtual async Task<Result<Recipe>> LoadAsync(string filePath)
 	{
 		if (!File.Exists(filePath))
 		{
@@ -18,7 +24,7 @@ internal sealed class CsvService(CsvFileSerializer csvFileSerializer) : ICsvServ
 		}
 
 		var (bodyText, metadata) = await CsvFileIo.ReadRecipeFileAsync(filePath);
-		var result = csvFileSerializer.Deserialize(bodyText);
+		var result = _csvFileSerializer.Deserialize(bodyText);
 
 		if (result.IsFailed)
 		{
@@ -38,13 +44,15 @@ internal sealed class CsvService(CsvFileSerializer csvFileSerializer) : ICsvServ
 		return okResult;
 	}
 
-	public async Task SaveAsync(Recipe recipe, string filePath)
+	public virtual async Task<Result> SaveAsync(Recipe recipe, string filePath)
 	{
-		var csvBody = csvFileSerializer.Serialize(recipe);
+		var csvBody = _csvFileSerializer.Serialize(recipe);
 		var metadata = CsvFileIo.BuildSaveMetadata(csvBody);
 
 		await CsvFileIo.WriteRecipeFileAsync(csvBody, metadata, filePath);
 
 		Log.Information("Saved recipe to {FilePath}: {StepCount} steps", filePath, recipe.StepCount);
+
+		return Result.Ok();
 	}
 }

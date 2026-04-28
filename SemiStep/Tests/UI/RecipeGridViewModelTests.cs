@@ -1,4 +1,10 @@
-﻿using Domain.Facade;
+﻿using ClipBoard;
+
+using Csv;
+
+using Domain;
+using Domain.Facade;
+using Domain.Helpers;
 
 using FluentAssertions;
 
@@ -22,7 +28,9 @@ namespace Tests.UI;
 [Trait("Category", "Integration")]
 public sealed class RecipeGridViewModelTests : IAsyncLifetime
 {
-	private DomainFacade _facade = null!;
+	private RecipeWorkspace _workspace = null!;
+	private RecipeEditor _editor = null!;
+	private PlcLifecycleManager _plc = null!;
 	private MessagePanelViewModel _panel = null!;
 	private RecipeMutationCoordinator _coordinator = null!;
 	private RecipeGridViewModel _grid = null!;
@@ -30,13 +38,27 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 
 	public async Task InitializeAsync()
 	{
-		var (services, facade) = await CoreTestHelper.BuildAsync("WithGroups");
-		_facade = facade;
+		var (services, workspace, editor, plc) = await CoreTestHelper.BuildAsync("WithGroups");
+		_workspace = workspace;
+		_editor = editor;
+		_plc = plc;
 		_configRegistry = services.GetRequiredService<ConfigRegistry>();
 		_panel = new MessagePanelViewModel();
-		var queryService = new RecipeQueryService(_facade, _configRegistry);
+		var clipboardService = services.GetRequiredService<ClipboardService>();
+		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
+		var queryService = new RecipeQueryService(_workspace, _plc, clipboardService, importedRecipeValidator, _configRegistry);
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
-		_coordinator = new RecipeMutationCoordinator(_facade, appConfiguration, queryService, _panel);
+		var csvService = services.GetRequiredService<CsvService>();
+		_coordinator = new RecipeMutationCoordinator(
+			_workspace,
+			_editor,
+			_plc,
+			csvService,
+			clipboardService,
+			importedRecipeValidator,
+			appConfiguration,
+			queryService,
+			_panel);
 		_coordinator.Initialize();
 		_grid = new RecipeGridViewModel(_coordinator, _configRegistry, _panel);
 		_grid.Initialize();

@@ -30,13 +30,10 @@ internal static class CsvTestHelper
 			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
 			.AddDomain()
-			.AddSingleton<ICsvService, StubCsvService>()
-			.AddSingleton<IClipboardService, StubClipboardService>()
+			.AddCsv()
+			.AddClipboard()
 			.AddSingleton<IS7Service, StubIs7Service>()
 			.AddSingleton<IPlcSyncService, StubPlcSyncService>()
-			.AddSingleton<CsvRowConverter>()
-			.AddSingleton<CsvFileSerializer>()
-			.AddSingleton<ClipboardSerializer>()
 			.BuildServiceProvider();
 
 		var domainFacade = services.GetRequiredService<DomainFacade>();

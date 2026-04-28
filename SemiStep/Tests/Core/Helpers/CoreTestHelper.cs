@@ -1,7 +1,11 @@
-﻿using Config;
+﻿using ClipBoard;
+
+using Config;
 using Config.Facade;
 
 using Core;
+
+using Csv;
 
 using Domain;
 using Domain.Facade;
@@ -27,8 +31,8 @@ public static class CoreTestHelper
 			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
 			.AddDomain()
-			.AddSingleton<ICsvService, StubCsvService>()
-			.AddSingleton<IClipboardService, StubClipboardService>()
+			.AddCsv()
+			.AddClipboard()
 			.AddSingleton<IS7Service, StubIs7Service>()
 			.AddSingleton<IPlcSyncService, StubPlcSyncService>()
 			.BuildServiceProvider();

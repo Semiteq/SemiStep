@@ -1,5 +1,7 @@
 ﻿using Avalonia.Threading;
 
+using ClipBoard;
+
 using Config.Facade;
 
 using Core;
@@ -185,7 +187,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
 			.AddDomain()
-			.AddSingleton<IClipboardService, StubClipboardService>()
+			.AddClipboard()
 			.AddSingleton<IS7Service, StubIs7Service>()
 			.AddSingleton<IPlcSyncService, StubPlcSyncService>();
 

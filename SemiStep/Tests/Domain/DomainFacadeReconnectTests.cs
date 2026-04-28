@@ -1,9 +1,13 @@
 ﻿using System.Collections.Immutable;
 
+using ClipBoard;
+
 using Config;
 using Config.Facade;
 
 using Core;
+
+using Csv;
 
 using Domain;
 using Domain.Facade;
@@ -43,8 +47,8 @@ public sealed class DomainFacadeReconnectTests
 			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
 			.AddDomain()
-			.AddSingleton<ICsvService, StubCsvService>()
-			.AddSingleton<IClipboardService, StubClipboardService>()
+			.AddCsv()
+			.AddClipboard()
 			.AddSingleton<IS7Service>(s7Service)
 			.AddSingleton<IPlcSyncService>(syncService)
 			.BuildServiceProvider();

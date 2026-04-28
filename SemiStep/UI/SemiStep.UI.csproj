@@ -1,5 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <AssemblyName>UI</AssemblyName>
+    <RootNamespace></RootNamespace>
+    <OutputType>WinExe</OutputType>
+    <ApplicationIcon>logo.ico</ApplicationIcon>
+  </PropertyGroup>
+
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>Tests</_Parameter1>
@@ -14,12 +21,14 @@
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.13"/>
     <PackageReference Include="Avalonia.Win32" Version="11.3.13"/>
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.13"/>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5"/>
+    <PackageReference Include="Serilog" Version="4.3.1"/>
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1"/>
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Domain\Domain.csproj"/>
-    <ProjectReference Include="..\TypesShared\TypesShared.csproj"/>
+    <ProjectReference Include="..\Core\SemiStep.Core.csproj"/>
   </ItemGroup>
 
   <ItemGroup>

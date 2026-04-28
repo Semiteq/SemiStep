@@ -13,18 +13,12 @@
     </PackageReference>
     <PackageReference Include="FluentAssertions" Version="8.9.0"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5"/>
-    <PackageReference Include="Serilog" Version="4.3.1" />
+    <PackageReference Include="Serilog" Version="4.3.1"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Clipboard\Clipboard.csproj"/>
-    <ProjectReference Include="..\Core\Core.csproj"/>
-    <ProjectReference Include="..\Config\Config.csproj"/>
-    <ProjectReference Include="..\Csv\Csv.csproj"/>
-    <ProjectReference Include="..\Domain\Domain.csproj"/>
-    <ProjectReference Include="..\S7\S7.csproj"/>
-    <ProjectReference Include="..\TypesShared\TypesShared.csproj" />
-    <ProjectReference Include="..\UI\UI.csproj"/>
+    <ProjectReference Include="..\Core\SemiStep.Core.csproj"/>
+    <ProjectReference Include="..\UI\SemiStep.UI.csproj"/>
   </ItemGroup>
 
   <ItemGroup>

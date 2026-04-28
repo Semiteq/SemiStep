@@ -19,9 +19,7 @@ using S7;
 
 using Serilog;
 
-using UI;
-
-namespace Application;
+namespace UI;
 
 public static class Program
 {

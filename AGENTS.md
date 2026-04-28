@@ -7,9 +7,9 @@ Solution: `SemiStep/SemiStep.slnx`. All commands run from repository root.
 ## Build
 
 ```powershell
-dotnet build SemiStep/Application/Application.csproj   # recommended
+dotnet build SemiStep/UI/SemiStep.UI.csproj            # recommended (entry executable)
 dotnet build SemiStep/SemiStep.slnx                    # all projects
-dotnet run   --project SemiStep/Application/Application.csproj
+dotnet run   --project SemiStep/UI/SemiStep.UI.csproj
 dotnet format SemiStep/SemiStep.slnx                   # pre-commit hook enforces this
 ```
 

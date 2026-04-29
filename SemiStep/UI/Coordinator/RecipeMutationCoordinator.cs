@@ -35,6 +35,7 @@ public sealed class RecipeMutationCoordinator : IDisposable
 	private readonly Subject<MutationSignal> _stateChanged = new();
 	private readonly RecipeStepCoordinator _stepCoordinator;
 	private readonly RecipeWorkspace _workspace;
+	private readonly object _disposeLock = new();
 	private bool _disposed;
 	private bool _initialized;
 	private Result<PlcSessionSnapshot> _lastPlcState = PlcSessionSnapshot.InitialState;
@@ -113,20 +114,23 @@ public sealed class RecipeMutationCoordinator : IDisposable
 
 	public void Dispose()
 	{
-		if (_disposed)
+		lock (_disposeLock)
 		{
-			return;
+			if (_disposed)
+			{
+				return;
+			}
+
+			_disposed = true;
+
+			_plc.PlcRecipeConflictDetected -= OnPlcRecipeConflictDetected;
+
+			_plcStateSubscription?.Dispose();
+
+			_stateChanged.Dispose();
+			_plcRecipeConflictDetected.Dispose();
+			_plcStateChanged.Dispose();
 		}
-
-		_disposed = true;
-
-		_plc.PlcRecipeConflictDetected -= OnPlcRecipeConflictDetected;
-
-		_plcStateSubscription?.Dispose();
-
-		_stateChanged.Dispose();
-		_plcRecipeConflictDetected.Dispose();
-		_plcStateChanged.Dispose();
 	}
 
 	public int? ConsumeSuggestedSelection()
@@ -279,6 +283,8 @@ public sealed class RecipeMutationCoordinator : IDisposable
 			_workspace.MarkSaved();
 		}
 
+		_lastRecipeResult = result;
+
 		RebuildMessagePanel();
 
 		if (result.IsFailed)
@@ -294,24 +300,30 @@ public sealed class RecipeMutationCoordinator : IDisposable
 
 	private void OnPlcStateChanged(Result<PlcSessionSnapshot> result)
 	{
-		if (_disposed)
+		lock (_disposeLock)
 		{
-			return;
-		}
+			if (_disposed)
+			{
+				return;
+			}
 
-		_lastPlcState = result;
-		_plcStateChanged.OnNext(result);
-		RebuildMessagePanel();
+			_lastPlcState = result;
+			_plcStateChanged.OnNext(result);
+			RebuildMessagePanel();
+		}
 	}
 
 	private void OnPlcRecipeConflictDetected(Recipe local, Recipe plc)
 	{
-		if (_disposed)
+		lock (_disposeLock)
 		{
-			return;
-		}
+			if (_disposed)
+			{
+				return;
+			}
 
-		_plcRecipeConflictDetected.OnNext((local, plc));
+			_plcRecipeConflictDetected.OnNext((local, plc));
+		}
 	}
 
 	private void RebuildMessagePanel()

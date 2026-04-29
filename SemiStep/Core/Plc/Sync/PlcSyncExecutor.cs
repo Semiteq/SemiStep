@@ -160,6 +160,8 @@ internal sealed class PlcSyncExecutor(
 			}
 			catch (OperationCanceledException)
 			{
+				// Expected: the debounce window was preempted by a newer sync request
+				// that cancelled this token. The newer request scheduled its own task.
 			}
 			catch (Exception ex)
 			{

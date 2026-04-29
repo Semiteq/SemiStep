@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 using SemiStep.Core.Recipes;
 
+using Serilog;
+
 using UI.Coordinator;
 using UI.Dialogs;
 using UI.MainWindow;
@@ -79,7 +81,12 @@ public class App : Application
 	private static void InitializeServices(IServiceProvider provider)
 	{
 		var workspace = provider.GetRequiredService<RecipeWorkspace>();
-		workspace.Reset();
+		var resetResult = workspace.Reset();
+		if (resetResult.IsFailed)
+		{
+			Log.Warning("Workspace reset reported failures at startup: {Errors}",
+				string.Join("; ", resetResult.Errors.Select(e => e.Message)));
+		}
 
 		var coordinator = provider.GetRequiredService<RecipeMutationCoordinator>();
 		coordinator.Initialize();

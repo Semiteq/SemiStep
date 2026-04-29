@@ -18,10 +18,11 @@ internal static class CsvTestHelper
 	{
 		var configDir = TestConfigLocator.GetConfigDirectory(configName);
 		var configLoadResult = await ConfigFacade.LoadAndValidateAsync(configDir);
+		var configuration = configLoadResult.EnsureSuccess("Test config load");
 
 		var services = new ServiceCollection()
 			.AddLogging()
-			.AddSingleton(configLoadResult.Value)
+			.AddSingleton(configuration)
 			.AddRecipe()
 			.AddCsv()
 			.AddClipboard()
@@ -35,7 +36,7 @@ internal static class CsvTestHelper
 		var workspace = services.GetRequiredService<RecipeWorkspace>();
 		var plc = services.GetRequiredService<PlcLifecycleManager>();
 		plc.Initialize();
-		workspace.Reset();
+		workspace.Reset().EnsureSuccess("Workspace reset");
 
 		var fileSerializer = services.GetRequiredService<CsvFileSerializer>();
 		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();

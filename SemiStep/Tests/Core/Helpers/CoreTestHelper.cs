@@ -19,10 +19,11 @@ public static class CoreTestHelper
 		var configDir = GetConfigDirectory(configName);
 
 		var configLoadResult = await ConfigFacade.LoadAndValidateAsync(configDir);
+		var configuration = configLoadResult.EnsureSuccess("Test config load");
 
 		var services = new ServiceCollection()
 			.AddLogging()
-			.AddSingleton(configLoadResult.Value)
+			.AddSingleton(configuration)
 			.AddRecipe()
 			.AddCsv()
 			.AddClipboard()
@@ -37,7 +38,7 @@ public static class CoreTestHelper
 		var editor = services.GetRequiredService<RecipeEditor>();
 		var plc = services.GetRequiredService<PlcLifecycleManager>();
 		plc.Initialize();
-		workspace.Reset();
+		workspace.Reset().EnsureSuccess("Workspace reset");
 
 		return (services, workspace, editor, plc);
 	}

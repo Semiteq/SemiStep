@@ -209,10 +209,11 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 	{
 		var configDir = TestConfigLocator.GetConfigDirectory("WithGroups");
 		var configLoadResult = await ConfigFacade.LoadAndValidateAsync(configDir);
+		var configuration = configLoadResult.EnsureSuccess("Test config load");
 
 		var serviceCollection = new ServiceCollection()
 			.AddLogging()
-			.AddSingleton(configLoadResult.Value)
+			.AddSingleton(configuration)
 			.AddRecipe()
 			.AddClipboard()
 			.AddSingleton<StubS7Service>()
@@ -229,7 +230,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		var editor = services.GetRequiredService<RecipeEditor>();
 		var plc = services.GetRequiredService<PlcLifecycleManager>();
 		plc.Initialize();
-		workspace.Reset();
+		workspace.Reset().EnsureSuccess("Workspace reset");
 
 		var recipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 		var panel = new MessagePanelViewModel();

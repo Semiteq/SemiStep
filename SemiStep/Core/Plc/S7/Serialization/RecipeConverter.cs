@@ -9,7 +9,7 @@ using SemiStep.Core.Recipes;
 
 namespace SemiStep.Core.Plc.S7.Serialization;
 
-internal sealed class RecipeConverter(RecipeMetadataRegistry configRegistry)
+internal sealed class RecipeConverter(RecipeMetadataRegistry recipeMetadataRegistry)
 {
 	public Result<PlcRecipeData> FromRecipe(Recipe recipe)
 	{
@@ -213,7 +213,7 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry configRegistry)
 
 	private Result<PropertyType> ResolvePropertyType(ActionPropertyDefinition propertyDef)
 	{
-		var propertyDefResult = configRegistry.GetProperty(propertyDef.PropertyTypeId);
+		var propertyDefResult = recipeMetadataRegistry.GetProperty(propertyDef.PropertyTypeId);
 		if (propertyDefResult.IsFailed)
 		{
 			return Result.Fail(
@@ -225,7 +225,7 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry configRegistry)
 
 	private Result<ActionDefinition> ResolveAction(int actionKey)
 	{
-		var actionResult = configRegistry.GetAction(actionKey);
+		var actionResult = recipeMetadataRegistry.GetAction(actionKey);
 		if (actionResult.IsFailed)
 		{
 			return Result.Fail($"Action with key {actionKey} not found in configuration registry");

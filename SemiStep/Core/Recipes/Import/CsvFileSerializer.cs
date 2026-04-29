@@ -11,14 +11,14 @@ using SemiStep.Core.Configuration;
 namespace SemiStep.Core.Recipes.Import;
 
 internal sealed class CsvFileSerializer(
-	RecipeMetadataRegistry configRegistry,
+	RecipeMetadataRegistry recipeMetadataRegistry,
 	CsvRowConverter converter)
 {
 	private const char Separator = ';';
 
 	public string Serialize(Recipe recipe)
 	{
-		var csvColumns = CsvStepWriter.GetCsvColumns(configRegistry);
+		var csvColumns = CsvStepWriter.GetCsvColumns(recipeMetadataRegistry);
 		using var stringWriter = new StringWriter();
 		using var csvWriter = CreateWriter(stringWriter);
 

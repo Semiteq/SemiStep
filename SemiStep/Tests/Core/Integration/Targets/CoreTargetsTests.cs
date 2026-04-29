@@ -20,8 +20,8 @@ public sealed class CoreTargetsTests(CoreFixture fixture) : IClassFixture<CoreFi
 	[Fact]
 	public void Actions_List_NotEmpty()
 	{
-		var configRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
-		var actions = configRegistry.GetAllActions();
+		var recipeMetadataRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
+		var actions = recipeMetadataRegistry.GetAllActions();
 
 		actions.Should().NotBeEmpty("Standard config defines at least 4 actions");
 	}
@@ -29,8 +29,8 @@ public sealed class CoreTargetsTests(CoreFixture fixture) : IClassFixture<CoreFi
 	[Fact]
 	public void EnumOptions_ForGroupColumn_Succeeds()
 	{
-		var configRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
-		var groupResult = configRegistry.GetGroup("valve");
+		var recipeMetadataRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
+		var groupResult = recipeMetadataRegistry.GetGroup("valve");
 
 		groupResult.IsSuccess.Should().BeTrue();
 		groupResult.Value.Items.Should().NotBeEmpty("WithGroups config defines a valve group with items");
@@ -39,8 +39,8 @@ public sealed class CoreTargetsTests(CoreFixture fixture) : IClassFixture<CoreFi
 	[Fact]
 	public void GroupExists_ForDefinedGroup_ReturnsTrue()
 	{
-		var configRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
-		var exists = configRegistry.GroupExists("valve");
+		var recipeMetadataRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
+		var exists = recipeMetadataRegistry.GroupExists("valve");
 
 		exists.IsSuccess.Should().BeTrue("valve group is defined in WithGroups config");
 	}

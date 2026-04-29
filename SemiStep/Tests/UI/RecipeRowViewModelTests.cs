@@ -21,14 +21,14 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 {
 	private RecipeWorkspace _workspace = null!;
 	private RecipeEditor _editor = null!;
-	private RecipeMetadataRegistry _configRegistry = null!;
+	private RecipeMetadataRegistry _recipeMetadataRegistry = null!;
 
 	public async Task InitializeAsync()
 	{
 		var (services, workspace, editor, _) = await CoreTestHelper.BuildAsync("WithGroups");
 		_workspace = workspace;
 		_editor = editor;
-		_configRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
+		_recipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 	}
 
 	public Task DisposeAsync()
@@ -40,15 +40,15 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	{
 		_editor.AppendStep(actionId);
 		var step = _workspace.CurrentRecipe.Steps[0];
-		var action = _configRegistry.GetAction(step.ActionKey).Value;
+		var action = _recipeMetadataRegistry.GetAction(step.ActionKey).Value;
 		var cellStates = BuildCellStates(action);
-		return new RecipeRowViewModel(1, step, action, _configRegistry, cellStates);
+		return new RecipeRowViewModel(1, step, action, _recipeMetadataRegistry, cellStates);
 	}
 
 	private IReadOnlyDictionary<string, CellState> BuildCellStates(ActionDefinition action)
 	{
 		var states = new Dictionary<string, CellState>();
-		foreach (var col in _configRegistry.GetAllColumns())
+		foreach (var col in _recipeMetadataRegistry.GetAllColumns())
 		{
 			states[col.Key] = CellStateResolver.GetCellState(col, action);
 		}

@@ -20,6 +20,7 @@ internal sealed class S7Service(
 	private static readonly TimeSpan _reconnectInitialDelay = TimeSpan.FromSeconds(1);
 	private static readonly TimeSpan _reconnectMaxDelay = TimeSpan.FromSeconds(30);
 
+	private readonly ILogger<S7Service> _logger = logger;
 	private readonly Lock _stateLock = new();
 	private PlcConnectionState _state = PlcConnectionState.Disconnected;
 	private bool _autoReconnectEnabled;
@@ -110,7 +111,7 @@ internal sealed class S7Service(
 		}
 
 		State = PlcConnectionState.Disconnected;
-		logger.LogInformation("Disconnected from PLC");
+		_logger.LogInformation("Disconnected from PLC");
 	}
 
 	public async Task<Result<PlcManagingAreaState>> ReadManagingAreaAsync()
@@ -118,7 +119,7 @@ internal sealed class S7Service(
 		var result = await transactionExecutor.ReadManagingAreaAsync();
 		if (result.IsFailed)
 		{
-			logger.LogWarning("Failed to read managing area from PLC: {Reason}", result.Errors.FirstOrDefault()?.Message ?? "(no message)");
+			_logger.LogWarning("Failed to read managing area from PLC: {Reason}", result.Errors.FirstOrDefault()?.Message ?? "(no message)");
 			return result.ToResult<PlcManagingAreaState>();
 		}
 		return result;
@@ -129,7 +130,7 @@ internal sealed class S7Service(
 		var result = await transactionExecutor.ReadRecipeFromPlcAsync();
 		if (result.IsFailed)
 		{
-			logger.LogWarning("Failed to read recipe from PLC: {Reason}", result.Errors.FirstOrDefault()?.Message ?? "(no message)");
+			_logger.LogWarning("Failed to read recipe from PLC: {Reason}", result.Errors.FirstOrDefault()?.Message ?? "(no message)");
 		}
 		return result;
 	}
@@ -150,7 +151,7 @@ internal sealed class S7Service(
 
 		_ = StopKeepAlive();
 		executionMonitor.Stop();
-		logger.LogWarning("PLC connection lost");
+		_logger.LogWarning("PLC connection lost");
 
 		if (_autoReconnectEnabled && _settings is not null)
 		{
@@ -166,13 +167,13 @@ internal sealed class S7Service(
 		}
 
 		State = PlcConnectionState.Connecting;
-		logger.LogInformation("Connecting to PLC at {IpAddress}...", _settings.IpAddress);
+		_logger.LogInformation("Connecting to PLC at {IpAddress}...", _settings.IpAddress);
 
 		try
 		{
 			await transport.ConnectAsync(_settings);
 			State = PlcConnectionState.Connected;
-			logger.LogInformation("Connected to PLC at {IpAddress}", _settings.IpAddress);
+			_logger.LogInformation("Connected to PLC at {IpAddress}", _settings.IpAddress);
 
 			executionMonitor.Start();
 			StartKeepAlive();
@@ -180,7 +181,7 @@ internal sealed class S7Service(
 		catch (Exception ex)
 		{
 			State = PlcConnectionState.Disconnected;
-			logger.LogError(ex, "Failed to connect to PLC at {IpAddress}", _settings.IpAddress);
+			_logger.LogError(ex, "Failed to connect to PLC at {IpAddress}", _settings.IpAddress);
 
 			throw;
 		}
@@ -233,7 +234,7 @@ internal sealed class S7Service(
 			}
 			catch (Exception ex)
 			{
-				logger.LogWarning("Keep-alive probe failed, connection assumed lost: {Message}", ex.Message);
+				_logger.LogWarning("Keep-alive probe failed, connection assumed lost: {Message}", ex.Message);
 				OnConnectionLost();
 
 				return;
@@ -294,7 +295,7 @@ internal sealed class S7Service(
 			}
 			catch (Exception ex)
 			{
-				logger.LogWarning("Reconnection attempt failed, retrying in {Delay}s: {Message}", delay.TotalSeconds, ex.Message);
+				_logger.LogWarning("Reconnection attempt failed, retrying in {Delay}s: {Message}", delay.TotalSeconds, ex.Message);
 				delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, _reconnectMaxDelay.TotalSeconds));
 			}
 		}

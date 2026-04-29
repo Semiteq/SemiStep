@@ -1,7 +1,5 @@
 ﻿using FluentResults;
 
-using SemiStep.Core.Configuration;
-
 namespace SemiStep.Core.Recipes;
 
 internal static class PropertyValidator
@@ -24,7 +22,7 @@ internal static class PropertyValidator
 	internal static Result ValidateGroupValue(
 		ActionPropertyDefinition actionProperty,
 		PropertyValue parsed,
-		RecipeMetadataRegistry configRegistry)
+		RecipeMetadataRegistry recipeMetadataRegistry)
 	{
 		if (actionProperty.GroupName is null)
 		{
@@ -36,7 +34,7 @@ internal static class PropertyValidator
 			return Result.Fail($"Group value must be integer, got {parsed.Type}");
 		}
 
-		return configRegistry.GroupHasIntKey(intKey, actionProperty.GroupName);
+		return recipeMetadataRegistry.GroupHasIntKey(intKey, actionProperty.GroupName);
 	}
 
 	private static Result ValidateNumericRange(PropertyTypeDefinition property, double value)

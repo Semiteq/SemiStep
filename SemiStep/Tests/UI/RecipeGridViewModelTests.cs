@@ -32,7 +32,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 	private MessagePanelViewModel _panel = null!;
 	private RecipeMutationCoordinator _coordinator = null!;
 	private RecipeGridViewModel _grid = null!;
-	private RecipeMetadataRegistry _configRegistry = null!;
+	private RecipeMetadataRegistry _recipeMetadataRegistry = null!;
 
 	public async Task InitializeAsync()
 	{
@@ -40,11 +40,11 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_workspace = workspace;
 		_editor = editor;
 		_plc = plc;
-		_configRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
+		_recipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 		_panel = new MessagePanelViewModel();
 		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
-		var queryService = new RecipeQueryService(_workspace, _plc, clipboardSerializer, importedRecipeValidator, _configRegistry);
+		var queryService = new RecipeQueryService(_workspace, _plc, clipboardSerializer, importedRecipeValidator, _recipeMetadataRegistry);
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
 		var csvService = services.GetRequiredService<CsvService>();
 		_coordinator = new RecipeMutationCoordinator(
@@ -58,7 +58,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 			_panel,
 			NullLogger<RecipeMutationCoordinator>.Instance);
 		_coordinator.Initialize();
-		_grid = new RecipeGridViewModel(_coordinator, _configRegistry, _panel);
+		_grid = new RecipeGridViewModel(_coordinator, _recipeMetadataRegistry, _panel);
 		_grid.Initialize();
 	}
 

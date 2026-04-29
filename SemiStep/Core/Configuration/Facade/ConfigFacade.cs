@@ -13,6 +13,8 @@ namespace SemiStep.Core.Configuration.Facade;
 
 public static class ConfigFacade
 {
+	// ConfigFacade is a static class, so it cannot be used as a type argument.
+	// Log.ForContext(typeof(...)) is the supported alternative.
 	private static readonly ILogger _logger = Log.ForContext(typeof(ConfigFacade));
 
 	public static async Task<Result<AppConfiguration>> LoadAndValidateAsync(string configDirectory)
@@ -27,12 +29,7 @@ public static class ConfigFacade
 		var loadResult = await LoadAllSectionsAsync(configDirectory);
 		if (loadResult.IsFailed)
 		{
-			foreach (var error in loadResult.Errors)
-			{
-				_logger.Error("Configuration error: {Error}", error.Message);
-			}
-
-			return loadResult.ToResult<AppConfiguration>();
+			return LogAndPropagate(loadResult);
 		}
 
 		var (properties, columns, groups, actions, gridStyle, connection) = loadResult.Value;
@@ -40,28 +37,13 @@ public static class ConfigFacade
 		var xrefResult = CrossReferenceValidator.Validate(properties, columns, groups, actions);
 		if (xrefResult.IsFailed)
 		{
-			foreach (var error in xrefResult.Errors)
-			{
-				_logger.Error("Configuration error: {Error}", error.Message);
-			}
-
-			return Result.Fail<AppConfiguration>(xrefResult.Errors)
-				.WithReasons(loadResult.Reasons)
-				.WithReasons(xrefResult.Successes.OfType<Warning>());
+			return LogAndPropagate(xrefResult, loadResult);
 		}
 
 		var defaultsResult = DefaultValueValidator.Validate(properties, columns, actions);
 		if (defaultsResult.IsFailed)
 		{
-			foreach (var error in defaultsResult.Errors)
-			{
-				_logger.Error("Configuration error: {Error}", error.Message);
-			}
-
-			return Result.Fail<AppConfiguration>(defaultsResult.Errors)
-				.WithReasons(loadResult.Reasons)
-				.WithReasons(xrefResult.Reasons)
-				.WithReasons(defaultsResult.Successes.OfType<Warning>());
+			return LogAndPropagate(defaultsResult, loadResult, xrefResult);
 		}
 
 		var mapResult = Result.Try(
@@ -70,15 +52,7 @@ public static class ConfigFacade
 
 		if (mapResult.IsFailed)
 		{
-			foreach (var error in mapResult.Errors)
-			{
-				_logger.Error("Configuration error: {Error}", error.Message);
-			}
-
-			return Result.Fail<AppConfiguration>(mapResult.Errors)
-				.WithReasons(loadResult.Reasons)
-				.WithReasons(xrefResult.Reasons)
-				.WithReasons(defaultsResult.Reasons);
+			return LogAndPropagate(mapResult, loadResult, xrefResult, defaultsResult);
 		}
 
 		var config = mapResult.Value;
@@ -86,15 +60,7 @@ public static class ConfigFacade
 		var plcResult = PlcConfigurationValidator.Validate(config.PlcConfiguration);
 		if (plcResult.IsFailed)
 		{
-			foreach (var error in plcResult.Errors)
-			{
-				_logger.Error("Configuration error: {Error}", error.Message);
-			}
-
-			return Result.Fail<AppConfiguration>(plcResult.Errors)
-				.WithReasons(loadResult.Reasons)
-				.WithReasons(xrefResult.Reasons)
-				.WithReasons(defaultsResult.Reasons);
+			return LogAndPropagate(plcResult, loadResult, xrefResult, defaultsResult);
 		}
 
 		_logger.Information("Configuration loaded successfully");
@@ -103,6 +69,24 @@ public static class ConfigFacade
 			.WithReasons(loadResult.Reasons)
 			.WithReasons(xrefResult.Reasons)
 			.WithReasons(defaultsResult.Reasons);
+	}
+
+	private static Result<AppConfiguration> LogAndPropagate(ResultBase failedResult, params ResultBase[] priorReasons)
+	{
+		foreach (var error in failedResult.Errors)
+		{
+			_logger.Error("Configuration error: {Error}", error.Message);
+		}
+
+		var propagated = Result.Fail<AppConfiguration>(failedResult.Errors);
+
+		foreach (var prior in priorReasons)
+		{
+			propagated = propagated.WithReasons(prior.Reasons);
+		}
+
+		// Carry forward the failed step's successes (warnings, etc.); its errors are already attached above.
+		return propagated.WithReasons(failedResult.Successes);
 	}
 
 	private static async Task<Result<LoadedSections>> LoadAllSectionsAsync(string configDirectory)

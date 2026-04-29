@@ -8,12 +8,12 @@ namespace UI.RecipeGrid;
 
 public sealed class ColumnBuilder(
 	GridStyleOptions gridStyle,
-	RecipeMetadataRegistry configRegistry)
+	RecipeMetadataRegistry recipeMetadataRegistry)
 {
-	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(configRegistry);
+	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(recipeMetadataRegistry);
 
 	private readonly TextCellFactory _textCellFactory = new();
-	private readonly ColumnWidthCalculator _widthCalculator = new(configRegistry, gridStyle);
+	private readonly ColumnWidthCalculator _widthCalculator = new(recipeMetadataRegistry, gridStyle);
 
 	public void BuildColumnsFromConfiguration(DataGrid grid, AppConfiguration config)
 	{
@@ -29,7 +29,7 @@ public sealed class ColumnBuilder(
 		_comboBoxCellFactory.InvalidateCaches();
 		AddNumberingColumn(grid);
 
-		foreach (var columnDef in configRegistry.GetAllColumns())
+		foreach (var columnDef in recipeMetadataRegistry.GetAllColumns())
 		{
 			var column = CreateColumn(columnDef);
 			grid.Columns.Add(column);

@@ -17,7 +17,7 @@ public sealed class RecipeQueryService(
 	PlcLifecycleManager plcLifecycleManager,
 	ClipboardSerializer clipboardSerializer,
 	ImportedRecipeValidator importedRecipeValidator,
-	RecipeMetadataRegistry configRegistry)
+	RecipeMetadataRegistry recipeMetadataRegistry)
 {
 	public Recipe CurrentRecipe => workspace.CurrentRecipe;
 
@@ -43,7 +43,7 @@ public sealed class RecipeQueryService(
 
 	public int GetDefaultActionId()
 	{
-		return configRegistry.GetAllActions().FirstOrDefault()?.Id
+		return recipeMetadataRegistry.GetAllActions().FirstOrDefault()?.Id
 			?? throw new InvalidOperationException("No actions are defined in the configuration.");
 	}
 

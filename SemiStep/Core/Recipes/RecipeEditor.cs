@@ -7,32 +7,32 @@ namespace SemiStep.Core.Recipes;
 
 public sealed class RecipeEditor
 {
-	private readonly RecipeMetadataRegistry _configRegistry;
+	private readonly RecipeMetadataRegistry _recipeMetadataRegistry;
 	private readonly FormulaApplicationCoordinator _formulaCoordinator;
 	private readonly PropertyParser _propertyParser;
 	private readonly RecipeWorkspace _workspace;
 
 	internal RecipeEditor(
 		RecipeWorkspace workspace,
-		RecipeMetadataRegistry configRegistry,
+		RecipeMetadataRegistry recipeMetadataRegistry,
 		FormulaApplicationCoordinator formulaCoordinator,
 		PropertyParser propertyParser)
 	{
 		_workspace = workspace;
-		_configRegistry = configRegistry;
+		_recipeMetadataRegistry = recipeMetadataRegistry;
 		_formulaCoordinator = formulaCoordinator;
 		_propertyParser = propertyParser;
 	}
 
 	public Result AppendStep(int actionId)
 	{
-		var actionResult = _configRegistry.GetAction(actionId);
+		var actionResult = _recipeMetadataRegistry.GetAction(actionId);
 		if (actionResult.IsFailed)
 		{
 			return actionResult.ToResult();
 		}
 
-		var step = StepInitializer.Create(actionResult.Value, _configRegistry);
+		var step = StepInitializer.Create(actionResult.Value, _recipeMetadataRegistry);
 		var newRecipe = _workspace.CurrentRecipe.AppendStep(step);
 
 		return _workspace.Apply(newRecipe);
@@ -46,13 +46,13 @@ public sealed class RecipeEditor
 			return indexCheck;
 		}
 
-		var actionResult = _configRegistry.GetAction(actionId);
+		var actionResult = _recipeMetadataRegistry.GetAction(actionId);
 		if (actionResult.IsFailed)
 		{
 			return actionResult.ToResult();
 		}
 
-		var step = StepInitializer.Create(actionResult.Value, _configRegistry);
+		var step = StepInitializer.Create(actionResult.Value, _recipeMetadataRegistry);
 		var newRecipe = _workspace.CurrentRecipe.InsertStep(index, step);
 
 		return _workspace.Apply(newRecipe);
@@ -109,13 +109,13 @@ public sealed class RecipeEditor
 			return indexCheck;
 		}
 
-		var actionResult = _configRegistry.GetAction(newActionId);
+		var actionResult = _recipeMetadataRegistry.GetAction(newActionId);
 		if (actionResult.IsFailed)
 		{
 			return actionResult.ToResult();
 		}
 
-		var step = StepInitializer.Create(actionResult.Value, _configRegistry);
+		var step = StepInitializer.Create(actionResult.Value, _recipeMetadataRegistry);
 		var newRecipe = _workspace.CurrentRecipe.ReplaceStep(stepIndex, step);
 
 		return _workspace.Apply(newRecipe);
@@ -132,7 +132,7 @@ public sealed class RecipeEditor
 		var current = _workspace.CurrentRecipe;
 		var step = current.Steps[stepIndex];
 
-		var actionResult = _configRegistry.GetAction(step.ActionKey);
+		var actionResult = _recipeMetadataRegistry.GetAction(step.ActionKey);
 		if (actionResult.IsFailed)
 		{
 			return actionResult.ToResult();
@@ -148,7 +148,7 @@ public sealed class RecipeEditor
 
 		var actionProperty = actionPropertyResult.Value;
 
-		var propertyDefinitionResult = _configRegistry.GetProperty(actionProperty.PropertyTypeId);
+		var propertyDefinitionResult = _recipeMetadataRegistry.GetProperty(actionProperty.PropertyTypeId);
 		if (propertyDefinitionResult.IsFailed)
 		{
 			return propertyDefinitionResult.ToResult();
@@ -168,7 +168,7 @@ public sealed class RecipeEditor
 			return typeCheck;
 		}
 
-		var groupCheck = PropertyValidator.ValidateGroupValue(actionProperty, parsedValue, _configRegistry);
+		var groupCheck = PropertyValidator.ValidateGroupValue(actionProperty, parsedValue, _recipeMetadataRegistry);
 		if (groupCheck.IsFailed)
 		{
 			return groupCheck;

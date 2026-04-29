@@ -8,9 +8,9 @@ internal static class CsvStepWriter
 {
 	internal const string ActionColumnKey = StepValueParser.ActionColumnKey;
 
-	internal static IReadOnlyList<GridColumnDefinition> GetCsvColumns(RecipeMetadataRegistry configRegistry)
+	internal static IReadOnlyList<GridColumnDefinition> GetCsvColumns(RecipeMetadataRegistry recipeMetadataRegistry)
 	{
-		return configRegistry.GetAllColumns()
+		return recipeMetadataRegistry.GetAllColumns()
 			.Where(c => c.SaveToCsv)
 			.ToList();
 	}

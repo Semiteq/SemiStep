@@ -109,7 +109,20 @@ public sealed class PlcConfigurationValidatorTests
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(error =>
 			error.Message.Contains("ExecutionDbLayout") &&
-			error.Message.Contains("ForLoopCount1Offset"));
+			error.Message.Contains("StepCurrentTimeOffset") &&
+			error.Message.Contains("must be at least"));
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ExecutionDbLayout") &&
+			error.Message.Contains("ForLoopCount1Offset") &&
+			error.Message.Contains("must be at least"));
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ExecutionDbLayout") &&
+			error.Message.Contains("ForLoopCount2Offset") &&
+			error.Message.Contains("must be at least"));
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ExecutionDbLayout") &&
+			error.Message.Contains("ForLoopCount3Offset") &&
+			error.Message.Contains("must be at least"));
 	}
 
 	[Fact]
@@ -150,10 +163,106 @@ public sealed class PlcConfigurationValidatorTests
 		var result = PlcConfigurationValidator.Validate(config);
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(error => error.Message.Contains("ManagingDbLayout"));
-		result.Errors.Should().Contain(error => error.Message.Contains("IntDb"));
-		result.Errors.Should().Contain(error => error.Message.Contains("ExecutionDbLayout"));
-		result.Errors.Should().HaveCountGreaterThan(2);
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ManagingDbLayout") &&
+			error.Message.Contains("CommittedOffset") &&
+			error.Message.Contains("non-negative"));
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ManagingDbLayout") &&
+			error.Message.Contains("TotalSize") &&
+			error.Message.Contains("RecipeLinesOffset"));
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("IntDb") &&
+			error.Message.Contains("DataStartOffset"));
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ExecutionDbLayout") &&
+			error.Message.Contains("StepCurrentTimeOffset"));
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ExecutionDbLayout") &&
+			error.Message.Contains("ForLoopCount1Offset"));
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ExecutionDbLayout") &&
+			error.Message.Contains("ForLoopCount2Offset"));
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ExecutionDbLayout") &&
+			error.Message.Contains("ForLoopCount3Offset"));
+		result.Errors.Should().HaveCount(7);
+	}
+
+	[Fact]
+	public void Validate_StringDbDataStartOverlapsHeader_Fails()
+	{
+		var brokenString = DataDbLayout.DefaultString with { DataStartOffset = 4 };
+		var config = WithStringDb(brokenString);
+
+		var result = PlcConfigurationValidator.Validate(config);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("StringDb") &&
+			error.Message.Contains("DataStartOffset"));
+	}
+
+	[Fact]
+	public void Validate_ManagingDbCommittedOffsetOverlapsRecipeLines_Fails()
+	{
+		// Both at offset 0: Committed[0..1) overlaps RecipeLines[0..4).
+		var brokenManaging = new ManagingDbLayout(
+			DbNumber: 2,
+			CommittedOffset: 0,
+			RecipeLinesOffset: 0,
+			TotalSize: 6);
+		var config = WithManaging(brokenManaging);
+
+		var result = PlcConfigurationValidator.Validate(config);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ManagingDbLayout") &&
+			error.Message.Contains("CommittedOffset") &&
+			error.Message.Contains("RecipeLinesOffset") &&
+			error.Message.Contains("overlaps"));
+	}
+
+	[Fact]
+	public void Validate_DataDbCapacityOverlapsCurrentSize_Fails()
+	{
+		// Both at offset 0: Capacity[0..4) overlaps CurrentSize[0..4).
+		var brokenInt = new DataDbLayout(
+			DbNumber: 3,
+			CapacityOffset: 0,
+			CurrentSizeOffset: 0,
+			DataStartOffset: 8);
+		var config = WithIntDb(brokenInt);
+
+		var result = PlcConfigurationValidator.Validate(config);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("IntDb") &&
+			error.Message.Contains("CapacityOffset") &&
+			error.Message.Contains("CurrentSizeOffset") &&
+			error.Message.Contains("overlaps"));
+	}
+
+	[Fact]
+	public void Validate_ExecutionDbForLoopCount1OverlapsForLoopCount2_Fails()
+	{
+		// ForLoopCount1[10..14) overlaps ForLoopCount2[12..16).
+		var brokenExecution = ExecutionDbLayout.Default with
+		{
+			ForLoopCount2Offset = 12,
+		};
+		var config = WithExecution(brokenExecution);
+
+		var result = PlcConfigurationValidator.Validate(config);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ExecutionDbLayout") &&
+			error.Message.Contains("ForLoopCount1Offset") &&
+			error.Message.Contains("ForLoopCount2Offset") &&
+			error.Message.Contains("overlaps"));
 	}
 
 	private static PlcConfiguration WithManaging(ManagingDbLayout managing)
@@ -171,6 +280,12 @@ public sealed class PlcConfigurationValidatorTests
 	private static PlcConfiguration WithFloatDb(DataDbLayout floatDb)
 	{
 		var layout = PlcProtocolLayout.Default with { FloatDb = floatDb };
+		return PlcConfiguration.Default with { Layout = layout };
+	}
+
+	private static PlcConfiguration WithStringDb(DataDbLayout stringDb)
+	{
+		var layout = PlcProtocolLayout.Default with { StringDb = stringDb };
 		return PlcConfiguration.Default with { Layout = layout };
 	}
 

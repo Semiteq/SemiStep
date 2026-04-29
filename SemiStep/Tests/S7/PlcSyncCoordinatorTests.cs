@@ -4,6 +4,7 @@ using FluentAssertions;
 
 using FluentResults;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
@@ -53,7 +54,7 @@ public sealed class PlcSyncCoordinatorTests
 		var executor = new PlcTransactionExecutor(
 			transport, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
 		var coordinator = new PlcSyncCoordinator(
-			executor, connectionService, NullLogger<PlcSyncExecutor>.Instance);
+			executor, connectionService, NullLoggerFactory.Instance);
 
 		return (coordinator, transport, connectionService);
 	}

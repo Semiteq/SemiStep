@@ -141,4 +141,24 @@ public sealed class ExecutionStateCodecTests
 		result.Value.ForLoopCount2.Should().Be(0);
 		result.Value.ForLoopCount3.Should().Be(0);
 	}
+
+	[Fact]
+	public void Constructor_WithInvalidLayout_DoesNotThrow_ValidationIsConfigFacadeResponsibility()
+	{
+		// The codec must not perform layout validation — that responsibility belongs
+		// to ConfigFacade via PlcConfigurationValidator. The codec accepts any layout.
+		var malformedLayout = new ExecutionDbLayout(
+			DbNumber: 0,
+			RecipeActiveOffset: 0,
+			ActualLineOffset: 0,
+			StepCurrentTimeOffset: 0,
+			ForLoopCount1Offset: 0,
+			ForLoopCount2Offset: 0,
+			ForLoopCount3Offset: 0,
+			TotalSize: 0);
+
+		var act = () => new ExecutionStateCodec(malformedLayout);
+
+		act.Should().NotThrow();
+	}
 }

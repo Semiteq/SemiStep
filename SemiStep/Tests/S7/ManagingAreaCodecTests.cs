@@ -176,4 +176,20 @@ public sealed class ManagingAreaCodecTests
 		result.Value.Committed.Should().BeFalse();
 		result.Value.RecipeLines.Should().Be(Lines);
 	}
+
+	[Fact]
+	public void Constructor_WithInvalidLayout_DoesNotThrow_ValidationIsConfigFacadeResponsibility()
+	{
+		// The codec must not perform layout validation — that responsibility belongs
+		// to ConfigFacade via PlcConfigurationValidator. The codec accepts any layout.
+		var malformedLayout = new ManagingDbLayout(
+			DbNumber: 0,
+			CommittedOffset: 0,
+			RecipeLinesOffset: 0,
+			TotalSize: 0);
+
+		var act = () => new ManagingAreaCodec(malformedLayout);
+
+		act.Should().NotThrow();
+	}
 }

@@ -20,6 +20,7 @@ internal sealed class PlcExecutionMonitor(
 {
 	private static readonly TimeSpan _stopTimeout = TimeSpan.FromSeconds(5);
 
+	private readonly ILogger<PlcExecutionMonitor> _logger = logger;
 	private readonly Subject<PlcExecutionInfo> _subject = new();
 
 	private volatile PlcExecutionInfo _lastKnown = PlcExecutionInfo.Empty;
@@ -64,7 +65,7 @@ internal sealed class PlcExecutionMonitor(
 			}
 			catch (TimeoutException)
 			{
-				logger.LogWarning("Execution monitor poll loop did not stop within 5 seconds");
+				_logger.LogWarning("Execution monitor poll loop did not stop within 5 seconds");
 			}
 		}
 
@@ -109,7 +110,7 @@ internal sealed class PlcExecutionMonitor(
 				{
 					if (result.Errors.OfType<NotConnectedError>().Any())
 					{
-						logger.LogDebug("Execution monitor stopping: PLC not connected");
+						_logger.LogDebug("Execution monitor stopping: PLC not connected");
 
 						if (!(_pollCts?.IsCancellationRequested ?? true))
 						{
@@ -119,7 +120,7 @@ internal sealed class PlcExecutionMonitor(
 						return;
 					}
 
-					logger.LogWarning("Execution monitor poll error: {Message}", result.Errors[0].Message);
+					_logger.LogWarning("Execution monitor poll error: {Message}", result.Errors[0].Message);
 					continue;
 				}
 

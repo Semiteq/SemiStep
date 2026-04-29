@@ -31,11 +31,11 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 	public RecipeGridViewModel(
 		RecipeMutationCoordinator coordinator,
-		RecipeMetadataRegistry configRegistry,
+		RecipeMetadataRegistry recipeMetadataRegistry,
 		MessagePanelViewModel messagePanel)
 	{
 		_coordinator = coordinator;
-		RecipeMetadataRegistry = configRegistry;
+		RecipeMetadataRegistry = recipeMetadataRegistry;
 		_messagePanel = messagePanel;
 
 		RecipeRows = new ObservableCollection<RecipeRowViewModel>();

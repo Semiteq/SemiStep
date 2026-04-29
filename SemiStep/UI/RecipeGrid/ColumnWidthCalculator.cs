@@ -9,7 +9,7 @@ using SemiStep.Core.Recipes;
 namespace UI.RecipeGrid;
 
 public sealed class ColumnWidthCalculator(
-	RecipeMetadataRegistry configRegistry,
+	RecipeMetadataRegistry recipeMetadataRegistry,
 	GridStyleOptions gridStyle)
 {
 	private const string RepresentativeTimeValue = "00:00:00";
@@ -30,7 +30,7 @@ public sealed class ColumnWidthCalculator(
 
 	private DataGridLength CalculateActionColumnWidth(GridColumnDefinition columnDef)
 	{
-		var actionNames = configRegistry.GetAllActions().Select(a => a.UiName);
+		var actionNames = recipeMetadataRegistry.GetAllActions().Select(a => a.UiName);
 
 		return CalculateWidth(columnDef.UiName, actionNames);
 	}
@@ -81,7 +81,7 @@ public sealed class ColumnWidthCalculator(
 	{
 		var groupNames = new HashSet<string>();
 
-		foreach (var action in configRegistry.GetAllActions())
+		foreach (var action in recipeMetadataRegistry.GetAllActions())
 		{
 			var actionColumn = action.Properties.FirstOrDefault(c => c.Key == columnKey);
 			if (actionColumn?.GroupName is not null)
@@ -92,7 +92,7 @@ public sealed class ColumnWidthCalculator(
 
 		foreach (var groupName in groupNames)
 		{
-			var groupResult = configRegistry.GetGroup(groupName);
+			var groupResult = recipeMetadataRegistry.GetGroup(groupName);
 			if (groupResult.IsFailed)
 			{
 				continue;

@@ -20,9 +20,9 @@ public sealed class CoreTargetsEdgeCasesTests(CoreFixture fixture) : IClassFixtu
 	[Fact]
 	public void GetActionByName_EmptyName_Fails()
 	{
-		var configRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
+		var recipeMetadataRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
 
-		var result = configRegistry.GetActionByName("");
+		var result = recipeMetadataRegistry.GetActionByName("");
 
 		result.IsFailed.Should().BeTrue("empty string does not match any registered action name");
 	}
@@ -30,9 +30,9 @@ public sealed class CoreTargetsEdgeCasesTests(CoreFixture fixture) : IClassFixtu
 	[Fact]
 	public void GetGroup_InvalidId_Fails()
 	{
-		var configRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
+		var recipeMetadataRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
 
-		var result = configRegistry.GetGroup("nonexistent");
+		var result = recipeMetadataRegistry.GetGroup("nonexistent");
 
 		result.IsFailed.Should().BeTrue("no group is registered with the given ID");
 	}

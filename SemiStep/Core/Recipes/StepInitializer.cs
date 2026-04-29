@@ -1,20 +1,18 @@
 ﻿using System.Collections.Immutable;
 using System.Globalization;
 
-using SemiStep.Core.Configuration;
-
 namespace SemiStep.Core.Recipes;
 
 internal static class StepInitializer
 {
 	internal static Step Create(
 		ActionDefinition action,
-		RecipeMetadataRegistry configRegistry)
+		RecipeMetadataRegistry recipeMetadataRegistry)
 	{
 		var propertyValues = action.Properties
 			.ToImmutableDictionary(
 				col => new PropertyId(col.Key),
-				col => ResolveDefaultValue(col, configRegistry));
+				col => ResolveDefaultValue(col, recipeMetadataRegistry));
 
 		return new Step(action.Id, propertyValues);
 	}
@@ -22,9 +20,9 @@ internal static class StepInitializer
 	// Config registries are pre-validated at startup; .Value access is safe here.
 	private static PropertyValue ResolveDefaultValue(
 		ActionPropertyDefinition property,
-		RecipeMetadataRegistry configRegistry)
+		RecipeMetadataRegistry recipeMetadataRegistry)
 	{
-		var propertyDefinition = configRegistry.GetProperty(property.PropertyTypeId).Value;
+		var propertyDefinition = recipeMetadataRegistry.GetProperty(property.PropertyTypeId).Value;
 		var propertyType = PropertyTypeMapping.FromSystemType(propertyDefinition.SystemType);
 
 		if (!string.IsNullOrEmpty(property.DefaultValue))
@@ -33,9 +31,9 @@ internal static class StepInitializer
 				   ?? PropertyValue.FromString(property.DefaultValue);
 		}
 
-		if (property.GroupName is not null && configRegistry.GroupExists(property.GroupName).IsSuccess)
+		if (property.GroupName is not null && recipeMetadataRegistry.GroupExists(property.GroupName).IsSuccess)
 		{
-			var group = configRegistry.GetGroup(property.GroupName).Value;
+			var group = recipeMetadataRegistry.GetGroup(property.GroupName).Value;
 			if (group.Items.Count > 0)
 			{
 				return PropertyValue.FromInt(group.Items.Keys.Min());

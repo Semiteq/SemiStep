@@ -43,7 +43,18 @@ public static class Program
 		catch (Exception ex)
 		{
 			Log.Fatal(ex, "Application terminated unexpectedly");
-			App.RunErrorWindow(["Application startup failed unexpectedly:", ex.Message]);
+
+			// If Avalonia was already initialized before the exception, a second
+			// StartWithClassicDesktopLifetime throws "Application has already been initialized".
+			// Swallow that secondary failure so the original exception is the one logged.
+			try
+			{
+				App.RunErrorWindow(["Application startup failed unexpectedly:", ex.Message]);
+			}
+			catch (Exception secondary)
+			{
+				Log.Fatal(secondary, "Failed to display error window after primary failure");
+			}
 		}
 		finally
 		{

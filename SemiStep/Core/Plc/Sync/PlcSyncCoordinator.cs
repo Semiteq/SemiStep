@@ -27,7 +27,7 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 	public PlcSyncCoordinator(
 		PlcTransactionExecutor transactionExecutor,
 		IS7Connection connection,
-		ILogger<PlcSyncExecutor> executorLogger)
+		ILoggerFactory loggerFactory)
 	{
 		_executor = new PlcSyncExecutor(
 			transactionExecutor,
@@ -35,7 +35,7 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 			_lock,
 			status => Status = status,
 			time => LastSyncTime = time,
-			executorLogger);
+			loggerFactory.CreateLogger<PlcSyncExecutor>());
 	}
 
 	public bool IsSyncEnabled

@@ -9,14 +9,14 @@ public class RecipeRowViewModel(
 	int stepNumber,
 	Step step,
 	ActionDefinition action,
-	RecipeMetadataRegistry configRegistry,
+	RecipeMetadataRegistry recipeMetadataRegistry,
 	IReadOnlyDictionary<string, CellState> cellStates)
 	: ReactiveObject, IDisposable
 {
 	private Step _step = step;
 
 	private readonly (IReadOnlyDictionary<string, string?> Units, IReadOnlyDictionary<string, string> FormatKinds) _columnMetadata
-		= BuildColumnMetadata(action, configRegistry);
+		= BuildColumnMetadata(action, recipeMetadataRegistry);
 
 	public int StepNumber
 	{
@@ -135,7 +135,7 @@ public class RecipeRowViewModel(
 			return null;
 		}
 
-		var groupResult = configRegistry.GetGroup(groupName);
+		var groupResult = recipeMetadataRegistry.GetGroup(groupName);
 		if (groupResult.IsFailed)
 		{
 			return null;
@@ -146,22 +146,22 @@ public class RecipeRowViewModel(
 
 	private static PropertyTypeDefinition? ResolvePropertyType(
 		ActionPropertyDefinition actionProperty,
-		RecipeMetadataRegistry configRegistry)
+		RecipeMetadataRegistry recipeMetadataRegistry)
 	{
-		var propertyResult = configRegistry.GetProperty(actionProperty.PropertyTypeId);
+		var propertyResult = recipeMetadataRegistry.GetProperty(actionProperty.PropertyTypeId);
 		return propertyResult.IsSuccess ? propertyResult.Value : null;
 	}
 
 	private static (IReadOnlyDictionary<string, string?> Units, IReadOnlyDictionary<string, string> FormatKinds) BuildColumnMetadata(
 		ActionDefinition actionDefinition,
-		RecipeMetadataRegistry configRegistry)
+		RecipeMetadataRegistry recipeMetadataRegistry)
 	{
 		var units = new Dictionary<string, string?>(StringComparer.Ordinal);
 		var formatKinds = new Dictionary<string, string>(StringComparer.Ordinal);
 
 		foreach (var actionProperty in actionDefinition.Properties)
 		{
-			var propertyType = ResolvePropertyType(actionProperty, configRegistry);
+			var propertyType = ResolvePropertyType(actionProperty, recipeMetadataRegistry);
 			units[actionProperty.Key] = propertyType?.Units;
 			formatKinds[actionProperty.Key] = propertyType?.FormatKind ?? TimeFormatHelper.DefaultFormatKind;
 		}

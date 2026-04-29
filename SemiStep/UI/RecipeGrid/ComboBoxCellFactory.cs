@@ -10,7 +10,7 @@ using SemiStep.Core.Recipes;
 
 namespace UI.RecipeGrid;
 
-public sealed class ComboBoxCellFactory(RecipeMetadataRegistry configRegistry)
+public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataRegistry)
 {
 	private readonly Dictionary<string, List<ComboBoxItemViewModel>> _groupItemsByGroupName = new();
 	private List<ComboBoxItemViewModel>? _cachedActionItems;
@@ -194,7 +194,7 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry configRegistry)
 			return cached;
 		}
 
-		var groupResult = configRegistry.GetGroup(groupName);
+		var groupResult = recipeMetadataRegistry.GetGroup(groupName);
 		if (groupResult.IsFailed)
 		{
 			return [];
@@ -217,7 +217,7 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry configRegistry)
 			return _cachedActionItems;
 		}
 
-		_cachedActionItems = configRegistry.GetAllActions()
+		_cachedActionItems = recipeMetadataRegistry.GetAllActions()
 			.Select(a => new ComboBoxItemViewModel(a.Id, a.UiName))
 			.ToList();
 

@@ -5,7 +5,7 @@ using SemiStep.Core.Configuration;
 namespace SemiStep.Core.Recipes.Helpers;
 
 public sealed class ImportedRecipeValidator(
-	RecipeMetadataRegistry configRegistry)
+	RecipeMetadataRegistry recipeMetadataRegistry)
 {
 	public Result Validate(Recipe recipe)
 	{
@@ -32,7 +32,7 @@ public sealed class ImportedRecipeValidator(
 	{
 		var errors = new List<string>();
 
-		var actionResult = configRegistry.GetAction(step.ActionKey);
+		var actionResult = recipeMetadataRegistry.GetAction(step.ActionKey);
 		if (actionResult.IsFailed)
 		{
 			errors.Add($"Unknown action ID {step.ActionKey}");
@@ -60,7 +60,7 @@ public sealed class ImportedRecipeValidator(
 				continue;
 			}
 
-			if (configRegistry.GroupHasIntKey(intKey, column.GroupName).IsFailed)
+			if (recipeMetadataRegistry.GroupHasIntKey(intKey, column.GroupName).IsFailed)
 			{
 				errors.Add(
 					$"Value {intKey} is not a valid member of group '{column.GroupName}' for column '{column.Key}'");

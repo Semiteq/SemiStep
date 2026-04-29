@@ -11,7 +11,7 @@ using SemiStep.Core.Configuration;
 namespace SemiStep.Core.Recipes.Clipboard;
 
 public sealed class ClipboardSerializer(
-	RecipeMetadataRegistry configRegistry,
+	RecipeMetadataRegistry recipeMetadataRegistry,
 	PropertyParser propertyParser)
 {
 	private const char Separator = '\t';
@@ -64,7 +64,7 @@ public sealed class ClipboardSerializer(
 
 	private List<GridColumnDefinition> GetClipboardColumns()
 	{
-		return configRegistry
+		return recipeMetadataRegistry
 			.GetAllColumns()
 			.Where(c => c.SaveToCsv)
 			.ToList();
@@ -135,12 +135,12 @@ public sealed class ClipboardSerializer(
 			return Result.Fail($"Cannot parse action value '{rawAction}' as integer");
 		}
 
-		if (configRegistry.ActionExists(actionKey).IsFailed)
+		if (recipeMetadataRegistry.ActionExists(actionKey).IsFailed)
 		{
 			return Result.Fail($"Unknown action ID '{actionKey}'");
 		}
 
-		var actionDef = configRegistry.GetAction(actionKey).Value;
+		var actionDef = recipeMetadataRegistry.GetAction(actionKey).Value;
 		var actionPropertyKeys = actionDef.Properties
 			.Select(p => p.Key)
 			.ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -181,12 +181,12 @@ public sealed class ClipboardSerializer(
 				continue;
 			}
 
-			if (configRegistry.PropertyExists(column.PropertyTypeId).IsFailed)
+			if (recipeMetadataRegistry.PropertyExists(column.PropertyTypeId).IsFailed)
 			{
 				continue;
 			}
 
-			var propertyTypeDef = configRegistry.GetProperty(column.PropertyTypeId).Value;
+			var propertyTypeDef = recipeMetadataRegistry.GetProperty(column.PropertyTypeId).Value;
 			var parseResult = propertyParser.Parse(rawValue, propertyTypeDef);
 			if (parseResult.IsFailed)
 			{

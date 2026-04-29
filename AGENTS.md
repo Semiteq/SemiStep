@@ -108,6 +108,20 @@ No abbreviations in names.
 - Register services in extension methods: `AddRecipe()`, `AddS7()`, `AddCsv()`, `AddClipboard()`, `AddUi()`.
 - Avoid mutable static state.
 
+### Logging policy
+
+Production classes receive `ILogger<T>` via constructor DI and call
+`_logger.LogInformation`, `_logger.LogError`, etc. (Microsoft.Extensions.Logging API).
+The Serilog static API is reserved for two documented bootstrap exceptions:
+
+- `ConfigFacade` — runs before the DI container exists; uses
+  `private static readonly ILogger _logger = Log.ForContext(typeof(ConfigFacade));`
+- `Program.Main` — uses static `Log.Fatal(...)` for terminal errors caught at the
+  outermost frame.
+
+Both bootstrap classes still produce `{SourceContext}` correctly because
+`Log.ForContext<T>()` populates it.
+
 ### Interface Design
 
 - Create an interface when: 2+ implementations exist, the class is mocked in tests, it crosses

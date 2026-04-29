@@ -486,41 +486,42 @@ Serilog static API directly):**
 
 ### Task 9: Manual verification — log format and broken-config scenario
 
-- [ ] launch the application, perform save recipe -> load recipe
-- [ ] open the console and `C:\DISTR\Logs\semistep.log` — both must contain
+- [x] manual verification (skipped - autonomous run; user verifies post-merge): launch the application, perform save recipe -> load recipe
+- [x] manual verification (skipped - autonomous run; user verifies post-merge): open the console and `C:\DISTR\Logs\semistep.log` — both must contain
       identical formatting, e.g.
       `2026-04-29 11:53:31.850 [INF] SemiStep.Core.Recipes.Import.CsvService: Loaded recipe ...`.
       Verify: no `+03:00` in the timestamp; `SourceContext` is present
       (full class name)
-- [ ] temporarily break `connection.yaml` (e.g.
+- [x] manual verification (skipped - autonomous run; user verifies post-merge): temporarily break `connection.yaml` (e.g.
       `managing_db_total_size: 4`), launch — an `ErrorWindow` with a clear
       message must open, not a stack trace; the log entry should also use
       the new format
-- [ ] restore `connection.yaml`
+- [x] manual verification (skipped - autonomous run; user verifies post-merge): restore `connection.yaml`
 
 ### Task 10: Verify acceptance criteria
 
-- [ ] every requirement from the Overview is implemented:
+- [x] every requirement from the Overview is implemented:
   - config regression -> user-friendly `ErrorWindow` (no stack trace)
   - `Core/Configuration/` contains only the YAML pipeline +
     `AppConfiguration` + `GridStyleOptions` (no domain definition types)
-  - 10 production classes use `ILogger<T>` via DI
+  - 9 production classes use `ILogger<T>` via DI (plan header said 10;
+    Task 7 Files block listed 9 — count corrected)
   - console and file logs share an identical format
   - timestamp has no timezone offset
   - `SourceContext` is present
-- [ ] `dotnet build SemiStep/SemiStep.slnx` — green
-- [ ] `dotnet test SemiStep/Tests/Tests.csproj` — all pass (286+ tests)
-- [ ] manual GUI smoke-test (load/save recipe) — no regressions
+- [x] `dotnet build SemiStep/SemiStep.slnx` — green
+- [x] `dotnet test SemiStep/Tests/Tests.csproj` — all pass (296/296)
+- [x] manual smoke-test (skipped - autonomous run; user verifies post-merge)
 
 ### Task 11: Update documentation and archive plan
 
-- [ ] update `SemiStep/AGENTS.md`: replace any `ConfigRegistry` references
+- [x] update `SemiStep/AGENTS.md`: replace any `ConfigRegistry` references
       with `RecipeMetadataRegistry`; add a logging-policy section
       ("`ILogger<T>` via DI for production classes; `Log.ForContext<T>()`
       is the documented bootstrap exception in `ConfigFacade`")
-- [ ] update `Docs/02-architecture.md` (or equivalent) if it references the
+- [x] update `Docs/02-architecture.md` (or equivalent) if it references the
       old type locations
-- [ ] move
+- [x] move
       `docs/plans/20260429-config-cleanup-and-logging-foundation.md` ->
       `docs/plans/completed/20260429-config-cleanup-and-logging-foundation.md`
 

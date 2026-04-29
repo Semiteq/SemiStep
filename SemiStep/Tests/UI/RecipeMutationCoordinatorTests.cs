@@ -3,6 +3,7 @@
 using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
@@ -53,7 +54,8 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 			importedRecipeValidator,
 			appConfiguration,
 			queryService,
-			_messagePanel);
+			_messagePanel,
+			NullLogger<RecipeMutationCoordinator>.Instance);
 		_coordinator.Initialize();
 	}
 

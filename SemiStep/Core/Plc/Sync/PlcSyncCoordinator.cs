@@ -2,6 +2,8 @@
 
 using FluentResults;
 
+using Microsoft.Extensions.Logging;
+
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
@@ -22,14 +24,18 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 	private DateTimeOffset? _lastSyncTime;
 	private PlcSyncStatus _status = PlcSyncStatus.Idle;
 
-	public PlcSyncCoordinator(PlcTransactionExecutor transactionExecutor, IS7Connection connection)
+	public PlcSyncCoordinator(
+		PlcTransactionExecutor transactionExecutor,
+		IS7Connection connection,
+		ILogger<PlcSyncExecutor> executorLogger)
 	{
 		_executor = new PlcSyncExecutor(
 			transactionExecutor,
 			connection,
 			_lock,
 			status => Status = status,
-			time => LastSyncTime = time);
+			time => LastSyncTime = time,
+			executorLogger);
 	}
 
 	public bool IsSyncEnabled

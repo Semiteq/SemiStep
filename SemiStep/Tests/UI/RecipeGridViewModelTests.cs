@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
@@ -54,7 +55,8 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 			importedRecipeValidator,
 			appConfiguration,
 			queryService,
-			_panel);
+			_panel,
+			NullLogger<RecipeMutationCoordinator>.Instance);
 		_coordinator.Initialize();
 		_grid = new RecipeGridViewModel(_coordinator, _configRegistry, _panel);
 		_grid.Initialize();

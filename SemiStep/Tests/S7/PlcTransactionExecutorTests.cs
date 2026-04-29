@@ -4,6 +4,8 @@ using FluentAssertions;
 
 using FluentResults;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.Configuration.Memory;
@@ -64,7 +66,8 @@ public sealed class PlcTransactionExecutorTests
 		var transport = new FakeS7Transport();
 		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
 		var configuration = BuildTestConfiguration();
-		var executor = new PlcTransactionExecutor(transport, converter, configuration);
+		var executor = new PlcTransactionExecutor(
+			transport, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
 
 		return (executor, transport);
 	}

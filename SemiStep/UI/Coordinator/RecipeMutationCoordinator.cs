@@ -3,6 +3,8 @@ using System.Reactive.Subjects;
 
 using FluentResults;
 
+using Microsoft.Extensions.Logging;
+
 using ReactiveUI;
 
 using SemiStep.Core.Configuration;
@@ -14,8 +16,6 @@ using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 
-using Serilog;
-
 using UI.MessageService;
 
 namespace UI.Coordinator;
@@ -26,6 +26,7 @@ public sealed class RecipeMutationCoordinator : IDisposable
 	private readonly CsvService _csvService;
 	private readonly RecipeEditor _editor;
 	private readonly ImportedRecipeValidator _importedRecipeValidator;
+	private readonly ILogger<RecipeMutationCoordinator> _logger;
 	private readonly MessagePanelViewModel _messagePanel;
 	private readonly PlcLifecycleManager _plc;
 	private readonly Subject<(Recipe Local, Recipe Plc)> _plcRecipeConflictDetected = new();
@@ -48,7 +49,8 @@ public sealed class RecipeMutationCoordinator : IDisposable
 		ImportedRecipeValidator importedRecipeValidator,
 		AppConfiguration appConfiguration,
 		RecipeQueryService queryService,
-		MessagePanelViewModel messagePanel)
+		MessagePanelViewModel messagePanel,
+		ILogger<RecipeMutationCoordinator> logger)
 	{
 		_workspace = workspace;
 		_editor = editor;
@@ -58,6 +60,7 @@ public sealed class RecipeMutationCoordinator : IDisposable
 		_appConfiguration = appConfiguration;
 		_queryService = queryService;
 		_messagePanel = messagePanel;
+		_logger = logger;
 		_stepCoordinator = new RecipeStepCoordinator(
 			workspace,
 			editor,
@@ -267,7 +270,7 @@ public sealed class RecipeMutationCoordinator : IDisposable
 
 		if (result.IsFailed)
 		{
-			Log.Error("Failed to save recipe to {FilePath}: {Errors}",
+			_logger.LogError("Failed to save recipe to {FilePath}: {Errors}",
 				filePath,
 				string.Join("; ", result.Errors.Select(e => e.Message)));
 		}

@@ -20,6 +20,7 @@ internal static class CsvTestHelper
 		var configLoadResult = await ConfigFacade.LoadAndValidateAsync(configDir);
 
 		var services = new ServiceCollection()
+			.AddLogging()
 			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
 			.AddCsv()

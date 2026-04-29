@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
@@ -23,6 +24,8 @@ public static class S7Di
 			var protocolSettings = sp.GetRequiredService<PlcProtocolSettings>();
 			var plcConfiguration = sp.GetRequiredService<PlcConfiguration>();
 			var driver = sp.GetRequiredService<S7Driver>();
+			var monitorLogger = sp.GetRequiredService<ILogger<PlcExecutionMonitor>>();
+			var serviceLogger = sp.GetRequiredService<ILogger<S7Service>>();
 
 			S7Service? service = null;
 			var monitor = new PlcExecutionMonitor(
@@ -32,9 +35,10 @@ public static class S7Di
 				// PlcExecutionMonitor only invokes onConnectionLost from its poll loop,
 				// which starts only when S7Service.ConnectAsync is called — well after
 				// the factory returns and service has been assigned.
-				onConnectionLost: () => service!.OnConnectionLost());
+				onConnectionLost: () => service!.OnConnectionLost(),
+				monitorLogger);
 
-			service = new S7Service(driver, monitor, transactionExecutor, plcConfiguration);
+			service = new S7Service(driver, monitor, transactionExecutor, plcConfiguration, serviceLogger);
 			return service;
 		});
 		services.AddSingleton<IS7Connection>(sp => sp.GetRequiredService<S7Service>());

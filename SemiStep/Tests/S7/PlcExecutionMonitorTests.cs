@@ -2,6 +2,8 @@
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.Configuration.Memory;
@@ -69,8 +71,13 @@ public sealed class PlcExecutionMonitorTests
 				ForLoopCount3: 0));
 
 		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
-		var executor = new PlcTransactionExecutor(transport, converter, configuration);
-		var monitor = new PlcExecutionMonitor(executor, configuration.ProtocolSettings, onConnectionLost: () => { });
+		var executor = new PlcTransactionExecutor(
+			transport, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
+		var monitor = new PlcExecutionMonitor(
+			executor,
+			configuration.ProtocolSettings,
+			onConnectionLost: () => { },
+			NullLogger<PlcExecutionMonitor>.Instance);
 
 		return (monitor, transport);
 	}
@@ -216,8 +223,13 @@ public sealed class PlcExecutionMonitorTests
 		var innerTransport = new FakeExecutionTransport(configuration.Layout, successState);
 		var transport = new FailFirstExecutionTransport(innerTransport, configuration.Layout.ExecutionDb.DbNumber);
 		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
-		var executor = new PlcTransactionExecutor(transport, converter, configuration);
-		var monitor = new PlcExecutionMonitor(executor, configuration.ProtocolSettings, onConnectionLost: () => { });
+		var executor = new PlcTransactionExecutor(
+			transport, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
+		var monitor = new PlcExecutionMonitor(
+			executor,
+			configuration.ProtocolSettings,
+			onConnectionLost: () => { },
+			NullLogger<PlcExecutionMonitor>.Instance);
 
 		var received = new List<PlcExecutionInfo>();
 		monitor.State.Subscribe(info => received.Add(info));

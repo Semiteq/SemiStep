@@ -3,6 +3,7 @@
 using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Configuration.Facade;
@@ -210,6 +211,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		var configLoadResult = await ConfigFacade.LoadAndValidateAsync(configDir);
 
 		var serviceCollection = new ServiceCollection()
+			.AddLogging()
 			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
 			.AddClipboard()
@@ -244,7 +246,8 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 			importedRecipeValidator,
 			appConfiguration,
 			queryService,
-			panel);
+			panel,
+			NullLogger<RecipeMutationCoordinator>.Instance);
 		coordinator.Initialize();
 
 		return (coordinator, panel);

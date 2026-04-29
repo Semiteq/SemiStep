@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
@@ -50,7 +51,8 @@ public sealed class UIFixture : IAsyncLifetime
 			importedRecipeValidator,
 			appConfiguration,
 			QueryService,
-			MessagePanel);
+			MessagePanel,
+			NullLogger<RecipeMutationCoordinator>.Instance);
 		Coordinator.Initialize();
 		Grid = new RecipeGridViewModel(Coordinator, RecipeMetadataRegistry, MessagePanel);
 		Grid.Initialize();

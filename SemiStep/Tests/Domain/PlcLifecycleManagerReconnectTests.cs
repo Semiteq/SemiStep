@@ -36,6 +36,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 		var syncService = new StubPlcSyncService();
 
 		var services = new ServiceCollection()
+			.AddLogging()
 			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
 			.AddCsv()

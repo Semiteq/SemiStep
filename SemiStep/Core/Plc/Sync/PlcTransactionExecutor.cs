@@ -1,13 +1,13 @@
 ﻿using FluentResults;
 
+using Microsoft.Extensions.Logging;
+
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.S7;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.S7.Serialization;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
-
-using Serilog;
 
 namespace SemiStep.Core.Plc.Sync;
 
@@ -17,6 +17,7 @@ internal sealed class PlcTransactionExecutor
 	private readonly RecipeConverter _converter;
 	private readonly ExecutionStateCodec _executionCodec;
 	private readonly PlcProtocolLayout _layout;
+	private readonly ILogger<PlcTransactionExecutor> _logger;
 	private readonly ManagingAreaCodec _managingCodec;
 	private readonly PlcProtocolSettings _protocolSettings;
 	private readonly IS7Transport _transport;
@@ -24,12 +25,14 @@ internal sealed class PlcTransactionExecutor
 	public PlcTransactionExecutor(
 		IS7Transport transport,
 		RecipeConverter converter,
-		PlcConfiguration plcConfiguration)
+		PlcConfiguration plcConfiguration,
+		ILogger<PlcTransactionExecutor> logger)
 	{
 		_transport = transport;
 		_converter = converter;
 		_layout = plcConfiguration.Layout;
 		_protocolSettings = plcConfiguration.ProtocolSettings;
+		_logger = logger;
 		_arrayCodec = new ArrayCodec(_layout.IntDb, _layout.FloatDb, _layout.StringDb);
 		_executionCodec = new ExecutionStateCodec(_layout.ExecutionDb);
 		_managingCodec = new ManagingAreaCodec(_layout.ManagingDb);
@@ -131,7 +134,7 @@ internal sealed class PlcTransactionExecutor
 
 			if (verifyResult.Value)
 			{
-				Log.Information(
+				_logger.LogInformation(
 					"Recipe synced to PLC successfully ({StepCount} steps, attempt {Attempt})",
 					recipe.StepCount,
 					attempt);
@@ -139,7 +142,7 @@ internal sealed class PlcTransactionExecutor
 				return Result.Ok();
 			}
 
-			Log.Warning(
+			_logger.LogWarning(
 				"Write verification failed on attempt {Attempt} of {MaxAttempts}",
 				attempt,
 				_protocolSettings.MaxRetryAttempts);

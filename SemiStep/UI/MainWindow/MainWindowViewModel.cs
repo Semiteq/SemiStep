@@ -4,13 +4,13 @@ using System.Reactive.Linq;
 
 using Avalonia.Controls;
 
+using Microsoft.Extensions.Logging;
+
 using ReactiveUI;
 
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
-
-using Serilog;
 
 using UI.Clipboard;
 using UI.Coordinator;
@@ -26,6 +26,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 {
 	private readonly RecipeMutationCoordinator _coordinator;
 	private readonly CompositeDisposable _disposables = new();
+	private readonly ILogger<MainWindowViewModel> _logger;
 
 	public MainWindowViewModel(
 		RecipeMutationCoordinator coordinator,
@@ -35,9 +36,11 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		RecipeFileViewModel recipeFile,
 		MessagePanelViewModel messagePanel,
 		ColumnBuilder columnBuilder,
-		PlcMonitorViewModel plcMonitor)
+		PlcMonitorViewModel plcMonitor,
+		ILogger<MainWindowViewModel> logger)
 	{
 		_coordinator = coordinator;
+		_logger = logger;
 		RecipeGrid = recipeGrid;
 		RecipeCommands = recipeCommands;
 		Clipboard = clipboard;
@@ -165,7 +168,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		}
 		catch (Exception ex)
 		{
-			Log.Warning("Unexpected error while showing PLC conflict dialog: {Message}", ex.Message);
+			_logger.LogWarning("Unexpected error while showing PLC conflict dialog: {Message}", ex.Message);
 			MessagePanel.AddError("Failed to show PLC conflict dialog", "PLC");
 
 			return;

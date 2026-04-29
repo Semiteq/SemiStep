@@ -1,11 +1,11 @@
 ﻿using FluentResults;
 
+using Microsoft.Extensions.Logging;
+
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
-
-using Serilog;
 
 namespace SemiStep.Core.Plc;
 
@@ -14,6 +14,7 @@ public sealed class PlcLifecycleManager : IDisposable
 	private readonly IS7Connection _connection;
 	private readonly IS7ExecutionStream _executionStream;
 	private readonly ImportedRecipeValidator _importedRecipeValidator;
+	private readonly ILogger<PlcLifecycleManager> _logger;
 	private readonly IS7Reader _reader;
 	private readonly IPlcSyncService _syncService;
 	private readonly RecipeWorkspace _workspace;
@@ -28,7 +29,8 @@ public sealed class PlcLifecycleManager : IDisposable
 		IS7Reader reader,
 		IS7ExecutionStream executionStream,
 		IPlcSyncService syncService,
-		ImportedRecipeValidator importedRecipeValidator)
+		ImportedRecipeValidator importedRecipeValidator,
+		ILogger<PlcLifecycleManager> logger)
 	{
 		_workspace = workspace;
 		_connection = connection;
@@ -36,6 +38,7 @@ public sealed class PlcLifecycleManager : IDisposable
 		_executionStream = executionStream;
 		_syncService = syncService;
 		_importedRecipeValidator = importedRecipeValidator;
+		_logger = logger;
 	}
 
 	public bool IsSyncEnabled => _syncService.IsSyncEnabled;
@@ -92,7 +95,7 @@ public sealed class PlcLifecycleManager : IDisposable
 		catch (Exception ex)
 		{
 			_syncService.SetSyncEnabled(false);
-			Log.Warning("PLC connection failed: {Message}", ex.Message);
+			_logger.LogWarning("PLC connection failed: {Message}", ex.Message);
 			return Result.Fail(ex.Message);
 		}
 
@@ -110,7 +113,7 @@ public sealed class PlcLifecycleManager : IDisposable
 		}
 		catch (Exception ex)
 		{
-			Log.Warning("Error while disconnecting from PLC: {Message}", ex.Message);
+			_logger.LogWarning("Error while disconnecting from PLC: {Message}", ex.Message);
 		}
 	}
 
@@ -142,7 +145,7 @@ public sealed class PlcLifecycleManager : IDisposable
 
 		if (_pendingPlcRecipe is null)
 		{
-			Log.Warning("ResolveConflict called with keepLocal=false but no pending PLC recipe exists.");
+			_logger.LogWarning("ResolveConflict called with keepLocal=false but no pending PLC recipe exists.");
 
 			return Result.Fail("No pending PLC recipe to resolve.");
 		}
@@ -164,7 +167,7 @@ public sealed class PlcLifecycleManager : IDisposable
 		else if (state == PlcConnectionState.Connected && _syncService.IsSyncEnabled)
 		{
 			_ = PerformReconnectReconciliationAsync().ContinueWith(
-				t => Log.Error(t.Exception, "Unhandled error in reconnect reconciliation"),
+				t => _logger.LogError(t.Exception, "Unhandled error in reconnect reconciliation"),
 				TaskContinuationOptions.OnlyOnFaulted);
 		}
 	}
@@ -174,7 +177,7 @@ public sealed class PlcLifecycleManager : IDisposable
 		var managingAreaResult = await _reader.ReadManagingAreaAsync();
 		if (managingAreaResult.IsFailed)
 		{
-			Log.Warning(
+			_logger.LogWarning(
 				"Could not read managing area during reconnect reconciliation: {Errors}",
 				string.Join("; ", managingAreaResult.Errors.Select(e => e.Message)));
 			NotifyLocalRecipe();
@@ -190,7 +193,7 @@ public sealed class PlcLifecycleManager : IDisposable
 		var plcRecipeResult = await _reader.ReadRecipeFromPlcAsync();
 		if (plcRecipeResult.IsFailed)
 		{
-			Log.Warning(
+			_logger.LogWarning(
 				"Could not read PLC recipe during reconciliation: {Errors}",
 				string.Join("; ", plcRecipeResult.Errors.Select(e => e.Message)));
 			NotifyLocalRecipe();
@@ -205,7 +208,7 @@ public sealed class PlcLifecycleManager : IDisposable
 			var loadResult = ValidateAndLoad(plcRecipe);
 			if (loadResult.IsFailed)
 			{
-				Log.Warning(
+				_logger.LogWarning(
 					"PLC recipe analysis errors during reconnect: {Errors}",
 					string.Join("; ", loadResult.Errors.Select(e => e.Message)));
 			}

@@ -2,12 +2,12 @@
 
 using FluentResults;
 
+using Microsoft.Extensions.Logging;
+
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
-
-using Serilog;
 
 namespace SemiStep.Core.Plc.Sync;
 
@@ -19,7 +19,8 @@ internal sealed class PlcSyncExecutor(
 	IS7Connection connection,
 	Lock stateLock,
 	Action<PlcSyncStatus> setStatus,
-	Action<DateTimeOffset> setLastSyncTime)
+	Action<DateTimeOffset> setLastSyncTime,
+	ILogger<PlcSyncExecutor> logger)
 {
 	internal const int DebounceDelayMilliseconds = 1000;
 
@@ -53,7 +54,7 @@ internal sealed class PlcSyncExecutor(
 
 			if (_syncTask is not null && !_syncTask.IsCompleted)
 			{
-				Log.Debug("Sync in progress, queueing new snapshot");
+				logger.LogDebug("Sync in progress, queueing new snapshot");
 
 				return;
 			}
@@ -137,7 +138,7 @@ internal sealed class PlcSyncExecutor(
 			}
 			catch (AggregateException ex)
 			{
-				Log.Warning(ex, "Sync task did not complete cleanly during disposal");
+				logger.LogWarning(ex, "Sync task did not complete cleanly during disposal");
 			}
 		}
 	}
@@ -161,7 +162,7 @@ internal sealed class PlcSyncExecutor(
 			}
 			catch (Exception ex)
 			{
-				Log.Error(ex, "Unhandled exception in sync task");
+				logger.LogError(ex, "Unhandled exception in sync task");
 				lock (stateLock)
 				{
 					_pendingErrorMessage = ex.Message;
@@ -203,7 +204,7 @@ internal sealed class PlcSyncExecutor(
 	{
 		if (!connection.IsConnected)
 		{
-			Log.Debug("Skipping sync: not connected to PLC");
+			logger.LogDebug("Skipping sync: not connected to PLC");
 			setStatus(PlcSyncStatus.Disconnected);
 
 			return Result.Fail("Not connected");
@@ -223,7 +224,7 @@ internal sealed class PlcSyncExecutor(
 
 			if (isDisconnected)
 			{
-				Log.Warning("Sync blocked: not connected to PLC");
+				logger.LogWarning("Sync blocked: not connected to PLC");
 			}
 
 			return Result.Fail(activeResult.Errors[0].Message);
@@ -236,7 +237,7 @@ internal sealed class PlcSyncExecutor(
 				_pendingErrorMessage = "Recipe is being executed on PLC";
 			}
 			setStatus(PlcSyncStatus.Failed);
-			Log.Warning("Sync blocked: recipe is being executed on PLC");
+			logger.LogWarning("Sync blocked: recipe is being executed on PLC");
 
 			return Result.Fail("Recipe active");
 		}
@@ -262,7 +263,7 @@ internal sealed class PlcSyncExecutor(
 			setStatus(PlcSyncStatus.Failed);
 			if (!writeResult.Errors.OfType<NotConnectedError>().Any())
 			{
-				Log.Error("Sync failed: {Message}", writeResult.Errors[0].Message);
+				logger.LogError("Sync failed: {Message}", writeResult.Errors[0].Message);
 			}
 
 			return;
@@ -283,7 +284,7 @@ internal sealed class PlcSyncExecutor(
 
 		if (hasPending)
 		{
-			Log.Debug("Changes occurred during sync, starting new debounce");
+			logger.LogDebug("Changes occurred during sync, starting new debounce");
 			lock (stateLock)
 			{
 				StartDebounce();

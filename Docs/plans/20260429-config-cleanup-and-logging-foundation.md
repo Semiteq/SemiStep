@@ -416,9 +416,9 @@ in mid-task.
   `ILogger.Abstractions` is not already transitive)
 - Modify: `SemiStep/UI/Program.cs`
 
-- [ ] add `<PackageReference>` for `Microsoft.Extensions.Logging` and
+- [x] add `<PackageReference>` for `Microsoft.Extensions.Logging` and
       `Serilog.Extensions.Logging` (latest stable) to `SemiStep.UI.csproj`
-- [ ] verify `Microsoft.Extensions.Logging.Abstractions` is reachable from
+- [x] verify `Microsoft.Extensions.Logging.Abstractions` is reachable from
       `SemiStep.Core` (it is normally transitive through
       `Microsoft.Extensions.DependencyInjection.Abstractions`). Seven of
       the ten conversion targets in Task 7 live in `SemiStep.Core`, so this
@@ -426,13 +426,16 @@ in mid-task.
       `<PackageReference Include="Microsoft.Extensions.Logging.Abstractions">`
       to `SemiStep/Core/SemiStep.Core.csproj` explicitly** rather than
       relying on transitivity that future DI version bumps could change
-- [ ] in `Program.CreateLogger`: apply the unified `outputTemplate`
+      (added explicitly at 10.0.5 — transitive was only 2.1.1 from a
+      legacy package chain, version mismatch with the rest of the
+      Microsoft.Extensions.* family at 10.0.5 made implicit reliance fragile)
+- [x] in `Program.CreateLogger`: apply the unified `outputTemplate`
       `"{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"`
       to **both** sinks (Console and File)
-- [ ] in `Program.StartupAsync`, after building `ServiceCollection` and
+- [x] in `Program.StartupAsync`, after building `ServiceCollection` and
       before `BuildServiceProvider`:
       `services.AddLogging(b => b.AddSerilog(Log.Logger, dispose: false))`
-- [ ] `dotnet build` — green
+- [x] `dotnet build` — green
 
 ### Task 7: Convert production classes to ILogger<T>
 
@@ -450,23 +453,23 @@ Serilog static API directly):**
 - Modify: `SemiStep/UI/Coordinator/RecipeMutationCoordinator.cs`
 - Modify: `SemiStep/UI/MainWindow/MainWindowViewModel.cs`
 
-- [ ] for each file: `using Serilog;` ->
+- [x] for each file: `using Serilog;` ->
       `using Microsoft.Extensions.Logging;`
-- [ ] add a constructor parameter `ILogger<ThisClass> logger`, store in a
+- [x] add a constructor parameter `ILogger<ThisClass> logger`, store in a
       `private readonly ILogger<ThisClass> _logger`
-- [ ] replace call sites by mapping:
+- [x] replace call sites by mapping:
       `Log.Information` -> `_logger.LogInformation`,
       `Log.Error` -> `_logger.LogError`,
       `Log.Warning` -> `_logger.LogWarning`,
       `Log.Debug` -> `_logger.LogDebug`,
       `Log.Fatal` -> `_logger.LogCritical`
-- [ ] update test fixtures (`Tests/Core/Helpers/CoreFixture.cs`,
+- [x] update test fixtures (`Tests/Core/Helpers/CoreFixture.cs`,
       `Tests/UI/Helpers/UIFixture.cs`, `Tests/Csv/Helpers/CsvTestHelper.cs`,
       and any test that constructs `new XService(...)` directly) — register
       `services.AddLogging(b => b.AddDebug())` or pass
       `NullLogger<T>.Instance`
-- [ ] `dotnet build` — green
-- [ ] `dotnet test` — all pass
+- [x] `dotnet build` — green
+- [x] `dotnet test` — all pass
 
 ### Task 8: ConfigFacade uses Log.ForContext (bootstrap exception)
 
@@ -474,12 +477,12 @@ Serilog static API directly):**
 
 - Modify: `SemiStep/Core/Configuration/Facade/ConfigFacade.cs`
 
-- [ ] add `private static readonly ILogger _logger = Log.ForContext(typeof(ConfigFacade));`
+- [x] add `private static readonly ILogger _logger = Log.ForContext(typeof(ConfigFacade));`
       (the `using Serilog;` import stays — this is the documented
       bootstrap exception)
-- [ ] replace every static `Log.X(...)` call with `_logger.X(...)`
-- [ ] `dotnet build` — green
-- [ ] `dotnet test` — all pass
+- [x] replace every static `Log.X(...)` call with `_logger.X(...)`
+- [x] `dotnet build` — green
+- [x] `dotnet test` — all pass
 
 ### Task 9: Manual verification — log format and broken-config scenario
 

@@ -4,6 +4,8 @@ using FluentAssertions;
 
 using FluentResults;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.Configuration;
@@ -48,8 +50,10 @@ public sealed class PlcSyncCoordinatorTests
 		var connectionService = new StubS7ServiceForSync(connected);
 		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
 		var configuration = BuildTestConfiguration();
-		var executor = new PlcTransactionExecutor(transport, converter, configuration);
-		var coordinator = new PlcSyncCoordinator(executor, connectionService);
+		var executor = new PlcTransactionExecutor(
+			transport, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
+		var coordinator = new PlcSyncCoordinator(
+			executor, connectionService, NullLogger<PlcSyncExecutor>.Instance);
 
 		return (coordinator, transport, connectionService);
 	}

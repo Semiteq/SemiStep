@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using SemiStep.Core.Configuration.Facade;
 using SemiStep.Core.Plc.S7;
@@ -73,12 +74,14 @@ public static class Program
 				.AddClipboard()
 				.AddUi();
 
+		services.AddLogging(b => b.AddSerilog(Log.Logger, dispose: false));
+
 		return (services.BuildServiceProvider(), null);
 	}
 
 	private static void CreateLogger(string logFilePath)
 	{
-		const string Template = "{Timestamp:O} [{Level:u3}] {Message:lj}{NewLine}{Exception}";
+		const string Template = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}";
 		var invariant = CultureInfo.InvariantCulture;
 
 		if (!EnsureLogDirExists(logFilePath))
@@ -90,7 +93,7 @@ public static class Program
 			new LoggerConfiguration()
 				.MinimumLevel.Verbose()
 				.Enrich.FromLogContext()
-				.WriteTo.Console();
+				.WriteTo.Console(outputTemplate: Template, formatProvider: invariant);
 
 		config = config.WriteTo.File(
 			path: logFilePath,

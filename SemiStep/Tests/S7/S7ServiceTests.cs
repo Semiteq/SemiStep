@@ -1,5 +1,7 @@
 ﻿using FluentAssertions;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.Configuration.Memory;
@@ -53,15 +55,18 @@ public sealed class S7ServiceTests
 	{
 		var driver = new FakeS7Driver();
 		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
-		var executor = new PlcTransactionExecutor(driver, converter, configuration);
+		var executor = new PlcTransactionExecutor(
+			driver, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
 
 		S7Service? service = null;
 		var monitor = new PlcExecutionMonitor(
 			executor,
 			configuration.ProtocolSettings,
-			onConnectionLost: () => service!.OnConnectionLost());
+			onConnectionLost: () => service!.OnConnectionLost(),
+			NullLogger<PlcExecutionMonitor>.Instance);
 
-		service = new S7Service(driver, monitor, executor, configuration);
+		service = new S7Service(
+			driver, monitor, executor, configuration, NullLogger<S7Service>.Instance);
 
 		return (service, driver);
 	}

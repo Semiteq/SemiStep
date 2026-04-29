@@ -1,11 +1,11 @@
 ﻿using FluentResults;
 
+using Microsoft.Extensions.Logging;
+
 using SemiStep.Core.Plc;
 using SemiStep.Core.Recipes.Analysis;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.State;
-
-using Serilog;
 
 namespace SemiStep.Core.Recipes;
 
@@ -13,6 +13,7 @@ public sealed class RecipeWorkspace
 {
 	private readonly RecipeAnalyzer _analyzer;
 	private readonly RecipeHistoryManager _historyManager;
+	private readonly ILogger<RecipeWorkspace> _logger;
 	private readonly RecipeStateManager _stateManager;
 	private readonly IPlcSyncService _syncService;
 
@@ -20,12 +21,14 @@ public sealed class RecipeWorkspace
 		RecipeStateManager stateManager,
 		RecipeHistoryManager historyManager,
 		RecipeAnalyzer analyzer,
-		IPlcSyncService syncService)
+		IPlcSyncService syncService,
+		ILogger<RecipeWorkspace> logger)
 	{
 		_stateManager = stateManager;
 		_historyManager = historyManager;
 		_analyzer = analyzer;
 		_syncService = syncService;
+		_logger = logger;
 	}
 
 	public Recipe CurrentRecipe => _stateManager.Current;
@@ -104,7 +107,7 @@ public sealed class RecipeWorkspace
 
 		if (snapshot.IsFailed)
 		{
-			Log.Warning("Empty recipe analysis unexpectedly failed: {Errors}",
+			_logger.LogWarning("Empty recipe analysis unexpectedly failed: {Errors}",
 				string.Join("; ", snapshot.Errors.Select(e => e.Message)));
 		}
 

@@ -3,18 +3,19 @@ using System.Reactive.Subjects;
 
 using FluentResults;
 
+using Microsoft.Extensions.Logging;
+
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
-
-using Serilog;
 
 namespace SemiStep.Core.Plc.Sync;
 
 internal sealed class PlcExecutionMonitor(
 	PlcTransactionExecutor transactionExecutor,
 	PlcProtocolSettings protocolSettings,
-	Action onConnectionLost)
+	Action onConnectionLost,
+	ILogger<PlcExecutionMonitor> logger)
 	: IDisposable
 {
 	private static readonly TimeSpan _stopTimeout = TimeSpan.FromSeconds(5);
@@ -63,7 +64,7 @@ internal sealed class PlcExecutionMonitor(
 			}
 			catch (TimeoutException)
 			{
-				Log.Warning("Execution monitor poll loop did not stop within 5 seconds");
+				logger.LogWarning("Execution monitor poll loop did not stop within 5 seconds");
 			}
 		}
 
@@ -108,7 +109,7 @@ internal sealed class PlcExecutionMonitor(
 				{
 					if (result.Errors.OfType<NotConnectedError>().Any())
 					{
-						Log.Debug("Execution monitor stopping: PLC not connected");
+						logger.LogDebug("Execution monitor stopping: PLC not connected");
 
 						if (!(_pollCts?.IsCancellationRequested ?? true))
 						{
@@ -118,7 +119,7 @@ internal sealed class PlcExecutionMonitor(
 						return;
 					}
 
-					Log.Warning("Execution monitor poll error: {Message}", result.Errors[0].Message);
+					logger.LogWarning("Execution monitor poll error: {Message}", result.Errors[0].Message);
 					continue;
 				}
 

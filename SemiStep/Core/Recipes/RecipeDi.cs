@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
@@ -31,7 +32,8 @@ public static class RecipeDi
 			sp.GetRequiredService<RecipeStateManager>(),
 			sp.GetRequiredService<RecipeHistoryManager>(),
 			sp.GetRequiredService<RecipeAnalyzer>(),
-			sp.GetRequiredService<IPlcSyncService>()));
+			sp.GetRequiredService<IPlcSyncService>(),
+			sp.GetRequiredService<ILogger<RecipeWorkspace>>()));
 
 		services.AddSingleton(sp => new RecipeEditor(
 			sp.GetRequiredService<RecipeWorkspace>(),
@@ -45,7 +47,8 @@ public static class RecipeDi
 			sp.GetRequiredService<IS7Reader>(),
 			sp.GetRequiredService<IS7ExecutionStream>(),
 			sp.GetRequiredService<IPlcSyncService>(),
-			sp.GetRequiredService<ImportedRecipeValidator>()));
+			sp.GetRequiredService<ImportedRecipeValidator>(),
+			sp.GetRequiredService<ILogger<PlcLifecycleManager>>()));
 
 		return services;
 	}

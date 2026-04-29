@@ -13,11 +13,13 @@ namespace SemiStep.Core.Configuration.Facade;
 
 public static class ConfigFacade
 {
+	private static readonly ILogger _logger = Log.ForContext(typeof(ConfigFacade));
+
 	public static async Task<Result<AppConfiguration>> LoadAndValidateAsync(string configDirectory)
 	{
 		if (!Directory.Exists(configDirectory))
 		{
-			Log.Error("Configuration directory not found: {ConfigDirectory}", configDirectory);
+			_logger.Error("Configuration directory not found: {ConfigDirectory}", configDirectory);
 
 			return Result.Fail($"Configuration directory not found: {configDirectory}");
 		}
@@ -27,7 +29,7 @@ public static class ConfigFacade
 		{
 			foreach (var error in loadResult.Errors)
 			{
-				Log.Error("Configuration error: {Error}", error.Message);
+				_logger.Error("Configuration error: {Error}", error.Message);
 			}
 
 			return loadResult.ToResult<AppConfiguration>();
@@ -40,7 +42,7 @@ public static class ConfigFacade
 		{
 			foreach (var error in xrefResult.Errors)
 			{
-				Log.Error("Configuration error: {Error}", error.Message);
+				_logger.Error("Configuration error: {Error}", error.Message);
 			}
 
 			return Result.Fail<AppConfiguration>(xrefResult.Errors)
@@ -53,7 +55,7 @@ public static class ConfigFacade
 		{
 			foreach (var error in defaultsResult.Errors)
 			{
-				Log.Error("Configuration error: {Error}", error.Message);
+				_logger.Error("Configuration error: {Error}", error.Message);
 			}
 
 			return Result.Fail<AppConfiguration>(defaultsResult.Errors)
@@ -70,7 +72,7 @@ public static class ConfigFacade
 		{
 			foreach (var error in mapResult.Errors)
 			{
-				Log.Error("Configuration error: {Error}", error.Message);
+				_logger.Error("Configuration error: {Error}", error.Message);
 			}
 
 			return Result.Fail<AppConfiguration>(mapResult.Errors)
@@ -86,7 +88,7 @@ public static class ConfigFacade
 		{
 			foreach (var error in plcResult.Errors)
 			{
-				Log.Error("Configuration error: {Error}", error.Message);
+				_logger.Error("Configuration error: {Error}", error.Message);
 			}
 
 			return Result.Fail<AppConfiguration>(plcResult.Errors)
@@ -95,7 +97,7 @@ public static class ConfigFacade
 				.WithReasons(defaultsResult.Reasons);
 		}
 
-		Log.Information("Configuration loaded successfully");
+		_logger.Information("Configuration loaded successfully");
 
 		return Result.Ok(config)
 			.WithReasons(loadResult.Reasons)

@@ -1,9 +1,10 @@
 ﻿using FluentResults;
 
-using SemiStep.Core.Configuration;
 using SemiStep.Core.Configuration.Loaders;
 using SemiStep.Core.Configuration.Mapping;
 using SemiStep.Core.Configuration.Validation;
+using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Recipes;
 using SemiStep.Core.Shared;
 
 using Serilog;
@@ -61,22 +62,45 @@ public static class ConfigFacade
 				.WithReasons(defaultsResult.Successes.OfType<Warning>());
 		}
 
-		try
-		{
-			var config = MapToDomain(properties, columns, groups, actions, gridStyle, connection);
-			Log.Information("Configuration loaded successfully");
+		var mapResult = Result.Try(
+			() => MapToDomain(properties, columns, groups, actions, gridStyle, connection),
+			ex => new Error("Failed to map configuration to domain: " + ex.Message).CausedBy(ex));
 
-			return Result.Ok(config)
+		if (mapResult.IsFailed)
+		{
+			foreach (var error in mapResult.Errors)
+			{
+				Log.Error("Configuration error: {Error}", error.Message);
+			}
+
+			return Result.Fail<AppConfiguration>(mapResult.Errors)
 				.WithReasons(loadResult.Reasons)
 				.WithReasons(xrefResult.Reasons)
 				.WithReasons(defaultsResult.Reasons);
 		}
-		catch (Exception ex)
-		{
-			Log.Error("Failed to map configuration to domain: {message}", ex.Message);
 
-			return Result.Fail<AppConfiguration>($"Failed to map configuration to domain: {ex.Message}");
+		var config = mapResult.Value;
+
+		var plcResult = PlcConfigurationValidator.Validate(config.PlcConfiguration);
+		if (plcResult.IsFailed)
+		{
+			foreach (var error in plcResult.Errors)
+			{
+				Log.Error("Configuration error: {Error}", error.Message);
+			}
+
+			return Result.Fail<AppConfiguration>(plcResult.Errors)
+				.WithReasons(loadResult.Reasons)
+				.WithReasons(xrefResult.Reasons)
+				.WithReasons(defaultsResult.Reasons);
 		}
+
+		Log.Information("Configuration loaded successfully");
+
+		return Result.Ok(config)
+			.WithReasons(loadResult.Reasons)
+			.WithReasons(xrefResult.Reasons)
+			.WithReasons(defaultsResult.Reasons);
 	}
 
 	private static async Task<Result<LoadedSections>> LoadAllSectionsAsync(string configDirectory)

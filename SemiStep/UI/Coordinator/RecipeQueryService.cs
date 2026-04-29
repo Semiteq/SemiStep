@@ -17,7 +17,7 @@ public sealed class RecipeQueryService(
 	PlcLifecycleManager plcLifecycleManager,
 	ClipboardSerializer clipboardSerializer,
 	ImportedRecipeValidator importedRecipeValidator,
-	ConfigRegistry configRegistry)
+	RecipeMetadataRegistry configRegistry)
 {
 	public Recipe CurrentRecipe => workspace.CurrentRecipe;
 

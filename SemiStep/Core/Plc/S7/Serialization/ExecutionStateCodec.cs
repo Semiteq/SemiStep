@@ -2,7 +2,6 @@
 
 using FluentResults;
 
-using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.Configuration.Memory;
 using SemiStep.Core.Plc.State;
 
@@ -14,54 +13,6 @@ internal sealed class ExecutionStateCodec
 
 	public ExecutionStateCodec(ExecutionDbLayout layout)
 	{
-		if (layout.TotalSize < layout.RecipeActiveOffset + 2)
-		{
-			throw new ArgumentException(
-				$"ExecutionDbLayout.TotalSize ({layout.TotalSize}) must be at least " +
-				$"RecipeActiveOffset ({layout.RecipeActiveOffset}) + 2 bytes",
-				nameof(layout));
-		}
-
-		if (layout.TotalSize < layout.ActualLineOffset + sizeof(int))
-		{
-			throw new ArgumentException(
-				$"ExecutionDbLayout.TotalSize ({layout.TotalSize}) must be at least " +
-				$"ActualLineOffset ({layout.ActualLineOffset}) + 4 bytes",
-				nameof(layout));
-		}
-
-		if (layout.TotalSize < layout.StepCurrentTimeOffset + sizeof(int))
-		{
-			throw new ArgumentException(
-				$"ExecutionDbLayout.TotalSize ({layout.TotalSize}) must be at least " +
-				$"StepCurrentTimeOffset ({layout.StepCurrentTimeOffset}) + 4 bytes",
-				nameof(layout));
-		}
-
-		if (layout.TotalSize < layout.ForLoopCount1Offset + sizeof(int))
-		{
-			throw new ArgumentException(
-				$"ExecutionDbLayout.TotalSize ({layout.TotalSize}) must be at least " +
-				$"ForLoopCount1Offset ({layout.ForLoopCount1Offset}) + 4 bytes",
-				nameof(layout));
-		}
-
-		if (layout.TotalSize < layout.ForLoopCount2Offset + sizeof(int))
-		{
-			throw new ArgumentException(
-				$"ExecutionDbLayout.TotalSize ({layout.TotalSize}) must be at least " +
-				$"ForLoopCount2Offset ({layout.ForLoopCount2Offset}) + 4 bytes",
-				nameof(layout));
-		}
-
-		if (layout.TotalSize < layout.ForLoopCount3Offset + sizeof(int))
-		{
-			throw new ArgumentException(
-				$"ExecutionDbLayout.TotalSize ({layout.TotalSize}) must be at least " +
-				$"ForLoopCount3Offset ({layout.ForLoopCount3Offset}) + 4 bytes",
-				nameof(layout));
-		}
-
 		_layout = layout;
 	}
 

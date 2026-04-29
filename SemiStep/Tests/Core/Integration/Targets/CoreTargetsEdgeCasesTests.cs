@@ -4,7 +4,7 @@ using FluentResults;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using SemiStep.Core.Configuration;
+using SemiStep.Core.Recipes;
 
 using Tests.Core.Helpers;
 
@@ -20,7 +20,7 @@ public sealed class CoreTargetsEdgeCasesTests(CoreFixture fixture) : IClassFixtu
 	[Fact]
 	public void GetActionByName_EmptyName_Fails()
 	{
-		var configRegistry = fixture.Services.GetRequiredService<ConfigRegistry>();
+		var configRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
 
 		var result = configRegistry.GetActionByName("");
 
@@ -30,7 +30,7 @@ public sealed class CoreTargetsEdgeCasesTests(CoreFixture fixture) : IClassFixtu
 	[Fact]
 	public void GetGroup_InvalidId_Fails()
 	{
-		var configRegistry = fixture.Services.GetRequiredService<ConfigRegistry>();
+		var configRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
 
 		var result = configRegistry.GetGroup("nonexistent");
 

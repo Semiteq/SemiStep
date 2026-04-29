@@ -9,7 +9,7 @@ public class RecipeRowViewModel(
 	int stepNumber,
 	Step step,
 	ActionDefinition action,
-	ConfigRegistry configRegistry,
+	RecipeMetadataRegistry configRegistry,
 	IReadOnlyDictionary<string, CellState> cellStates)
 	: ReactiveObject, IDisposable
 {
@@ -146,7 +146,7 @@ public class RecipeRowViewModel(
 
 	private static PropertyTypeDefinition? ResolvePropertyType(
 		ActionPropertyDefinition actionProperty,
-		ConfigRegistry configRegistry)
+		RecipeMetadataRegistry configRegistry)
 	{
 		var propertyResult = configRegistry.GetProperty(actionProperty.PropertyTypeId);
 		return propertyResult.IsSuccess ? propertyResult.Value : null;
@@ -154,7 +154,7 @@ public class RecipeRowViewModel(
 
 	private static (IReadOnlyDictionary<string, string?> Units, IReadOnlyDictionary<string, string> FormatKinds) BuildColumnMetadata(
 		ActionDefinition actionDefinition,
-		ConfigRegistry configRegistry)
+		RecipeMetadataRegistry configRegistry)
 	{
 		var units = new Dictionary<string, string?>(StringComparer.Ordinal);
 		var formatKinds = new Dictionary<string, string>(StringComparer.Ordinal);

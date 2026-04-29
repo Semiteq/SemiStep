@@ -4,7 +4,7 @@ using FluentResults;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using SemiStep.Core.Configuration;
+using SemiStep.Core.Recipes;
 
 using Tests.Core.Helpers;
 
@@ -20,7 +20,7 @@ public sealed class CoreTargetsTests(CoreFixture fixture) : IClassFixture<CoreFi
 	[Fact]
 	public void Actions_List_NotEmpty()
 	{
-		var configRegistry = fixture.Services.GetRequiredService<ConfigRegistry>();
+		var configRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
 		var actions = configRegistry.GetAllActions();
 
 		actions.Should().NotBeEmpty("Standard config defines at least 4 actions");
@@ -29,7 +29,7 @@ public sealed class CoreTargetsTests(CoreFixture fixture) : IClassFixture<CoreFi
 	[Fact]
 	public void EnumOptions_ForGroupColumn_Succeeds()
 	{
-		var configRegistry = fixture.Services.GetRequiredService<ConfigRegistry>();
+		var configRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
 		var groupResult = configRegistry.GetGroup("valve");
 
 		groupResult.IsSuccess.Should().BeTrue();
@@ -39,7 +39,7 @@ public sealed class CoreTargetsTests(CoreFixture fixture) : IClassFixture<CoreFi
 	[Fact]
 	public void GroupExists_ForDefinedGroup_ReturnsTrue()
 	{
-		var configRegistry = fixture.Services.GetRequiredService<ConfigRegistry>();
+		var configRegistry = fixture.Services.GetRequiredService<RecipeMetadataRegistry>();
 		var exists = configRegistry.GroupExists("valve");
 
 		exists.IsSuccess.Should().BeTrue("valve group is defined in WithGroups config");

@@ -36,7 +36,7 @@ public sealed class S7ServiceTests
 			PlcProtocolLayout.Default);
 	}
 
-	private static ConfigRegistry BuildEmptyConfigRegistry()
+	private static RecipeMetadataRegistry BuildEmptyRecipeMetadataRegistry()
 	{
 		var config = new AppConfiguration(
 			Properties: new Dictionary<string, PropertyTypeDefinition>(),
@@ -46,13 +46,13 @@ public sealed class S7ServiceTests
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default);
 
-		return new ConfigRegistry(config);
+		return new RecipeMetadataRegistry(config);
 	}
 
 	private static (S7Service Service, FakeS7Driver Driver) BuildService(PlcConfiguration configuration)
 	{
 		var driver = new FakeS7Driver();
-		var converter = new RecipeConverter(BuildEmptyConfigRegistry());
+		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
 		var executor = new PlcTransactionExecutor(driver, converter, configuration);
 
 		S7Service? service = null;

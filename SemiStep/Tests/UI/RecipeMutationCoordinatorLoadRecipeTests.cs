@@ -229,7 +229,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		plc.Initialize();
 		workspace.Reset();
 
-		var configRegistry = services.GetRequiredService<ConfigRegistry>();
+		var configRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 		var panel = new MessagePanelViewModel();
 		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();

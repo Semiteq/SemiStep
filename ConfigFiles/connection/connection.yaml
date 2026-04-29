@@ -17,7 +17,7 @@ keep_alive_interval_ms: 5000
 managing_db_number: 995
 committed_offset: 0
 recipe_lines_offset: 4
-managing_db_total_size: 6
+managing_db_total_size: 8
 
 # -- Int DB --
 int_db_number: 997

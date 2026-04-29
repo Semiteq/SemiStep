@@ -7,14 +7,14 @@ namespace SemiStep.Core.Recipes;
 
 public sealed class RecipeEditor
 {
-	private readonly ConfigRegistry _configRegistry;
+	private readonly RecipeMetadataRegistry _configRegistry;
 	private readonly FormulaApplicationCoordinator _formulaCoordinator;
 	private readonly PropertyParser _propertyParser;
 	private readonly RecipeWorkspace _workspace;
 
 	internal RecipeEditor(
 		RecipeWorkspace workspace,
-		ConfigRegistry configRegistry,
+		RecipeMetadataRegistry configRegistry,
 		FormulaApplicationCoordinator formulaCoordinator,
 		PropertyParser propertyParser)
 	{

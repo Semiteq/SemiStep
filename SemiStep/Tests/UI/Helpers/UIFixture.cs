@@ -23,7 +23,7 @@ public sealed class UIFixture : IAsyncLifetime
 	public RecipeWorkspace Workspace { get; private set; } = null!;
 	public RecipeEditor Editor { get; private set; } = null!;
 	public PlcLifecycleManager Plc { get; private set; } = null!;
-	public ConfigRegistry ConfigRegistry { get; private set; } = null!;
+	public RecipeMetadataRegistry RecipeMetadataRegistry { get; private set; } = null!;
 	public MessagePanelViewModel MessagePanel { get; private set; } = null!;
 	public RecipeQueryService QueryService { get; private set; } = null!;
 	public RecipeMutationCoordinator Coordinator { get; private set; } = null!;
@@ -35,11 +35,11 @@ public sealed class UIFixture : IAsyncLifetime
 		Workspace = workspace;
 		Editor = editor;
 		Plc = plc;
-		ConfigRegistry = services.GetRequiredService<ConfigRegistry>();
+		RecipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 		MessagePanel = new MessagePanelViewModel();
 		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
-		QueryService = new RecipeQueryService(Workspace, plc, clipboardSerializer, importedRecipeValidator, ConfigRegistry);
+		QueryService = new RecipeQueryService(Workspace, plc, clipboardSerializer, importedRecipeValidator, RecipeMetadataRegistry);
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
 		var csvService = services.GetRequiredService<CsvService>();
 		Coordinator = new RecipeMutationCoordinator(
@@ -52,7 +52,7 @@ public sealed class UIFixture : IAsyncLifetime
 			QueryService,
 			MessagePanel);
 		Coordinator.Initialize();
-		Grid = new RecipeGridViewModel(Coordinator, ConfigRegistry, MessagePanel);
+		Grid = new RecipeGridViewModel(Coordinator, RecipeMetadataRegistry, MessagePanel);
 		Grid.Initialize();
 	}
 

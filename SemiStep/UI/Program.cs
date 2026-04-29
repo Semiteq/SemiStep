@@ -1,11 +1,8 @@
 ﻿using System.Globalization;
 
-using FluentResults;
-
 using Microsoft.Extensions.DependencyInjection;
 
 using SemiStep.Core.Configuration.Facade;
-using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.S7;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard;
@@ -45,6 +42,7 @@ public static class Program
 		catch (Exception ex)
 		{
 			Log.Fatal(ex, "Application terminated unexpectedly");
+			App.RunErrorWindow(["Application startup failed unexpectedly:", ex.Message]);
 		}
 		finally
 		{

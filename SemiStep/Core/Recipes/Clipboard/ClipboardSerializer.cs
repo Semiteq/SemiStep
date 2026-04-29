@@ -11,7 +11,7 @@ using SemiStep.Core.Configuration;
 namespace SemiStep.Core.Recipes.Clipboard;
 
 public sealed class ClipboardSerializer(
-	ConfigRegistry configRegistry,
+	RecipeMetadataRegistry configRegistry,
 	PropertyParser propertyParser)
 {
 	private const char Separator = '\t';

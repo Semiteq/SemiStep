@@ -1,5 +1,5 @@
-﻿using SemiStep.Core.Configuration;
-using SemiStep.Core.Configuration.Dto;
+﻿using SemiStep.Core.Configuration.Dto;
+using SemiStep.Core.Recipes;
 
 namespace SemiStep.Core.Configuration.Mapping;
 

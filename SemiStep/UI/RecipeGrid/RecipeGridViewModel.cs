@@ -31,11 +31,11 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 	public RecipeGridViewModel(
 		RecipeMutationCoordinator coordinator,
-		ConfigRegistry configRegistry,
+		RecipeMetadataRegistry configRegistry,
 		MessagePanelViewModel messagePanel)
 	{
 		_coordinator = coordinator;
-		ConfigRegistry = configRegistry;
+		RecipeMetadataRegistry = configRegistry;
 		_messagePanel = messagePanel;
 
 		RecipeRows = new ObservableCollection<RecipeRowViewModel>();
@@ -63,7 +63,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			.DisposeWith(_disposables);
 	}
 
-	internal ConfigRegistry ConfigRegistry { get; }
+	internal RecipeMetadataRegistry RecipeMetadataRegistry { get; }
 
 	public ObservableCollection<RecipeRowViewModel> RecipeRows { get; }
 
@@ -267,7 +267,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 	private void AppendRow(Recipe recipe, int index)
 	{
 		var step = recipe.Steps[index];
-		var action = ConfigRegistry.GetAction(step.ActionKey).Value;
+		var action = RecipeMetadataRegistry.GetAction(step.ActionKey).Value;
 		RecipeRows.Add(CreateRowViewModel(step, action, index + 1));
 	}
 
@@ -277,7 +277,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		{
 			var index = startIndex + i;
 			var step = recipe.Steps[index];
-			var action = ConfigRegistry.GetAction(step.ActionKey).Value;
+			var action = RecipeMetadataRegistry.GetAction(step.ActionKey).Value;
 			RecipeRows.Insert(index, CreateRowViewModel(step, action, index + 1));
 		}
 
@@ -312,7 +312,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 	{
 		RecipeRows[stepIndex].Dispose();
 		var step = recipe.Steps[stepIndex];
-		var action = ConfigRegistry.GetAction(step.ActionKey).Value;
+		var action = RecipeMetadataRegistry.GetAction(step.ActionKey).Value;
 		RecipeRows[stepIndex] = CreateRowViewModel(step, action, stepIndex + 1);
 	}
 
@@ -335,7 +335,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		for (var i = 0; i < recipe.StepCount; i++)
 		{
 			var step = recipe.Steps[i];
-			var action = ConfigRegistry.GetAction(step.ActionKey).Value;
+			var action = RecipeMetadataRegistry.GetAction(step.ActionKey).Value;
 			RecipeRows.Add(CreateRowViewModel(step, action, i + 1));
 		}
 	}
@@ -368,7 +368,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		int stepNumber)
 	{
 		var cellStates = new Dictionary<string, CellState>();
-		foreach (var col in ConfigRegistry.GetAllColumns())
+		foreach (var col in RecipeMetadataRegistry.GetAllColumns())
 		{
 			cellStates[col.Key] = _coordinator.QueryService.GetCellState(col, action);
 		}
@@ -377,7 +377,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			stepNumber,
 			step,
 			action,
-			ConfigRegistry,
+			RecipeMetadataRegistry,
 			cellStates);
 
 		row.PropertyValueChanged += (columnKey, value) => OnCellValueChanged(row, columnKey, value);

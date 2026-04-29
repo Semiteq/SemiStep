@@ -24,7 +24,7 @@ internal static class PropertyValidator
 	internal static Result ValidateGroupValue(
 		ActionPropertyDefinition actionProperty,
 		PropertyValue parsed,
-		ConfigRegistry configRegistry)
+		RecipeMetadataRegistry configRegistry)
 	{
 		if (actionProperty.GroupName is null)
 		{

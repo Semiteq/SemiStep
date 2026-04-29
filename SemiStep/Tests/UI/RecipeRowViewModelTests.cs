@@ -21,14 +21,14 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 {
 	private RecipeWorkspace _workspace = null!;
 	private RecipeEditor _editor = null!;
-	private ConfigRegistry _configRegistry = null!;
+	private RecipeMetadataRegistry _configRegistry = null!;
 
 	public async Task InitializeAsync()
 	{
 		var (services, workspace, editor, _) = await CoreTestHelper.BuildAsync("WithGroups");
 		_workspace = workspace;
 		_editor = editor;
-		_configRegistry = services.GetRequiredService<ConfigRegistry>();
+		_configRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 	}
 
 	public Task DisposeAsync()

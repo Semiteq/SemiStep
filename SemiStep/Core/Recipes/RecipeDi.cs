@@ -22,7 +22,7 @@ public static class RecipeDi
 
 		services.AddSingleton<PropertyParser>();
 
-		services.AddSingleton(sp => new ConfigRegistry(sp.GetRequiredService<AppConfiguration>()));
+		services.AddSingleton(sp => new RecipeMetadataRegistry(sp.GetRequiredService<AppConfiguration>()));
 		services.AddSingleton<RecipeStateManager>();
 		services.AddSingleton<RecipeHistoryManager>();
 		services.AddSingleton<ImportedRecipeValidator>();
@@ -35,7 +35,7 @@ public static class RecipeDi
 
 		services.AddSingleton(sp => new RecipeEditor(
 			sp.GetRequiredService<RecipeWorkspace>(),
-			sp.GetRequiredService<ConfigRegistry>(),
+			sp.GetRequiredService<RecipeMetadataRegistry>(),
 			sp.GetRequiredService<FormulaApplicationCoordinator>(),
 			sp.GetRequiredService<PropertyParser>()));
 

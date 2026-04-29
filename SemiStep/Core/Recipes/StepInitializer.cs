@@ -9,7 +9,7 @@ internal static class StepInitializer
 {
 	internal static Step Create(
 		ActionDefinition action,
-		ConfigRegistry configRegistry)
+		RecipeMetadataRegistry configRegistry)
 	{
 		var propertyValues = action.Properties
 			.ToImmutableDictionary(
@@ -22,7 +22,7 @@ internal static class StepInitializer
 	// Config registries are pre-validated at startup; .Value access is safe here.
 	private static PropertyValue ResolveDefaultValue(
 		ActionPropertyDefinition property,
-		ConfigRegistry configRegistry)
+		RecipeMetadataRegistry configRegistry)
 	{
 		var propertyDefinition = configRegistry.GetProperty(property.PropertyTypeId).Value;
 		var propertyType = PropertyTypeMapping.FromSystemType(propertyDefinition.SystemType);

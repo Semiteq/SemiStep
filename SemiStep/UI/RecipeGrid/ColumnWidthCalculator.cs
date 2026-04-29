@@ -4,11 +4,12 @@ using Avalonia.Controls;
 using Avalonia.Media;
 
 using SemiStep.Core.Configuration;
+using SemiStep.Core.Recipes;
 
 namespace UI.RecipeGrid;
 
 public sealed class ColumnWidthCalculator(
-	ConfigRegistry configRegistry,
+	RecipeMetadataRegistry configRegistry,
 	GridStyleOptions gridStyle)
 {
 	private const string RepresentativeTimeValue = "00:00:00";

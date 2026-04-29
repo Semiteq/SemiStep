@@ -2,7 +2,6 @@
 
 using FluentResults;
 
-using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.Configuration.Memory;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
@@ -11,7 +10,7 @@ namespace SemiStep.Core.Plc.S7.Serialization;
 
 internal sealed class ManagingAreaCodec(ManagingDbLayout layout)
 {
-	private readonly ManagingDbLayout _layout = Validate(layout);
+	private readonly ManagingDbLayout _layout = layout;
 
 	public Result<PlcManagingAreaState> Decode(byte[] data)
 	{
@@ -35,26 +34,5 @@ internal sealed class ManagingAreaCodec(ManagingDbLayout layout)
 		BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(_layout.RecipeLinesOffset), data.RecipeLines);
 
 		return bytes;
-	}
-
-	private static ManagingDbLayout Validate(ManagingDbLayout layout)
-	{
-		if (layout.TotalSize < layout.RecipeLinesOffset + sizeof(int))
-		{
-			throw new ArgumentException(
-				$"ManagingDbLayout.TotalSize ({layout.TotalSize}) must be at least " +
-				$"RecipeLinesOffset ({layout.RecipeLinesOffset}) + 4 bytes",
-				nameof(layout));
-		}
-
-		if (layout.TotalSize <= layout.CommittedOffset)
-		{
-			throw new ArgumentException(
-				$"ManagingDbLayout.TotalSize ({layout.TotalSize}) must be greater than " +
-				$"CommittedOffset ({layout.CommittedOffset})",
-				nameof(layout));
-		}
-
-		return layout;
 	}
 }

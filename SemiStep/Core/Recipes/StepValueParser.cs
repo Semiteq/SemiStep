@@ -1,7 +1,5 @@
 ﻿using System.Globalization;
 
-using SemiStep.Core.Configuration;
-
 namespace SemiStep.Core.Recipes;
 
 public static class StepValueParser

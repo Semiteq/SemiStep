@@ -2,12 +2,13 @@
 using Avalonia.Data;
 
 using SemiStep.Core.Configuration;
+using SemiStep.Core.Recipes;
 
 namespace UI.RecipeGrid;
 
 public sealed class ColumnBuilder(
 	GridStyleOptions gridStyle,
-	ConfigRegistry configRegistry)
+	RecipeMetadataRegistry configRegistry)
 {
 	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(configRegistry);
 

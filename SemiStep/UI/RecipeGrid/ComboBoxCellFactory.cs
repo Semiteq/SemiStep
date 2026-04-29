@@ -10,7 +10,7 @@ using SemiStep.Core.Recipes;
 
 namespace UI.RecipeGrid;
 
-public sealed class ComboBoxCellFactory(ConfigRegistry configRegistry)
+public sealed class ComboBoxCellFactory(RecipeMetadataRegistry configRegistry)
 {
 	private readonly Dictionary<string, List<ComboBoxItemViewModel>> _groupItemsByGroupName = new();
 	private List<ComboBoxItemViewModel>? _cachedActionItems;

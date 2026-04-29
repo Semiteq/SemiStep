@@ -38,7 +38,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		_workspace = workspace;
 		_editor = editor;
 		_plc = plc;
-		var configRegistry = services.GetRequiredService<ConfigRegistry>();
+		var configRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 		_messagePanel = new MessagePanelViewModel();
 		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();

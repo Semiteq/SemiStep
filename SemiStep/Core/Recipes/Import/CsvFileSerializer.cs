@@ -11,7 +11,7 @@ using SemiStep.Core.Configuration;
 namespace SemiStep.Core.Recipes.Import;
 
 internal sealed class CsvFileSerializer(
-	ConfigRegistry configRegistry,
+	RecipeMetadataRegistry configRegistry,
 	CsvRowConverter converter)
 {
 	private const char Separator = ';';

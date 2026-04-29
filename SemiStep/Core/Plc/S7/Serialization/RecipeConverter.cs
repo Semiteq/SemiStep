@@ -9,7 +9,7 @@ using SemiStep.Core.Recipes;
 
 namespace SemiStep.Core.Plc.S7.Serialization;
 
-internal sealed class RecipeConverter(ConfigRegistry configRegistry)
+internal sealed class RecipeConverter(RecipeMetadataRegistry configRegistry)
 {
 	public Result<PlcRecipeData> FromRecipe(Recipe recipe)
 	{

@@ -5,7 +5,7 @@ using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
 
-using SemiStep.Core.Configuration;
+using SemiStep.Core.Recipes;
 
 namespace UI.RecipeGrid;
 

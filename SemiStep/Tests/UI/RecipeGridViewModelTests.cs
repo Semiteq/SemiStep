@@ -31,7 +31,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 	private MessagePanelViewModel _panel = null!;
 	private RecipeMutationCoordinator _coordinator = null!;
 	private RecipeGridViewModel _grid = null!;
-	private ConfigRegistry _configRegistry = null!;
+	private RecipeMetadataRegistry _configRegistry = null!;
 
 	public async Task InitializeAsync()
 	{
@@ -39,7 +39,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_workspace = workspace;
 		_editor = editor;
 		_plc = plc;
-		_configRegistry = services.GetRequiredService<ConfigRegistry>();
+		_configRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 		_panel = new MessagePanelViewModel();
 		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();

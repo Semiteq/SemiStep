@@ -1,10 +1,10 @@
 ﻿using FluentResults;
 
-using SemiStep.Core.Recipes;
+using SemiStep.Core.Configuration;
 
-namespace SemiStep.Core.Configuration;
+namespace SemiStep.Core.Recipes;
 
-public sealed class ConfigRegistry
+public sealed class RecipeMetadataRegistry
 {
 	private readonly Dictionary<int, ActionDefinition> _actionsById;
 	private readonly Dictionary<string, ActionDefinition> _actionsByName;
@@ -14,7 +14,7 @@ public sealed class ConfigRegistry
 	private readonly IReadOnlyList<GridColumnDefinition> _allColumns;
 	private readonly Dictionary<string, GroupDefinition> _groups;
 
-	public ConfigRegistry(AppConfiguration config)
+	public RecipeMetadataRegistry(AppConfiguration config)
 	{
 		_actionsById = new Dictionary<int, ActionDefinition>(config.Actions);
 
@@ -121,31 +121,6 @@ public sealed class ConfigRegistry
 		}
 
 		return Result.Ok();
-	}
-
-	public Result<PropertyTypeDefinition> ResolvePropertyType(
-		Recipe recipe,
-		int stepIndex,
-		string columnKey)
-	{
-		var step = recipe.Steps[stepIndex];
-
-		var actionResult = GetAction(step.ActionKey);
-		if (actionResult.IsFailed)
-		{
-			return actionResult.ToResult<PropertyTypeDefinition>();
-		}
-
-		var actionProperty = actionResult.Value.Properties
-			.FirstOrDefault(p => p.Key == columnKey);
-
-		if (actionProperty is null)
-		{
-			return Result.Fail<PropertyTypeDefinition>(
-				$"Property '{columnKey}' is not defined in action '{actionResult.Value.UiName}'");
-		}
-
-		return GetProperty(actionProperty.PropertyTypeId);
 	}
 
 	private static Result<TValue> TryGetOrFail<TKey, TValue>(

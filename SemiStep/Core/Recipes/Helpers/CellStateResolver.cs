@@ -1,6 +1,4 @@
-﻿using SemiStep.Core.Configuration;
-
-namespace SemiStep.Core.Recipes.Helpers;
+﻿namespace SemiStep.Core.Recipes.Helpers;
 
 public static class CellStateResolver
 {

@@ -46,7 +46,7 @@ public sealed class PlcSyncCoordinatorTests
 		transport.SetConnected(connected);
 
 		var connectionService = new StubS7ServiceForSync(connected);
-		var converter = new RecipeConverter(BuildEmptyConfigRegistry());
+		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
 		var configuration = BuildTestConfiguration();
 		var executor = new PlcTransactionExecutor(transport, converter, configuration);
 		var coordinator = new PlcSyncCoordinator(executor, connectionService);
@@ -54,7 +54,7 @@ public sealed class PlcSyncCoordinatorTests
 		return (coordinator, transport, connectionService);
 	}
 
-	private static ConfigRegistry BuildEmptyConfigRegistry()
+	private static RecipeMetadataRegistry BuildEmptyRecipeMetadataRegistry()
 	{
 		var config = new AppConfiguration(
 			Properties: new Dictionary<string, PropertyTypeDefinition>(),
@@ -64,7 +64,7 @@ public sealed class PlcSyncCoordinatorTests
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default);
 
-		return new ConfigRegistry(config);
+		return new RecipeMetadataRegistry(config);
 	}
 
 	[Fact]

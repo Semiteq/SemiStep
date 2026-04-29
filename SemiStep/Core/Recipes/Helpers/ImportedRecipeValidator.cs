@@ -5,7 +5,7 @@ using SemiStep.Core.Configuration;
 namespace SemiStep.Core.Recipes.Helpers;
 
 public sealed class ImportedRecipeValidator(
-	ConfigRegistry configRegistry)
+	RecipeMetadataRegistry configRegistry)
 {
 	public Result Validate(Recipe recipe)
 	{

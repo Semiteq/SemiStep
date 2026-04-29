@@ -23,7 +23,7 @@ public sealed class ImportedRecipeValidatorTests
 	private const int ValidGroupKey = 1;
 	private const int InvalidGroupKey = 99;
 
-	private static ConfigRegistry BuildConfigRegistry(
+	private static RecipeMetadataRegistry BuildRecipeMetadataRegistry(
 		Dictionary<int, ActionDefinition>? actions = null,
 		Dictionary<string, GroupDefinition>? groups = null)
 	{
@@ -35,7 +35,7 @@ public sealed class ImportedRecipeValidatorTests
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default);
 
-		return new ConfigRegistry(config);
+		return new RecipeMetadataRegistry(config);
 	}
 
 	private static ImportedRecipeValidator BuildValidator()
@@ -67,7 +67,7 @@ public sealed class ImportedRecipeValidatorTests
 				})
 		};
 
-		var registry = BuildConfigRegistry(actions, groups);
+		var registry = BuildRecipeMetadataRegistry(actions, groups);
 		return new ImportedRecipeValidator(registry);
 	}
 
@@ -135,7 +135,7 @@ public sealed class ImportedRecipeValidatorTests
 				})
 		};
 
-		var registry = BuildConfigRegistry(actions);
+		var registry = BuildRecipeMetadataRegistry(actions);
 		var validator = new ImportedRecipeValidator(registry);
 		var step = new Step(
 			10,

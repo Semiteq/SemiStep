@@ -46,7 +46,7 @@ public sealed class PlcTransactionExecutorTests
 			layout);
 	}
 
-	private static ConfigRegistry BuildEmptyConfigRegistry()
+	private static RecipeMetadataRegistry BuildEmptyRecipeMetadataRegistry()
 	{
 		var config = new AppConfiguration(
 			Properties: new Dictionary<string, PropertyTypeDefinition>(),
@@ -56,13 +56,13 @@ public sealed class PlcTransactionExecutorTests
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default);
 
-		return new ConfigRegistry(config);
+		return new RecipeMetadataRegistry(config);
 	}
 
 	private static (PlcTransactionExecutor executor, FakeS7Transport transport) BuildExecutor()
 	{
 		var transport = new FakeS7Transport();
-		var converter = new RecipeConverter(BuildEmptyConfigRegistry());
+		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
 		var configuration = BuildTestConfiguration();
 		var executor = new PlcTransactionExecutor(transport, converter, configuration);
 

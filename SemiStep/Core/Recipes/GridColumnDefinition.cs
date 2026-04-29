@@ -1,4 +1,4 @@
-﻿namespace SemiStep.Core.Configuration;
+﻿namespace SemiStep.Core.Recipes;
 
 public sealed record GridColumnDefinition(
 	string Key,

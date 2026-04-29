@@ -37,7 +37,7 @@ public sealed class PlcExecutionMonitorTests
 			layout);
 	}
 
-	private static ConfigRegistry BuildEmptyConfigRegistry()
+	private static RecipeMetadataRegistry BuildEmptyRecipeMetadataRegistry()
 	{
 		var config = new AppConfiguration(
 			Properties: new Dictionary<string, PropertyTypeDefinition>(),
@@ -47,7 +47,7 @@ public sealed class PlcExecutionMonitorTests
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default);
 
-		return new ConfigRegistry(config);
+		return new RecipeMetadataRegistry(config);
 	}
 
 	/// <summary>
@@ -68,7 +68,7 @@ public sealed class PlcExecutionMonitorTests
 				ForLoopCount2: 0,
 				ForLoopCount3: 0));
 
-		var converter = new RecipeConverter(BuildEmptyConfigRegistry());
+		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
 		var executor = new PlcTransactionExecutor(transport, converter, configuration);
 		var monitor = new PlcExecutionMonitor(executor, configuration.ProtocolSettings, onConnectionLost: () => { });
 
@@ -215,7 +215,7 @@ public sealed class PlcExecutionMonitorTests
 
 		var innerTransport = new FakeExecutionTransport(configuration.Layout, successState);
 		var transport = new FailFirstExecutionTransport(innerTransport, configuration.Layout.ExecutionDb.DbNumber);
-		var converter = new RecipeConverter(BuildEmptyConfigRegistry());
+		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
 		var executor = new PlcTransactionExecutor(transport, converter, configuration);
 		var monitor = new PlcExecutionMonitor(executor, configuration.ProtocolSettings, onConnectionLost: () => { });
 

@@ -8,6 +8,9 @@
 *.suo
 *.user
 *.userosscache
+
+# Zed editor — per-developer overrides (e.g. netcoredbg binary path)
+.zed/settings.json
 *.sln.docstates
 
 # User-specific files (MonoDevelop/Xamarin Studio)
@@ -397,4 +400,4 @@ FodyWeavers.xsd
 # nuke
 .nuke/
 
-.opencode/package-lock.json
+*.local.json

@@ -14,7 +14,6 @@ public sealed class CorePropertyParsingTests
 	[Fact]
 	public void NonNumericString_AsInt_ReturnsFailure()
 	{
-		var parser = new PropertyParser();
 		var definition = new PropertyTypeDefinition(
 			Id: "test_int",
 			SystemType: "int",
@@ -24,7 +23,7 @@ public sealed class CorePropertyParsingTests
 			Max: null,
 			MaxLength: null);
 
-		var result = parser.Parse("abc", definition);
+		var result = PropertyParser.Parse("abc", definition);
 
 		result.IsFailed.Should().BeTrue();
 	}

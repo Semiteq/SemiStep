@@ -76,7 +76,7 @@ internal static class ActionsSectionLoader
 		}
 		catch (Exception exception)
 		{
-			return Result.Fail<List<ActionDto>>(
+			return Result.Fail(
 				$"Failed to parse {Path.GetFileName(filePath)}: {exception.Message}");
 		}
 	}

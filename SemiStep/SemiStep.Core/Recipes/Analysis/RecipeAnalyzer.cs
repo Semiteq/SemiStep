@@ -4,7 +4,7 @@ using SemiStep.Core.Shared;
 
 namespace SemiStep.Core.Recipes.Analysis;
 
-internal sealed class RecipeAnalyzer(LoopParser loopParser)
+public sealed class RecipeAnalyzer
 {
 	private const int MaxLoopDepth = 3;
 
@@ -16,10 +16,10 @@ internal sealed class RecipeAnalyzer(LoopParser loopParser)
 			return Result.Ok(RecipeSnapshot.Empty).WithWarning("Recipe has no steps");
 		}
 
-		var loopParseResult = loopParser.Parse(recipe);
+		var loopParseResult = LoopParser.Parse(recipe);
 		if (loopParseResult.IsFailed)
 		{
-			return Result.Fail<RecipeSnapshot>(loopParseResult.Errors);
+			return Result.Fail(loopParseResult.Errors);
 		}
 
 		var parsedLoops = loopParseResult.Value;

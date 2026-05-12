@@ -14,7 +14,7 @@ public sealed record ActionDefinition(
 
 		if (property is null)
 		{
-			return Result.Fail<ActionPropertyDefinition>(
+			return Result.Fail(
 				$"Property '{propertyKey}' is not defined in action '{UiName}'");
 		}
 

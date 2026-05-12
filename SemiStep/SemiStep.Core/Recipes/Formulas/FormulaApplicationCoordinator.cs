@@ -2,7 +2,7 @@
 
 namespace SemiStep.Core.Recipes.Formulas;
 
-internal sealed class FormulaApplicationCoordinator(FormulaEngine engine)
+public sealed class FormulaApplicationCoordinator(FormulaEngine engine)
 {
 	public Result<Step> ApplyIfExists(
 		Step step,

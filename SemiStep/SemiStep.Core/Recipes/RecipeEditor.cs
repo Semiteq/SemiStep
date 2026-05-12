@@ -9,19 +9,16 @@ public sealed class RecipeEditor
 {
 	private readonly RecipeMetadataRegistry _recipeMetadataRegistry;
 	private readonly FormulaApplicationCoordinator _formulaCoordinator;
-	private readonly PropertyParser _propertyParser;
 	private readonly RecipeWorkspace _workspace;
 
-	internal RecipeEditor(
+	public RecipeEditor(
 		RecipeWorkspace workspace,
 		RecipeMetadataRegistry recipeMetadataRegistry,
-		FormulaApplicationCoordinator formulaCoordinator,
-		PropertyParser propertyParser)
+		FormulaApplicationCoordinator formulaCoordinator)
 	{
 		_workspace = workspace;
 		_recipeMetadataRegistry = recipeMetadataRegistry;
 		_formulaCoordinator = formulaCoordinator;
-		_propertyParser = propertyParser;
 	}
 
 	public Result AppendStep(int actionId)
@@ -154,7 +151,7 @@ public sealed class RecipeEditor
 			return propertyDefinitionResult.ToResult();
 		}
 
-		var parseResult = _propertyParser.Parse(value, propertyDefinitionResult.Value);
+		var parseResult = PropertyParser.Parse(value, propertyDefinitionResult.Value);
 		if (parseResult.IsFailed)
 		{
 			return parseResult.ToResult();

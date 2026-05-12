@@ -10,7 +10,7 @@ using SemiStep.Core.Configuration;
 
 namespace SemiStep.Core.Recipes.Import;
 
-internal sealed class CsvFileSerializer(
+public sealed class CsvFileSerializer(
 	RecipeMetadataRegistry recipeMetadataRegistry,
 	CsvRowConverter converter)
 {
@@ -40,7 +40,7 @@ internal sealed class CsvFileSerializer(
 
 		if (lines.Length == 0)
 		{
-			return Result.Fail<Recipe>("CSV body is empty");
+			return Result.Fail("CSV body is empty");
 		}
 
 		var headerResult = ValidateHeader(lines[0]);
@@ -71,7 +71,7 @@ internal sealed class CsvFileSerializer(
 
 		if (allErrors.Count > 0)
 		{
-			return Result.Fail<Recipe>(allErrors);
+			return Result.Fail(allErrors);
 		}
 
 		return Result.Ok(new Recipe(steps.ToImmutableList()));

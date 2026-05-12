@@ -11,7 +11,7 @@ public class CsvService
 	private readonly CsvFileSerializer _csvFileSerializer;
 	private readonly ILogger<CsvService> _logger;
 
-	internal CsvService(CsvFileSerializer csvFileSerializer, ILogger<CsvService> logger)
+	public CsvService(CsvFileSerializer csvFileSerializer, ILogger<CsvService> logger)
 	{
 		_csvFileSerializer = csvFileSerializer;
 		_logger = logger;
@@ -21,7 +21,7 @@ public class CsvService
 	{
 		if (!File.Exists(filePath))
 		{
-			return Result.Fail<Recipe>($"Recipe file not found: {filePath}");
+			return Result.Fail($"Recipe file not found: {filePath}");
 		}
 
 		string bodyText;
@@ -33,12 +33,12 @@ public class CsvService
 		catch (IOException ex)
 		{
 			_logger.LogWarning("IO error while loading recipe from {FilePath}: {Message}", filePath, ex.Message);
-			return Result.Fail<Recipe>($"Failed to load recipe from '{filePath}': {ex.Message}");
+			return Result.Fail($"Failed to load recipe from '{filePath}': {ex.Message}");
 		}
 		catch (UnauthorizedAccessException ex)
 		{
 			_logger.LogWarning("Access denied while loading recipe from {FilePath}: {Message}", filePath, ex.Message);
-			return Result.Fail<Recipe>($"Failed to load recipe from '{filePath}': {ex.Message}");
+			return Result.Fail($"Failed to load recipe from '{filePath}': {ex.Message}");
 		}
 
 		var result = _csvFileSerializer.Deserialize(bodyText);

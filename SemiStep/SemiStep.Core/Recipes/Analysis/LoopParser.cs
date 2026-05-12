@@ -4,12 +4,12 @@ using SemiStep.Core.Shared;
 
 namespace SemiStep.Core.Recipes.Analysis;
 
-internal sealed class LoopParser
+internal static class LoopParser
 {
 	private const string IterationColumnName = "task";
 	private static readonly PropertyId _iterationPropertyId = new(IterationColumnName);
 
-	public Result<List<LoopInfo>> Parse(Recipe recipe)
+	public static Result<List<LoopInfo>> Parse(Recipe recipe)
 	{
 		var validLoops = new List<LoopInfo>();
 		var reasons = new List<IReason>();
@@ -72,7 +72,7 @@ internal sealed class LoopParser
 			.WithReasons(reasons);
 	}
 
-	private Result<int> ExtractIterationCount(Step step)
+	private static Result<int> ExtractIterationCount(Step step)
 	{
 		if (!step.Properties.TryGetValue(_iterationPropertyId, out var iterationProperty))
 		{

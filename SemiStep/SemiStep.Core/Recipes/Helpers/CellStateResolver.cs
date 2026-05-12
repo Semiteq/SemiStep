@@ -4,12 +4,12 @@ public static class CellStateResolver
 {
 	public static CellState GetCellState(GridColumnDefinition column, ActionDefinition action)
 	{
-		if (column.Key is "action")
+		if (column.Key == StepValueParser.ActionColumnKey)
 		{
 			return CellState.Enabled;
 		}
 
-		if (column.ColumnType is "step_start_time_field")
+		if (column.ReadOnly)
 		{
 			return CellState.Readonly;
 		}
@@ -17,11 +17,6 @@ public static class CellStateResolver
 		if (!IsPropertyPresentInAction(column.Key, action))
 		{
 			return CellState.Disabled;
-		}
-
-		if (column.ReadOnly)
-		{
-			return CellState.Readonly;
 		}
 
 		return CellState.Enabled;

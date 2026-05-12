@@ -1,5 +1,5 @@
 ﻿namespace SemiStep.Core.Recipes.Formulas;
 
-internal sealed record FormulaDefinition(
+public sealed record FormulaDefinition(
 	string Expression,
 	IReadOnlyList<string> RecalcOrder);

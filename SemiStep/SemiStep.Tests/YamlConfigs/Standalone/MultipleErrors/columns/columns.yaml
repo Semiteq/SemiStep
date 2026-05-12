@@ -5,6 +5,5 @@ action:
     ui_name: "Action"
   business_logic:
     property_type_id: broken1
-    plc_data_type: int
     read_only: false
     save_to_csv: true

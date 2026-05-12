@@ -133,7 +133,7 @@ public sealed class RecipeMetadataRegistry
 			return value;
 		}
 
-		return Result.Fail<TValue>(errorMessage);
+		return Result.Fail(errorMessage);
 	}
 
 	private static Result ContainsOrFail<TKey, TValue>(

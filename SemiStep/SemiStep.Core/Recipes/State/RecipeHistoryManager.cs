@@ -1,6 +1,6 @@
 ﻿namespace SemiStep.Core.Recipes.State;
 
-internal sealed class RecipeHistoryManager
+public sealed class RecipeHistoryManager
 {
 	private const int MaxHistoryDepth = 100;
 	private readonly List<Recipe> _redoStack = new(MaxHistoryDepth);

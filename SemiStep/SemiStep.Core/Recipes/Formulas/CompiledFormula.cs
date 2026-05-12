@@ -2,7 +2,7 @@
 
 namespace SemiStep.Core.Recipes.Formulas;
 
-internal sealed class CompiledFormula(
+public sealed class CompiledFormula(
 	IReadOnlyList<string> recalcOrder,
 	IReadOnlyList<string> variables,
 	IReadOnlyDictionary<string, Func<Dictionary<string, double>, double>> solvers)
@@ -13,14 +13,14 @@ internal sealed class CompiledFormula(
 	{
 		if (!IsVariableKnown(changedVariable))
 		{
-			return Result.Fail<Dictionary<string, double>>(
+			return Result.Fail(
 				$"Variable '{changedVariable}' is not defined in formula");
 		}
 
 		var targetVariable = DetermineTarget(changedVariable);
 		if (targetVariable is null)
 		{
-			return Result.Fail<Dictionary<string, double>>(
+			return Result.Fail(
 				$"No target variable for changed variable '{changedVariable}'");
 		}
 
@@ -56,7 +56,7 @@ internal sealed class CompiledFormula(
 	{
 		if (!solvers.TryGetValue(targetVariable, out var solver))
 		{
-			return Result.Fail<Dictionary<string, double>>(
+			return Result.Fail(
 				$"No solver found for target variable '{targetVariable}'");
 		}
 
@@ -65,7 +65,7 @@ internal sealed class CompiledFormula(
 
 		if (double.IsNaN(calculatedValue) || double.IsInfinity(calculatedValue))
 		{
-			return Result.Fail<Dictionary<string, double>>(
+			return Result.Fail(
 				$"Computation for '{targetVariable}' resulted in NaN or Infinity");
 		}
 

@@ -10,9 +10,7 @@ using SemiStep.Core.Configuration;
 
 namespace SemiStep.Core.Recipes.Clipboard;
 
-public sealed class ClipboardSerializer(
-	RecipeMetadataRegistry recipeMetadataRegistry,
-	PropertyParser propertyParser)
+public sealed class ClipboardSerializer(RecipeMetadataRegistry recipeMetadataRegistry)
 {
 	private const char Separator = '\t';
 
@@ -187,7 +185,7 @@ public sealed class ClipboardSerializer(
 			}
 
 			var propertyTypeDef = recipeMetadataRegistry.GetProperty(column.PropertyTypeId).Value;
-			var parseResult = propertyParser.Parse(rawValue, propertyTypeDef);
+			var parseResult = PropertyParser.Parse(rawValue, propertyTypeDef);
 			if (parseResult.IsFailed)
 			{
 				foreach (var error in parseResult.Errors)

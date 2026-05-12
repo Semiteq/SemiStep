@@ -16,7 +16,7 @@ internal static class StepVariableAdapter
 
 			if (!step.Properties.TryGetValue(columnId, out var propertyValue))
 			{
-				return Result.Fail<IReadOnlyDictionary<string, double>>(
+				return Result.Fail(
 					$"Variable '{variableName}' not found in step properties");
 			}
 
@@ -70,7 +70,7 @@ internal static class StepVariableAdapter
 		{
 			int i => i,
 			float f => f,
-			_ => Result.Fail<double>($"Cannot convert value '{value.Value}' to numeric")
+			_ => Result.Fail($"Cannot convert value '{value.Value}' to numeric")
 		};
 	}
 
@@ -80,7 +80,7 @@ internal static class StepVariableAdapter
 		{
 			PropertyType.Int => PropertyValue.FromInt((int)Math.Round(value)),
 			PropertyType.Float => PropertyValue.FromFloat((float)value),
-			_ => Result.Fail<PropertyValue>(
+			_ => Result.Fail(
 				$"Cannot convert formula result to property type '{targetType}'")
 		};
 	}

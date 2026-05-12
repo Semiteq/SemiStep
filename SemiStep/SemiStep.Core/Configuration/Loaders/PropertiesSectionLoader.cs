@@ -74,7 +74,7 @@ internal static class PropertiesSectionLoader
 		}
 		catch (Exception ex)
 		{
-			return Result.Fail<List<PropertyDto>>(
+			return Result.Fail(
 				$"Failed to parse {Path.GetFileName(filePath)}: {ex.Message}");
 		}
 	}

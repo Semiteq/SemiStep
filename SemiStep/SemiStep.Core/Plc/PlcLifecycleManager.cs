@@ -23,7 +23,7 @@ public sealed class PlcLifecycleManager : IDisposable
 	private bool _initialized;
 	private Recipe? _pendingPlcRecipe;
 
-	internal PlcLifecycleManager(
+	public PlcLifecycleManager(
 		RecipeWorkspace workspace,
 		IS7Connection connection,
 		IS7Reader reader,

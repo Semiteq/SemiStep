@@ -2,7 +2,7 @@
 
 namespace SemiStep.Core.Recipes.State;
 
-internal sealed class RecipeStateManager
+public sealed class RecipeStateManager
 {
 	public Result<RecipeSnapshot>? LatestSnapshot { get; private set; } = Result.Ok(RecipeSnapshot.Empty);
 	public Recipe Current => LatestSnapshot is { IsSuccess: true }

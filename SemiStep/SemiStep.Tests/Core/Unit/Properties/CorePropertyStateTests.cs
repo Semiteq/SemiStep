@@ -31,23 +31,6 @@ public sealed class CorePropertyStateTests
 		Properties: [_stepDurationProperties, _commentProperties]);
 
 	[Fact]
-	public void StepStartTimeColumn_IsReadonly()
-	{
-		var column = new GridColumnDefinition(
-			Key: "step_start_time",
-			ColumnType: "step_start_time_field",
-			UiName: "Start Time",
-			PropertyTypeId: "time",
-			PlcDataType: "float",
-			ReadOnly: false,
-			SaveToCsv: false);
-
-		var result = CellStateResolver.GetCellState(column, _waitAction);
-
-		result.Should().Be(CellState.Readonly);
-	}
-
-	[Fact]
 	public void UnsupportedColumn_IsDisabled()
 	{
 		var column = new GridColumnDefinition(
@@ -55,7 +38,6 @@ public sealed class CorePropertyStateTests
 			ColumnType: "property_field",
 			UiName: "Unsupported",
 			PropertyTypeId: "float",
-			PlcDataType: "float",
 			ReadOnly: false,
 			SaveToCsv: true);
 
@@ -72,9 +54,24 @@ public sealed class CorePropertyStateTests
 			ColumnType: "property_field",
 			UiName: "Duration",
 			PropertyTypeId: "time",
-			PlcDataType: "float",
 			ReadOnly: true,
 			SaveToCsv: true);
+
+		var result = CellStateResolver.GetCellState(column, _waitAction);
+
+		result.Should().Be(CellState.Readonly);
+	}
+
+	[Fact]
+	public void ReadOnlyColumn_WhenPropertyMissingFromAction_StillReadonly()
+	{
+		var column = new GridColumnDefinition(
+			Key: "step_start_time",
+			ColumnType: "step_start_time_field",
+			UiName: "Start Time",
+			PropertyTypeId: "time",
+			ReadOnly: true,
+			SaveToCsv: false);
 
 		var result = CellStateResolver.GetCellState(column, _waitAction);
 
@@ -89,7 +86,6 @@ public sealed class CorePropertyStateTests
 			ColumnType: "action_combo_box",
 			UiName: "Action",
 			PropertyTypeId: "enum",
-			PlcDataType: "int",
 			ReadOnly: false,
 			SaveToCsv: true);
 

@@ -2,7 +2,7 @@
 
 namespace SemiStep.Core.Recipes.Formulas;
 
-internal sealed class FormulaEngine(
+public sealed class FormulaEngine(
 	IReadOnlyDictionary<int, CompiledFormula> compiledFormulas)
 {
 	private readonly IReadOnlyDictionary<int, CompiledFormula> _compiledFormulas =

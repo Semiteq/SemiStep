@@ -17,7 +17,7 @@ public sealed class RecipeWorkspace
 	private readonly RecipeStateManager _stateManager;
 	private readonly IPlcSyncService _syncService;
 
-	internal RecipeWorkspace(
+	public RecipeWorkspace(
 		RecipeStateManager stateManager,
 		RecipeHistoryManager historyManager,
 		RecipeAnalyzer analyzer,

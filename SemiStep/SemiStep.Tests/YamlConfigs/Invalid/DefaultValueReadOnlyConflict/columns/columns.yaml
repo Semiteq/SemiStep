@@ -5,7 +5,6 @@ action:
     ui_name: "Action"
   business_logic:
     property_type_id: enum
-    plc_data_type: int
     read_only: false
     save_to_csv: true
 
@@ -15,7 +14,6 @@ step_duration:
     ui_name: "Duration"
   business_logic:
     property_type_id: time
-    plc_data_type: float
     read_only: false
     save_to_csv: true
 
@@ -25,7 +23,6 @@ task:
     ui_name: "Task"
   business_logic:
     property_type_id: float
-    plc_data_type: float
     read_only: false
     save_to_csv: true
 
@@ -35,7 +32,6 @@ comment:
     ui_name: "Comment"
   business_logic:
     property_type_id: string
-    plc_data_type: none
     save_to_csv: true
     read_only: false
 
@@ -45,6 +41,5 @@ readonly_col:
     ui_name: "Read Only Column"
   business_logic:
     property_type_id: string
-    plc_data_type: none
     read_only: true
     save_to_csv: false

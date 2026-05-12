@@ -4,9 +4,9 @@ using FluentResults;
 
 namespace SemiStep.Core.Recipes;
 
-public sealed class PropertyParser
+public static class PropertyParser
 {
-	public Result<PropertyValue> Parse(string input, PropertyTypeDefinition propertyDefinition)
+	public static Result<PropertyValue> Parse(string input, PropertyTypeDefinition propertyDefinition)
 	{
 		var propertyType = PropertyTypeMapping.FromSystemType(propertyDefinition.SystemType);
 

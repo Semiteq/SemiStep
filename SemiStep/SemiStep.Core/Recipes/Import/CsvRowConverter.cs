@@ -7,7 +7,7 @@ using SemiStep.Core.Configuration;
 
 namespace SemiStep.Core.Recipes.Import;
 
-public sealed class CsvRowConverter(AppConfiguration config, PropertyParser propertyParser)
+public sealed class CsvRowConverter(AppConfiguration config)
 {
 	private const char Separator = ';';
 	private const string ActionColumnKey = StepValueParser.ActionColumnKey;
@@ -81,7 +81,7 @@ public sealed class CsvRowConverter(AppConfiguration config, PropertyParser prop
 				continue;
 			}
 
-			var parseResult = propertyParser.Parse(rawValue, propertyTypeDef);
+			var parseResult = PropertyParser.Parse(rawValue, propertyTypeDef);
 			if (parseResult.IsFailed)
 			{
 				foreach (var e in parseResult.Errors)

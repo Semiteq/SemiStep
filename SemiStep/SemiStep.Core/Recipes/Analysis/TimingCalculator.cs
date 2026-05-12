@@ -6,7 +6,8 @@ internal static class TimingCalculator
 
 	public static (IReadOnlyDictionary<int, TimeSpan> StepStartTimes, TimeSpan TotalDuration) Calculate(
 		Recipe recipe,
-		IReadOnlyList<LoopInfo> loops)
+		IReadOnlyList<LoopInfo> loops,
+		RecipeMetadataRegistry registry)
 	{
 		var startTimes = new Dictionary<int, TimeSpan>(recipe.Steps.Count);
 		var accumulated = TimeSpan.Zero;
@@ -18,7 +19,7 @@ internal static class TimingCalculator
 			startTimes[i] = accumulated;
 
 			var step = recipe.Steps[i];
-			var duration = ExtractStepDuration(step);
+			var duration = ExtractStepDuration(step, registry);
 			if (duration > TimeSpan.Zero)
 			{
 				accumulated += duration;
@@ -44,8 +45,20 @@ internal static class TimingCalculator
 		return (startTimes, accumulated);
 	}
 
-	private static TimeSpan ExtractStepDuration(Step step)
+	private static TimeSpan ExtractStepDuration(Step step, RecipeMetadataRegistry registry)
 	{
+		var actionResult = registry.GetAction(step.ActionKey);
+		if (actionResult.IsFailed)
+		{
+			throw new InvalidOperationException(
+				$"Step references unknown action id {step.ActionKey}");
+		}
+
+		if (actionResult.Value.DeployDuration == DeployDuration.Immediate)
+		{
+			return TimeSpan.Zero;
+		}
+
 		if (!step.Properties.TryGetValue(_durationProperty, out var durationProperty))
 		{
 			return TimeSpan.Zero;

@@ -44,7 +44,7 @@ public sealed class ImportedRecipeValidatorTests
 			[ValveActionId] = new ActionDefinition(
 				Id: ValveActionId,
 				UiName: "Valve",
-				DeployDuration: "immediate",
+				DeployDuration: DeployDuration.Immediate,
 				Properties: new[]
 				{
 					new ActionPropertyDefinition(
@@ -123,7 +123,7 @@ public sealed class ImportedRecipeValidatorTests
 			[10] = new ActionDefinition(
 				Id: 10,
 				UiName: "Wait",
-				DeployDuration: "longlasting",
+				DeployDuration: DeployDuration.LongLasting,
 				Properties: new[]
 				{
 					new ActionPropertyDefinition(

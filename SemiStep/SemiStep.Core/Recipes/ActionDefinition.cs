@@ -5,7 +5,7 @@ namespace SemiStep.Core.Recipes;
 public sealed record ActionDefinition(
 	int Id,
 	string UiName,
-	string DeployDuration,
+	DeployDuration DeployDuration,
 	IReadOnlyList<ActionPropertyDefinition> Properties)
 {
 	public Result<ActionPropertyDefinition> FindProperty(string propertyKey)

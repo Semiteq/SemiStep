@@ -4,7 +4,7 @@ using SemiStep.Core.Shared;
 
 namespace SemiStep.Core.Recipes.Analysis;
 
-public sealed class RecipeAnalyzer
+public sealed class RecipeAnalyzer(RecipeMetadataRegistry registry)
 {
 	private const int MaxLoopDepth = 3;
 
@@ -24,7 +24,7 @@ public sealed class RecipeAnalyzer
 
 		var parsedLoops = loopParseResult.Value;
 
-		var (stepStartTimes, totalDuration) = TimingCalculator.Calculate(recipe, parsedLoops);
+		var (stepStartTimes, totalDuration) = TimingCalculator.Calculate(recipe, parsedLoops, registry);
 
 		var maxDepth = parsedLoops.Count > 0
 			? parsedLoops.Max(l => l.Depth)

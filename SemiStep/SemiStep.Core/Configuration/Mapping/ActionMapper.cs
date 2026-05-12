@@ -27,11 +27,24 @@ internal static class ActionMapper
 			.Select(MapColumn)
 			.ToList() ?? [];
 
+		var deployDuration = MapDeployDuration(dto.DeployDuration, dto.Id);
+
 		return new ActionDefinition(
 			Id: dto.Id,
 			UiName: dto.UiName,
-			DeployDuration: dto.DeployDuration,
+			DeployDuration: deployDuration,
 			Properties: columns);
+	}
+
+	private static DeployDuration MapDeployDuration(string? value, int actionId)
+	{
+		return value switch
+		{
+			"immediate" => DeployDuration.Immediate,
+			"longlasting" => DeployDuration.LongLasting,
+			_ => throw new InvalidOperationException(
+				$"Unsupported DeployDuration '{value}' for action Id={actionId}")
+		};
 	}
 
 	public static IReadOnlyList<ActionDefinition> MapMany(IEnumerable<ActionDto> dtos)

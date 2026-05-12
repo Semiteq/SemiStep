@@ -19,6 +19,8 @@ internal static class GridStyleLoader
 	{
 		var uiDir = Path.Combine(configDirectory, "ui");
 
+		// Grid styles are cosmetic — both a missing ui directory and a missing grid_style.yaml
+		// are legitimate; defaults apply in either case.
 		if (!Directory.Exists(uiDir))
 		{
 			return Result.Ok<GridStyleOptionsDto?>(null)
@@ -41,8 +43,7 @@ internal static class GridStyleLoader
 		}
 		catch (Exception ex)
 		{
-			return Result.Ok<GridStyleOptionsDto?>(null)
-				.WithWarning($"Failed to parse grid style file, using defaults: {ex.Message}");
+			return Result.Fail($"Failed to load {Path.GetFileName(filePath)}: {ex.Message}");
 		}
 	}
 }

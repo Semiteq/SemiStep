@@ -27,7 +27,7 @@ public sealed class CorePropertyStateTests
 	private static readonly ActionDefinition _waitAction = new(
 		Id: 10,
 		UiName: "Wait",
-		DeployDuration: "longlasting",
+		DeployDuration: DeployDuration.LongLasting,
 		Properties: [_stepDurationProperties, _commentProperties]);
 
 	[Fact]

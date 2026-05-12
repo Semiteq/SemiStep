@@ -2,7 +2,7 @@ connection_file_version: 1.0
 
 # -- Connection info --
 ip: "192.168.0.150:102"
-connection_protocol: "S7"
+connection_protocol: "1.0"
 plc_rack: 0
 plc_slot: 1
 

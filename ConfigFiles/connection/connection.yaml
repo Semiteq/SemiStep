@@ -1,8 +1,8 @@
-connection_file_version: 1.0
+connection_file_version: "1.0"
 
 # -- Connection info --
 ip: "192.168.0.1:102"
-connection_protocol: "S7"
+connection_protocol: "1.0"
 plc_rack: 0
 plc_slot: 1
 
@@ -17,7 +17,7 @@ keep_alive_interval_ms: 5000
 managing_db_number: 995
 committed_offset: 0
 recipe_lines_offset: 4
-managing_db_total_size: 6
+managing_db_total_size: 8
 
 # -- Int DB --
 int_db_number: 997

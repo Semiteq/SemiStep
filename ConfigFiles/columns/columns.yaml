@@ -4,7 +4,6 @@ action:
     ui_name: "Имя команды"
   business_logic:
     property_type_id: enum
-    plc_data_type: int
     read_only: false
     save_to_csv: true
 
@@ -14,7 +13,6 @@ channel:
     ui_name: "Канал"
   business_logic:
     property_type_id: enum
-    plc_data_type: int
     read_only: false
     save_to_csv: true
 
@@ -24,7 +22,6 @@ mode:
     ui_name: "Режим"
   business_logic:
     property_type_id: enum
-    plc_data_type: int
     read_only: false
     save_to_csv: true
 
@@ -34,7 +31,6 @@ target_value:
     ui_name: "Значение"
   business_logic:
     property_type_id: float
-    plc_data_type: float
     read_only: false
     save_to_csv: true
 
@@ -44,7 +40,6 @@ dilution:
     ui_name: "Разбавление"
   business_logic:
     property_type_id: float
-    plc_data_type: float
     read_only: false
     save_to_csv: true
 
@@ -54,7 +49,6 @@ pressure:
     ui_name: "Давление"
   business_logic:
     property_type_id: pressure_bar
-    plc_data_type: float
     read_only: false
     save_to_csv: true
 
@@ -64,7 +58,6 @@ mixing:
     ui_name: "Смешивание"
   business_logic:
     property_type_id: flow
-    plc_data_type: float
     read_only: false
     save_to_csv: true
 
@@ -74,7 +67,6 @@ transport:
     ui_name: "Транспорт"
   business_logic:
     property_type_id: flow
-    plc_data_type: float
     read_only: false
     save_to_csv: true
 
@@ -84,7 +76,6 @@ step_duration:
     ui_name: "Время"
   business_logic:
     property_type_id: time
-    plc_data_type: float
     read_only: false
     save_to_csv: true
 
@@ -94,7 +85,6 @@ step_start_time:
     ui_name: "Время абс."
   business_logic:
     property_type_id: string
-    plc_data_type: none
     save_to_csv: false
     read_only: true
 
@@ -104,6 +94,5 @@ comment:
     ui_name: "Комментарий"
   business_logic:
     property_type_id: string
-    plc_data_type: none
     save_to_csv: true
     read_only: false

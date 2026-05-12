@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="SemiStep.UI.MainWindow.RecipeMenuBar">
+
+    <Menu>
+        <MenuItem Header="_File">
+            <MenuItem Header="_New Recipe"
+                      Command="{Binding RecipeFile.NewRecipeCommand}" />
+            <MenuItem Header="_Open Recipe..."
+                      Command="{Binding RecipeFile.LoadRecipeCommand}"
+                      InputGesture="Ctrl+O" />
+            <MenuItem Header="_Save Recipe"
+                      Command="{Binding RecipeFile.SaveRecipeCommand}"
+                      InputGesture="Ctrl+S" />
+            <MenuItem Header="Save Recipe _As..."
+                      Command="{Binding RecipeFile.SaveAsRecipeCommand}"
+                      InputGesture="Ctrl+Shift+S" />
+            <Separator />
+            <MenuItem Header="E_xit"
+                      Command="{Binding ExitCommand}"
+                      InputGesture="Alt+F4" />
+        </MenuItem>
+
+        <MenuItem Header="_Edit">
+            <MenuItem Header="_Add Step"
+                      Command="{Binding RecipeCommands.AddStepCommand}"
+                      InputGesture="Ctrl+N" />
+            <MenuItem Header="_Delete Step"
+                      Command="{Binding RecipeCommands.DeleteStepCommand}"
+                      InputGesture="Delete" />
+            <Separator />
+            <MenuItem Header="Cop_y Steps"
+                      Command="{Binding Clipboard.CopyStepCommand}"
+                      InputGesture="Ctrl+C" />
+            <MenuItem Header="Cu_t Steps"
+                      Command="{Binding Clipboard.CutStepCommand}"
+                      InputGesture="Ctrl+X" />
+            <MenuItem Header="_Paste Steps"
+                      Command="{Binding Clipboard.PasteStepCommand}"
+                      InputGesture="Ctrl+V" />
+            <Separator />
+            <MenuItem Header="_Undo"
+                      Command="{Binding RecipeCommands.UndoCommand}"
+                      InputGesture="Ctrl+Z" />
+            <MenuItem Header="_Redo"
+                      Command="{Binding RecipeCommands.RedoCommand}"
+                      InputGesture="Ctrl+Shift+Z" />
+        </MenuItem>
+        <MenuItem Header="_View">
+            <MenuItem Header="_Notification Log"
+                      Command="{Binding MessagePanel.ToggleCommand}" />
+        </MenuItem>
+
+        <MenuItem Header="_Help">
+            <MenuItem Header="_About"
+                      IsEnabled="False" />
+        </MenuItem>
+    </Menu>
+
+</UserControl>

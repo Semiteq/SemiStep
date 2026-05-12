@@ -60,10 +60,10 @@ jobs:
         run: dotnet build SemiStep/SemiStep.slnx -c Release --no-restore
 
       - name: test
-        run: dotnet test SemiStep/Tests/Tests.csproj -c Release --no-build --logger "console;verbosity=normal"
+        run: dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release --no-build --logger "console;verbosity=normal"
 
       - name: publish
-        run: dotnet publish SemiStep/Application/Application.csproj -c Release -p:Version=${{ steps.version.outputs.version }}
+        run: dotnet publish SemiStep/SemiStep.UI/SemiStep.UI.csproj -c Release -p:Version=${{ steps.version.outputs.version }}
 
       - name: install Inno Setup
         shell: powershell

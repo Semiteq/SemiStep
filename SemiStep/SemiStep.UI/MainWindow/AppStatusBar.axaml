@@ -1,0 +1,211 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="SemiStep.UI.MainWindow.AppStatusBar">
+
+    <UserControl.Styles>
+        <!-- Connection indicator color via style class binding -->
+        <Style Selector="Ellipse.connection-dot">
+            <Setter Property="Fill" Value="{DynamicResource DisconnectedBrush}" />
+        </Style>
+        <Style Selector="Ellipse.connection-dot.connected">
+            <Setter Property="Fill" Value="{DynamicResource ConnectedBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Name="StatusBarBorder"
+            Background="{DynamicResource StatusBarBackgroundBrush}"
+            BorderBrush="{DynamicResource SubtleBorderBrush}"
+            BorderThickness="0,1,0,0"
+            Padding="8,4">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Status Text (Modified/Saved) -->
+            <TextBlock Grid.Column="0"
+                       Name="StatusText"
+                       Text="{Binding StatusText}"
+                       VerticalAlignment="Center"
+                       FontSize="12" />
+
+            <!-- Separator -->
+            <Border Grid.Column="1"
+                    Width="1"
+                    Background="{DynamicResource SeparatorBrush}"
+                    Margin="12,2" />
+
+            <!-- Error/Warning counts - clickable to toggle log panel -->
+            <Button Grid.Column="2"
+                    Command="{Binding MessagePanel.ToggleCommand}"
+                    IsVisible="{Binding MessagePanel.HasStatusErrors}"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="4,2"
+                    VerticalAlignment="Center"
+                    Cursor="Hand">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <!-- Error count -->
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="4"
+                                IsVisible="{Binding MessagePanel.HasErrors}">
+                        <Ellipse Width="8" Height="8"
+                                 Fill="{DynamicResource ErrorBrush}"
+                                 VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding MessagePanel.ErrorCountText}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource ErrorBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Warning count -->
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="4"
+                                IsVisible="{Binding MessagePanel.HasWarnings}">
+                        <Ellipse Width="8" Height="8"
+                                 Fill="{DynamicResource WarningBrush}"
+                                 VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding MessagePanel.WarningCountText}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource WarningBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+            </Button>
+
+            <!-- Separator (only if errors visible) -->
+            <Border Grid.Column="3"
+                    Width="1"
+                    Background="{DynamicResource SeparatorBrush}"
+                    Margin="12,2"
+                    IsVisible="{Binding MessagePanel.HasStatusErrors}" />
+
+            <!-- Sync controls -->
+            <StackPanel Grid.Column="4"
+                        Orientation="Horizontal"
+                        Spacing="6"
+                        VerticalAlignment="Center">
+
+                <!-- Sync toggle button: label switches based on IsSyncEnabled -->
+                <Button Command="{Binding ToggleSyncCommand}"
+                        Padding="6,2"
+                        FontSize="12"
+                        VerticalAlignment="Center">
+                    <Panel>
+                        <TextBlock Text="Sync: ON"
+                                   IsVisible="{Binding IsSyncEnabled}" />
+                        <TextBlock Text="Sync: OFF"
+                                   IsVisible="{Binding IsSyncEnabled,
+                                               Converter={x:Static BoolConverters.Not}}" />
+                    </Panel>
+                </Button>
+
+                <!-- Sync status label -->
+                <TextBlock Text="{Binding PlcSyncStatusText}"
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource SecondaryForegroundBrush}" />
+
+                <!-- Last sync time -->
+                <TextBlock FontSize="12"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource SecondaryForegroundBrush}"
+                           Text="{Binding LastSyncTimeText, StringFormat='Last sync: {0}'}" />
+
+            </StackPanel>
+
+            <!-- Separator before execution info -->
+            <Border Grid.Column="5"
+                    Width="1"
+                    Background="{DynamicResource SeparatorBrush}"
+                    Margin="12,2"
+                    IsVisible="{Binding PlcMonitor.IsRecipeActive}" />
+
+            <!-- Execution time info (visible only when recipe is active) -->
+            <StackPanel Grid.Column="6"
+                        Orientation="Horizontal"
+                        Spacing="10"
+                        VerticalAlignment="Center"
+                        IsVisible="{Binding PlcMonitor.IsRecipeActive}">
+
+                <!-- Line time remaining -->
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="Step:"
+                               FontSize="12"
+                               Foreground="{DynamicResource SecondaryForegroundBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding PlcMonitor.StepElapsedTime}"
+                               FontSize="12"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+
+            </StackPanel>
+
+            <!-- Separator before FOR loop counters -->
+            <Border Grid.Column="7"
+                    Width="1"
+                    Background="{DynamicResource SeparatorBrush}"
+                    Margin="12,2"
+                    IsVisible="{Binding PlcMonitor.IsRecipeActive}" />
+
+            <!-- FOR loop counters (visible only when recipe is active) -->
+            <StackPanel Grid.Column="8"
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        VerticalAlignment="Center"
+                        IsVisible="{Binding PlcMonitor.IsRecipeActive}">
+
+                <TextBlock Text="FOR:"
+                           FontSize="12"
+                           Foreground="{DynamicResource SecondaryForegroundBrush}"
+                           VerticalAlignment="Center" />
+
+                <TextBlock Text="{Binding PlcMonitor.ForLoopCount1}"
+                           FontSize="12"
+                           VerticalAlignment="Center" />
+
+                <TextBlock Text="{Binding PlcMonitor.ForLoopCount2}"
+                           FontSize="12"
+                           VerticalAlignment="Center" />
+
+                <TextBlock Text="{Binding PlcMonitor.ForLoopCount3}"
+                           FontSize="12"
+                           VerticalAlignment="Center" />
+
+            </StackPanel>
+
+            <!-- Spacer -->
+            <Panel Grid.Column="9" />
+
+            <!-- Connection Status -->
+            <StackPanel Grid.Column="10"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <Ellipse Width="8"
+                         Height="8"
+                         Margin="0,0,6,0"
+                         VerticalAlignment="Center"
+                         Classes="connection-dot"
+                         Classes.connected="{Binding IsConnectedToPlc}" />
+                <TextBlock Name="ConnectionText"
+                           Text="{Binding ConnectionStatus}"
+                           VerticalAlignment="Center"
+                           FontSize="12" />
+            </StackPanel>
+        </Grid>
+    </Border>
+
+</UserControl>

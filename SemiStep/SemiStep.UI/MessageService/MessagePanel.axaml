@@ -1,0 +1,123 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:messageService="clr-namespace:SemiStep.UI.MessageService"
+             mc:Ignorable="d"
+             x:Class="SemiStep.UI.MessageService.MessagePanel">
+
+    <UserControl.Styles>
+        <!-- Severity dot colors via style class binding -->
+        <Style Selector="Ellipse.severity-dot.error">
+            <Setter Property="Fill" Value="{DynamicResource ErrorBrush}" />
+        </Style>
+        <Style Selector="Ellipse.severity-dot.warning">
+            <Setter Property="Fill" Value="{DynamicResource WarningBrush}" />
+        </Style>
+        <Style Selector="Ellipse.severity-dot.info">
+            <Setter Property="Fill" Value="{DynamicResource InfoBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{DynamicResource PanelBackgroundBrush}"
+            BorderBrush="{DynamicResource SubtleBorderBrush}"
+            BorderThickness="0,1,0,0"
+            MaxHeight="200">
+
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- Header with counts and clear button -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource PanelHeaderBackgroundBrush}"
+                    Padding="8,4">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                Spacing="12"
+                                VerticalAlignment="Center">
+
+                        <!-- Error count -->
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="4"
+                                    IsVisible="{Binding HasErrors}">
+                            <Ellipse Width="8" Height="8"
+                                     Fill="{DynamicResource ErrorBrush}"
+                                     VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ErrorCountText}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <!-- Warning count -->
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="4"
+                                    IsVisible="{Binding HasWarnings}">
+                            <Ellipse Width="8" Height="8"
+                                     Fill="{DynamicResource WarningBrush}"
+                                     VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding WarningCountText}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource WarningBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                            Content="Clear"
+                            Command="{Binding ClearCommand}"
+                            FontSize="11"
+                            Padding="8,2"
+                            VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- Log entries list -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          MaxHeight="160">
+                <ItemsControl ItemsSource="{Binding Entries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="messageService:MessageEntry">
+                            <Border Padding="8,3"
+                                    BorderBrush="{DynamicResource GridLineBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <Grid ColumnDefinitions="16,Auto,*">
+
+                                    <!-- Severity dot (style class binding) -->
+                                    <Ellipse Grid.Column="0"
+                                             Width="8" Height="8"
+                                             Classes="severity-dot"
+                                             Classes.error="{Binding IsError}"
+                                             Classes.warning="{Binding IsWarning}"
+                                             Classes.info="{Binding IsInfo}"
+                                             VerticalAlignment="Center"
+                                             HorizontalAlignment="Center" />
+
+                                    <!-- Source label -->
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Source}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource SecondaryForegroundBrush}"
+                                               Margin="6,0,8,0"
+                                               VerticalAlignment="Center" />
+
+                                    <!-- Message -->
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Message}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               VerticalAlignment="Center" />
+
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+        </Grid>
+    </Border>
+
+</UserControl>

@@ -8,13 +8,13 @@
 
 #define AppName      "SemiStep"
 #define AppPublisher "Inc Semiteq"
-#define AppExeName   "Application.exe"
+#define AppExeName   "UI.exe"
 #define AppId        "{{8B3F2C1A-4D7E-4F9B-A2C6-1E5D8F3B7A4C}"
 
 ; Paths relative to the location of this .iss file (Installer/)
-#define SrcBinDir    "..\SemiStep\Artifacts\publish\Application\release_win-x64"
+#define SrcBinDir    "..\SemiStep\Artifacts\publish\SemiStep.UI\release_win-x64"
 #define SrcCfgDir    "..\ConfigFiles"
-#define AppIconFile       "..\SemiStep\Application\logo.ico"
+#define AppIconFile       "..\SemiStep\UI\logo.ico"
 #define LicenseFile       ".\LICENSE.txt"
 #define WizardImageLarge  ".\WizardImageFile.bmp"
 #define WizardImageSmall  ".\WizardSmallImageFile.bmp"

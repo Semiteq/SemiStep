@@ -58,7 +58,7 @@ not personal preferences.
 
 - Public types, methods, properties: PascalCase.
 - Private fields: `_camelCase` (underscore prefix). Class-level instance fields named after
-  their type, unabbreviated: `_domainFacade`, `_messagePanel`.
+  their type, unabbreviated: `_recipeEditor`, `_plcLifecycleManager`.
 - Interfaces: `I`-prefix + PascalCase.
 - Local variables and parameters: camelCase.
 - No abbreviations in any identifier.

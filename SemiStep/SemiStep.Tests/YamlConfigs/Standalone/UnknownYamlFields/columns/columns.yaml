@@ -1,0 +1,39 @@
+﻿# Valid columns with extra unknown fields
+action:
+  column_type: action_combo_box
+  ui:
+    ui_name: "Action"
+    unknown_ui_field: "noise"
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+    extra_logic_field: 99
+
+step_duration:
+  column_type: property_field
+  ui:
+    ui_name: "Duration"
+  business_logic:
+    property_type_id: time
+    read_only: false
+    save_to_csv: true
+
+task:
+  column_type: property_field
+  ui:
+    ui_name: "Task"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+comment:
+  column_type: text_field
+  unknown_top_level_key: "should be ignored"
+  ui:
+    ui_name: "Comment"
+  business_logic:
+    property_type_id: string
+    save_to_csv: true
+    read_only: false

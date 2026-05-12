@@ -1,0 +1,80 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:SemiStep.UI.RecipeGrid">
+
+    <!-- Base DataGrid styles -->
+    <Style Selector="DataGrid">
+        <Setter Property="BorderBrush" Value="Gray" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="GridLinesVisibility" Value="All" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
+        <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- CellPresenter: base cell-state styles          -->
+    <!-- ============================================== -->
+
+    <Style Selector="controls|CellPresenter:cell-enabled">
+        <Setter Property="Background" Value="{DynamicResource CellEnabledBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource CellEnabledForegroundBrush}" />
+    </Style>
+
+    <Style Selector="controls|CellPresenter:cell-readonly">
+        <Setter Property="Background" Value="{DynamicResource CellReadonlyBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource CellEnabledForegroundBrush}" />
+    </Style>
+
+    <Style Selector="controls|CellPresenter:cell-disabled">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource CellDisabledForegroundBrush}" />
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Selected row: override CellPresenter colors    -->
+    <!-- Uses DataGrid's native :selected on DataGridRow -->
+    <!-- ============================================== -->
+
+    <Style Selector="DataGridRow:selected controls|CellPresenter:cell-enabled">
+        <Setter Property="Background" Value="{DynamicResource CellEnabledSelectedBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+    </Style>
+
+    <Style Selector="DataGridRow:selected controls|CellPresenter:cell-readonly">
+        <Setter Property="Background" Value="{DynamicResource CellReadonlySelectedBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+    </Style>
+
+    <Style Selector="DataGridRow:selected controls|CellPresenter:cell-disabled">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Disabled cell: hide inner content under        -->
+    <!-- recycling (same visual tree reused for          -->
+    <!-- enabled and disabled rows)                      -->
+    <!-- ============================================== -->
+
+    <Style Selector="controls|CellPresenter:cell-disabled > TextBlock">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+
+    <Style Selector="controls|CellPresenter:cell-disabled > ComboBox">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+
+    <!-- ============================================== -->
+    <!-- Execution state: current and past step row     -->
+    <!-- highlighting via CellPresenter pseudo-classes  -->
+    <!-- ============================================== -->
+
+    <Style Selector="controls|CellPresenter:step-current">
+        <Setter Property="Background" Value="{DynamicResource CurrentStepBrush}" />
+    </Style>
+
+    <Style Selector="controls|CellPresenter:step-past">
+        <Setter Property="Background" Value="{DynamicResource PastStepBrush}" />
+    </Style>
+
+</Styles>

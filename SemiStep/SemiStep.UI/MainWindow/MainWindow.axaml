@@ -1,0 +1,68 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:messageService="clr-namespace:SemiStep.UI.MessageService"
+        xmlns:local="clr-namespace:SemiStep.UI.MainWindow"
+        mc:Ignorable="d"
+        d:DesignWidth="1600"
+        d:DesignHeight="800"
+        x:Class="SemiStep.UI.MainWindow.MainWindow"
+        Title="{Binding WindowTitle}"
+        Width="1600"
+        Height="800">
+
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+O" Command="{Binding RecipeFile.LoadRecipeCommand}" />
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding RecipeFile.SaveRecipeCommand}" />
+        <KeyBinding Gesture="Ctrl+Z" Command="{Binding RecipeCommands.UndoCommand}" />
+        <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RecipeCommands.RedoCommand}" />
+        <KeyBinding Gesture="Ctrl+N" Command="{Binding RecipeCommands.AddStepCommand}" />
+    </Window.KeyBindings>
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto">
+
+        <local:RecipeMenuBar Grid.Row="0" />
+
+        <DataGrid Grid.Row="1"
+                  x:Name="RecipeGrid"
+                  ItemsSource="{Binding RecipeGrid.RecipeRows}"
+                  SelectedIndex="{Binding RecipeGrid.SelectedRowIndex}"
+                  AutoGenerateColumns="False"
+                  CanUserReorderColumns="False"
+                  CanUserResizeColumns="True"
+                  IsReadOnly="{Binding RecipeGrid.IsReadOnly}"
+                  GridLinesVisibility="All"
+                  HeadersVisibility="Column"
+                  BorderThickness="1"
+                  BorderBrush="Gray"
+                  Background="White"
+                  SelectionMode="Extended"
+                  ClipboardCopyMode="None">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Add Step"
+                              Command="{Binding RecipeCommands.AddStepCommand}" />
+                    <MenuItem Header="Delete Step"
+                              Command="{Binding RecipeCommands.DeleteStepCommand}" />
+                    <Separator />
+                    <MenuItem Header="Copy Steps"
+                              Command="{Binding Clipboard.CopyStepCommand}" />
+                    <MenuItem Header="Cut Steps"
+                              Command="{Binding Clipboard.CutStepCommand}" />
+                    <MenuItem Header="Paste Steps"
+                              Command="{Binding Clipboard.PasteStepCommand}" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+        </DataGrid>
+
+        <messageService:MessagePanel Grid.Row="2"
+                                     x:Name="LogPanel"
+                                     DataContext="{Binding MessagePanel}"
+                                     IsVisible="{Binding ShowPanel}" />
+
+        <local:AppStatusBar Grid.Row="3" x:Name="StatusBar" />
+
+    </Grid>
+
+</Window>

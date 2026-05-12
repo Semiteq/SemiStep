@@ -1,4 +1,4 @@
-connection_file_version: 1.0
+connection_file_version: "1.0"
 
 # -- Connection info --
 ip: "192.168.0.1:102"

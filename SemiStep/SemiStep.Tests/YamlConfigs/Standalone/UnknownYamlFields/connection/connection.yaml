@@ -1,4 +1,4 @@
-connection_file_version: 1.0
+connection_file_version: "1.0"
 unknown_connection_field: "noise"
 
 ip: "192.168.0.150:102"

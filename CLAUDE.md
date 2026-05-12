@@ -7,27 +7,27 @@ Solution: `SemiStep/SemiStep.slnx`. All commands run from repository root.
 ## Build
 
 ```powershell
-dotnet build SemiStep/UI/SemiStep.UI.csproj            # recommended (entry executable)
+dotnet build SemiStep/SemiStep.UI/SemiStep.UI.csproj            # recommended (entry executable)
 dotnet build SemiStep/SemiStep.slnx                    # all projects
-dotnet run   --project SemiStep/UI/SemiStep.UI.csproj
+dotnet run   --project SemiStep/SemiStep.UI/SemiStep.UI.csproj
 dotnet format SemiStep/SemiStep.slnx                   # pre-commit hook enforces this
 ```
 
 ## Test
 
 ```powershell
-dotnet test SemiStep/Tests/Tests.csproj
-dotnet test SemiStep/Tests/Tests.csproj --filter "Component=Core"
-dotnet test SemiStep/Tests/Tests.csproj --filter "Area=Mutation"
-dotnet test SemiStep/Tests/Tests.csproj --filter "Category=Unit"
-dotnet test SemiStep/Tests/Tests.csproj --filter "FullyQualifiedName~TestMethodName"
+dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj
+dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=Core"
+dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Area=Mutation"
+dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Category=Unit"
+dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "FullyQualifiedName~TestMethodName"
 ```
 
 Test traits: `[Trait("Component", "Core|Config|UI|Domain|Csv|S7")]`, `[Trait("Area", "<AreaName>")]`,
 `[Trait("Category", "Unit|Integration")]`.
 
-Invalid config test cases use an overlay pattern: copy `Tests/YamlConfigs/Standard/` to a temp
-directory and overlay only the differing files from `Tests/YamlConfigs/Invalid/{CaseName}/`.
+Invalid config test cases use an overlay pattern: copy `SemiStep.Tests/YamlConfigs/Standard/` to a temp
+directory and overlay only the differing files from `SemiStep.Tests/YamlConfigs/Invalid/{CaseName}/`.
 
 **Dispatcher flush in tests:** After awaiting `RecipeMutationCoordinator` async methods
 (`LoadRecipeAsync`, `LoadRecipeFromPlcAsync`), call `Dispatcher.UIThread.RunJobs(null)` before

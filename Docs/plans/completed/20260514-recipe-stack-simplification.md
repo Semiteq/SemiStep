@@ -492,8 +492,8 @@ Highest-risk phase. Characterization tests land BEFORE the merge to lock in sema
 - Modify: `Docs/07-non-functional.md` — Round-9 subsection
 - Create: `Docs/plans/yyyymmdd-cell-templates-to-xaml.md` (Round-10 seed, optional — only if user wants to keep the next round visible)
 
-- [ ] `git mv` the plan file to `completed/`.
-- [ ] Append a Round-9 subsection to `Docs/07-non-functional.md` after Round-8 covering:
+- [x] `git mv` the plan file to `completed/`.
+- [x] Append a Round-9 subsection to `Docs/07-non-functional.md` after Round-8 covering:
   - Diagnosis: 5-subagent architecture audit, root-cause summary.
   - State layer flattening: 7 classes → 2 (`RecipeSession` + `RecipeCoordinator`).
   - Signal channel: `Subject<MutationSignal> + ObserveOn` → synchronous `IRecipeSink.OnMutation` via Attach pattern.
@@ -502,7 +502,7 @@ Highest-risk phase. Characterization tests land BEFORE the merge to lock in sema
   - Dead code: `Formulas/` subsystem deleted; `MutationSignal.MetadataChanged` removed.
   - Logging: structured `ILogger` at recipe lifecycle and grid signal boundaries.
   - Round-10 deferred work clearly noted.
-- [ ] Decide whether to commit a Round-10 seed plan file now or wait. Recommend wait — write Round-10 plan after Round-9 lands and the binding seam is the only major surface remaining.
+- [x] Decide whether to commit a Round-10 seed plan file now or wait. Decision: wait — Round-10 plan to be written after Round-9 lands on master.
 
 **Task 19 completed 2026-05-14, commit 8824254. Plan archived; Round-9 documented in `Docs/07-non-functional.md`; Round-10 seed deferred. Round-9 fully landed.**
 

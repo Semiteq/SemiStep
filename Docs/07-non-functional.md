@@ -277,14 +277,13 @@
   каноническое наблюдаемое — «клик по ячейке → popup открылся с первого раза» — не
   покрывается unit-тестами. Покрытие в Round-8 косвенное: assertion'ы на форму
   колонок (`IsReadOnly == true`, `CellEditingTemplate == null`, `CellTemplate != null`),
-  раунд-трип `ComboBoxItemMultiSelectionConverter`, регрессионная сетка существующих
-  тестов (309 baseline до Round-8, 351 после) обеспечивает биндинг-семантику
-  (action-change wiring, row rebuild, mutation-coordinator flows). Manual scroll/click
-  smoke (7 сценариев из плана —
+  раунд-трип `ComboBoxItemMultiSelectionConverter`, существующие 309 тестов работают
+  как regression-сеть для биндинг-семантики (action-change wiring, row rebuild,
+  mutation-coordinator flows). Manual scroll/click smoke (7 сценариев из плана —
   клик по action-ячейке, смена action → перестроение строки, клик по group-ячейке,
   disabled-state, RecipeActive read-only, скролл рецепта ≥100 шагов 30 сек) остаётся
   обязательной верификацией перед открытием PR.
-- Финальный прогон: 351/351 зелёных, `dotnet format --verify-no-changes` чистый,
+- Финальный прогон: 344/344 зелёных, `dotnet format --verify-no-changes` чистый,
   `dotnet build` 0 ошибок 0 предупреждений.
 
 ---

@@ -5,7 +5,7 @@ using SemiStep.Core.Recipes;
 
 namespace SemiStep.UI.RecipeGrid;
 
-public class RecipeRowViewModel(
+public sealed class RecipeRowViewModel(
 	int stepNumber,
 	Step step,
 	ActionDefinition action,

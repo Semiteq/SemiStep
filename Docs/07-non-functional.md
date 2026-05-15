@@ -554,31 +554,6 @@
   `dotnet build SemiStep/SemiStep.slnx` — 0 ошибок, 0 предупреждений.
   `dotnet test` — 378/378 зелёных. `dotnet format --verify-no-changes` —
   чисто.
-- **Контракт жизненного цикла Classes-привязки.** В шаблонах ячеек
-  (`ComboBoxCellFactory`, `TextCellFactory`) применяется публичный helper
-  `StyledElementExtensions.BindClass(target, className, source, anchor)`.
-  Avalonia 12 регистрирует глобальный proxy `AvaloniaProperty<bool>` под
-  именем класса и привязывает обычный биндинг к цели через value-store
-  контрола — освобождение подписки происходит автоматически при удалении
-  цели из визуального дерева. Никаких ручных `OnDetachedFromVisualTree`
-  отписок и собственных `CellPresenter`-обёрток не требуется.
-- **Контракт `LoadingRow` / `UnloadingRow` для row-state классов.**
-  `DataGridRow` создаётся самим DataGrid'ом и переиспользуется между
-  view-model'ями по мере виртуализации. Row-level состояние
-  (`IsCurrentStep` / `IsPastStep`) проецируется в CSS-классы
-  `current-step` / `past-step` через handler в code-behind
-  `MainWindow`: `OnDataGridLoadingRow` подписывается на
-  `RecipeRowViewModel.PropertyChanged` и вызывает
-  `RowExecutionClasses.Apply`, `OnDataGridUnloadingRow` отписывается и
-  вызывает `RowExecutionClasses.Clear`. Утечка handler'ов в словаре
-  `_rowPropertyChangedHandlers` исключена тремя independent защитами:
-  `UnloadingRow` (нормальный путь рециклинга), подписка на
-  `RecipeRows.CollectionChanged` (Remove/Replace/Reset кейсы для строк
-  вне viewport'а), и `ClearAllRowPropertyChangedHandlers` при
-  деактивации окна. Логика `RowExecutionClasses` вынесена в
-  internal-static тип для возможности модульного тестирования
-  без `LoadingRow`-эмуляции (headless DataGrid не симулирует
-  виртуализацию).
 - **Round-11 отложенная работа: нет.** Round-10 закрывает binding-seam
   класс структурно; дальнейших отложенных задач из этой темы не
   планируется.

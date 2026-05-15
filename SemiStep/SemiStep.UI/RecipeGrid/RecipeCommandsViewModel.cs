@@ -44,8 +44,9 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 		RedoCommand.DisposeWith(_disposables);
 	}
 
-	private void OnCoordinatorMutated()
+	private void OnCoordinatorMutated(MutationSignal signal)
 	{
+		_ = signal;
 		_canUndo.OnNext(_coordinator.CanUndo);
 		_canRedo.OnNext(_coordinator.CanRedo);
 	}

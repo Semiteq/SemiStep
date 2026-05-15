@@ -35,7 +35,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 			_fixture.RecipeMetadataRegistry,
 			_fixture.MessagePanel,
 			_logger);
-		_fixture.Coordinator.Attach(_grid);
+		_fixture.Coordinator.Mutated += _grid.OnMutation;
 		_grid.Initialize();
 	}
 

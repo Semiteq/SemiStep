@@ -22,7 +22,7 @@ using SemiStep.UI.MessageService;
 
 namespace SemiStep.UI.RecipeGrid;
 
-public class RecipeGridViewModel : ReactiveObject, IRecipeSink, IDisposable
+public class RecipeGridViewModel : ReactiveObject, IDisposable
 {
 	private readonly ObservableAsPropertyHelper<bool> _canDeleteStep;
 	private readonly ObservableAsPropertyHelper<bool> _isReadOnly;
@@ -187,6 +187,9 @@ public class RecipeGridViewModel : ReactiveObject, IRecipeSink, IDisposable
 			case MutationSignal.RecipeReplaced:
 				FullRebuild(recipe);
 				break;
+
+			case MutationSignal.StateRefreshed:
+				return;
 		}
 
 		RefreshStepStartTimes();
@@ -249,14 +252,19 @@ public class RecipeGridViewModel : ReactiveObject, IRecipeSink, IDisposable
 		}
 	}
 
+	private void LogStaleSignal(string signalKind, string contextTemplate, params object?[] contextArgs)
+	{
+		var args = new object?[contextArgs.Length + 1];
+		args[0] = signalKind;
+		Array.Copy(contextArgs, 0, args, 1, contextArgs.Length);
+		_logger.LogWarning("Stale {SignalKind} signal dropped: " + contextTemplate, args);
+	}
+
 	private void UpdateSingleRowInPlace(Recipe recipe, int stepIndex)
 	{
 		if (stepIndex < 0 || stepIndex >= recipe.StepCount)
 		{
-			_logger.LogWarning(
-				"Stale PropertyUpdated signal dropped: stepIndex={StepIndex} out of recipe range (StepCount={StepCount})",
-				stepIndex,
-				recipe.StepCount);
+			LogStaleSignal("PropertyUpdated", "stepIndex={StepIndex} out of recipe range (StepCount={StepCount})", stepIndex, recipe.StepCount);
 			return;
 		}
 
@@ -274,10 +282,7 @@ public class RecipeGridViewModel : ReactiveObject, IRecipeSink, IDisposable
 	{
 		if (index < 0 || index >= recipe.StepCount)
 		{
-			_logger.LogWarning(
-				"Stale StepAppended signal dropped: index={Index} out of recipe range (StepCount={StepCount})",
-				index,
-				recipe.StepCount);
+			LogStaleSignal("StepAppended", "index={Index} out of recipe range (StepCount={StepCount})", index, recipe.StepCount);
 			return;
 		}
 
@@ -290,20 +295,13 @@ public class RecipeGridViewModel : ReactiveObject, IRecipeSink, IDisposable
 	{
 		if (startIndex < 0 || count <= 0 || startIndex + count > recipe.StepCount)
 		{
-			_logger.LogWarning(
-				"Stale StepsInserted signal dropped: startIndex={StartIndex}, count={Count}, recipe StepCount={StepCount}",
-				startIndex,
-				count,
-				recipe.StepCount);
+			LogStaleSignal("StepsInserted", "startIndex={StartIndex}, count={Count}, recipe StepCount={StepCount}", startIndex, count, recipe.StepCount);
 			return;
 		}
 
 		if (startIndex > RecipeRows.Count)
 		{
-			_logger.LogWarning(
-				"Stale StepsInserted signal dropped: startIndex={StartIndex} exceeds RecipeRows.Count={RowCount}",
-				startIndex,
-				RecipeRows.Count);
+			LogStaleSignal("StepsInserted", "startIndex={StartIndex} exceeds RecipeRows.Count={RowCount}", startIndex, RecipeRows.Count);
 			return;
 		}
 
@@ -322,10 +320,7 @@ public class RecipeGridViewModel : ReactiveObject, IRecipeSink, IDisposable
 	{
 		if (removedIndex < 0 || removedIndex >= RecipeRows.Count)
 		{
-			_logger.LogWarning(
-				"Stale StepRemoved signal dropped: removedIndex={RemovedIndex} out of RecipeRows range (Count={RowCount})",
-				removedIndex,
-				RecipeRows.Count);
+			LogStaleSignal("StepRemoved", "removedIndex={RemovedIndex} out of RecipeRows range (Count={RowCount})", removedIndex, RecipeRows.Count);
 			return;
 		}
 
@@ -345,10 +340,7 @@ public class RecipeGridViewModel : ReactiveObject, IRecipeSink, IDisposable
 		{
 			if (index < 0 || index >= RecipeRows.Count)
 			{
-				_logger.LogWarning(
-					"Stale StepsRemoved signal dropped: index={Index} out of RecipeRows range (Count={RowCount})",
-					index,
-					RecipeRows.Count);
+				LogStaleSignal("StepsRemoved", "index={Index} out of RecipeRows range (Count={RowCount})", index, RecipeRows.Count);
 				return;
 			}
 		}
@@ -367,11 +359,7 @@ public class RecipeGridViewModel : ReactiveObject, IRecipeSink, IDisposable
 	{
 		if (stepIndex < 0 || stepIndex >= recipe.StepCount || stepIndex >= RecipeRows.Count)
 		{
-			_logger.LogWarning(
-				"Stale StepActionChanged signal dropped: stepIndex={StepIndex}, recipe StepCount={StepCount}, RecipeRows.Count={RowCount}",
-				stepIndex,
-				recipe.StepCount,
-				RecipeRows.Count);
+			LogStaleSignal("StepActionChanged", "stepIndex={StepIndex}, recipe StepCount={StepCount}, RecipeRows.Count={RowCount}", stepIndex, recipe.StepCount, RecipeRows.Count);
 			return;
 		}
 

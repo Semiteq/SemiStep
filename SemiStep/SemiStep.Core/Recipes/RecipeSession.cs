@@ -75,20 +75,24 @@ public sealed class RecipeSession
 
 	public Result Undo()
 	{
-		var previous = PopUndo(Current);
-		if (previous is null)
+		if (_undoStack.Count == 0)
 		{
 			_logger.LogInformation("Undo requested but no state available");
 			return Result.Fail("No state to undo to");
 		}
 
-		var snapshot = _analyzer.Analyze(previous);
-		UpdateSnapshot(snapshot);
+		var previousIndex = _undoStack.Count - 1;
+		var previous = _undoStack[previousIndex];
 
+		var snapshot = _analyzer.Analyze(previous);
 		if (snapshot.IsFailed)
 		{
 			return snapshot.ToResult();
 		}
+
+		_redoStack.Add(Current);
+		_undoStack.RemoveAt(previousIndex);
+		UpdateSnapshot(snapshot);
 
 		NotifySyncIfEnabled();
 
@@ -99,20 +103,24 @@ public sealed class RecipeSession
 
 	public Result Redo()
 	{
-		var next = PopRedo(Current);
-		if (next is null)
+		if (_redoStack.Count == 0)
 		{
 			_logger.LogInformation("Redo requested but no state available");
 			return Result.Fail("No state to redo to");
 		}
 
-		var snapshot = _analyzer.Analyze(next);
-		UpdateSnapshot(snapshot);
+		var nextIndex = _redoStack.Count - 1;
+		var next = _redoStack[nextIndex];
 
+		var snapshot = _analyzer.Analyze(next);
 		if (snapshot.IsFailed)
 		{
 			return snapshot.ToResult();
 		}
+
+		_undoStack.Add(Current);
+		_redoStack.RemoveAt(nextIndex);
+		UpdateSnapshot(snapshot);
 
 		NotifySyncIfEnabled();
 
@@ -127,7 +135,7 @@ public sealed class RecipeSession
 		ResetSnapshotToEmpty();
 
 		var snapshot = _analyzer.Analyze(Recipe.Empty);
-		UpdateSnapshot(snapshot);
+		UpdateSnapshot(snapshot, markDirty: false);
 
 		if (snapshot.IsFailed)
 		{
@@ -281,13 +289,15 @@ public sealed class RecipeSession
 
 	public Result<MutationOutcome> RemoveSteps(IReadOnlyList<int> indices)
 	{
+		var distinctIndices = indices.Distinct().ToList();
+
 		_logger.LogInformation(
 			"Mutation entry: RemoveSteps Count={Count}, StepCount={StepCount}",
-			indices.Count,
+			distinctIndices.Count,
 			Current.StepCount);
 
 		var current = Current;
-		foreach (var i in indices)
+		foreach (var i in distinctIndices)
 		{
 			var indexCheck = ValidateStepIndex(current, i);
 			if (indexCheck.IsFailed)
@@ -296,7 +306,7 @@ public sealed class RecipeSession
 			}
 		}
 
-		var newRecipe = current.RemoveSteps(indices);
+		var newRecipe = current.RemoveSteps(distinctIndices);
 		var applyResult = Apply(newRecipe);
 		if (applyResult.IsFailed)
 		{
@@ -304,7 +314,7 @@ public sealed class RecipeSession
 		}
 
 		var stepCount = Current.StepCount;
-		int? suggested = stepCount > 0 ? Math.Min(indices.Min(), stepCount - 1) : null;
+		int? suggested = stepCount > 0 ? Math.Min(distinctIndices.Min(), stepCount - 1) : null;
 		return Result.Ok(new MutationOutcome(suggested))
 			.WithReasons(applyResult.Reasons);
 	}
@@ -434,8 +444,17 @@ public sealed class RecipeSession
 
 	private void UpdateSnapshot(Result<RecipeSnapshot> snapshot)
 	{
+		UpdateSnapshot(snapshot, markDirty: true);
+	}
+
+	private void UpdateSnapshot(Result<RecipeSnapshot> snapshot, bool markDirty)
+	{
 		_latestSnapshot = snapshot;
-		_isDirty = true;
+
+		if (markDirty)
+		{
+			_isDirty = true;
+		}
 
 		if (snapshot.IsSuccess)
 		{
@@ -460,38 +479,6 @@ public sealed class RecipeSession
 		}
 
 		_undoStack.Add(recipe);
-	}
-
-	private Recipe? PopUndo(Recipe currentRecipe)
-	{
-		if (_undoStack.Count == 0)
-		{
-			return null;
-		}
-
-		_redoStack.Add(currentRecipe);
-
-		var index = _undoStack.Count - 1;
-		var previous = _undoStack[index];
-		_undoStack.RemoveAt(index);
-
-		return previous;
-	}
-
-	private Recipe? PopRedo(Recipe currentRecipe)
-	{
-		if (_redoStack.Count == 0)
-		{
-			return null;
-		}
-
-		_undoStack.Add(currentRecipe);
-
-		var index = _redoStack.Count - 1;
-		var next = _redoStack[index];
-		_redoStack.RemoveAt(index);
-
-		return next;
 	}
 
 	private void ClearHistory()

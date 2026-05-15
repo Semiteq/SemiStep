@@ -84,7 +84,7 @@ public sealed class RecipeCoordinatorLoadRecipeTests
 		try
 		{
 			var sink = new RecordingRecipeSink();
-			coordinator.Attach(sink);
+			coordinator.Mutated += sink.OnMutation;
 
 			await coordinator.LoadRecipeAsync("nonexistent/path/recipe.csv");
 

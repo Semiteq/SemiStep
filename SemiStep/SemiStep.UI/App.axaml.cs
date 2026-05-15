@@ -102,7 +102,7 @@ public class App : Application
 		coordinator.Initialize();
 
 		var gridViewModel = provider.GetRequiredService<RecipeGridViewModel>();
-		coordinator.Attach(gridViewModel);
+		coordinator.Mutated += gridViewModel.OnMutation;
 	}
 
 	public static void RunErrorWindow(IReadOnlyList<string> errors)

@@ -21,7 +21,7 @@ internal sealed class TextCellFactory
 			IsReadOnly = true,
 			CanUserSort = false,
 			CellTemplate = columnDef.ColumnType == ColumnTypes.StepStartTimeField
-				? CreateStepStartTimeTemplate(columnDef.Key)
+				? CreateStepStartTimeTemplate()
 				: CreateMultiBindingTemplate(columnDef.Key),
 		};
 	}
@@ -36,16 +36,14 @@ internal sealed class TextCellFactory
 			IsReadOnly = false,
 			CanUserSort = false,
 			CellTemplate = columnDef.ColumnType == ColumnTypes.StepStartTimeField
-				? CreateStepStartTimeTemplate(columnDef.Key)
+				? CreateStepStartTimeTemplate()
 				: CreateMultiBindingTemplate(columnDef.Key),
 			CellEditingTemplate = CreateEditingTemplate(columnDef.Key),
 		};
 	}
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateStepStartTimeTemplate(string columnKey)
+	private static FuncDataTemplate<RecipeRowViewModel> CreateStepStartTimeTemplate()
 	{
-		var inapplicableColumnsConverter = new InapplicableColumnsConverter(columnKey);
-
 		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
 		{
 			var textBlock = new TextBlock
@@ -60,18 +58,12 @@ internal sealed class TextCellFactory
 				Mode = BindingMode.OneWay,
 			});
 
-			textBlock.BindClass(
-				"disabled",
-				DisabledClassBinding.Create(inapplicableColumnsConverter),
-				textBlock);
-
 			return textBlock;
 		}, supportsRecycling: true);
 	}
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateMultiBindingTemplate(string columnKey)
+	private static FuncDataTemplate<RecipeRowViewModel> CreateMultiBindingTemplate(string columnKey)
 	{
-		var inapplicableColumnsConverter = new InapplicableColumnsConverter(columnKey);
 		var bindingPath = ResolveBindingPath(columnKey);
 		var unitsConverter = new DictionaryEntryConverter<string?>(columnKey, null);
 		var formatKindConverter = new DictionaryEntryConverter<string>(columnKey, TimeFormatHelper.DefaultFormatKind);
@@ -105,18 +97,12 @@ internal sealed class TextCellFactory
 				},
 			});
 
-			textBlock.BindClass(
-				"disabled",
-				DisabledClassBinding.Create(inapplicableColumnsConverter),
-				textBlock);
-
 			return textBlock;
 		}, supportsRecycling: true);
 	}
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(string columnKey)
+	private static FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(string columnKey)
 	{
-		var inapplicableColumnsConverter = new InapplicableColumnsConverter(columnKey);
 		var bindingPath = ResolveBindingPath(columnKey);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((row, _) =>
@@ -141,11 +127,6 @@ internal sealed class TextCellFactory
 				UpdateSourceTrigger = UpdateSourceTrigger.LostFocus,
 				Converter = editingConverter,
 			});
-
-			textBox.BindClass(
-				"disabled",
-				DisabledClassBinding.Create(inapplicableColumnsConverter),
-				textBox);
 
 			return textBox;
 		}, supportsRecycling: false);

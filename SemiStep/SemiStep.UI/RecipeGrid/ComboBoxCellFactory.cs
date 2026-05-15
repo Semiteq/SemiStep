@@ -1,9 +1,9 @@
-﻿using Avalonia;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
+using Avalonia.Data.Converters;
+using Avalonia.Input;
 using Avalonia.Layout;
-using Avalonia.Media;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
@@ -52,7 +52,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 	private FuncDataTemplate<RecipeRowViewModel> CreateActionCellTemplate(bool isColumnReadOnly)
 	{
 		var items = GetOrCreateActionItems();
-		var inapplicableColumnsConverter = new InapplicableColumnsConverter(ColumnTypes.Action);
+		var applicabilityConverter = CreateApplicabilityConverter(ColumnTypes.Action);
 		var selectionConverter = new ComboBoxItemSelectionConverter(items);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
@@ -68,7 +68,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 					Converter = selectionConverter,
 				});
 
-			ApplyDisabledClass(comboBox, inapplicableColumnsConverter, isColumnReadOnly);
+			ApplyDisabledState(comboBox, applicabilityConverter, isColumnReadOnly);
 
 			return comboBox;
 		}, supportsRecycling: true);
@@ -76,7 +76,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateGroupCellTemplate(string columnKey, bool isColumnReadOnly)
 	{
-		var inapplicableColumnsConverter = new InapplicableColumnsConverter(columnKey);
+		var applicabilityConverter = CreateApplicabilityConverter(columnKey);
 		var valueIndexerPath = ColumnTypes.IndexerPath(columnKey);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((row, _) =>
@@ -95,7 +95,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 					Converter = selectionConverter,
 				});
 
-			ApplyDisabledClass(comboBox, inapplicableColumnsConverter, isColumnReadOnly);
+			ApplyDisabledState(comboBox, applicabilityConverter, isColumnReadOnly);
 
 			return comboBox;
 		}, supportsRecycling: true);
@@ -108,24 +108,38 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 			DisplayMemberBinding = new Binding("DisplayText"),
 			HorizontalAlignment = HorizontalAlignment.Stretch,
 			VerticalAlignment = VerticalAlignment.Center,
-			Background = Brushes.Transparent,
-			BorderThickness = new Thickness(0),
 		};
 	}
 
-	private static void ApplyDisabledClass(
+	private static FuncValueConverter<IReadOnlySet<string>?, bool> CreateApplicabilityConverter(string columnKey)
+	{
+		return new FuncValueConverter<IReadOnlySet<string>?, bool>(
+			set => set is null || !set.Contains(columnKey));
+	}
+
+	private static void ApplyDisabledState(
 		ComboBox comboBox,
-		InapplicableColumnsConverter inapplicableColumnsConverter,
+		IValueConverter applicabilityConverter,
 		bool isColumnReadOnly)
 	{
 		if (isColumnReadOnly)
 		{
-			comboBox.Classes.Set("disabled", true);
+			comboBox.IsHitTestVisible = false;
+			comboBox.Focusable = false;
 			return;
 		}
 
-		var disabledBinding = DisabledClassBinding.Create(inapplicableColumnsConverter);
-		comboBox.BindClass("disabled", disabledBinding, comboBox);
+		comboBox.Bind(InputElement.IsHitTestVisibleProperty, new Binding(nameof(RecipeRowViewModel.InapplicableColumns))
+		{
+			Converter = applicabilityConverter,
+			Mode = BindingMode.OneWay,
+		});
+
+		comboBox.Bind(InputElement.FocusableProperty, new Binding(nameof(RecipeRowViewModel.InapplicableColumns))
+		{
+			Converter = applicabilityConverter,
+			Mode = BindingMode.OneWay,
+		});
 	}
 
 	private List<ComboBoxItemViewModel> GetOrCreateActionItems()

@@ -1,5 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rg="clr-namespace:SemiStep.UI.RecipeGrid;assembly=SemiStep.UI">
 
     <!-- Base DataGrid styles -->
     <Style Selector="DataGrid">
@@ -11,35 +12,48 @@
     </Style>
 
     <!-- ============================================== -->
-    <!-- Disabled (not-applicable) cell appearance.     -->
-    <!-- Canonical class-based selectors on inner       -->
-    <!-- content. Cell factories bind Classes.disabled  -->
-    <!-- directly on the ComboBox / TextBlock /         -->
-    <!-- TextBox (the content control returned from the -->
-    <!-- DataTemplate), so the selectors below project  -->
-    <!-- the greyed background and reduced opacity onto -->
-    <!-- the inner content.                             -->
+    <!-- DataGrid ComboBox default appearance.          -->
+    <!-- Background is transparent so the cell color    -->
+    <!-- shows through; BorderThickness=0 to blend.     -->
+    <!-- Set via style (not inline) so the :disabled    -->
+    <!-- selector below can override Background through -->
+    <!-- normal selector specificity.                   -->
     <!-- ============================================== -->
 
-    <Style Selector="ComboBox.disabled">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledBackgroundBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource CellDisabledForegroundBrush}" />
-        <Setter Property="Opacity" Value="0.5" />
-        <Setter Property="IsHitTestVisible" Value="False" />
+    <Style Selector="DataGrid ComboBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
     </Style>
 
-    <Style Selector="TextBlock.disabled">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledBackgroundBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource CellDisabledForegroundBrush}" />
-        <Setter Property="Opacity" Value="0.5" />
-        <Setter Property="IsHitTestVisible" Value="False" />
-    </Style>
+    <!-- ============================================== -->
+    <!-- Disabled (not-applicable) cell appearance.     -->
+    <!-- Per-column `DataGridColumn.CellTheme` (built   -->
+    <!-- in code via DisabledCellTheme) sets a custom   -->
+    <!-- attached property IsApplicable to a binding    -->
+    <!-- against the row VM. The selectors below match  -->
+    <!-- when IsApplicable=False and paint the greyed   -->
+    <!-- visual on the DataGridCell itself.             -->
+    <!--                                                -->
+    <!-- The cell keeps IsEnabled=true so mouse clicks  -->
+    <!-- still select the row and arrow-key navigation  -->
+    <!-- continues to work. Input on the cell content   -->
+    <!-- (ComboBox dropdown, TextBox edit) is blocked   -->
+    <!-- separately: ComboBoxCellFactory binds          -->
+    <!-- ComboBox.IsEnabled to !inapplicable, and the   -->
+    <!-- OnBeginningEdit handler cancels edit mode on   -->
+    <!-- inapplicable cells.                            -->
+    <!--                                                -->
+    <!-- Background fills the whole cell area without a -->
+    <!-- wrapper because DataGridCell already stretches.-->
+    <!-- TextElement.Foreground is an inherited         -->
+    <!-- attached property — children pick up the       -->
+    <!-- greyed text color automatically.               -->
+    <!-- ============================================== -->
 
-    <Style Selector="TextBox.disabled">
+    <Style Selector="DataGridCell[(rg|DisabledCellTheme.IsApplicable)=False]">
         <Setter Property="Background" Value="{DynamicResource CellDisabledBackgroundBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource CellDisabledForegroundBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource CellDisabledForegroundBrush}" />
         <Setter Property="Opacity" Value="0.5" />
-        <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
 
     <!-- ============================================== -->
@@ -61,19 +75,9 @@
     <!-- Selected row override for disabled cells.      -->
     <!-- ============================================== -->
 
-    <Style Selector="DataGridRow:selected ComboBox.disabled">
+    <Style Selector="DataGridRow:selected DataGridCell[(rg|DisabledCellTheme.IsApplicable)=False]">
         <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}" />
-    </Style>
-
-    <Style Selector="DataGridRow:selected TextBlock.disabled">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}" />
-    </Style>
-
-    <Style Selector="DataGridRow:selected TextBox.disabled">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
     </Style>
 
     <!-- ============================================== -->

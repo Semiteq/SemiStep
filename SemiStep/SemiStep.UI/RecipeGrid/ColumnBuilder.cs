@@ -43,7 +43,14 @@ public sealed class ColumnBuilder(
 	private DataGridColumn CreateColumn(GridColumnDefinition columnDef)
 	{
 		var width = _widthCalculator.CalculateColumnWidth(columnDef);
+		var column = CreateColumnInner(columnDef, width);
+		column.CellTheme = InapplicableCellTheme.Create(columnDef.Key);
 
+		return column;
+	}
+
+	private DataGridColumn CreateColumnInner(GridColumnDefinition columnDef, DataGridLength width)
+	{
 		if (columnDef.ColumnType == ColumnTypes.ActionComboBox)
 		{
 			return _comboBoxCellFactory.CreateActionColumn(columnDef, width);

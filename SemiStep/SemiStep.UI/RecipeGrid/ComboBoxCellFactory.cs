@@ -1,7 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
-using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Layout;
 
@@ -52,7 +51,6 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 	private FuncDataTemplate<RecipeRowViewModel> CreateActionCellTemplate(bool isColumnReadOnly)
 	{
 		var items = GetOrCreateActionItems();
-		var applicabilityConverter = CreateApplicabilityConverter(ColumnTypes.Action);
 		var selectionConverter = new ComboBoxItemSelectionConverter(items);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
@@ -68,7 +66,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 					Converter = selectionConverter,
 				});
 
-			ApplyDisabledState(comboBox, applicabilityConverter, isColumnReadOnly);
+			ApplyInputBlocking(comboBox, ColumnTypes.Action, isColumnReadOnly);
 
 			return comboBox;
 		}, supportsRecycling: true);
@@ -76,7 +74,6 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateGroupCellTemplate(string columnKey, bool isColumnReadOnly)
 	{
-		var applicabilityConverter = CreateApplicabilityConverter(columnKey);
 		var valueIndexerPath = ColumnTypes.IndexerPath(columnKey);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((row, _) =>
@@ -95,7 +92,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 					Converter = selectionConverter,
 				});
 
-			ApplyDisabledState(comboBox, applicabilityConverter, isColumnReadOnly);
+			ApplyInputBlocking(comboBox, columnKey, isColumnReadOnly);
 
 			return comboBox;
 		}, supportsRecycling: true);
@@ -111,16 +108,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 		};
 	}
 
-	private static FuncValueConverter<IReadOnlySet<string>?, bool> CreateApplicabilityConverter(string columnKey)
-	{
-		return new FuncValueConverter<IReadOnlySet<string>?, bool>(
-			set => set is null || !set.Contains(columnKey));
-	}
-
-	private static void ApplyDisabledState(
-		ComboBox comboBox,
-		IValueConverter applicabilityConverter,
-		bool isColumnReadOnly)
+	private static void ApplyInputBlocking(ComboBox comboBox, string columnKey, bool isColumnReadOnly)
 	{
 		if (isColumnReadOnly)
 		{
@@ -129,17 +117,8 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 			return;
 		}
 
-		comboBox.Bind(InputElement.IsHitTestVisibleProperty, new Binding(nameof(RecipeRowViewModel.InapplicableColumns))
-		{
-			Converter = applicabilityConverter,
-			Mode = BindingMode.OneWay,
-		});
-
-		comboBox.Bind(InputElement.FocusableProperty, new Binding(nameof(RecipeRowViewModel.InapplicableColumns))
-		{
-			Converter = applicabilityConverter,
-			Mode = BindingMode.OneWay,
-		});
+		comboBox.Bind(InputElement.IsHitTestVisibleProperty, CellApplicabilityBinding.CreateApplicableBinding(columnKey));
+		comboBox.Bind(InputElement.FocusableProperty, CellApplicabilityBinding.CreateApplicableBinding(columnKey));
 	}
 
 	private List<ComboBoxItemViewModel> GetOrCreateActionItems()
@@ -150,7 +129,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 		}
 
 		_cachedActionItems = recipeMetadataRegistry.GetAllActions()
-			.Select(a => new ComboBoxItemViewModel(a.Id, a.UiName))
+			.Select(action => new ComboBoxItemViewModel(action.Id, action.UiName))
 			.ToList();
 
 		return _cachedActionItems;
@@ -176,7 +155,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 		}
 
 		var items = groupResult.Value.Items
-			.Select(kvp => new ComboBoxItemViewModel(kvp.Key, kvp.Value))
+			.Select(entry => new ComboBoxItemViewModel(entry.Key, entry.Value))
 			.OrderBy(item => item.Id)
 			.ToList();
 

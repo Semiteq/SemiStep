@@ -68,7 +68,6 @@ public sealed class RecipeRowViewModel(
 	{
 		PropertyValueChanged = null;
 		ActionChanged = null;
-		GC.SuppressFinalize(this);
 	}
 
 	public void UpdateStep(Step newStep)

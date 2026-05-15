@@ -235,8 +235,12 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
-		var step = recipe.Steps[index];
-		RecipeRows.Add(CreateRowViewModel(step, ResolveAction(step.ActionKey), index + 1));
+		var row = TryCreateRow(recipe.Steps[index], index + 1);
+		if (row is null)
+		{
+			return;
+		}
+		RecipeRows.Add(row);
 	}
 
 	private void InsertRows(Recipe recipe, int startIndex, int count)
@@ -256,8 +260,12 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		for (var i = 0; i < count; i++)
 		{
 			var index = startIndex + i;
-			var step = recipe.Steps[index];
-			RecipeRows.Insert(index, CreateRowViewModel(step, ResolveAction(step.ActionKey), index + 1));
+			var row = TryCreateRow(recipe.Steps[index], index + 1);
+			if (row is null)
+			{
+				continue;
+			}
+			RecipeRows.Insert(index, row);
 		}
 
 		RenumberRows(startIndex + count);
@@ -310,9 +318,13 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
+		var row = TryCreateRow(recipe.Steps[stepIndex], stepIndex + 1);
+		if (row is null)
+		{
+			return;
+		}
 		RecipeRows[stepIndex].Dispose();
-		var step = recipe.Steps[stepIndex];
-		RecipeRows[stepIndex] = CreateRowViewModel(step, ResolveAction(step.ActionKey), stepIndex + 1);
+		RecipeRows[stepIndex] = row;
 	}
 
 	private void RenumberRows(int fromIndex)
@@ -332,8 +344,12 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 		for (var i = 0; i < recipe.StepCount; i++)
 		{
-			var step = recipe.Steps[i];
-			RecipeRows.Add(CreateRowViewModel(step, ResolveAction(step.ActionKey), i + 1));
+			var row = TryCreateRow(recipe.Steps[i], i + 1);
+			if (row is null)
+			{
+				continue;
+			}
+			RecipeRows.Add(row);
 		}
 	}
 
@@ -370,9 +386,21 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			.ToList();
 	}
 
-	private ActionDefinition ResolveAction(int actionKey)
+	private RecipeRowViewModel? TryCreateRow(Step step, int stepNumber)
 	{
-		return RecipeMetadataRegistry.GetAction(actionKey).Value;
+		var actionResult = RecipeMetadataRegistry.GetAction(step.ActionKey);
+		if (actionResult.IsFailed)
+		{
+			_logger.LogError(
+				"Unknown action key {ActionKey} in step {StepNumber}: {Errors}",
+				step.ActionKey,
+				stepNumber,
+				string.Join("; ", actionResult.Errors.Select(e => e.Message)));
+			_messagePanel.AddError($"Step {stepNumber}: unknown action (key={step.ActionKey})", "RecipeGrid");
+			return null;
+		}
+
+		return CreateRowViewModel(step, actionResult.Value, stepNumber);
 	}
 
 	private RecipeRowViewModel CreateRowViewModel(
@@ -381,11 +409,11 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		int stepNumber)
 	{
 		var inapplicableColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-		foreach (var col in RecipeMetadataRegistry.GetAllColumns())
+		foreach (var column in RecipeMetadataRegistry.GetAllColumns())
 		{
-			if (CellStateResolver.IsInapplicable(col, action))
+			if (CellStateResolver.IsInapplicable(column, action))
 			{
-				inapplicableColumns.Add(col.Key);
+				inapplicableColumns.Add(column.Key);
 			}
 		}
 

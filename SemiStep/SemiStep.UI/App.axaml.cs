@@ -1,9 +1,10 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using Avalonia.ReactiveUI;
 
 using Microsoft.Extensions.DependencyInjection;
+
+using ReactiveUI.Avalonia;
 
 using SemiStep.Core.Recipes;
 using SemiStep.UI.Coordinator;
@@ -55,7 +56,8 @@ public class App : Application
 		return AppBuilder.Configure<App>()
 			.UseWin32()
 			.UseSkia()
-			.UseReactiveUI()
+			.UseHarfBuzz()
+			.UseReactiveUI(_ => { })
 			.LogToTrace();
 	}
 

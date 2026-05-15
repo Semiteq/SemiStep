@@ -40,6 +40,35 @@ internal sealed class TextCellFactory
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateDisplayTemplate(string columnKey)
 	{
+		return columnKey == TimeFormatHelper.StepStartTimeColumnKey
+			? CreateStepStartTimeTemplate(columnKey)
+			: CreateMultiBindingTemplate(columnKey);
+	}
+
+	private FuncDataTemplate<RecipeRowViewModel> CreateStepStartTimeTemplate(string columnKey)
+	{
+		var cellStateConverter = new CellStateConverter(columnKey);
+
+		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
+		{
+			var textBlock = new TextBlock
+			{
+				VerticalAlignment = VerticalAlignment.Center,
+				Padding = new Thickness(4, 2),
+				TextAlignment = TextAlignment.Center,
+			};
+
+			textBlock.Bind(TextBlock.TextProperty, new Binding(nameof(RecipeRowViewModel.StepStartTime))
+			{
+				Mode = BindingMode.OneWay
+			});
+
+			return CellPresenter.Wrap(textBlock, cellStateConverter);
+		}, supportsRecycling: true);
+	}
+
+	private FuncDataTemplate<RecipeRowViewModel> CreateMultiBindingTemplate(string columnKey)
+	{
 		var cellStateConverter = new CellStateConverter(columnKey);
 		var bindingPath = ResolveBindingPath(columnKey);
 		var unitsConverter = new DictionaryEntryConverter<string?>(columnKey, null);

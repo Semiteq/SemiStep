@@ -92,8 +92,10 @@ public sealed class PlcLifecycleManagerReconnectTests
 		// Simulate an auto-reconnect: StateChanged fires Connected while sync is active.
 		s7Service.RaiseStateChanged(PlcConnectionState.Connected);
 
-		// Allow the fire-and-forget reconciliation task to complete.
-		await Task.Delay(200);
+		// (a) Observable state: wait until the fire-and-forget reconciliation has raised the conflict event.
+		await TestHelpers.WaitUntilAsync(
+			() => conflictLocalRecipe is not null,
+			cancellationToken: TestContext.Current.CancellationToken);
 
 		conflictLocalRecipe.Should().NotBeNull(
 			"PlcRecipeConflictDetected must fire when local and PLC recipes differ and both are non-empty");
@@ -116,7 +118,11 @@ public sealed class PlcLifecycleManagerReconnectTests
 
 		// Simulate an auto-reconnect.
 		s7Service.RaiseStateChanged(PlcConnectionState.Connected);
-		await Task.Delay(200);
+
+		// (a) Observable state: wait until the reconcile-on-reconnect pushes the local recipe.
+		await TestHelpers.WaitUntilAsync(
+			() => syncService.NotifyRecipeChangedCallCount > countBeforeStateChange,
+			cancellationToken: TestContext.Current.CancellationToken);
 
 		syncService.NotifyRecipeChangedCallCount.Should().BeGreaterThan(countBeforeStateChange,
 			"when committed=false the manager must push the local recipe to the PLC via NotifyRecipeChanged");

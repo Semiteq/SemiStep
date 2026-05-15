@@ -1,5 +1,6 @@
 ﻿using System.Reactive;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 
 using Avalonia.Input.Platform;
@@ -38,17 +39,17 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		PasteStepCommand = ReactiveCommand.CreateFromTask(PasteStepsAsync);
 
 		CopyStepCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(ex => _messagePanel.AddError($"Copy failed: {ex.Message}", ClipboardSource))
 			.DisposeWith(_disposables);
 
 		CutStepCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(ex => _messagePanel.AddError($"Cut failed: {ex.Message}", ClipboardSource))
 			.DisposeWith(_disposables);
 
 		PasteStepCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(ex => _messagePanel.AddError($"Paste failed: {ex.Message}", ClipboardSource))
 			.DisposeWith(_disposables);
 	}
@@ -107,7 +108,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
-		var csvText = await _clipboard.GetTextAsync();
+		var csvText = await _clipboard.TryGetTextAsync();
 		if (string.IsNullOrWhiteSpace(csvText))
 		{
 			return;

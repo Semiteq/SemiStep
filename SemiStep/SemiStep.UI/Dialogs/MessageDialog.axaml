@@ -10,7 +10,7 @@
         WindowStartupLocation="CenterOwner"
         CanResize="False"
         ShowInTaskbar="False"
-        SystemDecorations="BorderOnly">
+        WindowDecorations="BorderOnly">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>

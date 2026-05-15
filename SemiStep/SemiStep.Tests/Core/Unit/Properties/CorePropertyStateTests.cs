@@ -30,67 +30,28 @@ public sealed class CorePropertyStateTests
 		DeployDuration: DeployDuration.LongLasting,
 		Properties: [_stepDurationProperties, _commentProperties]);
 
-	[Fact]
-	public void UnsupportedColumn_IsDisabled()
+	[Theory]
+	[InlineData("unsupported_column", "property_field", "float", false, CellState.Disabled)]
+	[InlineData("step_duration", "property_field", "time", true, CellState.Readonly)]
+	[InlineData("step_start_time", "step_start_time_field", "time", true, CellState.Readonly)]
+	[InlineData("action", "action_combo_box", "enum", false, CellState.Enabled)]
+	public void GetCellState_ReturnsExpectedState(
+		string key,
+		string columnType,
+		string propertyTypeId,
+		bool readOnly,
+		CellState expected)
 	{
 		var column = new GridColumnDefinition(
-			Key: "unsupported_column",
-			ColumnType: "property_field",
-			UiName: "Unsupported",
-			PropertyTypeId: "float",
-			ReadOnly: false,
+			Key: key,
+			ColumnType: columnType,
+			UiName: key,
+			PropertyTypeId: propertyTypeId,
+			ReadOnly: readOnly,
 			SaveToCsv: true);
 
 		var result = CellStateResolver.GetCellState(column, _waitAction);
 
-		result.Should().Be(CellState.Disabled);
-	}
-
-	[Fact]
-	public void ReadOnlyColumn_IsReadonly()
-	{
-		var column = new GridColumnDefinition(
-			Key: "step_duration",
-			ColumnType: "property_field",
-			UiName: "Duration",
-			PropertyTypeId: "time",
-			ReadOnly: true,
-			SaveToCsv: true);
-
-		var result = CellStateResolver.GetCellState(column, _waitAction);
-
-		result.Should().Be(CellState.Readonly);
-	}
-
-	[Fact]
-	public void ReadOnlyColumn_WhenPropertyMissingFromAction_StillReadonly()
-	{
-		var column = new GridColumnDefinition(
-			Key: "step_start_time",
-			ColumnType: "step_start_time_field",
-			UiName: "Start Time",
-			PropertyTypeId: "time",
-			ReadOnly: true,
-			SaveToCsv: false);
-
-		var result = CellStateResolver.GetCellState(column, _waitAction);
-
-		result.Should().Be(CellState.Readonly);
-	}
-
-	[Fact]
-	public void ActionColumn_IsEnabled()
-	{
-		var column = new GridColumnDefinition(
-			Key: "action",
-			ColumnType: "action_combo_box",
-			UiName: "Action",
-			PropertyTypeId: "enum",
-			ReadOnly: false,
-			SaveToCsv: true);
-
-		var result = CellStateResolver.GetCellState(column, _waitAction);
-
-		result.Should().Be(CellState.Enabled);
+		result.Should().Be(expected);
 	}
 }

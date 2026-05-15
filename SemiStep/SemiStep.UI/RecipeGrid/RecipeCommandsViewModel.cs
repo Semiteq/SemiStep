@@ -1,5 +1,6 @@
 ﻿using System.Reactive;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 
 using ReactiveUI;
@@ -22,12 +23,12 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 		_recipeGrid = recipeGrid;
 
 		var canUndo = _coordinator.StateChanged
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Select(_ => _coordinator.CanUndo)
 			.StartWith(false);
 
 		var canRedo = _coordinator.StateChanged
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Select(_ => _coordinator.CanRedo)
 			.StartWith(false);
 

@@ -106,7 +106,7 @@ public sealed class RecipeMutationCoordinator : IDisposable
 		_plc.Initialize();
 
 		_plcStateSubscription = _plc.PlcState
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(OnPlcStateChanged);
 
 		return this;

@@ -15,7 +15,7 @@ public sealed class CoreFixture : IAsyncLifetime
 
 	private IServiceProvider? _services;
 
-	public async Task InitializeAsync()
+	public async ValueTask InitializeAsync()
 	{
 		var (services, workspace, editor, plc) = await CoreTestHelper.BuildAsync("WithGroups");
 		_services = services;
@@ -24,7 +24,7 @@ public sealed class CoreFixture : IAsyncLifetime
 		Plc = plc;
 	}
 
-	public async Task DisposeAsync()
+	public async ValueTask DisposeAsync()
 	{
 		if (_services is IAsyncDisposable asyncDisposable)
 		{

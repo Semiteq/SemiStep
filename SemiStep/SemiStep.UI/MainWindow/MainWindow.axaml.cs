@@ -1,15 +1,15 @@
 ﻿using System.Reactive;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
-using Avalonia.ReactiveUI;
 
 using ReactiveUI;
+using ReactiveUI.Avalonia;
 
 using SemiStep.Core.Recipes;
-
 using SemiStep.UI.RecipeGrid;
 using SemiStep.UI.ShutdownService;
 
@@ -20,6 +20,7 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 	private ColumnBuilder? _columnBuilder;
 	private bool _forceClose;
 	private bool _isEditing;
+	private bool _columnsBuilt;
 
 	public MainWindow()
 	{
@@ -223,11 +224,12 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 
 	private void BuildGrid()
 	{
-		if (_columnBuilder is null || ViewModel is null)
+		if (_columnsBuilt || _columnBuilder is null || ViewModel is null)
 		{
 			return;
 		}
 
 		_columnBuilder.BuildColumns(RecipeGrid);
+		_columnsBuilt = true;
 	}
 }

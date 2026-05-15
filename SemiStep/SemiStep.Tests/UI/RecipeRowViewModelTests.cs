@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿using Avalonia.Headless.XUnit;
+
+using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,17 +23,18 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	private RecipeEditor _editor = null!;
 	private RecipeMetadataRegistry _recipeMetadataRegistry = null!;
 
-	public async Task InitializeAsync()
+	public async ValueTask InitializeAsync()
 	{
 		var (services, workspace, editor, _) = await CoreTestHelper.BuildAsync("WithGroups");
 		_workspace = workspace;
 		_editor = editor;
 		_recipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
+		_workspace.Reset();
 	}
 
-	public Task DisposeAsync()
+	public ValueTask DisposeAsync()
 	{
-		return Task.CompletedTask;
+		return ValueTask.CompletedTask;
 	}
 
 	private RecipeRowViewModel CreateRow(int actionId = RecipeTestDriver.WaitActionId)
@@ -53,10 +56,9 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		return states;
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void GetPropertyValue_Action_ReturnsActionId()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 
 		var value = row.GetPropertyValue("action");
@@ -64,10 +66,9 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		value.Should().Be(RecipeTestDriver.WaitActionId);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void GetPropertyValue_StepStartTime_ReturnsNull_Initially()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 
 		var value = row.GetPropertyValue("step_start_time");
@@ -75,10 +76,9 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		value.Should().BeNull();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void GetPropertyValue_UnknownKey_ReturnsNull()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 
 		var value = row.GetPropertyValue("nonexistent_column");
@@ -86,10 +86,9 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		value.Should().BeNull();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void GetPropertyValue_KnownColumn_ReturnsPropertyValue()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 
 		var value = row.GetPropertyValue(RecipeTestDriver.StepDurationColumn);
@@ -97,22 +96,9 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		value.Should().NotBeNull();
 	}
 
-	[Fact]
-	public void Indexer_Get_DelegatesToGetPropertyValue()
-	{
-		_workspace.Reset();
-		var row = CreateRow();
-
-		var indexerValue = row["action"];
-		var getterValue = row.GetPropertyValue("action");
-
-		indexerValue.Should().Be(getterValue);
-	}
-
-	[Fact]
+	[AvaloniaFact]
 	public void SetPropertyValue_Action_FiresActionChangedEvent()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 		var receivedActionId = -1;
 		row.ActionChanged += id => receivedActionId = id;
@@ -122,10 +108,21 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		receivedActionId.Should().Be(RecipeTestDriver.ForLoopActionId);
 	}
 
-	[Fact]
+	[AvaloniaFact]
+	public void Indexer_SetActionToIntId_FiresActionChangedEvent()
+	{
+		var row = CreateRow();
+		var receivedActionId = -1;
+		row.ActionChanged += id => receivedActionId = id;
+
+		row["action"] = RecipeTestDriver.ForLoopActionId;
+
+		receivedActionId.Should().Be(RecipeTestDriver.ForLoopActionId);
+	}
+
+	[AvaloniaFact]
 	public void SetPropertyValue_Action_InvalidValue_DoesNotFireEvent()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 		var eventFired = false;
 		row.ActionChanged += _ => eventFired = true;
@@ -135,10 +132,9 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		eventFired.Should().BeFalse();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void SetPropertyValue_NonAction_FiresPropertyValueChangedEvent()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 		var receivedColumnKey = string.Empty;
 		row.PropertyValueChanged += (key, _) => receivedColumnKey = key;
@@ -148,10 +144,9 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		receivedColumnKey.Should().Be(RecipeTestDriver.StepDurationColumn);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void UpdateStep_RaisesItemArrayPropertyChanged()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 		var changedProperties = new List<string>();
 		row.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName ?? "");
@@ -162,10 +157,9 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		changedProperties.Should().Contain("Item[]");
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void UpdateStepNumber_ChangesStepNumber()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 
 		row.UpdateStepNumber(3);
@@ -173,10 +167,9 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		row.StepNumber.Should().Be(3);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void UpdateStepStartTime_ChangesStepStartTime()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 
 		row.UpdateStepStartTime("123.5");
@@ -184,28 +177,25 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		row.StepStartTime.Should().Be("123.5");
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void CellStates_NotEmpty()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 
 		row.CellStates.Count.Should().BeGreaterThan(0);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void CellStates_ActionColumn_IsEnabled()
 	{
-		_workspace.Reset();
 		var row = CreateRow(RecipeTestDriver.PauseActionId);
 
 		row.CellStates["action"].Should().Be(CellState.Enabled);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void GetGroupNameForColumn_ReturnsNull_ForNonGroupColumn()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 
 		var groupName = row.GetGroupNameForColumn(RecipeTestDriver.StepDurationColumn);
@@ -213,10 +203,9 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		groupName.Should().BeNull();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void GetGroupItemsForColumn_ReturnsNull_ForNonGroupColumn()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 
 		var groupItems = row.GetGroupItemsForColumn(RecipeTestDriver.StepDurationColumn);
@@ -224,63 +213,37 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		groupItems.Should().BeNull();
 	}
 
-	[Fact]
-	public void ColumnUnits_ContainsStepStartTime_WithTimeUnits()
+	public static TheoryData<string, string> ColumnUnitsData => new()
 	{
-		_workspace.Reset();
-		var row = CreateRow();
+		{ "step_start_time", "с" },
+		{ RecipeTestDriver.StepDurationColumn, "s" },
+		{ RecipeTestDriver.CommentColumn, "" },
+	};
 
-		row.ColumnUnits.Should().ContainKey("step_start_time")
-			.WhoseValue.Should().Be("с");
-	}
-
-	[Fact]
-	public void ColumnFormatKinds_ContainsStepStartTime_WithTimeHmsFormat()
+	[AvaloniaTheory]
+	[MemberData(nameof(ColumnUnitsData))]
+	public void ColumnUnits_ExposesExpectedUnitsForKnownColumns(string columnKey, string expectedUnits)
 	{
-		_workspace.Reset();
-		var row = CreateRow();
-
-		row.ColumnFormatKinds.Should().ContainKey("step_start_time")
-			.WhoseValue.Should().Be("time_hms");
-	}
-
-	[Fact]
-	public void ColumnUnits_ContainsActionColumnUnits()
-	{
-		_workspace.Reset();
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 
-		// Wait action: step_duration -> time property -> units "s"
-		row.ColumnUnits.Should().ContainKey(RecipeTestDriver.StepDurationColumn)
-			.WhoseValue.Should().Be("s");
+		row.ColumnUnits.Should().ContainKey(columnKey)
+			.WhoseValue.Should().Be(expectedUnits);
 	}
 
-	[Fact]
-	public void ColumnFormatKinds_ContainsActionColumnFormatKind()
+	[AvaloniaTheory]
+	[InlineData("step_start_time", "time_hms")]
+	[InlineData(RecipeTestDriver.StepDurationColumn, "time_hms")]
+	public void ColumnFormatKinds_ExposesExpectedFormatKindForKnownColumns(string columnKey, string expectedFormatKind)
 	{
-		_workspace.Reset();
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 
-		// Wait action: step_duration -> time property -> formatKind "time_hms"
-		row.ColumnFormatKinds.Should().ContainKey(RecipeTestDriver.StepDurationColumn)
-			.WhoseValue.Should().Be("time_hms");
+		row.ColumnFormatKinds.Should().ContainKey(columnKey)
+			.WhoseValue.Should().Be(expectedFormatKind);
 	}
 
-	[Fact]
-	public void ColumnUnits_ColumnWithEmptyUnits_ReturnsEmptyString()
-	{
-		_workspace.Reset();
-		var row = CreateRow(RecipeTestDriver.WaitActionId);
-
-		// Wait action: comment -> string property -> units ""
-		row.ColumnUnits.Should().ContainKey(RecipeTestDriver.CommentColumn)
-			.WhoseValue.Should().Be("");
-	}
-
-	[Fact]
+	[AvaloniaFact]
 	public void Dispose_NullsEventDelegates()
 	{
-		_workspace.Reset();
 		var row = CreateRow();
 		var handlerCalled = false;
 		row.PropertyValueChanged += (_, _) => handlerCalled = true;

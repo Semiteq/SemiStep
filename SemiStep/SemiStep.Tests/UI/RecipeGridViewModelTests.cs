@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿using Avalonia.Headless.XUnit;
+
+using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -32,7 +34,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 	private RecipeGridViewModel _grid = null!;
 	private RecipeMetadataRegistry _recipeMetadataRegistry = null!;
 
-	public async Task InitializeAsync()
+	public async ValueTask InitializeAsync()
 	{
 		var (services, workspace, editor, plc) = await CoreTestHelper.BuildAsync("WithGroups");
 		_workspace = workspace;
@@ -60,15 +62,15 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.Initialize();
 	}
 
-	public Task DisposeAsync()
+	public ValueTask DisposeAsync()
 	{
 		_grid.Dispose();
 		_coordinator.Dispose();
 		_panel.Dispose();
-		return Task.CompletedTask;
+		return ValueTask.CompletedTask;
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void Initialize_EmptyRecipe_HasZeroRows()
 	{
 		_coordinator.NewRecipe();
@@ -76,7 +78,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows.Should().BeEmpty();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void AppendStep_AddsOneRow()
 	{
 		_coordinator.NewRecipe();
@@ -86,7 +88,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows.Should().HaveCount(1);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void AppendStep_RowHasCorrectActionId()
 	{
 		_coordinator.NewRecipe();
@@ -96,7 +98,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows[0].ActionId.Should().Be(RecipeTestDriver.WaitActionId);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void AppendStep_RowStepNumberIsOne_ForFirstRow()
 	{
 		_coordinator.NewRecipe();
@@ -106,7 +108,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows[0].StepNumber.Should().Be(1);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void InsertStep_InsertsRowAtCorrectIndex()
 	{
 		_coordinator.NewRecipe();
@@ -118,7 +120,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows[1].ActionId.Should().Be(RecipeTestDriver.ForLoopActionId);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void InsertStep_RenumbersSubsequentRows()
 	{
 		_coordinator.NewRecipe();
@@ -131,7 +133,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows[2].StepNumber.Should().Be(3);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void RemoveStep_ReducesRowCount()
 	{
 		_coordinator.NewRecipe();
@@ -143,7 +145,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows.Should().HaveCount(1);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void RemoveStep_RenumbersRemainingRows()
 	{
 		_coordinator.NewRecipe();
@@ -157,7 +159,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows[1].StepNumber.Should().Be(2);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void RemoveSteps_RemovesMultipleRows()
 	{
 		_coordinator.NewRecipe();
@@ -170,7 +172,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows.Should().HaveCount(1);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void RemoveSteps_RenumbersRemainingRows()
 	{
 		_coordinator.NewRecipe();
@@ -183,7 +185,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows[0].StepNumber.Should().Be(1);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void ChangeStepAction_RebuildsRow_WithNewActionId()
 	{
 		_coordinator.NewRecipe();
@@ -194,7 +196,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows[0].ActionId.Should().Be(RecipeTestDriver.ForLoopActionId);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void NewRecipe_ClearsAllRows()
 	{
 		_coordinator.NewRecipe();
@@ -206,7 +208,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows.Should().BeEmpty();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void FullRebuild_RowCountMatchesRecipeStepCount()
 	{
 		_coordinator.NewRecipe();
@@ -220,7 +222,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows.Should().HaveCount(1);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void SelectedRowIndex_UpdatedAfterAppend()
 	{
 		_coordinator.NewRecipe();
@@ -230,7 +232,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.SelectedRowIndex.Should().Be(0);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void CanDeleteStep_False_Initially()
 	{
 		_coordinator.NewRecipe();
@@ -238,7 +240,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.CanDeleteStep.Should().BeFalse();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void CanDeleteStep_True_WhenRowSelected()
 	{
 		_coordinator.NewRecipe();
@@ -249,7 +251,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.CanDeleteStep.Should().BeTrue();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void CollectSelectedSteps_ReturnsStepsInIndexOrder()
 	{
 		_coordinator.NewRecipe();
@@ -266,7 +268,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		steps[1].Should().Be(recipe.Steps[2]);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void PropertyUpdated_UpdatesRowInPlace_WithoutChangingCount()
 	{
 		_coordinator.NewRecipe();
@@ -277,7 +279,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_grid.RecipeRows.Should().HaveCount(1);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void StepStartTimes_RefreshedAfterMutation()
 	{
 		_coordinator.NewRecipe();

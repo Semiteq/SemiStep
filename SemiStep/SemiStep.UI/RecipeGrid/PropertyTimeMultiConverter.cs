@@ -14,9 +14,12 @@ internal sealed class PropertyTimeMultiConverter : IMultiValueConverter
 			return string.Empty;
 		}
 
-		if (values.Any(v => v == AvaloniaProperty.UnsetValue))
+		for (var i = 0; i < values.Count; i++)
 		{
-			return string.Empty;
+			if (values[i] == AvaloniaProperty.UnsetValue)
+			{
+				return string.Empty;
+			}
 		}
 
 		var cellValue = values[0];
@@ -28,7 +31,7 @@ internal sealed class PropertyTimeMultiConverter : IMultiValueConverter
 			return string.Empty;
 		}
 
-		var rawString = cellValue.ToString();
+		var rawString = cellValue as string ?? cellValue.ToString();
 		if (string.IsNullOrEmpty(rawString))
 		{
 			return string.Empty;

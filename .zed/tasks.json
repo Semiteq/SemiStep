@@ -2,7 +2,7 @@
   {
     "label": "Build UI",
     "command": "dotnet",
-    "args": ["build", "SemiStep/UI/SemiStep.UI.csproj"],
+    "args": ["build", "SemiStep/SemiStep.UI/SemiStep.UI.csproj"],
     "cwd": "$ZED_WORKTREE_ROOT",
     "reveal": "always",
     "use_new_terminal": false,
@@ -17,7 +17,7 @@
   {
     "label": "Run UI",
     "command": "dotnet",
-    "args": ["run", "--project", "SemiStep/UI/SemiStep.UI.csproj"],
+    "args": ["run", "--project", "SemiStep/SemiStep.UI/SemiStep.UI.csproj"],
     "cwd": "$ZED_WORKTREE_ROOT",
     "reveal": "always",
     "use_new_terminal": true,
@@ -25,7 +25,7 @@
   {
     "label": "Test All",
     "command": "dotnet",
-    "args": ["test", "SemiStep/Tests/Tests.csproj"],
+    "args": ["test", "SemiStep/SemiStep.Tests/SemiStep.Tests.csproj"],
     "cwd": "$ZED_WORKTREE_ROOT",
   },
   {
@@ -33,7 +33,7 @@
     "command": "dotnet",
     "args": [
       "test",
-      "SemiStep/Tests/Tests.csproj",
+      "SemiStep/SemiStep.Tests/SemiStep.Tests.csproj",
       "--filter",
       "FullyQualifiedName~$ZED_STEM",
     ],

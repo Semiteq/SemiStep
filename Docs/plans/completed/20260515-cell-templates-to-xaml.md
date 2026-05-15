@@ -500,8 +500,8 @@ No code changes for Task 12 — Tasks 6-11 already updated all test assertions i
 - Move: `Docs/plans/20260515-cell-templates-to-xaml.md` → `Docs/plans/completed/`
 - Modify: `Docs/07-non-functional.md` — Round-10 subsection
 
-- [ ] `git mv` plan to completed/.
-- [ ] Append Round-10 subsection covering:
+- [x] `git mv` plan to completed/.
+- [x] Append Round-10 subsection covering:
   - Recycling experiment outcome (Scope A perf delta).
   - Canonical cell-state pattern (Scope B): CellPresenter deleted, 3 enum states → 1 boolean (applicability), editability via template choice, 4 converters deleted, total LOC -~250.
   - DataGridStyles.axaml rewritten to canonical Avalonia 12 patterns (Classes + DataGridCell selectors).

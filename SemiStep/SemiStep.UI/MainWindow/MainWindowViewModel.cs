@@ -58,8 +58,8 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			.Subscribe(ex => messagePanel.AddError($"Sync toggle failed: {ex.Message}", "PLC"))
 			.DisposeWith(_disposables);
 
-		_coordinator.Mutated += RaiseAllStateProperties;
-		_disposables.Add(Disposable.Create(() => _coordinator.Mutated -= RaiseAllStateProperties));
+		_coordinator.Mutated += OnCoordinatorMutated;
+		_disposables.Add(Disposable.Create(() => _coordinator.Mutated -= OnCoordinatorMutated));
 
 		_coordinator.PlcStateChanged
 			.Subscribe(_ => RaiseConnectionStateProperties())
@@ -182,6 +182,12 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		{
 			MessagePanel.AddError(result.Errors[0].Message, "PLC");
 		}
+	}
+
+	private void OnCoordinatorMutated(MutationSignal signal)
+	{
+		_ = signal;
+		RaiseAllStateProperties();
 	}
 
 	private void RaiseAllStateProperties()

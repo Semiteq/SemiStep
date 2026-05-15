@@ -13,11 +13,7 @@ using Xunit;
 namespace SemiStep.Tests.Core;
 
 /// <summary>
-/// Characterization tests pinning the same observable contract as
-/// <see cref="RecipeBehaviourCharacterizationTests"/> but exercised through the
-/// merged <see cref="RecipeSession"/> API. Divergence between the two suites is a
-/// behaviour bug: the merge must be invisible to callers. Once the legacy classes
-/// are deleted in Task 11 the older suite is removed and this one remains.
+/// Characterization tests pinning the observable contract of <see cref="RecipeSession"/>.
 /// </summary>
 [Trait("Category", "Integration")]
 [Trait("Component", "Core")]
@@ -107,7 +103,7 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 	}
 
 	[Fact]
-	public async Task Reset_LeavesSessionDirty_BecauseEmptyAnalysisFlipsTheFlag()
+	public async Task Reset_LeavesSessionClean()
 	{
 		var harness = await BuildHarnessAsync();
 		AppendWait(harness, 5f);
@@ -116,8 +112,8 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 
 		harness.Session.Reset();
 
-		harness.Session.IsDirty.Should().BeTrue(
-			"the current Reset implementation runs analyzer.Analyze(Empty) which flips IsDirty back on via the snapshot update");
+		harness.Session.IsDirty.Should().BeFalse(
+			"an empty recipe (the Reset target) is the same as a freshly saved state — Reset must not surface as Modified");
 	}
 
 	#endregion

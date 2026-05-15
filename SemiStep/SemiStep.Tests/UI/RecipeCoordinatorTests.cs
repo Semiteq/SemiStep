@@ -34,7 +34,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 	{
 		_fixture.Session.Reset();
 		var sink = new RecordingRecipeSink();
-		_fixture.Coordinator.Attach(sink);
+		_fixture.Coordinator.Mutated += sink.OnMutation;
 		var signals = sink.Signals;
 
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
@@ -59,7 +59,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var sink = new RecordingRecipeSink();
-		_fixture.Coordinator.Attach(sink);
+		_fixture.Coordinator.Mutated += sink.OnMutation;
 		var signals = sink.Signals;
 
 		_fixture.Coordinator.InsertStep(0, RecipeTestDriver.WaitActionId);
@@ -85,7 +85,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var sink = new RecordingRecipeSink();
-		_fixture.Coordinator.Attach(sink);
+		_fixture.Coordinator.Mutated += sink.OnMutation;
 		var signals = sink.Signals;
 
 		_fixture.Coordinator.RemoveStep(0);
@@ -125,7 +125,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var sink = new RecordingRecipeSink();
-		_fixture.Coordinator.Attach(sink);
+		_fixture.Coordinator.Mutated += sink.OnMutation;
 		var signals = sink.Signals;
 
 		_fixture.Coordinator.RemoveSteps(new[] { 0, 1 });
@@ -139,7 +139,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var sink = new RecordingRecipeSink();
-		_fixture.Coordinator.Attach(sink);
+		_fixture.Coordinator.Mutated += sink.OnMutation;
 		var signals = sink.Signals;
 
 		_fixture.Coordinator.ChangeStepAction(0, RecipeTestDriver.ForLoopActionId);
@@ -154,7 +154,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var sink = new RecordingRecipeSink();
-		_fixture.Coordinator.Attach(sink);
+		_fixture.Coordinator.Mutated += sink.OnMutation;
 		var signals = sink.Signals;
 
 		_fixture.Coordinator.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "5");
@@ -169,7 +169,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var sink = new RecordingRecipeSink();
-		_fixture.Coordinator.Attach(sink);
+		_fixture.Coordinator.Mutated += sink.OnMutation;
 		var signals = sink.Signals;
 
 		_fixture.Coordinator.Undo();
@@ -184,7 +184,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.Undo();
 		var sink = new RecordingRecipeSink();
-		_fixture.Coordinator.Attach(sink);
+		_fixture.Coordinator.Mutated += sink.OnMutation;
 		var signals = sink.Signals;
 
 		_fixture.Coordinator.Redo();
@@ -197,7 +197,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 	{
 		_fixture.Session.Reset();
 		var sink = new RecordingRecipeSink();
-		_fixture.Coordinator.Attach(sink);
+		_fixture.Coordinator.Mutated += sink.OnMutation;
 		var signals = sink.Signals;
 
 		_fixture.Coordinator.NewRecipe();
@@ -221,7 +221,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 	{
 		_fixture.Session.Reset();
 		var sink = new RecordingRecipeSink();
-		_fixture.Coordinator.Attach(sink);
+		_fixture.Coordinator.Mutated += sink.OnMutation;
 		var signals = sink.Signals;
 
 		_fixture.Coordinator.AppendStep(9999);
@@ -351,24 +351,12 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void Attach_CalledTwice_Throws()
-	{
-		_fixture.Session.Reset();
-		var sink = new RecordingRecipeSink();
-		_fixture.Coordinator.Attach(sink);
-
-		var act = () => _fixture.Coordinator.Attach(new RecordingRecipeSink());
-
-		act.Should().Throw<InvalidOperationException>();
-	}
-
-	[AvaloniaFact]
 	public async Task SaveRecipeAsync_Success_RaisesMutatedEvent()
 	{
 		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var mutatedCount = 0;
-		_fixture.Coordinator.Mutated += () => mutatedCount++;
+		_fixture.Coordinator.Mutated += _ => mutatedCount++;
 		var tempFilePath = Path.Combine(Path.GetTempPath(), $"SemiStep.MutatedTest.{Guid.NewGuid():N}.csv");
 
 		try

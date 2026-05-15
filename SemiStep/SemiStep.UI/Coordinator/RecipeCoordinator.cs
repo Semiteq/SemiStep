@@ -46,7 +46,6 @@ public sealed class RecipeCoordinator : IDisposable
 	private Result<PlcSessionSnapshot> _lastPlcState = PlcSessionSnapshot.InitialState;
 	private Result _lastRecipeResult = Result.Ok();
 	private IDisposable? _plcStateSubscription;
-	private IRecipeSink? _sink;
 
 	public RecipeCoordinator(
 		RecipeSession session,
@@ -84,7 +83,7 @@ public sealed class RecipeCoordinator : IDisposable
 	public IObservable<(Recipe Local, Recipe Plc)> PlcRecipeConflictDetected => _plcRecipeConflictDetectedShared;
 	public IObservable<Result<PlcSessionSnapshot>> PlcStateChanged => _plcStateChangedShared;
 
-	public event Action? Mutated;
+	public event Action<MutationSignal>? Mutated;
 
 	public Recipe CurrentRecipe => _session.Current;
 
@@ -130,18 +129,6 @@ public sealed class RecipeCoordinator : IDisposable
 		_initialized = true;
 
 		return this;
-	}
-
-	public void Attach(IRecipeSink sink)
-	{
-		ArgumentNullException.ThrowIfNull(sink);
-
-		if (_sink is not null)
-		{
-			throw new InvalidOperationException("RecipeCoordinator already has an attached sink.");
-		}
-
-		_sink = sink;
 	}
 
 	public void Dispose()
@@ -222,6 +209,7 @@ public sealed class RecipeCoordinator : IDisposable
 			return result;
 		}
 
+		_session.MarkSaved();
 		_logger.LogInformation(
 			"Loaded recipe from PLC: {StepCount} steps",
 			_session.Current.StepCount);
@@ -379,9 +367,8 @@ public sealed class RecipeCoordinator : IDisposable
 			// Marshal the dirty-flag mutation onto the UI thread (see DispatchMutation).
 			await Dispatcher.UIThread.InvokeAsync(() => _session.MarkSaved());
 			_logger.LogInformation("Saved recipe to {FilePath}", filePath);
-			// MarkSaved is not a step-graph mutation, so the grid sink does not need to
-			// react. Raise Mutated directly so window-title / IsDirty / status text refresh.
-			RaiseMutatedOnUiThread();
+			// Not a step-graph mutation; subscribers refresh window-title / IsDirty / status.
+			DispatchMutation(new MutationSignal.StateRefreshed());
 		}
 
 		_lastRecipeResult = result;
@@ -416,18 +403,6 @@ public sealed class RecipeCoordinator : IDisposable
 
 			return applyResult;
 		});
-	}
-
-	private void RaiseMutatedOnUiThread()
-	{
-		if (Dispatcher.UIThread.CheckAccess())
-		{
-			RaiseMutatedSafely();
-		}
-		else
-		{
-			Dispatcher.UIThread.Post(RaiseMutatedSafely);
-		}
 	}
 
 	private Result<int?> Track(Result<MutationOutcome> result, MutationSignal signal)
@@ -467,40 +442,23 @@ public sealed class RecipeCoordinator : IDisposable
 			_session.Current.StepCount);
 
 		// Mutation entry points include async file/PLC paths that may resume off the UI
-		// thread. The sink (RecipeGridViewModel.OnMutation) asserts UI-thread access, so
+		// thread. Subscribers (RecipeGridViewModel.OnMutation) assert UI-thread access, so
 		// marshal explicitly here instead of relying on captured sync context.
 		if (Dispatcher.UIThread.CheckAccess())
 		{
-			InvokeMutated(signal);
+			RaiseMutatedSafely(signal);
 		}
 		else
 		{
-			Dispatcher.UIThread.Post(() => InvokeMutated(signal));
+			Dispatcher.UIThread.Post(() => RaiseMutatedSafely(signal));
 		}
 	}
 
-	private void InvokeMutated(MutationSignal signal)
+	private void RaiseMutatedSafely(MutationSignal signal)
 	{
 		try
 		{
-			_sink?.OnMutation(signal);
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(
-				ex,
-				"Recipe sink OnMutation threw for signal {SignalType}",
-				signal.GetType().Name);
-		}
-
-		RaiseMutatedSafely();
-	}
-
-	private void RaiseMutatedSafely()
-	{
-		try
-		{
-			Mutated?.Invoke();
+			Mutated?.Invoke(signal);
 		}
 		catch (Exception ex)
 		{

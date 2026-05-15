@@ -17,4 +17,6 @@ public abstract record MutationSignal
 	public sealed record PropertyUpdated(int StepIndex) : MutationSignal;
 
 	public sealed record RecipeReplaced : MutationSignal;
+
+	public sealed record StateRefreshed : MutationSignal;
 }

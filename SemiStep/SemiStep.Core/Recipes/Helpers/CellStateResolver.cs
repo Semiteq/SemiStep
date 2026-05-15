@@ -2,24 +2,19 @@
 
 public static class CellStateResolver
 {
-	public static CellState GetCellState(GridColumnDefinition column, ActionDefinition action)
+	public static bool IsInapplicable(GridColumnDefinition column, ActionDefinition action)
 	{
 		if (column.Key == StepValueParser.ActionColumnKey)
 		{
-			return CellState.Enabled;
+			return false;
 		}
 
 		if (column.ReadOnly)
 		{
-			return CellState.Readonly;
+			return false;
 		}
 
-		if (!IsPropertyPresentInAction(column.Key, action))
-		{
-			return CellState.Disabled;
-		}
-
-		return CellState.Enabled;
+		return !IsPropertyPresentInAction(column.Key, action);
 	}
 
 	private static bool IsPropertyPresentInAction(string columnKey, ActionDefinition action)

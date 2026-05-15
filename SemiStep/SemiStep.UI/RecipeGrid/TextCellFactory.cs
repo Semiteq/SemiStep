@@ -22,7 +22,7 @@ internal sealed class TextCellFactory
 			CanUserSort = false,
 			CellTemplate = columnDef.ColumnType == ColumnTypes.StepStartTimeField
 				? CreateStepStartTimeTemplate(columnDef.Key)
-				: CreateMultiBindingTemplate(columnDef.Key)
+				: CreateMultiBindingTemplate(columnDef.Key),
 		};
 	}
 
@@ -38,13 +38,13 @@ internal sealed class TextCellFactory
 			CellTemplate = columnDef.ColumnType == ColumnTypes.StepStartTimeField
 				? CreateStepStartTimeTemplate(columnDef.Key)
 				: CreateMultiBindingTemplate(columnDef.Key),
-			CellEditingTemplate = CreateEditingTemplate(columnDef.Key)
+			CellEditingTemplate = CreateEditingTemplate(columnDef.Key),
 		};
 	}
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateStepStartTimeTemplate(string columnKey)
 	{
-		var cellStateConverter = new CellStateConverter(columnKey);
+		var inapplicableColumnsConverter = new InapplicableColumnsConverter(columnKey);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
 		{
@@ -57,16 +57,21 @@ internal sealed class TextCellFactory
 
 			textBlock.Bind(TextBlock.TextProperty, new Binding(nameof(RecipeRowViewModel.StepStartTime))
 			{
-				Mode = BindingMode.OneWay
+				Mode = BindingMode.OneWay,
 			});
 
-			return CellPresenter.Wrap(textBlock, cellStateConverter);
-		}, supportsRecycling: false);
+			textBlock.BindClass(
+				"disabled",
+				DisabledClassBinding.Create(inapplicableColumnsConverter),
+				textBlock);
+
+			return textBlock;
+		}, supportsRecycling: true);
 	}
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateMultiBindingTemplate(string columnKey)
 	{
-		var cellStateConverter = new CellStateConverter(columnKey);
+		var inapplicableColumnsConverter = new InapplicableColumnsConverter(columnKey);
 		var bindingPath = ResolveBindingPath(columnKey);
 		var unitsConverter = new DictionaryEntryConverter<string?>(columnKey, null);
 		var formatKindConverter = new DictionaryEntryConverter<string>(columnKey, TimeFormatHelper.DefaultFormatKind);
@@ -90,29 +95,33 @@ internal sealed class TextCellFactory
 					new Binding(nameof(RecipeRowViewModel.ColumnUnits))
 					{
 						Mode = BindingMode.OneWay,
-						Converter = unitsConverter
+						Converter = unitsConverter,
 					},
 					new Binding(nameof(RecipeRowViewModel.ColumnFormatKinds))
 					{
 						Mode = BindingMode.OneWay,
-						Converter = formatKindConverter
-					}
-				}
+						Converter = formatKindConverter,
+					},
+				},
 			});
 
-			return CellPresenter.Wrap(textBlock, cellStateConverter);
-		}, supportsRecycling: false);
+			textBlock.BindClass(
+				"disabled",
+				DisabledClassBinding.Create(inapplicableColumnsConverter),
+				textBlock);
+
+			return textBlock;
+		}, supportsRecycling: true);
 	}
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(string columnKey)
 	{
-		var cellStateConverter = new CellStateConverter(columnKey);
+		var inapplicableColumnsConverter = new InapplicableColumnsConverter(columnKey);
 		var bindingPath = ResolveBindingPath(columnKey);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((row, _) =>
 		{
-			var formatKind = row?.ColumnFormatKinds
-				.GetValueOrDefault(columnKey, TimeFormatHelper.DefaultFormatKind)
+			var formatKind = row?.ColumnFormatKinds.GetValueOrDefault(columnKey)
 				?? TimeFormatHelper.DefaultFormatKind;
 
 			var editingConverter = new PropertyTimeEditingConverter(formatKind);
@@ -130,10 +139,15 @@ internal sealed class TextCellFactory
 			{
 				Mode = BindingMode.TwoWay,
 				UpdateSourceTrigger = UpdateSourceTrigger.LostFocus,
-				Converter = editingConverter
+				Converter = editingConverter,
 			});
 
-			return CellPresenter.Wrap(textBox, cellStateConverter);
+			textBox.BindClass(
+				"disabled",
+				DisabledClassBinding.Create(inapplicableColumnsConverter),
+				textBox);
+
+			return textBox;
 		}, supportsRecycling: false);
 	}
 

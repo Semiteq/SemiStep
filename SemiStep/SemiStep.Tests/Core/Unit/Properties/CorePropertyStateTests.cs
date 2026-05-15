@@ -31,16 +31,16 @@ public sealed class CorePropertyStateTests
 		Properties: [_stepDurationProperty, _commentProperty]);
 
 	[Theory]
-	[InlineData("unsupported_column", "property_field", "float", false, CellState.Disabled)]
-	[InlineData("step_duration", "property_field", "time", true, CellState.Readonly)]
-	[InlineData("step_start_time", "step_start_time_field", "time", true, CellState.Readonly)]
-	[InlineData("action", "action_combo_box", "enum", false, CellState.Enabled)]
-	public void GetCellState_ReturnsExpectedState(
+	[InlineData("unsupported_column", "property_field", "float", false, true)]
+	[InlineData("step_duration", "property_field", "time", true, false)]
+	[InlineData("step_start_time", "step_start_time_field", "time", true, false)]
+	[InlineData("action", "action_combo_box", "enum", false, false)]
+	public void IsInapplicable_ReturnsExpectedValue(
 		string key,
 		string columnType,
 		string propertyTypeId,
 		bool readOnly,
-		CellState expected)
+		bool expectedInapplicable)
 	{
 		var column = new GridColumnDefinition(
 			Key: key,
@@ -50,8 +50,8 @@ public sealed class CorePropertyStateTests
 			ReadOnly: readOnly,
 			SaveToCsv: true);
 
-		var result = CellStateResolver.GetCellState(column, _waitAction);
+		var result = CellStateResolver.IsInapplicable(column, _waitAction);
 
-		result.Should().Be(expected);
+		result.Should().Be(expectedInapplicable);
 	}
 }

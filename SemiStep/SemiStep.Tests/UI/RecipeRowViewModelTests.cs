@@ -42,18 +42,21 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		_session.AppendStep(actionId);
 		var step = _session.Current.Steps[0];
 		var action = _recipeMetadataRegistry.GetAction(step.ActionKey).Value;
-		var cellStates = BuildCellStates(action);
-		return new RecipeRowViewModel(1, step, action, _recipeMetadataRegistry, cellStates);
+		var inapplicableColumns = BuildInapplicableColumns(action);
+		return new RecipeRowViewModel(1, step, action, _recipeMetadataRegistry, inapplicableColumns);
 	}
 
-	private IReadOnlyDictionary<string, CellState> BuildCellStates(ActionDefinition action)
+	private IReadOnlySet<string> BuildInapplicableColumns(ActionDefinition action)
 	{
-		var states = new Dictionary<string, CellState>(StringComparer.OrdinalIgnoreCase);
+		var inapplicable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		foreach (var col in _recipeMetadataRegistry.GetAllColumns())
 		{
-			states[col.Key] = CellStateResolver.GetCellState(col, action);
+			if (CellStateResolver.IsInapplicable(col, action))
+			{
+				inapplicable.Add(col.Key);
+			}
 		}
-		return states;
+		return inapplicable;
 	}
 
 	[AvaloniaFact]
@@ -194,7 +197,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	public void SetPropertyValue_PropertyWithSameValue_DoesNotFirePropertyChanged()
 	{
 		var row = CreateRow();
-		// Update underlying state through the editor so the row's _step reflects the canonical value.
 		_session.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "5");
 		row.UpdateStep(_session.Current.Steps[0]);
 		var canonicalValue = row.GetPropertyValue(RecipeTestDriver.StepDurationColumn)?.ToString();
@@ -211,7 +213,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	public void SetPropertyValue_PropertyWithDifferentValue_FiresPropertyChanged()
 	{
 		var row = CreateRow();
-		// Establish the underlying state via the editor so the row reflects the canonical value.
 		_session.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "5");
 		row.UpdateStep(_session.Current.Steps[0]);
 
@@ -263,19 +264,11 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void CellStates_NotEmpty()
-	{
-		var row = CreateRow();
-
-		row.CellStates.Count.Should().BeGreaterThan(0);
-	}
-
-	[AvaloniaFact]
-	public void CellStates_ActionColumn_IsEnabled()
+	public void InapplicableColumns_ActionColumn_IsApplicable()
 	{
 		var row = CreateRow(RecipeTestDriver.PauseActionId);
 
-		row.CellStates["action"].Should().Be(CellState.Enabled);
+		row.IsApplicable("action").Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -300,8 +293,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void GetGroupNameForColumn_ReturnsNull_WhenActionLacksProperty()
 	{
-		// Wait action has no `target` property, so even though `target` is a group-bound column
-		// in the registry, the row reports no group name for it.
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 
 		row.GetGroupNameForColumn(RecipeTestDriver.TargetColumn).Should().BeNull();
@@ -310,9 +301,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void GetGroupNameForColumn_ReturnsGroupName_EvenIfGroupCannotBeResolved()
 	{
-		// When an action property references a group that does not exist in the metadata registry,
-		// the row still surfaces the configured group name. The factory-level cache is responsible
-		// for resolving (or rejecting) the group lookup.
 		var unresolvedGroupProperty = new ActionPropertyDefinition(
 			Key: "phantom_column",
 			GroupName: "nonexistent_group",
@@ -324,9 +312,9 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 			DeployDuration: DeployDuration.Immediate,
 			Properties: new[] { unresolvedGroupProperty });
 		var step = new Step(999, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
-		var cellStates = new Dictionary<string, CellState>();
+		var inapplicableColumns = new HashSet<string>();
 
-		var row = new RecipeRowViewModel(1, step, actionWithUnresolvedGroup, _recipeMetadataRegistry, cellStates);
+		var row = new RecipeRowViewModel(1, step, actionWithUnresolvedGroup, _recipeMetadataRegistry, inapplicableColumns);
 
 		row.GetGroupNameForColumn("phantom_column").Should().Be("nonexistent_group");
 	}

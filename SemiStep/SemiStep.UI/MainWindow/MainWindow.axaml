@@ -32,13 +32,16 @@
                   CanUserReorderColumns="False"
                   CanUserResizeColumns="True"
                   IsReadOnly="{Binding RecipeGrid.IsReadOnly}"
+                  Classes.read-only="{Binding RecipeGrid.IsReadOnly}"
                   GridLinesVisibility="All"
                   HeadersVisibility="Column"
                   BorderThickness="1"
                   BorderBrush="Gray"
                   Background="White"
                   SelectionMode="Extended"
-                  ClipboardCopyMode="None">
+                  ClipboardCopyMode="None"
+                  LoadingRow="OnDataGridLoadingRow"
+                  UnloadingRow="OnDataGridUnloadingRow">
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Add Step"

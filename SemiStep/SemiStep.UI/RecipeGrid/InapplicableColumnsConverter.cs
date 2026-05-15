@@ -1,25 +1,24 @@
 ﻿using System.Globalization;
 
+using Avalonia.Data;
 using Avalonia.Data.Converters;
-
-using SemiStep.Core.Recipes;
 
 namespace SemiStep.UI.RecipeGrid;
 
-public sealed class CellStateConverter(string columnKey) : IValueConverter
+internal sealed class InapplicableColumnsConverter(string columnKey) : IValueConverter
 {
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
 	{
-		if (value is not IReadOnlyDictionary<string, CellState> cellStates)
+		if (value is not IReadOnlySet<string> inapplicableColumns)
 		{
-			return CellState.Enabled;
+			return false;
 		}
 
-		return cellStates.GetValueOrDefault(columnKey, CellState.Enabled);
+		return inapplicableColumns.Contains(columnKey);
 	}
 
 	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
 	{
-		return value;
+		return BindingOperations.DoNothing;
 	}
 }

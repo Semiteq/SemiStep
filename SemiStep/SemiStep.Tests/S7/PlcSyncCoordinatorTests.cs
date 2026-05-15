@@ -13,6 +13,7 @@ using SemiStep.Core.Plc.S7.Serialization;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Recipes;
+using SemiStep.Tests.Helpers;
 using SemiStep.Tests.S7.Helpers;
 
 using Xunit;
@@ -144,9 +145,16 @@ public sealed class PlcSyncCoordinatorTests
 
 		coordinator.NotifyRecipeChanged(Recipe.Empty, isValid: true);
 
-		// Wait for debounce (1000 ms) plus a generous margin.
-		await coordinator.WaitForPendingSyncAsync();
-		await Task.Delay(1200);
+		// Wait for the SUT-internal 1000 ms debounce to elapse and the resulting sync to complete.
+		await coordinator.WaitForPendingSyncAsync(TestContext.Current.CancellationToken);
+
+		// (a) Observable state: WaitForPendingSyncAsync returns when the pending sync is scheduled to complete,
+		// but PlcState propagation through the Rx pipeline is not strictly synchronous — poll the observable side effect.
+		await TestHelpers.WaitUntilAsync(
+			() => transport.WriteLog.Count > 0,
+			timeout: TimeSpan.FromMilliseconds(2500),
+			pollInterval: TimeSpan.FromMilliseconds(20),
+			cancellationToken: TestContext.Current.CancellationToken);
 
 		transport.WriteLog.Should().NotBeEmpty(
 			"after debounce period, a valid recipe should have been written to the PLC");
@@ -164,8 +172,14 @@ public sealed class PlcSyncCoordinatorTests
 
 		coordinator.NotifyRecipeChanged(Recipe.Empty, isValid: true);
 
-		await coordinator.WaitForPendingSyncAsync();
-		await Task.Delay(1200);
+		await coordinator.WaitForPendingSyncAsync(TestContext.Current.CancellationToken);
+
+		// (a) Observable state: poll Status until the sync pipeline transitions to Synced.
+		await TestHelpers.WaitUntilAsync(
+			() => coordinator.Status == PlcSyncStatus.Synced,
+			timeout: TimeSpan.FromMilliseconds(2500),
+			pollInterval: TimeSpan.FromMilliseconds(20),
+			cancellationToken: TestContext.Current.CancellationToken);
 
 		coordinator.Status.Should().Be(PlcSyncStatus.Synced);
 	}
@@ -182,8 +196,14 @@ public sealed class PlcSyncCoordinatorTests
 
 		var before = DateTimeOffset.UtcNow;
 		coordinator.NotifyRecipeChanged(Recipe.Empty, isValid: true);
-		await coordinator.WaitForPendingSyncAsync();
-		await Task.Delay(1200);
+		await coordinator.WaitForPendingSyncAsync(TestContext.Current.CancellationToken);
+
+		// (a) Observable state: poll LastSyncTime until the sync completion stamps it.
+		await TestHelpers.WaitUntilAsync(
+			() => coordinator.LastSyncTime is not null,
+			timeout: TimeSpan.FromMilliseconds(2500),
+			pollInterval: TimeSpan.FromMilliseconds(20),
+			cancellationToken: TestContext.Current.CancellationToken);
 
 		coordinator.LastSyncTime.Should().NotBeNull();
 		coordinator.LastSyncTime!.Value.Should().BeOnOrAfter(before);

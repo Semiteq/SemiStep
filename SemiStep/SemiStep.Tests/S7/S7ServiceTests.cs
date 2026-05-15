@@ -9,6 +9,7 @@ using SemiStep.Core.Plc.S7.Serialization;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Recipes;
+using SemiStep.Tests.Helpers;
 using SemiStep.Tests.S7.Helpers;
 
 using Xunit;
@@ -82,7 +83,11 @@ public sealed class S7ServiceTests
 		service.StateChanged += state => emittedStates.Add(state);
 
 		await service.ConnectAsync(PlcConnectionSettings.Default);
-		await Task.Delay(200);
+
+		// (a) Observable state: wait until the keep-alive probe detects the simulated failure and emits Disconnected.
+		await TestHelpers.WaitUntilAsync(
+			() => emittedStates.Contains(PlcConnectionState.Disconnected),
+			cancellationToken: TestContext.Current.CancellationToken);
 
 		emittedStates.Should().Contain(PlcConnectionState.Disconnected,
 			"the keep-alive probe should detect the transport failure and emit Disconnected");
@@ -104,7 +109,10 @@ public sealed class S7ServiceTests
 		// Transport now reports IsConnected = false, causing NotConnectedError on the next poll.
 		driver.SetConnected(false);
 
-		await Task.Delay(200);
+		// (a) Observable state: wait until the execution-monitor callback emits Disconnected.
+		await TestHelpers.WaitUntilAsync(
+			() => emittedStates.Contains(PlcConnectionState.Disconnected),
+			cancellationToken: TestContext.Current.CancellationToken);
 
 		emittedStates.Should().Contain(PlcConnectionState.Disconnected,
 			"the execution monitor callback should detect the connection loss and emit Disconnected");
@@ -131,7 +139,10 @@ public sealed class S7ServiceTests
 			configuration.Layout.ManagingDb.DbNumber,
 			new IOException("post-disconnect read should not happen"));
 
-		await Task.Delay(200);
+		// (c) Defensive settle: negative assertion — must allow time for any lingering keep-alive
+		// tick (50ms interval) to have fired had it not been stopped. No observable predicate exists
+		// for "no event was raised", so a bounded wait is required.
+		await Task.Delay(200, TestContext.Current.CancellationToken);
 
 		statesAfterDisconnect.Should().NotContain(PlcConnectionState.Disconnected,
 			"the keep-alive loop must be fully stopped before DisconnectAsync returns");

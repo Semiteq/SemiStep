@@ -3,6 +3,7 @@
 internal static class ColumnTypes
 {
 	public const string Action = "action";
+	public static readonly string ActionIndexerBindingPath = $"[{Action}]";
 	public const string ActionComboBox = "action_combo_box";
 	public const string ActionTargetComboBox = "action_target_combo_box";
 	public const string PropertyField = "property_field";

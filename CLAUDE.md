@@ -1,7 +1,7 @@
 # Agent Instructions for SemiStep
 
 SemiStep is a recipe table editor/runtime for PLC integration (S7 protocol).
-Platform: .NET 10, Windows, C# 14. UI: Avalonia 11.2 + ReactiveUI (MVVM).
+Platform: .NET 10, Windows, C# 14. UI: Avalonia 12.0.3 + ReactiveUI (MVVM).
 Solution: `SemiStep/SemiStep.slnx`. All commands run from repository root.
 
 ## Build
@@ -29,9 +29,7 @@ Test traits: `[Trait("Component", "Core|Config|UI|Domain|Csv|S7")]`, `[Trait("Ar
 Invalid config test cases use an overlay pattern: copy `SemiStep.Tests/YamlConfigs/Standard/` to a temp
 directory and overlay only the differing files from `SemiStep.Tests/YamlConfigs/Invalid/{CaseName}/`.
 
-**Dispatcher flush in tests:** After awaiting `RecipeMutationCoordinator` async methods
-(`LoadRecipeAsync`, `LoadRecipeFromPlcAsync`), call `Dispatcher.UIThread.RunJobs(null)` before
-asserting on `MessagePanelViewModel` state to flush the pending Avalonia dispatcher queue.
+**Avalonia headless tests:** UI tests use `[AvaloniaFact]` / `[AvaloniaTheory]` (from `Avalonia.Headless.XUnit`) which wraps the full test lifecycle, including `IAsyncLifetime.InitializeAsync` and `DisposeAsync`, in the headless dispatcher. No manual `Dispatcher.UIThread.RunJobs(...)` or sync-over-async wrappers are needed.
 
 ## Code Style
 

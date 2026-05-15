@@ -28,7 +28,7 @@ public sealed class UIFixture : IAsyncLifetime
 	public RecipeMutationCoordinator Coordinator { get; private set; } = null!;
 	public RecipeGridViewModel Grid { get; private set; } = null!;
 
-	public async Task InitializeAsync()
+	public async ValueTask InitializeAsync()
 	{
 		var (services, workspace, editor, plc) = await CoreTestHelper.BuildAsync("WithGroups");
 		Workspace = workspace;
@@ -56,11 +56,11 @@ public sealed class UIFixture : IAsyncLifetime
 		Grid.Initialize();
 	}
 
-	public Task DisposeAsync()
+	public ValueTask DisposeAsync()
 	{
 		Grid.Dispose();
 		Coordinator.Dispose();
 		MessagePanel.Dispose();
-		return Task.CompletedTask;
+		return ValueTask.CompletedTask;
 	}
 }

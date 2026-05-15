@@ -1,5 +1,6 @@
 ﻿using System.Reactive;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 
 using ReactiveUI;
@@ -33,17 +34,17 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		NewRecipeCommand = ReactiveCommand.Create(NewRecipe);
 
 		SaveRecipeCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(ex => _messagePanel.AddError($"Save failed: {ex.Message}", FileSource))
 			.DisposeWith(_disposables);
 
 		SaveAsRecipeCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(ex => _messagePanel.AddError($"Save As failed: {ex.Message}", FileSource))
 			.DisposeWith(_disposables);
 
 		LoadRecipeCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(ex => _messagePanel.AddError($"Load failed: {ex.Message}", FileSource))
 			.DisposeWith(_disposables);
 	}

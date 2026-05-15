@@ -12,7 +12,7 @@ public sealed class CsvFixture : IAsyncLifetime
 
 	private IServiceProvider? _services;
 
-	public async Task InitializeAsync()
+	public async ValueTask InitializeAsync()
 	{
 		var (fileSerializer, clipboardSerializer, services) = await CsvTestHelper.BuildAsync();
 		FileSerializer = fileSerializer;
@@ -20,7 +20,7 @@ public sealed class CsvFixture : IAsyncLifetime
 		_services = services;
 	}
 
-	public async Task DisposeAsync()
+	public async ValueTask DisposeAsync()
 	{
 		if (_services is IAsyncDisposable asyncDisposable)
 		{

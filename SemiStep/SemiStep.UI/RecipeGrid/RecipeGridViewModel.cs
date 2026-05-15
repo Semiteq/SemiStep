@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 
 using ReactiveUI;
@@ -47,18 +48,18 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			.DisposeWith(_disposables);
 
 		_isReadOnly = coordinator.ExecutionState
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Select(info => info.RecipeActive)
 			.ToProperty(this, x => x.IsReadOnly)
 			.DisposeWith(_disposables);
 
 		coordinator.ExecutionState
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(OnExecutionStateChanged)
 			.DisposeWith(_disposables);
 
 		coordinator.StateChanged
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(OnStateChange)
 			.DisposeWith(_disposables);
 	}

@@ -9,6 +9,7 @@ using SemiStep.Core.Plc.S7.Serialization;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Recipes;
+using SemiStep.Tests.Helpers;
 using SemiStep.Tests.S7.Helpers;
 
 using Xunit;
@@ -120,8 +121,12 @@ public sealed class PlcExecutionMonitorTests
 		var received = new List<PlcExecutionInfo>();
 		monitor.State.Subscribe(info => received.Add(info));
 
-		monitor.Start();
-		await Task.Delay(200);
+		monitor.Start(TestContext.Current.CancellationToken);
+
+		// (a) Observable state: wait until at least one poll has delivered the expected RecipeActive=true snapshot.
+		await TestHelpers.WaitUntilAsync(
+			() => received.Any(info => info.RecipeActive),
+			cancellationToken: TestContext.Current.CancellationToken);
 		monitor.Stop();
 
 		received.Should().Contain(info => info.RecipeActive,
@@ -148,8 +153,13 @@ public sealed class PlcExecutionMonitorTests
 		PlcExecutionInfo? lastReceived = null;
 		monitor.State.Subscribe(info => lastReceived = info);
 
-		monitor.Start();
-		await Task.Delay(200);
+		monitor.Start(TestContext.Current.CancellationToken);
+
+		// (a) Observable state: wait until at least one poll has delivered RecipeActive=true,
+		// so that the subsequent Stop() reliably overwrites it with Empty (RecipeActive=false).
+		await TestHelpers.WaitUntilAsync(
+			() => lastReceived is { RecipeActive: true },
+			cancellationToken: TestContext.Current.CancellationToken);
 		monitor.Stop();
 
 		lastReceived.Should().NotBeNull();
@@ -163,9 +173,12 @@ public sealed class PlcExecutionMonitorTests
 		var (monitor, transport) = BuildMonitor();
 		monitor.State.Subscribe(_ => { });
 
-		monitor.Start();
-		monitor.Start();
-		await Task.Delay(200);
+		monitor.Start(TestContext.Current.CancellationToken);
+		monitor.Start(TestContext.Current.CancellationToken);
+		// (b) SUT-internal timer: this test measures the poll rate over a fixed wall-clock window.
+		// Replacing with a predicate-based wait would defeat the purpose of bounding poll count.
+		// Configured polling interval is 50 ms; 200 ms window allows ~4 expected polls.
+		await Task.Delay(200, TestContext.Current.CancellationToken);
 		monitor.Stop();
 
 		var readCount = transport.ExecutionReadCount;
@@ -195,8 +208,12 @@ public sealed class PlcExecutionMonitorTests
 
 		var (monitor, _) = BuildMonitor(executionState);
 
-		monitor.Start();
-		await Task.Delay(200);
+		monitor.Start(TestContext.Current.CancellationToken);
+
+		// (a) Observable state: poll LastKnown until at least one poll has updated it.
+		await TestHelpers.WaitUntilAsync(
+			() => monitor.LastKnown.RecipeActive,
+			cancellationToken: TestContext.Current.CancellationToken);
 
 		monitor.LastKnown.RecipeActive.Should().BeTrue();
 		monitor.LastKnown.ActualLine.Should().Be(5);
@@ -230,8 +247,14 @@ public sealed class PlcExecutionMonitorTests
 		var received = new List<PlcExecutionInfo>();
 		monitor.State.Subscribe(info => received.Add(info));
 
-		monitor.Start();
-		await Task.Delay(500);
+		monitor.Start(TestContext.Current.CancellationToken);
+
+		// (a) Observable state: wait until the poll loop recovers from the first-failure and delivers a valid result.
+		await TestHelpers.WaitUntilAsync(
+			() => received.Any(info => info.RecipeActive),
+			timeout: TimeSpan.FromMilliseconds(3000),
+			pollInterval: TimeSpan.FromMilliseconds(20),
+			cancellationToken: TestContext.Current.CancellationToken);
 		monitor.Stop();
 
 		received.Should().Contain(info => info.RecipeActive,

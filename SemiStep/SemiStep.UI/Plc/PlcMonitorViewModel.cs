@@ -1,4 +1,5 @@
 ﻿using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 
 using ReactiveUI;
@@ -24,7 +25,7 @@ public sealed class PlcMonitorViewModel : ReactiveObject, IDisposable
 	public PlcMonitorViewModel(RecipeMutationCoordinator coordinator)
 	{
 		coordinator.ExecutionState
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(OnExecutionStateChanged)
 			.DisposeWith(_disposables);
 	}

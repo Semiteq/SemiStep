@@ -4,7 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:messageService="clr-namespace:SemiStep.UI.MessageService"
              mc:Ignorable="d"
-             x:Class="SemiStep.UI.MessageService.MessagePanel">
+             x:Class="SemiStep.UI.MessageService.MessagePanel"
+             x:DataType="messageService:MessagePanelViewModel">
 
     <UserControl.Styles>
         <!-- Severity dot colors via style class binding -->

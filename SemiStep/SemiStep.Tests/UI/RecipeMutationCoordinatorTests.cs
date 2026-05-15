@@ -1,4 +1,4 @@
-﻿using Avalonia.Threading;
+﻿using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
@@ -31,7 +31,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	private MessagePanelViewModel _messagePanel = null!;
 	private RecipeMutationCoordinator _coordinator = null!;
 
-	public async Task InitializeAsync()
+	public async ValueTask InitializeAsync()
 	{
 		var (services, workspace, editor, plc) = await CoreTestHelper.BuildAsync("WithGroups");
 		_workspace = workspace;
@@ -57,14 +57,14 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		_coordinator.Initialize();
 	}
 
-	public Task DisposeAsync()
+	public ValueTask DisposeAsync()
 	{
 		_coordinator.Dispose();
 		_messagePanel.Dispose();
-		return Task.CompletedTask;
+		return ValueTask.CompletedTask;
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void AppendStep_EmitsStepAppendedSignal()
 	{
 		_workspace.Reset();
@@ -77,7 +77,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 			.Which.Index.Should().Be(0);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void AppendStep_SetsSuggestedSelection_ToLastIndex()
 	{
 		_workspace.Reset();
@@ -88,7 +88,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		selection.Should().Be(0);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void InsertStep_EmitsStepsInsertedSignal()
 	{
 		_workspace.Reset();
@@ -102,7 +102,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 			.Which.Should().BeEquivalentTo(new MutationSignal.StepsInserted(0, 1));
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void InsertStep_SetsSuggestedSelection_ToInsertedIndex()
 	{
 		_workspace.Reset();
@@ -115,7 +115,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		selection.Should().Be(0);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void RemoveStep_EmitsStepRemovedSignal()
 	{
 		_workspace.Reset();
@@ -130,7 +130,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 			.Which.RemovedIndex.Should().Be(0);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void RemoveStep_SuggestedSelection_IsNull_WhenRecipeBecomesEmpty()
 	{
 		_workspace.Reset();
@@ -143,7 +143,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		selection.Should().BeNull();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void RemoveStep_SuggestedSelection_ClampedToLastIndex_WhenRemovingLast()
 	{
 		_workspace.Reset();
@@ -158,7 +158,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		selection.Should().Be(1);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void RemoveSteps_EmitsStepsRemovedSignal()
 	{
 		_workspace.Reset();
@@ -173,7 +173,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		signals.Should().ContainSingle().Which.Should().BeOfType<MutationSignal.StepsRemoved>();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void ChangeStepAction_EmitsStepActionChangedSignal()
 	{
 		_workspace.Reset();
@@ -188,7 +188,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 			.Which.StepIndex.Should().Be(0);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void UpdateStepProperty_EmitsPropertyUpdatedSignal_WithCorrectStepIndex()
 	{
 		_workspace.Reset();
@@ -203,7 +203,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 			.Which.StepIndex.Should().Be(0);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void Undo_EmitsRecipeReplacedSignal()
 	{
 		_workspace.Reset();
@@ -217,7 +217,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		signals.Should().ContainSingle().Which.Should().BeOfType<MutationSignal.RecipeReplaced>();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void Redo_EmitsRecipeReplacedSignal()
 	{
 		_workspace.Reset();
@@ -231,7 +231,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		signals.Should().ContainSingle().Which.Should().BeOfType<MutationSignal.RecipeReplaced>();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void NewRecipe_EmitsRecipeReplacedSignal()
 	{
 		_workspace.Reset();
@@ -243,20 +243,18 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		signals.Should().ContainSingle().Which.Should().BeOfType<MutationSignal.RecipeReplaced>();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void NewRecipe_ClearsPriorNonStructuralEntries()
 	{
 		_workspace.Reset();
 		_coordinator.AppendStep(9999);
-		Dispatcher.UIThread.RunJobs(null);
 
 		_coordinator.NewRecipe();
-		Dispatcher.UIThread.RunJobs(null);
 
 		_messagePanel.Entries.Should().NotContain(e => !e.IsStructural);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void ConsumeSuggestedSelection_ReturnsValueOnce_ThenNull()
 	{
 		_workspace.Reset();
@@ -269,7 +267,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		second.Should().BeNull();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void AppendStep_Failure_DoesNotEmitSignal()
 	{
 		_workspace.Reset();
@@ -281,18 +279,17 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		signals.Should().BeEmpty();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void AppendStep_Failure_AddsErrorToMessagePanel()
 	{
 		_workspace.Reset();
 
 		_coordinator.AppendStep(9999);
-		Dispatcher.UIThread.RunJobs(null);
 
 		_messagePanel.ErrorCount.Should().BeGreaterThan(0);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void IsDirty_True_AfterMutation()
 	{
 		_workspace.Reset();
@@ -302,7 +299,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		_coordinator.IsDirty.Should().BeTrue();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void CanUndo_True_AfterMutation()
 	{
 		_workspace.Reset();
@@ -312,7 +309,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		_coordinator.CanUndo.Should().BeTrue();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void CanRedo_True_AfterUndoingMutation()
 	{
 		_workspace.Reset();
@@ -323,20 +320,20 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		_coordinator.CanRedo.Should().BeTrue();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void AppendStep_Failure_ReturnsFailed()
 	{
-		_ = _workspace.Reset();
+		_workspace.Reset();
 
 		var result = _coordinator.AppendStep(9999);
 
 		result.IsFailed.Should().BeTrue();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void ChangeStepAction_Failure_ReturnsFailed()
 	{
-		_ = _workspace.Reset();
+		_workspace.Reset();
 		_coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
 		var result = _coordinator.ChangeStepAction(0, 9999);
@@ -344,10 +341,10 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 		result.IsFailed.Should().BeTrue();
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public void UpdateStepProperty_Failure_ReturnsFailed()
 	{
-		_ = _workspace.Reset();
+		_workspace.Reset();
 		_coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
 		var result = _coordinator.UpdateStepProperty(0, "NonExistentColumn", "value");

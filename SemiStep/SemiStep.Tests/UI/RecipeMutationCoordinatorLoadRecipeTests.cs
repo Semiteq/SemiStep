@@ -1,4 +1,4 @@
-﻿using Avalonia.Threading;
+﻿using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
@@ -29,7 +29,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 {
 	private const string TempFilePrefix = "SemiStep.CoordinatorTest";
 
-	[Fact]
+	[AvaloniaFact]
 	public async Task LoadRecipeAsync_Success_ClearsMessagePanelBeforeAddingNewReasons()
 	{
 		var (coordinator, panel, tempFilePath) = await BuildCoordinatorWithCsvAndSavedRecipeAsync();
@@ -37,10 +37,8 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		try
 		{
 			await coordinator.LoadRecipeAsync("nonexistent/path/recipe.csv");
-			Dispatcher.UIThread.RunJobs(null);
 
 			await coordinator.LoadRecipeAsync(tempFilePath);
-			Dispatcher.UIThread.RunJobs(null);
 
 			panel.Entries.Should().BeEmpty();
 		}
@@ -52,7 +50,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		}
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public async Task LoadRecipeAsync_Failure_LeavesPanelIntact()
 	{
 		var (coordinator, panel) = await BuildCoordinatorWithCsvAsync();
@@ -60,10 +58,8 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		try
 		{
 			panel.AddError("pre-existing error", "Test");
-			Dispatcher.UIThread.RunJobs(null);
 
 			await coordinator.LoadRecipeAsync("nonexistent/path/recipe.csv");
-			Dispatcher.UIThread.RunJobs(null);
 
 			panel.Entries.Should().ContainSingle(e => e.Source == "Test");
 			panel.Entries.Should().Contain(e => e.IsStructural && e.IsError);
@@ -76,7 +72,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		}
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public async Task LoadRecipeAsync_Failure_DoesNotEmitSignal()
 	{
 		var (coordinator, panel) = await BuildCoordinatorWithCsvAsync();
@@ -97,7 +93,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		}
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public async Task LoadRecipeAsync_Success_WithWarnings_ShowsWarningsInPanel()
 	{
 		var (coordinator, panel) = await BuildCoordinatorWithCsvAsync();
@@ -110,7 +106,6 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 
 			// Load it back — an empty recipe triggers a "Recipe has no steps" warning from the analyzer.
 			var result = await coordinator.LoadRecipeAsync(tempFilePath);
-			Dispatcher.UIThread.RunJobs(null);
 
 			result.IsSuccess.Should().BeTrue("loading a valid CSV should succeed even when it has warnings");
 			panel.Entries.Should().Contain(e => e.IsWarning,
@@ -145,7 +140,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		return (coordinator, panel, tempFilePath);
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public async Task SaveRecipeAsync_Failure_ReturnsFailed()
 	{
 		var (coordinator, panel) = await BuildCoordinatorWithThrowingCsvAsync();
@@ -153,7 +148,6 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		try
 		{
 			var result = await coordinator.SaveRecipeAsync("any/path.csv");
-			Dispatcher.UIThread.RunJobs(null);
 
 			result.IsFailed.Should().BeTrue();
 		}
@@ -164,7 +158,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		}
 	}
 
-	[Fact]
+	[AvaloniaFact]
 	public async Task SaveRecipeAsync_IoException_ConvertsToFailedResult()
 	{
 		var (coordinator, panel) = await BuildCoordinatorWithCsvAsync();
@@ -179,7 +173,6 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		try
 		{
 			var result = await coordinator.SaveRecipeAsync(unwritablePath);
-			Dispatcher.UIThread.RunJobs(null);
 
 			result.IsFailed.Should().BeTrue(
 				"a real IOException from the underlying file system must be converted to Result.Fail by CsvService.SaveAsync");

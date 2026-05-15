@@ -99,7 +99,7 @@ public sealed class PlcTransactionExecutorTests
 		ConfigureEmptyArrayReadResponses(transport);
 		var layout = BuildTestConfiguration().Layout;
 
-		await executor.WriteRecipeWithRetryAsync(Recipe.Empty);
+		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
 		var firstWrite = transport.WriteLog[0];
 		firstWrite.DbNumber.Should().Be(layout.ManagingDb.DbNumber);
@@ -114,7 +114,7 @@ public sealed class PlcTransactionExecutorTests
 		ConfigureEmptyArrayReadResponses(transport);
 		var layout = BuildTestConfiguration().Layout;
 
-		await executor.WriteRecipeWithRetryAsync(Recipe.Empty);
+		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
 		var secondWrite = transport.WriteLog[1];
 		secondWrite.DbNumber.Should().Be(layout.IntDb.DbNumber,
@@ -128,7 +128,7 @@ public sealed class PlcTransactionExecutorTests
 		ConfigureEmptyArrayReadResponses(transport);
 		var layout = BuildTestConfiguration().Layout;
 
-		await executor.WriteRecipeWithRetryAsync(Recipe.Empty);
+		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
 		var thirdWrite = transport.WriteLog[2];
 		thirdWrite.DbNumber.Should().Be(layout.FloatDb.DbNumber,
@@ -142,7 +142,7 @@ public sealed class PlcTransactionExecutorTests
 		ConfigureEmptyArrayReadResponses(transport);
 		var layout = BuildTestConfiguration().Layout;
 
-		await executor.WriteRecipeWithRetryAsync(Recipe.Empty);
+		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
 		var fourthWrite = transport.WriteLog[3];
 		fourthWrite.DbNumber.Should().Be(layout.StringDb.DbNumber,
@@ -156,7 +156,7 @@ public sealed class PlcTransactionExecutorTests
 		ConfigureEmptyArrayReadResponses(transport);
 		var layout = BuildTestConfiguration().Layout;
 
-		await executor.WriteRecipeWithRetryAsync(Recipe.Empty);
+		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
 		// Last managing-area write is committed=true
 		var lastManagingWrite = transport.WriteLog
@@ -174,7 +174,7 @@ public sealed class PlcTransactionExecutorTests
 		ConfigureEmptyArrayReadResponses(transport);
 		var layout = BuildTestConfiguration().Layout;
 
-		await executor.WriteRecipeWithRetryAsync(Recipe.Empty);
+		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
 		transport.ReadLog.Should().Contain(
 			r => r.DbNumber == layout.IntDb.DbNumber,
@@ -188,7 +188,7 @@ public sealed class PlcTransactionExecutorTests
 		ConfigureEmptyArrayReadResponses(transport);
 		var layout = BuildTestConfiguration().Layout;
 
-		await executor.WriteRecipeWithRetryAsync(Recipe.Empty);
+		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
 		var managingWrites = transport.WriteLog
 			.Where(w => w.DbNumber == layout.ManagingDb.DbNumber)
@@ -225,7 +225,7 @@ public sealed class PlcTransactionExecutorTests
 		transport.SetReadResponseForDb(layout.FloatDb.DbNumber, (_, count) => new byte[count]);
 		transport.SetReadResponseForDb(layout.StringDb.DbNumber, (_, count) => new byte[count]);
 
-		var result = await executor.WriteRecipeWithRetryAsync(Recipe.Empty);
+		var result = await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
 		result.IsFailed.Should().BeTrue(
 			"after exhausting all retry attempts the result must be failed");
@@ -253,7 +253,7 @@ public sealed class PlcTransactionExecutorTests
 		transport.SetReadResponseForDb(layout.FloatDb.DbNumber, (_, count) => new byte[count]);
 		transport.SetReadResponseForDb(layout.StringDb.DbNumber, (_, count) => new byte[count]);
 
-		await executor.WriteRecipeWithRetryAsync(Recipe.Empty);
+		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
 		var intHeaderReads = transport.ReadLog
 			.Count(r => r.DbNumber == layout.IntDb.DbNumber && r.Count == 8);
@@ -268,7 +268,7 @@ public sealed class PlcTransactionExecutorTests
 		var (executor, transport) = BuildExecutor();
 		transport.SetConnected(false);
 
-		var result = await executor.WriteRecipeWithRetryAsync(Recipe.Empty);
+		var result = await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
 		result.IsFailed.Should().BeTrue("writing to a disconnected PLC must return a failed result");
 		result.HasError<NotConnectedError>().Should().BeTrue(

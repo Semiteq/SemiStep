@@ -3,7 +3,7 @@
 		"label": "Launch SemiStep.UI",
 		"adapter": "netcoredbg",
 		"request": "launch",
-		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/UI.dll",
+		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/SemiStep.UI.dll",
 		"cwd": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug",
 		"stopAtEntry": false,
 		"build": "Build UI"

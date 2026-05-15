@@ -8,6 +8,7 @@
         d:DesignWidth="1600"
         d:DesignHeight="800"
         x:Class="SemiStep.UI.MainWindow.MainWindow"
+        x:DataType="local:MainWindowViewModel"
         Title="{Binding WindowTitle}"
         Width="1600"
         Height="800">

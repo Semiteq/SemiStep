@@ -75,35 +75,24 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 	{
 		var items = GetOrCreateActionItems();
 		var cellStateConverter = new CellStateConverter(ColumnTypes.Action);
+		var selectionConverter = new ComboBoxItemSelectionConverter(items);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((row, _) =>
 		{
-			var currentId = row?.ActionId ?? 0;
-			var selectedItem = items.FirstOrDefault(item => item.Id == currentId);
 			var isEnabled = !isColumnReadOnly;
 
 			var comboBox = new ComboBox
 			{
 				ItemsSource = items,
 				DisplayMemberBinding = new Binding("DisplayText"),
-				SelectedItem = selectedItem,
 				HorizontalAlignment = HorizontalAlignment.Stretch,
 				VerticalAlignment = VerticalAlignment.Center,
 				Background = Brushes.Transparent,
 				BorderThickness = new Thickness(0),
 				IsHitTestVisible = isEnabled,
 			};
-
-			if (isEnabled && row is not null)
-			{
-				comboBox.SelectionChanged += (_, _) =>
-				{
-					if (comboBox.SelectedItem is ComboBoxItemViewModel selected)
-					{
-						row.SetPropertyValue(ColumnTypes.Action, selected.Id.ToString());
-					}
-				};
-			}
+			comboBox.Bind(ComboBox.SelectedItemProperty,
+				new Binding(ColumnTypes.ActionIndexerBindingPath) { Mode = BindingMode.TwoWay, Converter = selectionConverter });
 
 			return CellPresenter.Wrap(comboBox, cellStateConverter);
 		}, supportsRecycling: false);

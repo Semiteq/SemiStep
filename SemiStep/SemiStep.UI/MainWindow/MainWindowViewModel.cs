@@ -1,5 +1,6 @@
 ﻿using System.Reactive;
 using System.Reactive.Disposables;
+using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 
 using Avalonia.Controls;
@@ -53,27 +54,27 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		ToggleSyncCommand = ReactiveCommand.CreateFromTask(ExecuteToggleSyncAsync);
 
 		ToggleSyncCommand.ThrownExceptions
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(ex => messagePanel.AddError($"Sync toggle failed: {ex.Message}", "PLC"))
 			.DisposeWith(_disposables);
 
 		_coordinator.StateChanged
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(_ => RaiseAllStateProperties())
 			.DisposeWith(_disposables);
 
 		_coordinator.PlcStateChanged
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(_ => RaiseConnectionStateProperties())
 			.DisposeWith(_disposables);
 
 		_coordinator.PlcRecipeConflictDetected
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(conflict => _ = HandleConflictAsync(conflict.Local, conflict.Plc))
 			.DisposeWith(_disposables);
 
 		Observable.Interval(TimeSpan.FromSeconds(1))
-			.ObserveOn(RxApp.MainThreadScheduler)
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(_ => this.RaisePropertyChanged(nameof(LastSyncTimeText)))
 			.DisposeWith(_disposables);
 	}

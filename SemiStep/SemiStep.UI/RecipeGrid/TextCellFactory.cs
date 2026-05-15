@@ -20,7 +20,9 @@ internal sealed class TextCellFactory
 			Width = width,
 			IsReadOnly = true,
 			CanUserSort = false,
-			CellTemplate = CreateDisplayTemplate(columnDef.Key)
+			CellTemplate = columnDef.ColumnType == ColumnTypes.StepStartTimeField
+				? CreateStepStartTimeTemplate(columnDef.Key)
+				: CreateMultiBindingTemplate(columnDef.Key)
 		};
 	}
 
@@ -33,16 +35,11 @@ internal sealed class TextCellFactory
 			Width = width,
 			IsReadOnly = false,
 			CanUserSort = false,
-			CellTemplate = CreateDisplayTemplate(columnDef.Key),
+			CellTemplate = columnDef.ColumnType == ColumnTypes.StepStartTimeField
+				? CreateStepStartTimeTemplate(columnDef.Key)
+				: CreateMultiBindingTemplate(columnDef.Key),
 			CellEditingTemplate = CreateEditingTemplate(columnDef.Key)
 		};
-	}
-
-	private FuncDataTemplate<RecipeRowViewModel> CreateDisplayTemplate(string columnKey)
-	{
-		return columnKey == TimeFormatHelper.StepStartTimeColumnKey
-			? CreateStepStartTimeTemplate(columnKey)
-			: CreateMultiBindingTemplate(columnKey);
 	}
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateStepStartTimeTemplate(string columnKey)
@@ -144,6 +141,6 @@ internal sealed class TextCellFactory
 	{
 		return columnKey == TimeFormatHelper.StepStartTimeColumnKey
 			? nameof(RecipeRowViewModel.StepStartTime)
-			: $"[{columnKey}]";
+			: ColumnTypes.IndexerPath(columnKey);
 	}
 }

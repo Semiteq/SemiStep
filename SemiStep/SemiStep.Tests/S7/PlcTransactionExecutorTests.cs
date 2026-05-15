@@ -182,7 +182,7 @@ public sealed class PlcTransactionExecutorTests
 	}
 
 	[Fact]
-	public async Task WriteRecipeWithRetryAsync_EmptyRecipe_WriteSequenceIsCommittedFalse_Arrays_RecipeLines_CommittedTrue()
+	public async Task WriteRecipeWithRetryAsync_EmptyRecipe_CommitsArraysAndLines_AfterUncommittedWrite()
 	{
 		var (executor, transport) = BuildExecutor();
 		ConfigureEmptyArrayReadResponses(transport);

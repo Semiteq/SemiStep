@@ -32,7 +32,10 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 	[AvaloniaFact]
 	public async Task LoadRecipeAsync_Success_ClearsMessagePanelBeforeAddingNewReasons()
 	{
-		var (coordinator, panel, tempFilePath) = await BuildCoordinatorWithCsvAndSavedRecipeAsync();
+		var (coordinator, panel) = await BuildCoordinatorAsync(services => services.AddCsv());
+		coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		var tempFilePath = Path.Combine(Path.GetTempPath(), $"{TempFilePrefix}.{Guid.NewGuid():N}.csv");
+		await coordinator.SaveRecipeAsync(tempFilePath);
 
 		try
 		{
@@ -53,7 +56,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 	[AvaloniaFact]
 	public async Task LoadRecipeAsync_Failure_LeavesPanelIntact()
 	{
-		var (coordinator, panel) = await BuildCoordinatorWithCsvAsync();
+		var (coordinator, panel) = await BuildCoordinatorAsync(services => services.AddCsv());
 
 		try
 		{
@@ -75,7 +78,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 	[AvaloniaFact]
 	public async Task LoadRecipeAsync_Failure_DoesNotEmitSignal()
 	{
-		var (coordinator, panel) = await BuildCoordinatorWithCsvAsync();
+		var (coordinator, panel) = await BuildCoordinatorAsync(services => services.AddCsv());
 
 		try
 		{
@@ -96,7 +99,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 	[AvaloniaFact]
 	public async Task LoadRecipeAsync_Success_WithWarnings_ShowsWarningsInPanel()
 	{
-		var (coordinator, panel) = await BuildCoordinatorWithCsvAsync();
+		var (coordinator, panel) = await BuildCoordinatorAsync(services => services.AddCsv());
 		var tempFilePath = Path.Combine(Path.GetTempPath(), $"{TempFilePrefix}.{Guid.NewGuid():N}.csv");
 
 		try
@@ -119,31 +122,15 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		}
 	}
 
-	private static async Task<(RecipeMutationCoordinator Coordinator, MessagePanelViewModel Panel)>
-		BuildCoordinatorWithCsvAsync()
-	{
-		return await BuildCoordinatorAsync(services => services.AddCsv());
-	}
-
-	private static async Task<(
-		RecipeMutationCoordinator Coordinator,
-		MessagePanelViewModel Panel,
-		string TempFilePath)> BuildCoordinatorWithCsvAndSavedRecipeAsync()
-	{
-		var (coordinator, panel) = await BuildCoordinatorWithCsvAsync();
-
-		coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-
-		var tempFilePath = Path.Combine(Path.GetTempPath(), $"{TempFilePrefix}.{Guid.NewGuid():N}.csv");
-		await coordinator.SaveRecipeAsync(tempFilePath);
-
-		return (coordinator, panel, tempFilePath);
-	}
-
 	[AvaloniaFact]
 	public async Task SaveRecipeAsync_Failure_ReturnsFailed()
 	{
-		var (coordinator, panel) = await BuildCoordinatorWithThrowingCsvAsync();
+		var (coordinator, panel) = await BuildCoordinatorAsync(services =>
+		{
+			services.AddCsv();
+			services.AddSingleton<CsvService>(sp => new ThrowingCsvService(
+				sp.GetRequiredService<CsvFileSerializer>()));
+		});
 
 		try
 		{
@@ -161,7 +148,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 	[AvaloniaFact]
 	public async Task SaveRecipeAsync_IoException_ConvertsToFailedResult()
 	{
-		var (coordinator, panel) = await BuildCoordinatorWithCsvAsync();
+		var (coordinator, panel) = await BuildCoordinatorAsync(services => services.AddCsv());
 
 		// Use an existing file as the directory portion of the target path.
 		// File.Move into a "directory" that is actually a file throws an IOException
@@ -175,7 +162,8 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 			var result = await coordinator.SaveRecipeAsync(unwritablePath);
 
 			result.IsFailed.Should().BeTrue(
-				"a real IOException from the underlying file system must be converted to Result.Fail by CsvService.SaveAsync");
+				"a real IOException from the underlying file system must be converted to "
+				+ "Result.Fail by CsvService.SaveAsync");
 		}
 		finally
 		{
@@ -183,17 +171,6 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 			panel.Dispose();
 			File.Delete(blockingFile);
 		}
-	}
-
-	private static async Task<(RecipeMutationCoordinator Coordinator, MessagePanelViewModel Panel)>
-		BuildCoordinatorWithThrowingCsvAsync()
-	{
-		return await BuildCoordinatorAsync(services =>
-		{
-			services.AddCsv();
-			services.AddSingleton<CsvService>(sp => new ThrowingCsvService(
-				sp.GetRequiredService<CsvFileSerializer>()));
-		});
 	}
 
 	private static async Task<(RecipeMutationCoordinator Coordinator, MessagePanelViewModel Panel)>
@@ -228,7 +205,12 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		var panel = new MessagePanelViewModel();
 		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
-		var queryService = new RecipeQueryService(workspace, plc, clipboardSerializer, importedRecipeValidator, recipeMetadataRegistry);
+		var queryService = new RecipeQueryService(
+			workspace,
+			plc,
+			clipboardSerializer,
+			importedRecipeValidator,
+			recipeMetadataRegistry);
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
 		var csvService = services.GetRequiredService<CsvService>();
 		var coordinator = new RecipeMutationCoordinator(

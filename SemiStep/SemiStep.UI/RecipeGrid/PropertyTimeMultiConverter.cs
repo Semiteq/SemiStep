@@ -7,7 +7,7 @@ namespace SemiStep.UI.RecipeGrid;
 
 internal sealed class PropertyTimeMultiConverter : IMultiValueConverter
 {
-	public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+	public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
 	{
 		if (values.Count < 3)
 		{

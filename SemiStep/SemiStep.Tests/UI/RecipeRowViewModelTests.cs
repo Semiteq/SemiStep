@@ -1,4 +1,6 @@
-﻿using Avalonia.Headless.XUnit;
+﻿using System.Collections.Immutable;
+
+using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
@@ -48,7 +50,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 
 	private IReadOnlyDictionary<string, CellState> BuildCellStates(ActionDefinition action)
 	{
-		var states = new Dictionary<string, CellState>();
+		var states = new Dictionary<string, CellState>(StringComparer.OrdinalIgnoreCase);
 		foreach (var col in _recipeMetadataRegistry.GetAllColumns())
 		{
 			states[col.Key] = CellStateResolver.GetCellState(col, action);
@@ -94,6 +96,28 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var value = row.GetPropertyValue(RecipeTestDriver.StepDurationColumn);
 
 		value.Should().NotBeNull();
+	}
+
+	[AvaloniaFact]
+	public void Indexer_Get_DelegatesToGetPropertyValue()
+	{
+		var row = CreateRow();
+
+		var indexerValue = row["action"];
+		var directValue = row.GetPropertyValue("action");
+
+		indexerValue.Should().Be(directValue);
+		indexerValue.Should().Be(RecipeTestDriver.WaitActionId);
+	}
+
+	[AvaloniaFact]
+	public void Indexer_Get_UnknownKey_ReturnsNull()
+	{
+		var row = CreateRow();
+
+		var value = row["nonexistent_column"];
+
+		value.Should().BeNull();
 	}
 
 	[AvaloniaFact]
@@ -194,23 +218,62 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void GetGroupNameForColumn_ReturnsNull_ForNonGroupColumn()
+	public void GroupItemsByColumn_ExposesItems_ForGroupBoundColumn()
 	{
-		var row = CreateRow();
+		var row = CreateRow(RecipeTestDriver.WithGroupActionId);
 
-		var groupName = row.GetGroupNameForColumn(RecipeTestDriver.StepDurationColumn);
-
-		groupName.Should().BeNull();
+		row.GroupItemsByColumn.Should().ContainKey(RecipeTestDriver.TargetColumn);
+		var items = row.GroupItemsByColumn[RecipeTestDriver.TargetColumn];
+		items.Should().NotBeEmpty();
+		items.Select(item => item.Id).Should().BeInAscendingOrder();
 	}
 
 	[AvaloniaFact]
-	public void GetGroupItemsForColumn_ReturnsNull_ForNonGroupColumn()
+	public void GroupItemsByColumn_OmitsKey_ForNonGroupBoundColumn()
 	{
-		var row = CreateRow();
+		// Pre-population is intentionally scoped to ActionTargetComboBox columns so non-group
+		// columns (text/property/action) do not accumulate empty-list entries.
+		var row = CreateRow(RecipeTestDriver.WithGroupActionId);
 
-		var groupItems = row.GetGroupItemsForColumn(RecipeTestDriver.StepDurationColumn);
+		row.GroupItemsByColumn.Should().NotContainKey(RecipeTestDriver.StepDurationColumn);
+		row.GroupItemsByColumn.Should().NotContainKey(RecipeTestDriver.CommentColumn);
+	}
 
-		groupItems.Should().BeNull();
+	[AvaloniaFact]
+	public void GroupItemsByColumn_PrepopulatesEmptyList_ForGroupColumnAbsentFromActionProperties()
+	{
+		// Wait action has no `target` property, but `target` is a group-bound column in the registry.
+		// The dictionary pre-populates such keys so bindings for cross-action grids never hit
+		// a missing key (which would yield UnsetValue and bypass the converter contract).
+		var row = CreateRow(RecipeTestDriver.WaitActionId);
+
+		row.GroupItemsByColumn.Should().ContainKey(RecipeTestDriver.TargetColumn);
+		row.GroupItemsByColumn[RecipeTestDriver.TargetColumn].Should().BeEmpty();
+	}
+
+	[AvaloniaFact]
+	public void GroupItemsByColumn_OmitsKey_WhenActionGroupResolutionFails()
+	{
+		// When an action property references a group that does not exist in the metadata registry,
+		// the view-model skips it rather than surfacing the property key with an empty list. The
+		// property key is also not a registered group-bound column, so the pre-population loop
+		// does not insert it either — the key is fully absent from the dictionary.
+		var unresolvedGroupProperty = new ActionPropertyDefinition(
+			Key: "phantom_column",
+			GroupName: "nonexistent_group",
+			PropertyTypeId: "enum",
+			DefaultValue: null);
+		var actionWithUnresolvedGroup = new ActionDefinition(
+			Id: 999,
+			UiName: "Phantom",
+			DeployDuration: DeployDuration.Immediate,
+			Properties: new[] { unresolvedGroupProperty });
+		var step = new Step(999, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
+		var cellStates = new Dictionary<string, CellState>();
+
+		var row = new RecipeRowViewModel(1, step, actionWithUnresolvedGroup, _recipeMetadataRegistry, cellStates);
+
+		row.GroupItemsByColumn.Should().NotContainKey("phantom_column");
 	}
 
 	public static TheoryData<string, string> ColumnUnitsData => new()

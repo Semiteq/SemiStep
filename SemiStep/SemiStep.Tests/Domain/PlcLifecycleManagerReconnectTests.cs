@@ -24,8 +24,12 @@ public sealed class PlcLifecycleManagerReconnectTests
 {
 	private const int WaitActionId = 10;
 
-	private static async Task<(PlcLifecycleManager Plc, RecipeWorkspace Workspace, RecipeEditor Editor, StubS7Service S7Service, StubPlcSyncService SyncService)>
-		BuildAsync()
+	private static async Task<(
+		PlcLifecycleManager Plc,
+		RecipeWorkspace Workspace,
+		RecipeEditor Editor,
+		StubS7Service S7Service,
+		StubPlcSyncService SyncService)> BuildAsync()
 	{
 		var configDir = TestConfigLocator.GetConfigDirectory("Standard");
 		var configLoadResult = await ConfigFacade.LoadAndValidateAsync(configDir);

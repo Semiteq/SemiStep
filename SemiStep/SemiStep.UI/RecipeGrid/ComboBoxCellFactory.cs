@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 
@@ -12,13 +13,15 @@ namespace SemiStep.UI.RecipeGrid;
 
 public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataRegistry)
 {
-	private readonly Dictionary<string, List<ComboBoxItemViewModel>> _groupItemsByGroupName = new();
+	private static readonly CellStateToBoolConverter _cellStateToBoolConverter = new();
+	private static readonly HitTestVisibleMultiConverter _hitTestVisibleMultiConverter = new();
+	private static readonly ComboBoxItemMultiSelectionConverter _groupSelectionConverter = new();
+
 	private List<ComboBoxItemViewModel>? _cachedActionItems;
 
 	public void InvalidateCaches()
 	{
 		_cachedActionItems = null;
-		_groupItemsByGroupName.Clear();
 	}
 
 	public DataGridColumn CreateActionColumn(GridColumnDefinition columnDef, DataGridLength width)
@@ -28,10 +31,9 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 			Header = columnDef.UiName,
 			Tag = columnDef.Key,
 			Width = width,
-			IsReadOnly = false,
+			IsReadOnly = true,
 			CanUserSort = false,
-			CellTemplate = CreateActionDisplayTemplate(),
-			CellEditingTemplate = CreateActionEditingTemplate(columnDef.ReadOnly)
+			CellTemplate = CreateActionCellTemplate(columnDef.ReadOnly)
 		};
 	}
 
@@ -42,161 +44,116 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 			Header = columnDef.UiName,
 			Tag = columnDef.Key,
 			Width = width,
-			IsReadOnly = false,
+			IsReadOnly = true,
 			CanUserSort = false,
-			CellTemplate = CreateGroupDisplayTemplate(columnDef.Key),
-			CellEditingTemplate = CreateGroupEditingTemplate(columnDef.Key, columnDef.ReadOnly)
+			CellTemplate = CreateGroupCellTemplate(columnDef.Key, columnDef.ReadOnly)
 		};
 	}
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateActionDisplayTemplate()
-	{
-		var cellStateConverter = new CellStateConverter(ColumnTypes.Action);
-
-		return new FuncDataTemplate<RecipeRowViewModel>((row, _) =>
-		{
-			var textBlock = new TextBlock
-			{
-				VerticalAlignment = VerticalAlignment.Center,
-				Padding = new Thickness(4, 2),
-				TextAlignment = TextAlignment.Center,
-			};
-
-			if (row is not null)
-			{
-				textBlock.Text = row.ActionName;
-			}
-
-			return CellPresenter.Wrap(textBlock, cellStateConverter);
-		}, supportsRecycling: false);
-	}
-
-	private FuncDataTemplate<RecipeRowViewModel> CreateActionEditingTemplate(bool isColumnReadOnly)
+	private FuncDataTemplate<RecipeRowViewModel> CreateActionCellTemplate(bool isColumnReadOnly)
 	{
 		var items = GetOrCreateActionItems();
 		var cellStateConverter = new CellStateConverter(ColumnTypes.Action);
 		var selectionConverter = new ComboBoxItemSelectionConverter(items);
 
-		return new FuncDataTemplate<RecipeRowViewModel>((row, _) =>
+		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
 		{
-			var isEnabled = !isColumnReadOnly;
+			var comboBox = CreateStyledComboBox();
+			comboBox.ItemsSource = items;
 
-			var comboBox = new ComboBox
-			{
-				ItemsSource = items,
-				DisplayMemberBinding = new Binding("DisplayText"),
-				HorizontalAlignment = HorizontalAlignment.Stretch,
-				VerticalAlignment = VerticalAlignment.Center,
-				Background = Brushes.Transparent,
-				BorderThickness = new Thickness(0),
-				IsHitTestVisible = isEnabled,
-			};
-			comboBox.Bind(ComboBox.SelectedItemProperty,
-				new Binding(ColumnTypes.ActionIndexerBindingPath) { Mode = BindingMode.TwoWay, Converter = selectionConverter });
+			comboBox.Bind(
+				ComboBox.SelectedItemProperty,
+				new Binding(ColumnTypes.ActionIndexerBindingPath)
+				{
+					Mode = BindingMode.TwoWay,
+					Converter = selectionConverter
+				});
+
+			comboBox.Bind(
+				InputElement.IsHitTestVisibleProperty,
+				BuildHitTestVisibleBinding(ColumnTypes.Action, isColumnReadOnly));
 
 			return CellPresenter.Wrap(comboBox, cellStateConverter);
-		}, supportsRecycling: false);
+		}, supportsRecycling: true);
 	}
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateGroupDisplayTemplate(string columnKey)
+	private FuncDataTemplate<RecipeRowViewModel> CreateGroupCellTemplate(string columnKey, bool isColumnReadOnly)
 	{
 		var cellStateConverter = new CellStateConverter(columnKey);
+		var itemsSourcePath = ColumnTypes.GroupItemsPath(columnKey);
+		var valueIndexerPath = ColumnTypes.IndexerPath(columnKey);
 
-		return new FuncDataTemplate<RecipeRowViewModel>((row, _) =>
+		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
 		{
-			var textBlock = new TextBlock
-			{
-				VerticalAlignment = VerticalAlignment.Center,
-				Padding = new Thickness(4, 2),
-				TextAlignment = TextAlignment.Center,
-			};
+			var comboBox = CreateStyledComboBox();
 
-			if (row is not null)
-			{
-				var displayText = ResolveGroupDisplayText(row, columnKey);
-				textBlock.Text = displayText;
-			}
+			comboBox.Bind(
+				ComboBox.ItemsSourceProperty,
+				new Binding(itemsSourcePath));
 
-			return CellPresenter.Wrap(textBlock, cellStateConverter);
-		}, supportsRecycling: false);
-	}
+			comboBox.Bind(
+				ComboBox.SelectedItemProperty,
+				new MultiBinding
+				{
+					Mode = BindingMode.TwoWay,
+					Converter = _groupSelectionConverter,
+					Bindings =
+					{
+						new Binding(valueIndexerPath) { Mode = BindingMode.TwoWay },
+						new Binding(itemsSourcePath)
+					}
+				});
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateGroupEditingTemplate(string columnKey, bool isColumnReadOnly)
-	{
-		var cellStateConverter = new CellStateConverter(columnKey);
-
-		return new FuncDataTemplate<RecipeRowViewModel>((row, _) =>
-		{
-			if (row is null)
-			{
-				return CellPresenter.Wrap(new TextBlock { Text = string.Empty }, cellStateConverter);
-			}
-
-			var groupItems = GetOrCreateGroupItems(row, columnKey);
-			var selectionConverter = new ComboBoxItemSelectionConverter(groupItems);
-			var cellState = row.CellStates.TryGetValue(columnKey, out var state) ? state : CellState.Enabled;
-			var isEnabled = !isColumnReadOnly && cellState == CellState.Enabled;
-
-			var comboBox = new ComboBox
-			{
-				ItemsSource = groupItems,
-				DisplayMemberBinding = new Binding("DisplayText"),
-				HorizontalAlignment = HorizontalAlignment.Stretch,
-				VerticalAlignment = VerticalAlignment.Center,
-				Background = Brushes.Transparent,
-				BorderThickness = new Thickness(0),
-				IsHitTestVisible = isEnabled,
-			};
-			comboBox.Bind(ComboBox.SelectedItemProperty,
-				new Binding($"[{columnKey}]") { Mode = BindingMode.TwoWay, Converter = selectionConverter });
+			comboBox.Bind(
+				InputElement.IsHitTestVisibleProperty,
+				BuildHitTestVisibleBinding(columnKey, isColumnReadOnly));
 
 			return CellPresenter.Wrap(comboBox, cellStateConverter);
-		}, supportsRecycling: false);
+		}, supportsRecycling: true);
 	}
 
-	private string ResolveGroupDisplayText(RecipeRowViewModel row, string columnKey)
+	private static ComboBox CreateStyledComboBox()
 	{
-		if (row.GetPropertyValue(columnKey) is not int intValue)
+		return new ComboBox
 		{
-			return string.Empty;
-		}
-
-		var groupItems = row.GetGroupItemsForColumn(columnKey);
-		if (groupItems is null)
-		{
-			return string.Empty;
-		}
-
-		return groupItems.TryGetValue(intValue, out var displayText) ? displayText : string.Empty;
+			DisplayMemberBinding = new Binding("DisplayText"),
+			HorizontalAlignment = HorizontalAlignment.Stretch,
+			VerticalAlignment = VerticalAlignment.Center,
+			Background = Brushes.Transparent,
+			BorderThickness = new Thickness(0),
+		};
 	}
 
-	private List<ComboBoxItemViewModel> GetOrCreateGroupItems(RecipeRowViewModel row, string columnKey)
+	private static BindingBase BuildHitTestVisibleBinding(string columnKey, bool isColumnReadOnly)
 	{
-		var groupName = row.GetGroupNameForColumn(columnKey);
-		if (groupName is null)
+		if (isColumnReadOnly)
 		{
-			return [];
+			return new Binding
+			{
+				Source = false,
+				Mode = BindingMode.OneTime,
+			};
 		}
 
-		if (_groupItemsByGroupName.TryGetValue(groupName, out var cached))
+		return new MultiBinding
 		{
-			return cached;
-		}
-
-		var groupResult = recipeMetadataRegistry.GetGroup(groupName);
-		if (groupResult.IsFailed)
-		{
-			return [];
-		}
-
-		var items = groupResult.Value.Items
-			.Select(kvp => new ComboBoxItemViewModel(kvp.Key, kvp.Value))
-			.OrderBy(item => item.Id)
-			.ToList();
-
-		_groupItemsByGroupName[groupName] = items;
-
-		return items;
+			Converter = _hitTestVisibleMultiConverter,
+			Bindings =
+			{
+				new Binding(ColumnTypes.CellStatePath(columnKey))
+				{
+					Converter = _cellStateToBoolConverter,
+				},
+				new Binding(nameof(DataGrid.IsReadOnly))
+				{
+					RelativeSource = new RelativeSource
+					{
+						Mode = RelativeSourceMode.FindAncestor,
+						AncestorType = typeof(DataGrid),
+					},
+				},
+			},
+		};
 	}
 
 	private List<ComboBoxItemViewModel> GetOrCreateActionItems()

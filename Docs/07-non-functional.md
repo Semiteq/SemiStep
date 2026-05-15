@@ -10,7 +10,7 @@
 |----------|----------|
 | ОС | Windows 10/11 |
 | Framework | .NET 10 |
-| UI Framework | Avalonia 12.0.2 |
+| UI Framework | Avalonia 12.0.3 |
 | Язык | C# 14 |
 
 ---
@@ -213,6 +213,79 @@
   ради compiled-bindings (вместо текущих reflection-based `new Binding(path)` из кода) —
   отдельный объём работ. Manual scroll smoke с реальным рецептом ≥100 шагов остаётся
   обязательной верификацией перед открытием PR (в headless не автоматизируется).
+
+### Round-8 (ComboBox CellTemplate миграция + включение recycling)
+
+- **Регрессия Avalonia 12: `CellEditingTemplate` + ComboBox не работает.** После апгрейда
+  Avalonia 11 → 12 (Round-4) ComboBox внутри `DataGridTemplateColumn.CellEditingTemplate`
+  перестал реагировать на клики — popup не открывается ни при первом, ни при повторных
+  кликах по ячейке. Причина задокументирована в `AvaloniaUI/Avalonia.Controls.DataGrid#236`
+  и закрыта без апстрим-фикса. Промежуточный воркараунд из `dd0d7f7` (синхронная установка
+  `SelectedItem` в editing-template) снимал NRE при первом клике, но не решал основную
+  проблему — popup всё равно не открывался. Единственный рабочий паттерн в Avalonia 12,
+  подтверждённый официальными сэмплами (`NumericUpDown` в `CellEditingTemplate` — да,
+  ComboBox — нет), avalonia-docs и community-обсуждениями `#7086`/`#14103`, — это
+  размещение интерактивных ComboBox'ов **прямо в `CellTemplate`** при выставленном
+  `IsReadOnly = true` на колонке. Ячейка не проходит edit-mode lifecycle DataGrid'а;
+  ComboBox живёт в визуальном дереве с момента материализации строки, владеет своими
+  pointer-events и открывает popup на первом клике.
+- **Миграция шаблонов action/group ComboBox.** В `ComboBoxCellFactory` четыре шаблона
+  (display + edit × action + group) свёрнуты в два (`CellTemplate` × action + group).
+  Колонки помечены `IsReadOnly = true`, `CellEditingTemplate` снят. Шаблоны построены
+  как `FuncDataTemplate<RecipeRowViewModel>` без захвата `row` в замыкание — все
+  per-row данные текут через биндинги к свойствам `DataContext`.
+- **Включение `supportsRecycling: true` — закрытие Round-7 follow-up.** Round-7
+  оставил `supportsRecycling: false` на пяти шаблонах из-за замыканий на `row`
+  (resolving action id, group items list, write-back lambda). Round-8 структурно
+  устранил эти замыкания:
+  - Action items живут как глобальный кэш `_cachedActionItems` в инстансе
+    `ComboBoxCellFactory` — одинаковы для всех строк, лямбда захватывает константу,
+    не строку. `InvalidateCaches()` вызывается **только** из `ColumnBuilder.BuildColumns`
+    сразу после `grid.Columns.Clear()`; очистка колонок уничтожает все материализованные
+    ячейки, переиспользованной ячейки со stale-кэшом не существует.
+  - Group items вынесены из фабрики в view-model: `RecipeRowViewModel.GroupItemsByColumn`
+    (`IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>>`) строится
+    однократно в конструкторе строки рядом с `BuildColumnMetadata`. Action для строки
+    фиксирован на её время жизни (`MutationSignal.StepActionChanged` всегда пересоздаёт
+    строку через `RecipeGridViewModel.RebuildRow`), поэтому словарь иммутабельный.
+    ComboBox в group-шаблоне биндит `ItemsSource` к пути `GroupItemsByColumn[<key>]`.
+  - Для group-колонок введён `ComboBoxItemMultiSelectionConverter` (`IMultiValueConverter`):
+    source 0 — int id из `[<columnKey>]`, source 1 — список айтемов из
+    `GroupItemsByColumn[<columnKey>]`, прямое преобразование возвращает совпавший
+    `ComboBoxItemViewModel`, обратное — `[item.Id, BindingOperations.DoNothing]`.
+    Action-колонка осталась на одиночном `ComboBoxItemSelectionConverter` — у неё
+    список айтемов глобален.
+  - Сознательная регрессия аллокаций: ранее `_groupItemsByGroupName` кэш в фабрике
+    шарил списки между строками с одинаковым action. Теперь каждая строка строит
+    собственный — группы малы (<20 элементов), компромисс оправдан устранением
+    замыканий ради recycling. Если профилирование покажет горячую точку, кэш
+    реинтродуцируется на уровне registry (проекция — чистая функция от
+    `ActionDefinition` и group-данных).
+- **Disable-state через `IsHitTestVisible`, не `IsEnabled`.** Для read-only/disabled
+  ячеек ComboBox биндит `IsHitTestVisible` на `MultiBinding` (`HitTestVisibleMultiConverter`)
+  с двумя источниками: `CellStates[<columnKey>]` проектируется в bool через cell-state →
+  bool логику (Enabled → true), и `DataGrid.IsReadOnly` через `RelativeSource = FindAncestor`
+  с инверсией. Третий фактор — статический `isColumnReadOnly` — короткозамыкается на
+  константный `false`-биндинг при `true` (без MultiBinding'а вовсе). Выбор
+  `IsHitTestVisible` вместо `IsEnabled` сделан сознательно: Fluent-тема Avalonia
+  выкрашивает `IsEnabled = false` в серый — это визуальный регресс UX относительно
+  master. `IsHitTestVisible = false` сохраняет текущий рендер ComboBox'а, игнорируя
+  только клики. Полностью disabled-ячейки скрывают ComboBox целиком через стиль
+  `:cell-disabled > ComboBox { IsVisible: false }` в `Styles/DataGridStyles.axaml` —
+  без изменений.
+- **Headless ограничение.** Avalonia.Headless не симулирует hit-testing, поэтому
+  каноническое наблюдаемое — «клик по ячейке → popup открылся с первого раза» — не
+  покрывается unit-тестами. Покрытие в Round-8 косвенное: assertion'ы на форму
+  колонок (`IsReadOnly == true`, `CellEditingTemplate == null`, `CellTemplate != null`),
+  раунд-трип `ComboBoxItemMultiSelectionConverter`, регрессионная сетка существующих
+  тестов (309 baseline до Round-8, 351 после) обеспечивает биндинг-семантику
+  (action-change wiring, row rebuild, mutation-coordinator flows). Manual scroll/click
+  smoke (7 сценариев из плана —
+  клик по action-ячейке, смена action → перестроение строки, клик по group-ячейке,
+  disabled-state, RecipeActive read-only, скролл рецепта ≥100 шагов 30 сек) остаётся
+  обязательной верификацией перед открытием PR.
+- Финальный прогон: 351/351 зелёных, `dotnet format --verify-no-changes` чистый,
+  `dotnet build` 0 ошибок 0 предупреждений.
 
 ---
 

@@ -67,7 +67,7 @@ public class App : Application
 		BuildAvaloniaApp()
 			.AfterSetup(_ =>
 				// UseReactiveUI() above has already registered AvaloniaScheduler as
-				// RxApp.MainThreadScheduler. Initialize services here — after the
+				// RxSchedulers.MainThreadScheduler. Initialize services here — after the
 				// scheduler is set — so that ReactiveCommand singletons capture the
 				// correct scheduler at construction time.
 				InitializeServices(serviceProvider))

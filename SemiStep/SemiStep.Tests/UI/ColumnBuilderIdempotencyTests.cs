@@ -127,18 +127,21 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 	{
 		var action = _fixture.RecipeMetadataRegistry.GetAction(actionId).Value;
 		var step = new Step(actionId, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
-		var cellStates = BuildCellStates(action);
-		return new RecipeRowViewModel(1, step, action, _fixture.RecipeMetadataRegistry, cellStates);
+		var inapplicableColumns = BuildInapplicableColumns(action);
+		return new RecipeRowViewModel(1, step, action, _fixture.RecipeMetadataRegistry, inapplicableColumns);
 	}
 
-	private IReadOnlyDictionary<string, CellState> BuildCellStates(ActionDefinition action)
+	private IReadOnlySet<string> BuildInapplicableColumns(ActionDefinition action)
 	{
-		var states = new Dictionary<string, CellState>();
+		var inapplicable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		foreach (var col in _fixture.RecipeMetadataRegistry.GetAllColumns())
 		{
-			states[col.Key] = CellStateResolver.GetCellState(col, action);
+			if (CellStateResolver.IsInapplicable(col, action))
+			{
+				inapplicable.Add(col.Key);
+			}
 		}
-		return states;
+		return inapplicable;
 	}
 
 	private static ComboBox MaterializeComboBox(IDataTemplate template, RecipeRowViewModel row)
@@ -146,11 +149,8 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 		var built = template.Build(row);
 		built.Should().NotBeNull();
 
-		var cellPresenter = built as CellPresenter;
-		cellPresenter.Should().NotBeNull("CellTemplate must return a CellPresenter wrapping the ComboBox");
-
-		var comboBox = cellPresenter!.Content as ComboBox;
-		comboBox.Should().NotBeNull("the CellPresenter must contain a ComboBox");
+		var comboBox = built as ComboBox;
+		comboBox.Should().NotBeNull("CellTemplate must return a ComboBox directly");
 		comboBox!.DataContext = row;
 		return comboBox;
 	}

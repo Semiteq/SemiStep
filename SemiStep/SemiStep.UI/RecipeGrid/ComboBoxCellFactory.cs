@@ -2,7 +2,6 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
-using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 
@@ -11,11 +10,8 @@ using SemiStep.Core.Recipes;
 
 namespace SemiStep.UI.RecipeGrid;
 
-public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataRegistry)
+internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataRegistry)
 {
-	private static readonly CellStateToBoolConverter _cellStateToBoolConverter = new();
-	private static readonly HitTestVisibleMultiConverter _hitTestVisibleMultiConverter = new();
-
 	private readonly Dictionary<string, IReadOnlyList<ComboBoxItemViewModel>> _groupItemsByGroupName
 		= new(StringComparer.OrdinalIgnoreCase);
 
@@ -36,7 +32,7 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 			Width = width,
 			IsReadOnly = true,
 			CanUserSort = false,
-			CellTemplate = CreateActionCellTemplate(columnDef.ReadOnly)
+			CellTemplate = CreateActionCellTemplate(columnDef.ReadOnly),
 		};
 	}
 
@@ -49,14 +45,14 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 			Width = width,
 			IsReadOnly = true,
 			CanUserSort = false,
-			CellTemplate = CreateGroupCellTemplate(columnDef.Key, columnDef.ReadOnly)
+			CellTemplate = CreateGroupCellTemplate(columnDef.Key, columnDef.ReadOnly),
 		};
 	}
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateActionCellTemplate(bool isColumnReadOnly)
 	{
 		var items = GetOrCreateActionItems();
-		var cellStateConverter = new CellStateConverter(ColumnTypes.Action);
+		var inapplicableColumnsConverter = new InapplicableColumnsConverter(ColumnTypes.Action);
 		var selectionConverter = new ComboBoxItemSelectionConverter(items);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
@@ -69,20 +65,18 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 				new Binding(ColumnTypes.IndexerPath(ColumnTypes.Action))
 				{
 					Mode = BindingMode.TwoWay,
-					Converter = selectionConverter
+					Converter = selectionConverter,
 				});
 
-			comboBox.Bind(
-				InputElement.IsHitTestVisibleProperty,
-				BuildHitTestVisibleBinding(ColumnTypes.Action, isColumnReadOnly));
+			ApplyDisabledClass(comboBox, inapplicableColumnsConverter, isColumnReadOnly);
 
-			return CellPresenter.Wrap(comboBox, cellStateConverter);
-		}, supportsRecycling: false);
+			return comboBox;
+		}, supportsRecycling: true);
 	}
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateGroupCellTemplate(string columnKey, bool isColumnReadOnly)
 	{
-		var cellStateConverter = new CellStateConverter(columnKey);
+		var inapplicableColumnsConverter = new InapplicableColumnsConverter(columnKey);
 		var valueIndexerPath = ColumnTypes.IndexerPath(columnKey);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((row, _) =>
@@ -98,15 +92,13 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 				new Binding(valueIndexerPath)
 				{
 					Mode = BindingMode.TwoWay,
-					Converter = selectionConverter
+					Converter = selectionConverter,
 				});
 
-			comboBox.Bind(
-				InputElement.IsHitTestVisibleProperty,
-				BuildHitTestVisibleBinding(columnKey, isColumnReadOnly));
+			ApplyDisabledClass(comboBox, inapplicableColumnsConverter, isColumnReadOnly);
 
-			return CellPresenter.Wrap(comboBox, cellStateConverter);
-		}, supportsRecycling: false);
+			return comboBox;
+		}, supportsRecycling: true);
 	}
 
 	private static ComboBox CreateStyledComboBox()
@@ -121,36 +113,19 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 		};
 	}
 
-	private static BindingBase BuildHitTestVisibleBinding(string columnKey, bool isColumnReadOnly)
+	private static void ApplyDisabledClass(
+		ComboBox comboBox,
+		InapplicableColumnsConverter inapplicableColumnsConverter,
+		bool isColumnReadOnly)
 	{
 		if (isColumnReadOnly)
 		{
-			return new Binding
-			{
-				Source = false,
-				Mode = BindingMode.OneTime,
-			};
+			comboBox.Classes.Set("disabled", true);
+			return;
 		}
 
-		return new MultiBinding
-		{
-			Converter = _hitTestVisibleMultiConverter,
-			Bindings =
-			{
-				new Binding(ColumnTypes.CellStatePath(columnKey))
-				{
-					Converter = _cellStateToBoolConverter,
-				},
-				new Binding(nameof(DataGrid.IsReadOnly))
-				{
-					RelativeSource = new RelativeSource
-					{
-						Mode = RelativeSourceMode.FindAncestor,
-						AncestorType = typeof(DataGrid),
-					},
-				},
-			},
-		};
+		var disabledBinding = DisabledClassBinding.Create(inapplicableColumnsConverter);
+		comboBox.BindClass("disabled", disabledBinding, comboBox);
 	}
 
 	private List<ComboBoxItemViewModel> GetOrCreateActionItems()

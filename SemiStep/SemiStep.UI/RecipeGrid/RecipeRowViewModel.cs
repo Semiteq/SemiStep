@@ -10,9 +10,11 @@ public sealed class RecipeRowViewModel(
 	Step step,
 	ActionDefinition action,
 	RecipeMetadataRegistry recipeMetadataRegistry,
-	IReadOnlyDictionary<string, CellState> cellStates)
+	IReadOnlySet<string> inapplicableColumns)
 	: ReactiveObject, IDisposable
 {
+	private const string IndexerName = "Item[]";
+
 	private readonly (IReadOnlyDictionary<string, string?> Units, IReadOnlyDictionary<string, string> FormatKinds) _columnMetadata
 		= BuildColumnMetadata(action, recipeMetadataRegistry);
 
@@ -47,7 +49,7 @@ public sealed class RecipeRowViewModel(
 		set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
-	public IReadOnlyDictionary<string, CellState> CellStates { get; } = cellStates;
+	public IReadOnlySet<string> InapplicableColumns { get; } = inapplicableColumns;
 
 	public IReadOnlyDictionary<string, string?> ColumnUnits => _columnMetadata.Units;
 
@@ -72,7 +74,7 @@ public sealed class RecipeRowViewModel(
 	public void UpdateStep(Step newStep)
 	{
 		_step = newStep;
-		this.RaisePropertyChanged("Item[]");
+		this.RaisePropertyChanged(IndexerName);
 	}
 
 	public void UpdateStepNumber(int newNumber)
@@ -83,6 +85,11 @@ public sealed class RecipeRowViewModel(
 	public void UpdateStepStartTime(string? formattedTime)
 	{
 		StepStartTime = formattedTime;
+	}
+
+	public bool IsApplicable(string columnKey)
+	{
+		return !InapplicableColumns.Contains(columnKey);
 	}
 
 	public object? GetPropertyValue(string columnKey)

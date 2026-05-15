@@ -474,6 +474,115 @@
   создаётся после landing'а Round-9 на master). Round-9 mitigates этот класс
   через equal-value guard + recycling rollback; не устраняет структурно.
 
+### Round-10 (cell-state modernization + safe recycling)
+
+- **Диагностика.** Round-9 закрыл binding-seam класс багов на уровне поведения
+  (equal-value guard в `RecipeRowViewModel.SetPropertyValue`), но откатил
+  `supportsRecycling: false` на всех четырёх шаблонах ячеек ради безопасности.
+  Пользователь сообщил о высокой GC-нагрузке и подвисаниях UI при прокрутке
+  больших рецептов — структурный шов оставался. Round-10 разделён на три
+  независимых scope'а — A (recycling-first эксперимент), B (канонический
+  Classes-binding паттерн), C (XAML compiled-binding, пропущен по
+  audit-предположению Task 5).
+- **Scope A: `supportsRecycling: true` на всех четырёх шаблонах.** Pre-implementation
+  audit (Task 1.A1) формально подтвердил, что equal-value guard в
+  `SetPropertyValue` корректен под recycling: `ComboBoxItemSelectionConverter.ConvertBack`
+  возвращает `BindingOperations.DoNothing` для любого входа, не являющегося
+  `ComboBoxItemViewModel` (null, неверный тип, boxed empty string). По исходникам
+  Avalonia 12.0.3 (`Avalonia.Base/Data/Core/BindingExpression.cs:267-282`,
+  `WriteValueToSource`) возврат `DoNothing` короткозамыкает запись в источник
+  на уровне binding-pipeline'а — phantom-writeback от DataContext-swap при
+  recycling никогда не достигает row VM. Layer-2 защита (string-equals
+  early-return в `SetPropertyValue`) остаётся как belt-and-suspenders для других
+  write-путей (paste, undo, PLC sync). `supportsRecycling: true` выставлен в
+  `ComboBoxCellFactory.CreateActionCellTemplate` / `CreateGroupCellTemplate`,
+  `TextCellFactory.CreateStepStartTimeTemplate` / `CreateMultiBindingTemplate`.
+- **Scope B: канонический Avalonia 12 Classes-binding паттерн.** `CellPresenter`
+  удалён (~90 LOC, anti-pattern wrapper, существовавший только потому, что
+  `PseudoClasses` `protected` — три `StyledProperty<>`, три reflection-биндинга,
+  пять `OnChanged`-хэндлеров ради доступа к `PseudoClasses.Set`, который
+  может вызывать только сам контрол). Модель состояния ячейки упрощена:
+  три enum-значения (`Enabled` / `Readonly` / `Disabled`) свёрнуты в один
+  boolean (`IsApplicable`). Editability перенесена с runtime-флага на
+  template-choice (TextBlock для `step_start_time` вместо TextBox).
+  `HitTestVisibleMultiConverter` и `CellStateToBoolConverter` удалены;
+  `CellStateConverter` сохранён — теперь выполняет
+  `IReadOnlySet<string>.Contains(columnKey)` lookup для `Classes.disabled`
+  биндинга. Row-level состояние (`IsCurrentStep` / `IsPastStep`) мигрировано
+  с per-cell `CellPresenter`-биндингов на `DataGrid.LoadingRow` handler
+  в code-behind `MainWindow`, устанавливающий `DataGridRow.Classes` и
+  отписывающийся в `UnloadingRow` — row-level данные живут в row-level визуале,
+  не дублируются по ячейкам.
+- **Канонические Avalonia 12 паттерны.** Документ
+  `AvaloniaUI/avalonia-docs/docs/data-binding/binding-classes.md` плюс
+  `docs/styling/pseudoclasses.md` явно рекомендуют `Classes` для data-driven
+  внешнего состояния и резервируют `PseudoClasses` (которое `protected`)
+  для intrinsic control state. Используется публичный helper
+  `StyledElementExtensions.BindClass(target, className, source, anchor)` —
+  обёртка над `ClassBindingManager.Bind`, регистрирующая глобальный proxy
+  `AvaloniaProperty<bool>` per class name и привязывающая обычный
+  Avalonia-биндинг на цель. Lifecycle управляется value-store'ом контрола —
+  no per-cell subscribe/cleanup boilerplate. Стили в `DataGridStyles.axaml`
+  переписаны на канонические селекторы `<Style Selector="DataGridCell.disabled / TextBlock.disabled / ComboBox.disabled">`
+  (плюс `DataGrid.read-only ComboBox` для PLC-sync read-only состояния,
+  привязанного на `RecipeGrid.IsReadOnly`).
+- **Behavior diff (user-visible).** Два преднамеренных UX-изменения, следующих
+  из упрощения cell-state модели:
+  1. Колонка `step_start_time` рендерится с нормальным фоном и видимым
+     текстом — она выглядит как данные, потому что она и есть данные
+     (computed, но всё ещё данные). Прежний светло-серый фон через
+     `:cell-readonly` удалён вместе с самим состоянием Readonly.
+  2. Не-применимые ячейки (колонка не применима к action строки —
+     например `temperature_target` в строке `OpenValve`) теперь показывают
+     greyed-out ComboBox / TextBlock на сером фоне с
+     `IsHitTestVisible = false`. Прежнее поведение — скрытие содержимого
+     через `:cell-disabled > Child { IsVisible = false }` на тёмно-сером
+     фоне — заменено. Современная UX-парадигма (Fluent / Material обе
+     предпочитают видимый-но-неактивный паттерн hidden-content паттерну) —
+     информативно («колонка существует, здесь не применима»), а не
+     запутывающе-пусто.
+- **Scope C отложен.** Миграция action-ComboBox на XAML compiled-bindings
+  отложена до пользовательского manual smoke в Task 15. Baseline и
+  post-Scope-B сравнение требуют manual perf-измерения (headless dispatcher
+  не симулирует hit-testing и не воспроизводит DataGrid-виртуализацию
+  на realistic viewport scale). Если manual smoke покажет gen-0/sec drop
+  &lt;50% или растущий working set — Tasks 13-14 разморозятся и Scope C
+  выполнится post-hoc.
+- **Метрики Round-10.** Тесты: 402 baseline (Round-9 после доп.
+  стабилизирующих фиксов) → 378 после Round-10 (удалено 24 теста вместе
+  с консолидированными / удалёнными конвертерами и их suite'ами).
+  `dotnet build SemiStep/SemiStep.slnx` — 0 ошибок, 0 предупреждений.
+  `dotnet test` — 378/378 зелёных. `dotnet format --verify-no-changes` —
+  чисто.
+- **Контракт жизненного цикла Classes-привязки.** В шаблонах ячеек
+  (`ComboBoxCellFactory`, `TextCellFactory`) применяется публичный helper
+  `StyledElementExtensions.BindClass(target, className, source, anchor)`.
+  Avalonia 12 регистрирует глобальный proxy `AvaloniaProperty<bool>` под
+  именем класса и привязывает обычный биндинг к цели через value-store
+  контрола — освобождение подписки происходит автоматически при удалении
+  цели из визуального дерева. Никаких ручных `OnDetachedFromVisualTree`
+  отписок и собственных `CellPresenter`-обёрток не требуется.
+- **Контракт `LoadingRow` / `UnloadingRow` для row-state классов.**
+  `DataGridRow` создаётся самим DataGrid'ом и переиспользуется между
+  view-model'ями по мере виртуализации. Row-level состояние
+  (`IsCurrentStep` / `IsPastStep`) проецируется в CSS-классы
+  `current-step` / `past-step` через handler в code-behind
+  `MainWindow`: `OnDataGridLoadingRow` подписывается на
+  `RecipeRowViewModel.PropertyChanged` и вызывает
+  `RowExecutionClasses.Apply`, `OnDataGridUnloadingRow` отписывается и
+  вызывает `RowExecutionClasses.Clear`. Утечка handler'ов в словаре
+  `_rowPropertyChangedHandlers` исключена тремя independent защитами:
+  `UnloadingRow` (нормальный путь рециклинга), подписка на
+  `RecipeRows.CollectionChanged` (Remove/Replace/Reset кейсы для строк
+  вне viewport'а), и `ClearAllRowPropertyChangedHandlers` при
+  деактивации окна. Логика `RowExecutionClasses` вынесена в
+  internal-static тип для возможности модульного тестирования
+  без `LoadingRow`-эмуляции (headless DataGrid не симулирует
+  виртуализацию).
+- **Round-11 отложенная работа: нет.** Round-10 закрывает binding-seam
+  класс структурно; дальнейших отложенных задач из этой темы не
+  планируется.
+
 ---
 
 ## 7.6. Локализация

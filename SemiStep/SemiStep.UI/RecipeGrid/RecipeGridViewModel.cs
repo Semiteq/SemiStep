@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
@@ -13,7 +12,6 @@ using ReactiveUI;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
-using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
 
@@ -26,14 +24,14 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 {
 	private readonly ObservableAsPropertyHelper<bool> _canDeleteStep;
 	private readonly ObservableAsPropertyHelper<bool> _isReadOnly;
+	private readonly ObservableAsPropertyHelper<int> _selectedRowIndex;
 	private readonly RecipeCoordinator _coordinator;
 	private readonly CompositeDisposable _disposables = new();
+	private readonly ExecutionHighlightTracker _executionHighlightTracker;
 	private readonly ILogger<RecipeGridViewModel> _logger;
 	private readonly MessagePanelViewModel _messagePanel;
 
 	private IReadOnlyList<int> _selectedRowIndices = [];
-	private bool _lastRecipeActive;
-	private int _lastActualLine = -1;
 
 	public RecipeGridViewModel(
 		RecipeCoordinator coordinator,
@@ -47,11 +45,18 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		_logger = logger;
 
 		RecipeRows = new ObservableCollection<RecipeRowViewModel>();
+		_executionHighlightTracker = new ExecutionHighlightTracker(RecipeRows);
 
 		_canDeleteStep = this
 			.WhenAnyValue(x => x.SelectedRowIndices)
 			.Select(indices => indices.Count > 0)
 			.ToProperty(this, x => x.CanDeleteStep)
+			.DisposeWith(_disposables);
+
+		_selectedRowIndex = this
+			.WhenAnyValue(x => x.SelectedRowIndices)
+			.Select(indices => indices.Count > 0 ? indices[0] : -1)
+			.ToProperty(this, x => x.SelectedRowIndex)
 			.DisposeWith(_disposables);
 
 		_isReadOnly = coordinator.ExecutionState
@@ -60,7 +65,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			.DisposeWith(_disposables);
 
 		coordinator.ExecutionState
-			.Subscribe(OnExecutionStateChanged)
+			.Subscribe(_executionHighlightTracker.OnExecutionStateChanged)
 			.DisposeWith(_disposables);
 	}
 
@@ -72,16 +77,12 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 	public bool IsReadOnly => _isReadOnly.Value;
 
-	public int SelectedRowIndex => _selectedRowIndices.Count > 0 ? _selectedRowIndices[0] : -1;
+	public int SelectedRowIndex => _selectedRowIndex.Value;
 
 	public IReadOnlyList<int> SelectedRowIndices
 	{
 		get => _selectedRowIndices;
-		set
-		{
-			this.RaiseAndSetIfChanged(ref _selectedRowIndices, value);
-			this.RaisePropertyChanged(nameof(SelectedRowIndex));
-		}
+		set => this.RaiseAndSetIfChanged(ref _selectedRowIndices, value);
 	}
 
 	public event Action<int?>? SelectionRequested;
@@ -96,55 +97,6 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 	public void Initialize()
 	{
 		FullRebuild(_coordinator.CurrentRecipe);
-	}
-
-	private void OnExecutionStateChanged(PlcExecutionInfo info)
-	{
-		var activeChanged = info.RecipeActive != _lastRecipeActive;
-		var lineChanged = info.ActualLine != _lastActualLine;
-
-		if (!activeChanged && !lineChanged)
-		{
-			return;
-		}
-
-		if (!info.RecipeActive)
-		{
-			if (_lastRecipeActive)
-			{
-				ClearAllStepHighlights();
-			}
-
-			_lastRecipeActive = false;
-			_lastActualLine = -1;
-
-			return;
-		}
-
-		var previousLine = _lastActualLine;
-		_lastRecipeActive = true;
-		_lastActualLine = info.ActualLine;
-
-		if (previousLine >= 0 && previousLine < RecipeRows.Count && previousLine != info.ActualLine)
-		{
-			RecipeRows[previousLine].IsCurrentStep = false;
-			RecipeRows[previousLine].IsPastStep = previousLine < info.ActualLine;
-		}
-
-		if (info.ActualLine >= 0 && info.ActualLine < RecipeRows.Count)
-		{
-			RecipeRows[info.ActualLine].IsCurrentStep = true;
-			RecipeRows[info.ActualLine].IsPastStep = false;
-		}
-	}
-
-	private void ClearAllStepHighlights()
-	{
-		foreach (var row in RecipeRows)
-		{
-			row.IsCurrentStep = false;
-			row.IsPastStep = false;
-		}
 	}
 
 	public void OnMutation(MutationSignal signal)
@@ -243,9 +195,6 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 	private void UpdateAllRowsInPlace(Recipe recipe)
 	{
-		Debug.Assert(RecipeRows.Count == recipe.StepCount,
-			"Row count mismatch: grid rows and recipe steps are out of sync.");
-
 		for (var i = 0; i < recipe.StepCount; i++)
 		{
 			RecipeRows[i].UpdateStep(recipe.Steps[i]);
@@ -287,8 +236,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		}
 
 		var step = recipe.Steps[index];
-		var action = RecipeMetadataRegistry.GetAction(step.ActionKey).Value;
-		RecipeRows.Add(CreateRowViewModel(step, action, index + 1));
+		RecipeRows.Add(CreateRowViewModel(step, ResolveAction(step.ActionKey), index + 1));
 	}
 
 	private void InsertRows(Recipe recipe, int startIndex, int count)
@@ -309,8 +257,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		{
 			var index = startIndex + i;
 			var step = recipe.Steps[index];
-			var action = RecipeMetadataRegistry.GetAction(step.ActionKey).Value;
-			RecipeRows.Insert(index, CreateRowViewModel(step, action, index + 1));
+			RecipeRows.Insert(index, CreateRowViewModel(step, ResolveAction(step.ActionKey), index + 1));
 		}
 
 		RenumberRows(startIndex + count);
@@ -365,8 +312,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 		RecipeRows[stepIndex].Dispose();
 		var step = recipe.Steps[stepIndex];
-		var action = RecipeMetadataRegistry.GetAction(step.ActionKey).Value;
-		RecipeRows[stepIndex] = CreateRowViewModel(step, action, stepIndex + 1);
+		RecipeRows[stepIndex] = CreateRowViewModel(step, ResolveAction(step.ActionKey), stepIndex + 1);
 	}
 
 	private void RenumberRows(int fromIndex)
@@ -379,8 +325,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 	private void FullRebuild(Recipe recipe)
 	{
-		_lastRecipeActive = false;
-		_lastActualLine = -1;
+		_executionHighlightTracker.Reset();
 
 		DisposeAllRows();
 		RecipeRows.Clear();
@@ -388,8 +333,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		for (var i = 0; i < recipe.StepCount; i++)
 		{
 			var step = recipe.Steps[i];
-			var action = RecipeMetadataRegistry.GetAction(step.ActionKey).Value;
-			RecipeRows.Add(CreateRowViewModel(step, action, i + 1));
+			RecipeRows.Add(CreateRowViewModel(step, ResolveAction(step.ActionKey), i + 1));
 		}
 	}
 
@@ -426,15 +370,23 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			.ToList();
 	}
 
+	private ActionDefinition ResolveAction(int actionKey)
+	{
+		return RecipeMetadataRegistry.GetAction(actionKey).Value;
+	}
+
 	private RecipeRowViewModel CreateRowViewModel(
 		Step step,
 		ActionDefinition action,
 		int stepNumber)
 	{
-		var cellStates = new Dictionary<string, CellState>(StringComparer.OrdinalIgnoreCase);
+		var inapplicableColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		foreach (var col in RecipeMetadataRegistry.GetAllColumns())
 		{
-			cellStates[col.Key] = CellStateResolver.GetCellState(col, action);
+			if (CellStateResolver.IsInapplicable(col, action))
+			{
+				inapplicableColumns.Add(col.Key);
+			}
 		}
 
 		var row = new RecipeRowViewModel(
@@ -442,7 +394,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			step,
 			action,
 			RecipeMetadataRegistry,
-			cellStates);
+			inapplicableColumns);
 
 		row.PropertyValueChanged += (columnKey, value) => OnCellValueChanged(row, columnKey, value);
 		row.ActionChanged += actionId => OnActionChanged(row, actionId);

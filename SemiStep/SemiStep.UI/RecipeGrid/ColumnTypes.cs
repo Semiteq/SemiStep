@@ -18,9 +18,4 @@ internal static class ColumnTypes
 	{
 		return $"[{columnKey}]";
 	}
-
-	public static string CellStatePath(string columnKey)
-	{
-		return $"CellStates[{columnKey}]";
-	}
 }

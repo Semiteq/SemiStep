@@ -1,4 +1,6 @@
-﻿using System.Reactive;
+﻿using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 
@@ -9,7 +11,6 @@ using Avalonia.Platform.Storage;
 using ReactiveUI;
 using ReactiveUI.Avalonia;
 
-using SemiStep.Core.Recipes;
 using SemiStep.UI.RecipeGrid;
 using SemiStep.UI.ShutdownService;
 
@@ -17,6 +18,8 @@ namespace SemiStep.UI.MainWindow;
 
 internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 {
+	private readonly Dictionary<RecipeRowViewModel, PropertyChangedEventHandler> _rowPropertyChangedHandlers = new();
+
 	private ColumnBuilder? _columnBuilder;
 	private bool _forceClose;
 	private bool _isEditing;
@@ -53,6 +56,7 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 			RecipeGrid.CellEditEnded += OnCellEditEnded;
 			RecipeGrid.SelectionChanged += OnSelectionChanged;
 			ViewModel.RecipeGrid.SelectionRequested += OnSelectionRequested;
+			ViewModel.RecipeGrid.RecipeRows.CollectionChanged += OnRecipeRowsCollectionChanged;
 
 			Disposable.Create(() =>
 			{
@@ -62,7 +66,9 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 				if (ViewModel is not null)
 				{
 					ViewModel.RecipeGrid.SelectionRequested -= OnSelectionRequested;
+					ViewModel.RecipeGrid.RecipeRows.CollectionChanged -= OnRecipeRowsCollectionChanged;
 				}
+				ClearAllRowPropertyChangedHandlers();
 			}).DisposeWith(disposables);
 		});
 	}
@@ -113,8 +119,7 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 	{
 		if (e.Row.DataContext is RecipeRowViewModel row
 			&& e.Column.Tag is string columnKey
-			&& row.CellStates.TryGetValue(columnKey, out var cellState)
-			&& cellState is not CellState.Enabled)
+			&& !row.IsApplicable(columnKey))
 		{
 			e.Cancel = true;
 
@@ -127,6 +132,83 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 	private void OnCellEditEnded(object? sender, DataGridCellEditEndedEventArgs e)
 	{
 		_isEditing = false;
+	}
+
+	private void OnDataGridLoadingRow(object? sender, DataGridRowEventArgs e)
+	{
+		if (e.Row.DataContext is not RecipeRowViewModel row)
+		{
+			return;
+		}
+
+		RowExecutionClasses.Apply(e.Row, row);
+
+		if (_rowPropertyChangedHandlers.ContainsKey(row))
+		{
+			return;
+		}
+
+		void Handler(object? s, PropertyChangedEventArgs args)
+		{
+			if (args.PropertyName == nameof(RecipeRowViewModel.IsCurrentStep)
+				|| args.PropertyName == nameof(RecipeRowViewModel.IsPastStep))
+			{
+				RowExecutionClasses.Apply(e.Row, row);
+			}
+		}
+
+		row.PropertyChanged += Handler;
+		_rowPropertyChangedHandlers[row] = Handler;
+	}
+
+	private void OnDataGridUnloadingRow(object? sender, DataGridRowEventArgs e)
+	{
+		if (e.Row.DataContext is not RecipeRowViewModel row)
+		{
+			return;
+		}
+
+		DetachRowHandler(row);
+		RowExecutionClasses.Clear(e.Row);
+	}
+
+	private void OnRecipeRowsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+	{
+		if (e.Action == NotifyCollectionChangedAction.Reset)
+		{
+			ClearAllRowPropertyChangedHandlers();
+			return;
+		}
+
+		if (e.OldItems is null)
+		{
+			return;
+		}
+
+		foreach (var item in e.OldItems)
+		{
+			if (item is RecipeRowViewModel row)
+			{
+				DetachRowHandler(row);
+			}
+		}
+	}
+
+	private void DetachRowHandler(RecipeRowViewModel row)
+	{
+		if (_rowPropertyChangedHandlers.Remove(row, out var handler))
+		{
+			row.PropertyChanged -= handler;
+		}
+	}
+
+	private void ClearAllRowPropertyChangedHandlers()
+	{
+		foreach (var entry in _rowPropertyChangedHandlers)
+		{
+			entry.Key.PropertyChanged -= entry.Value;
+		}
+		_rowPropertyChangedHandlers.Clear();
 	}
 
 	private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)

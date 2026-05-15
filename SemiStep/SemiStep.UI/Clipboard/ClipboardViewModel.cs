@@ -1,11 +1,18 @@
-﻿using System.Reactive;
+﻿using System.Collections.Immutable;
+using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 
 using Avalonia.Input.Platform;
 
+using FluentResults;
+
 using ReactiveUI;
+
+using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Clipboard;
+using SemiStep.Core.Recipes.Helpers;
 
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.MessageService;
@@ -16,20 +23,26 @@ namespace SemiStep.UI.Clipboard;
 public class ClipboardViewModel : ReactiveObject, IDisposable
 {
 	private const string ClipboardSource = "Clipboard";
-	private readonly RecipeMutationCoordinator _coordinator;
+	private readonly ClipboardSerializer _clipboardSerializer;
+	private readonly RecipeCoordinator _coordinator;
 
 	private readonly CompositeDisposable _disposables = new();
+	private readonly ImportedRecipeValidator _importedRecipeValidator;
 	private readonly MessagePanelViewModel _messagePanel;
 	private readonly RecipeGridViewModel _recipeGrid;
 	private IClipboard? _clipboard;
 
 	public ClipboardViewModel(
-		RecipeMutationCoordinator coordinator,
+		RecipeCoordinator coordinator,
 		RecipeGridViewModel recipeGrid,
+		ClipboardSerializer clipboardSerializer,
+		ImportedRecipeValidator importedRecipeValidator,
 		MessagePanelViewModel messagePanel)
 	{
 		_coordinator = coordinator;
 		_recipeGrid = recipeGrid;
+		_clipboardSerializer = clipboardSerializer;
+		_importedRecipeValidator = importedRecipeValidator;
 		_messagePanel = messagePanel;
 
 		var canCopyOrCut = _recipeGrid.WhenAnyValue(x => x.CanDeleteStep);
@@ -79,7 +92,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		}
 
 		var steps = _recipeGrid.CollectSelectedSteps();
-		var csvText = _coordinator.QueryService.SerializeStepsForClipboard(steps);
+		var csvText = SerializeStepsForClipboard(steps);
 		await _clipboard.SetTextAsync(csvText);
 	}
 
@@ -91,14 +104,17 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		}
 
 		var steps = _recipeGrid.CollectSelectedSteps();
-		var csvText = _coordinator.QueryService.SerializeStepsForClipboard(steps);
+		var csvText = SerializeStepsForClipboard(steps);
 		await _clipboard.SetTextAsync(csvText);
 
 		var result = _coordinator.RemoveSteps(_recipeGrid.SelectedRowIndices);
 		if (result.IsFailed)
 		{
 			_messagePanel.AddError(result.Errors[0].Message, ClipboardSource);
+			return;
 		}
+
+		_recipeGrid.RequestSelection(result.Value);
 	}
 
 	private async Task PasteStepsAsync()
@@ -114,7 +130,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
-		var recipeResult = _coordinator.QueryService.DeserializeStepsFromClipboard(csvText);
+		var recipeResult = DeserializeStepsFromClipboard(csvText);
 		if (recipeResult.IsFailed)
 		{
 			var errorMessages = string.Join(
@@ -134,6 +150,32 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		if (insertResult.IsFailed)
 		{
 			_messagePanel.AddError(insertResult.Errors[0].Message, ClipboardSource);
+			return;
 		}
+
+		_recipeGrid.RequestSelection(insertResult.Value);
+	}
+
+	private string SerializeStepsForClipboard(IReadOnlyList<Step> steps)
+	{
+		var recipe = new Recipe(steps.ToImmutableList());
+		return _clipboardSerializer.SerializeSteps(recipe);
+	}
+
+	private Result<Recipe> DeserializeStepsFromClipboard(string csv)
+	{
+		var result = _clipboardSerializer.DeserializeSteps(csv);
+		if (result.IsFailed)
+		{
+			return result;
+		}
+
+		var validationResult = _importedRecipeValidator.Validate(result.Value);
+		if (validationResult.IsFailed)
+		{
+			return validationResult.ToResult<Recipe>();
+		}
+
+		return result;
 	}
 }

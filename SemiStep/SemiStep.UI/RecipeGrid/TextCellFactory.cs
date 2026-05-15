@@ -61,7 +61,7 @@ internal sealed class TextCellFactory
 			});
 
 			return CellPresenter.Wrap(textBlock, cellStateConverter);
-		}, supportsRecycling: true);
+		}, supportsRecycling: false);
 	}
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateMultiBindingTemplate(string columnKey)
@@ -101,7 +101,7 @@ internal sealed class TextCellFactory
 			});
 
 			return CellPresenter.Wrap(textBlock, cellStateConverter);
-		}, supportsRecycling: true);
+		}, supportsRecycling: false);
 	}
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(string columnKey)

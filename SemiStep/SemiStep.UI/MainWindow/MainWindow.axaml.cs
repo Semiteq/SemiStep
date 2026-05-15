@@ -52,12 +52,17 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 			RecipeGrid.BeginningEdit += OnBeginningEdit;
 			RecipeGrid.CellEditEnded += OnCellEditEnded;
 			RecipeGrid.SelectionChanged += OnSelectionChanged;
+			ViewModel.RecipeGrid.SelectionRequested += OnSelectionRequested;
 
 			Disposable.Create(() =>
 			{
 				RecipeGrid.BeginningEdit -= OnBeginningEdit;
 				RecipeGrid.CellEditEnded -= OnCellEditEnded;
 				RecipeGrid.SelectionChanged -= OnSelectionChanged;
+				if (ViewModel is not null)
+				{
+					ViewModel.RecipeGrid.SelectionRequested -= OnSelectionRequested;
+				}
 			}).DisposeWith(disposables);
 		});
 	}
@@ -146,6 +151,28 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 
 		indices.Sort();
 		ViewModel.RecipeGrid.SelectedRowIndices = indices;
+	}
+
+	private void OnSelectionRequested(int? suggestedIndex)
+	{
+		if (ViewModel is null)
+		{
+			return;
+		}
+
+		if (suggestedIndex is null)
+		{
+			RecipeGrid.SelectedIndex = -1;
+			return;
+		}
+
+		var index = suggestedIndex.Value;
+		if (index < 0 || index >= ViewModel.RecipeGrid.RecipeRows.Count)
+		{
+			return;
+		}
+
+		RecipeGrid.SelectedIndex = index;
 	}
 
 	private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)

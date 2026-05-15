@@ -24,36 +24,26 @@ public static class Program
 
 		try
 		{
-			var outcome = Task.Run(StartupAsync).GetAwaiter().GetResult();
+			// Phase 1: pre-flight validation. Anything that can fail BEFORE Avalonia is
+			// initialised runs here. The outcome decides which window (and only one) is shown.
+			var outcome = ValidateStartup();
 
+			// Phase 2: launch exactly one window. Both branches call BuildAvaloniaApp()
+			// exactly once; the catch below intentionally does NOT fall back to RunErrorWindow,
+			// because by the time App.Run can throw, Avalonia has already been initialised
+			// and a second BuildAvaloniaApp() would throw "Application has already been initialized".
 			if (outcome.Errors is not null)
 			{
 				App.RunErrorWindow(outcome.Errors);
 			}
-			else if (outcome.Provider is not null)
-			{
-				App.Run(outcome.Provider);
-			}
 			else
 			{
-				App.RunErrorWindow(["Application startup failed: unknown error"]);
+				App.Run(outcome.Provider!);
 			}
 		}
 		catch (Exception ex)
 		{
 			Log.Fatal(ex, "Application terminated unexpectedly");
-
-			// If Avalonia was already initialized before the exception, a second
-			// StartWithClassicDesktopLifetime throws "Application has already been initialized".
-			// Swallow that secondary failure so the original exception is the one logged.
-			try
-			{
-				App.RunErrorWindow(["Application startup failed unexpectedly:", ex.Message]);
-			}
-			catch (Exception secondary)
-			{
-				Log.Fatal(secondary, "Failed to display error window after primary failure");
-			}
 		}
 		finally
 		{
@@ -61,7 +51,20 @@ public static class Program
 		}
 	}
 
-	private static async Task<(IServiceProvider? Provider, IReadOnlyList<string>? Errors)> StartupAsync()
+	private static StartupOutcome ValidateStartup()
+	{
+		try
+		{
+			return Task.Run(StartupAsync).GetAwaiter().GetResult();
+		}
+		catch (Exception ex)
+		{
+			Log.Fatal(ex, "Startup validation failed before UI initialisation");
+			return StartupOutcome.Failed(["Application startup failed unexpectedly:", ex.Message]);
+		}
+	}
+
+	private static async Task<StartupOutcome> StartupAsync()
 	{
 		var result = await ConfigFacade.LoadAndValidateAsync(ConfigDir);
 
@@ -72,7 +75,7 @@ public static class Program
 				"Application startup failed: configuration loading produced {ErrorCount} error(s)",
 				errors.Count);
 
-			return (null, errors);
+			return StartupOutcome.Failed(errors);
 		}
 
 		var services =
@@ -86,7 +89,7 @@ public static class Program
 
 		services.AddLogging(b => b.AddSerilog(Log.Logger, dispose: false));
 
-		return (services.BuildServiceProvider(), null);
+		return StartupOutcome.Succeeded(services.BuildServiceProvider());
 	}
 
 	private static void CreateLogger(string logFilePath)
@@ -134,6 +137,19 @@ public static class Program
 		{
 			Console.Error.WriteLine($"Failed to create log directory for '{filePath}': {ex.Message}. File logging is disabled.");
 			return false;
+		}
+	}
+
+	private readonly record struct StartupOutcome(IServiceProvider? Provider, IReadOnlyList<string>? Errors)
+	{
+		public static StartupOutcome Succeeded(IServiceProvider provider)
+		{
+			return new StartupOutcome(provider, null);
+		}
+
+		public static StartupOutcome Failed(IReadOnlyList<string> errors)
+		{
+			return new StartupOutcome(null, errors);
 		}
 	}
 }

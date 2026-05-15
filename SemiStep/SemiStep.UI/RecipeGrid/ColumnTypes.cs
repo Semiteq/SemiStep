@@ -23,9 +23,4 @@ internal static class ColumnTypes
 	{
 		return $"CellStates[{columnKey}]";
 	}
-
-	public static string GroupItemsPath(string columnKey)
-	{
-		return $"GroupItemsByColumn[{columnKey}]";
-	}
 }

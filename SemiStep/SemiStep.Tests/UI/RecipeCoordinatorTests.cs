@@ -15,7 +15,7 @@ namespace SemiStep.Tests.UI;
 [Trait("Component", "UI")]
 [Trait("Area", "Coordinator")]
 [Trait("Category", "Integration")]
-public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
+public sealed class RecipeCoordinatorTests : IAsyncLifetime
 {
 	private readonly UIFixture _fixture = new();
 
@@ -32,9 +32,10 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void AppendStep_EmitsStepAppendedSignal()
 	{
-		_fixture.Workspace.Reset();
-		var signals = new List<MutationSignal>();
-		using var sub = _fixture.Coordinator.StateChanged.Subscribe(signals.Add);
+		_fixture.Session.Reset();
+		var sink = new RecordingRecipeSink();
+		_fixture.Coordinator.Attach(sink);
+		var signals = sink.Signals;
 
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
@@ -43,23 +44,23 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void AppendStep_SetsSuggestedSelection_ToLastIndex()
+	public void AppendStep_ReturnsSuggestedSelection_AsLastIndex()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 
-		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		var selection = _fixture.Coordinator.ConsumeSuggestedSelection();
+		var result = _fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		selection.Should().Be(0);
+		result.Value.Should().Be(0);
 	}
 
 	[AvaloniaFact]
 	public void InsertStep_EmitsStepsInsertedSignal()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		var signals = new List<MutationSignal>();
-		using var sub = _fixture.Coordinator.StateChanged.Subscribe(signals.Add);
+		var sink = new RecordingRecipeSink();
+		_fixture.Coordinator.Attach(sink);
+		var signals = sink.Signals;
 
 		_fixture.Coordinator.InsertStep(0, RecipeTestDriver.WaitActionId);
 
@@ -68,26 +69,24 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void InsertStep_SetsSuggestedSelection_ToInsertedIndex()
+	public void InsertStep_ReturnsSuggestedSelection_AsInsertedIndex()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_fixture.Coordinator.ConsumeSuggestedSelection();
 
-		_fixture.Coordinator.InsertStep(0, RecipeTestDriver.WaitActionId);
-		var selection = _fixture.Coordinator.ConsumeSuggestedSelection();
+		var result = _fixture.Coordinator.InsertStep(0, RecipeTestDriver.WaitActionId);
 
-		selection.Should().Be(0);
+		result.Value.Should().Be(0);
 	}
 
 	[AvaloniaFact]
 	public void RemoveStep_EmitsStepRemovedSignal()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_fixture.Coordinator.ConsumeSuggestedSelection();
-		var signals = new List<MutationSignal>();
-		using var sub = _fixture.Coordinator.StateChanged.Subscribe(signals.Add);
+		var sink = new RecordingRecipeSink();
+		_fixture.Coordinator.Attach(sink);
+		var signals = sink.Signals;
 
 		_fixture.Coordinator.RemoveStep(0);
 
@@ -96,42 +95,38 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void RemoveStep_SuggestedSelection_IsNull_WhenRecipeBecomesEmpty()
+	public void RemoveStep_ReturnsNullSelection_WhenRecipeBecomesEmpty()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_fixture.Coordinator.ConsumeSuggestedSelection();
 
-		_fixture.Coordinator.RemoveStep(0);
-		var selection = _fixture.Coordinator.ConsumeSuggestedSelection();
+		var result = _fixture.Coordinator.RemoveStep(0);
 
-		selection.Should().BeNull();
+		result.Value.Should().BeNull();
 	}
 
 	[AvaloniaFact]
-	public void RemoveStep_SuggestedSelection_ClampedToLastIndex_WhenRemovingLast()
+	public void RemoveStep_ReturnsClampedSelection_WhenRemovingLast()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_fixture.Coordinator.ConsumeSuggestedSelection();
 
-		_fixture.Coordinator.RemoveStep(2);
-		var selection = _fixture.Coordinator.ConsumeSuggestedSelection();
+		var result = _fixture.Coordinator.RemoveStep(2);
 
-		selection.Should().Be(1);
+		result.Value.Should().Be(1);
 	}
 
 	[AvaloniaFact]
 	public void RemoveSteps_EmitsStepsRemovedSignal()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_fixture.Coordinator.ConsumeSuggestedSelection();
-		var signals = new List<MutationSignal>();
-		using var sub = _fixture.Coordinator.StateChanged.Subscribe(signals.Add);
+		var sink = new RecordingRecipeSink();
+		_fixture.Coordinator.Attach(sink);
+		var signals = sink.Signals;
 
 		_fixture.Coordinator.RemoveSteps(new[] { 0, 1 });
 
@@ -141,11 +136,11 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void ChangeStepAction_EmitsStepActionChangedSignal()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_fixture.Coordinator.ConsumeSuggestedSelection();
-		var signals = new List<MutationSignal>();
-		using var sub = _fixture.Coordinator.StateChanged.Subscribe(signals.Add);
+		var sink = new RecordingRecipeSink();
+		_fixture.Coordinator.Attach(sink);
+		var signals = sink.Signals;
 
 		_fixture.Coordinator.ChangeStepAction(0, RecipeTestDriver.ForLoopActionId);
 
@@ -156,11 +151,11 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void UpdateStepProperty_EmitsPropertyUpdatedSignal_WithCorrectStepIndex()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_fixture.Coordinator.ConsumeSuggestedSelection();
-		var signals = new List<MutationSignal>();
-		using var sub = _fixture.Coordinator.StateChanged.Subscribe(signals.Add);
+		var sink = new RecordingRecipeSink();
+		_fixture.Coordinator.Attach(sink);
+		var signals = sink.Signals;
 
 		_fixture.Coordinator.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "5");
 
@@ -171,11 +166,11 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void Undo_EmitsRecipeReplacedSignal()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_fixture.Coordinator.ConsumeSuggestedSelection();
-		var signals = new List<MutationSignal>();
-		using var sub = _fixture.Coordinator.StateChanged.Subscribe(signals.Add);
+		var sink = new RecordingRecipeSink();
+		_fixture.Coordinator.Attach(sink);
+		var signals = sink.Signals;
 
 		_fixture.Coordinator.Undo();
 
@@ -185,11 +180,12 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void Redo_EmitsRecipeReplacedSignal()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.Undo();
-		var signals = new List<MutationSignal>();
-		using var sub = _fixture.Coordinator.StateChanged.Subscribe(signals.Add);
+		var sink = new RecordingRecipeSink();
+		_fixture.Coordinator.Attach(sink);
+		var signals = sink.Signals;
 
 		_fixture.Coordinator.Redo();
 
@@ -199,9 +195,10 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void NewRecipe_EmitsRecipeReplacedSignal()
 	{
-		_fixture.Workspace.Reset();
-		var signals = new List<MutationSignal>();
-		using var sub = _fixture.Coordinator.StateChanged.Subscribe(signals.Add);
+		_fixture.Session.Reset();
+		var sink = new RecordingRecipeSink();
+		_fixture.Coordinator.Attach(sink);
+		var signals = sink.Signals;
 
 		_fixture.Coordinator.NewRecipe();
 
@@ -211,7 +208,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void NewRecipe_ClearsPriorNonStructuralEntries()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(9999);
 
 		_fixture.Coordinator.NewRecipe();
@@ -220,24 +217,12 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void ConsumeSuggestedSelection_ReturnsValueOnce_ThenNull()
-	{
-		_fixture.Workspace.Reset();
-		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-
-		var first = _fixture.Coordinator.ConsumeSuggestedSelection();
-		var second = _fixture.Coordinator.ConsumeSuggestedSelection();
-
-		first.Should().NotBeNull();
-		second.Should().BeNull();
-	}
-
-	[AvaloniaFact]
 	public void AppendStep_Failure_DoesNotEmitSignal()
 	{
-		_fixture.Workspace.Reset();
-		var signals = new List<MutationSignal>();
-		using var sub = _fixture.Coordinator.StateChanged.Subscribe(signals.Add);
+		_fixture.Session.Reset();
+		var sink = new RecordingRecipeSink();
+		_fixture.Coordinator.Attach(sink);
+		var signals = sink.Signals;
 
 		_fixture.Coordinator.AppendStep(9999);
 
@@ -247,7 +232,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void AppendStep_Failure_AddsErrorToMessagePanel()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 
 		_fixture.Coordinator.AppendStep(9999);
 
@@ -257,7 +242,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void IsDirty_True_AfterMutation()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
@@ -267,7 +252,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void CanUndo_True_AfterMutation()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
@@ -277,7 +262,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void CanRedo_True_AfterUndoingMutation()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
 		_fixture.Coordinator.Undo();
@@ -288,7 +273,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void AppendStep_Failure_ReturnsFailed()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 
 		var result = _fixture.Coordinator.AppendStep(9999);
 
@@ -298,7 +283,7 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void ChangeStepAction_Failure_ReturnsFailed()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
 		var result = _fixture.Coordinator.ChangeStepAction(0, 9999);
@@ -309,11 +294,98 @@ public sealed class RecipeMutationCoordinatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void UpdateStepProperty_Failure_ReturnsFailed()
 	{
-		_fixture.Workspace.Reset();
+		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
 		var result = _fixture.Coordinator.UpdateStepProperty(0, "NonExistentColumn", "value");
 
 		result.IsFailed.Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void InsertSteps_ReturnsSuggestedSelection_AsStartIndex()
+	{
+		_fixture.Session.Reset();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		var result = _fixture.Coordinator.InsertSteps(0, new[] { _fixture.Coordinator.CurrentRecipe.Steps[0] });
+
+		result.Value.Should().Be(0);
+	}
+
+	[AvaloniaFact]
+	public void ChangeStepAction_ReturnsSuggestedSelection_AsStepIndex()
+	{
+		_fixture.Session.Reset();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		var result = _fixture.Coordinator.ChangeStepAction(1, RecipeTestDriver.ForLoopActionId);
+
+		result.Value.Should().Be(1);
+	}
+
+	[AvaloniaFact]
+	public void RemoveSteps_ReturnsClampedSelection_AsMinIndex()
+	{
+		_fixture.Session.Reset();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		var result = _fixture.Coordinator.RemoveSteps(new[] { 1, 2 });
+
+		result.Value.Should().Be(0);
+	}
+
+	[AvaloniaFact]
+	public void RemoveSteps_ReturnsNull_WhenRecipeBecomesEmpty()
+	{
+		_fixture.Session.Reset();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		var result = _fixture.Coordinator.RemoveSteps(new[] { 0, 1 });
+
+		result.Value.Should().BeNull();
+	}
+
+	[AvaloniaFact]
+	public void Attach_CalledTwice_Throws()
+	{
+		_fixture.Session.Reset();
+		var sink = new RecordingRecipeSink();
+		_fixture.Coordinator.Attach(sink);
+
+		var act = () => _fixture.Coordinator.Attach(new RecordingRecipeSink());
+
+		act.Should().Throw<InvalidOperationException>();
+	}
+
+	[AvaloniaFact]
+	public async Task SaveRecipeAsync_Success_RaisesMutatedEvent()
+	{
+		_fixture.Session.Reset();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		var mutatedCount = 0;
+		_fixture.Coordinator.Mutated += () => mutatedCount++;
+		var tempFilePath = Path.Combine(Path.GetTempPath(), $"SemiStep.MutatedTest.{Guid.NewGuid():N}.csv");
+
+		try
+		{
+			var result = await _fixture.Coordinator.SaveRecipeAsync(tempFilePath);
+
+			result.IsSuccess.Should().BeTrue();
+			mutatedCount.Should().BeGreaterThan(0,
+				"SaveRecipeAsync must raise Mutated after MarkSaved so the window title and IsDirty refresh");
+			_fixture.Coordinator.IsDirty.Should().BeFalse();
+		}
+		finally
+		{
+			if (File.Exists(tempFilePath))
+			{
+				File.Delete(tempFilePath);
+			}
+		}
 	}
 }

@@ -14,17 +14,20 @@ public sealed class PlcLifecycleManager : IDisposable
 	private readonly IS7Connection _connection;
 	private readonly IS7ExecutionStream _executionStream;
 	private readonly ImportedRecipeValidator _importedRecipeValidator;
+	private readonly CancellationTokenSource _lifetimeCts = new();
 	private readonly ILogger<PlcLifecycleManager> _logger;
+	private readonly object _pendingLock = new();
 	private readonly IS7Reader _reader;
+	private readonly RecipeSession _session;
 	private readonly IPlcSyncService _syncService;
-	private readonly RecipeWorkspace _workspace;
 	private Action<PlcConnectionState>? _connectionStateHandler;
 	private bool _disposed;
 	private bool _initialized;
 	private Recipe? _pendingPlcRecipe;
+	private Func<Recipe, Task<Result>>? _reconnectApplyCallback;
 
 	public PlcLifecycleManager(
-		RecipeWorkspace workspace,
+		RecipeSession session,
 		IS7Connection connection,
 		IS7Reader reader,
 		IS7ExecutionStream executionStream,
@@ -32,7 +35,7 @@ public sealed class PlcLifecycleManager : IDisposable
 		ImportedRecipeValidator importedRecipeValidator,
 		ILogger<PlcLifecycleManager> logger)
 	{
-		_workspace = workspace;
+		_session = session;
 		_connection = connection;
 		_reader = reader;
 		_executionStream = executionStream;
@@ -78,6 +81,16 @@ public sealed class PlcLifecycleManager : IDisposable
 		{
 			_connection.StateChanged -= _connectionStateHandler;
 		}
+
+		try
+		{
+			_lifetimeCts.Cancel();
+		}
+		catch (ObjectDisposedException)
+		{
+		}
+
+		_lifetimeCts.Dispose();
 	}
 
 	public async Task<Result> EnableSync(PlcConfiguration config)
@@ -117,43 +130,69 @@ public sealed class PlcLifecycleManager : IDisposable
 		}
 	}
 
-	public async Task<Result> LoadRecipeFromPlcAsync()
+	public async Task<Result<Recipe>> ReadRecipeFromPlcAsync()
 	{
-		var loadResult = await _reader.ReadRecipeFromPlcAsync();
-		if (loadResult.IsFailed)
+		return await _reader.ReadRecipeFromPlcAsync();
+	}
+
+	public Result ApplyRecipeFromPlc(Recipe recipe)
+	{
+		return ValidateAndLoad(recipe);
+	}
+
+	/// <summary>
+	/// Registers the callback invoked by the reconnect-reconciliation path when an empty
+	/// local recipe is replaced with the recipe read from the PLC. The callback owns
+	/// the UI-thread marshalling and mutation-signal dispatch so the grid and dependent
+	/// view-models refresh; the lifecycle manager only knows when an apply should occur.
+	/// </summary>
+	public void RegisterReconnectApplyCallback(Func<Recipe, Task<Result>> callback)
+	{
+		ArgumentNullException.ThrowIfNull(callback);
+
+		if (_reconnectApplyCallback is not null)
 		{
-			return loadResult.ToResult();
+			throw new InvalidOperationException(
+				"Reconnect apply callback has already been registered.");
 		}
 
-		return ValidateAndLoad(loadResult.Value);
+		_reconnectApplyCallback = callback;
 	}
 
 	private Result ValidateAndLoad(Recipe recipe)
 	{
-		return _workspace.LoadAsCurrentValidated(recipe, _importedRecipeValidator);
+		return _session.LoadAsCurrentValidated(recipe, _importedRecipeValidator);
 	}
 
 	public Result ResolveConflict(bool keepLocal)
 	{
 		if (keepLocal)
 		{
-			_pendingPlcRecipe = null;
-			_syncService.NotifyRecipeChanged(_workspace.CurrentRecipe, _workspace.IsValid);
+			lock (_pendingLock)
+			{
+				_pendingPlcRecipe = null;
+			}
+
+			_syncService.NotifyRecipeChanged(_session.Current, _session.IsValid);
 
 			return Result.Ok();
 		}
 
-		if (_pendingPlcRecipe is null)
+		Recipe? pending;
+		lock (_pendingLock)
+		{
+			pending = _pendingPlcRecipe;
+			_pendingPlcRecipe = null;
+		}
+
+		if (pending is null)
 		{
 			_logger.LogWarning("ResolveConflict called with keepLocal=false but no pending PLC recipe exists.");
 
 			return Result.Fail("No pending PLC recipe to resolve.");
 		}
 
-		var result = _workspace.LoadAsCurrent(_pendingPlcRecipe);
-		_pendingPlcRecipe = null;
-
-		return result;
+		return _session.LoadAsCurrent(pending);
 	}
 
 	private void OnConnectionStateChanged(PlcConnectionState state)
@@ -166,15 +205,32 @@ public sealed class PlcLifecycleManager : IDisposable
 		}
 		else if (state == PlcConnectionState.Connected && _syncService.IsSyncEnabled)
 		{
-			_ = PerformReconnectReconciliationAsync().ContinueWith(
+			if (_disposed)
+			{
+				return;
+			}
+
+			var token = _lifetimeCts.Token;
+			_ = PerformReconnectReconciliationAsync(token).ContinueWith(
 				t => _logger.LogError(t.Exception, "Unhandled error in reconnect reconciliation"),
 				TaskContinuationOptions.OnlyOnFaulted);
 		}
 	}
 
-	private async Task PerformReconnectReconciliationAsync()
+	private async Task PerformReconnectReconciliationAsync(CancellationToken cancellationToken)
 	{
+		if (cancellationToken.IsCancellationRequested)
+		{
+			return;
+		}
+
 		var managingAreaResult = await _reader.ReadManagingAreaAsync();
+
+		if (cancellationToken.IsCancellationRequested)
+		{
+			return;
+		}
+
 		if (managingAreaResult.IsFailed)
 		{
 			_logger.LogWarning(
@@ -191,6 +247,12 @@ public sealed class PlcLifecycleManager : IDisposable
 		}
 
 		var plcRecipeResult = await _reader.ReadRecipeFromPlcAsync();
+
+		if (cancellationToken.IsCancellationRequested)
+		{
+			return;
+		}
+
 		if (plcRecipeResult.IsFailed)
 		{
 			_logger.LogWarning(
@@ -201,23 +263,21 @@ public sealed class PlcLifecycleManager : IDisposable
 		}
 
 		var plcRecipe = plcRecipeResult.Value;
-		var localRecipe = _workspace.CurrentRecipe;
+		var localRecipe = _session.Current;
 
 		if (localRecipe.Steps.Count == 0 && plcRecipe.Steps.Count > 0)
 		{
-			var loadResult = ValidateAndLoad(plcRecipe);
-			if (loadResult.IsFailed)
-			{
-				_logger.LogWarning(
-					"PLC recipe analysis errors during reconnect: {Errors}",
-					string.Join("; ", loadResult.Errors.Select(e => e.Message)));
-			}
+			await ApplyReconnectPlcRecipeAsync(plcRecipe, cancellationToken);
 			return;
 		}
 
 		if (plcRecipe.Steps.Count > 0 && !localRecipe.Equals(plcRecipe))
 		{
-			_pendingPlcRecipe = plcRecipe;
+			lock (_pendingLock)
+			{
+				_pendingPlcRecipe = plcRecipe;
+			}
+
 			PlcRecipeConflictDetected?.Invoke(localRecipe, plcRecipe);
 			return;
 		}
@@ -225,8 +285,42 @@ public sealed class PlcLifecycleManager : IDisposable
 		NotifyLocalRecipe();
 	}
 
+	private async Task ApplyReconnectPlcRecipeAsync(Recipe plcRecipe, CancellationToken cancellationToken)
+	{
+		var callback = _reconnectApplyCallback;
+		if (callback is null)
+		{
+			_logger.LogWarning(
+				"Reconnect reconciliation discarded PLC recipe: no apply callback registered.");
+			return;
+		}
+
+		Result applyResult;
+		try
+		{
+			applyResult = await callback(plcRecipe);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Reconnect apply callback threw");
+			return;
+		}
+
+		if (cancellationToken.IsCancellationRequested)
+		{
+			return;
+		}
+
+		if (applyResult.IsFailed)
+		{
+			_logger.LogWarning(
+				"PLC recipe analysis errors during reconnect: {Errors}",
+				string.Join("; ", applyResult.Errors.Select(e => e.Message)));
+		}
+	}
+
 	private void NotifyLocalRecipe()
 	{
-		_syncService.NotifyRecipeChanged(_workspace.CurrentRecipe, _workspace.IsValid);
+		_syncService.NotifyRecipeChanged(_session.Current, _session.IsValid);
 	}
 }

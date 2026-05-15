@@ -22,10 +22,9 @@ public sealed class PlcMonitorViewModel : ReactiveObject, IDisposable
 	private int _forLoopCount2;
 	private int _forLoopCount3;
 
-	public PlcMonitorViewModel(RecipeMutationCoordinator coordinator)
+	public PlcMonitorViewModel(RecipeCoordinator coordinator)
 	{
 		coordinator.ExecutionState
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(OnExecutionStateChanged)
 			.DisposeWith(_disposables);
 	}

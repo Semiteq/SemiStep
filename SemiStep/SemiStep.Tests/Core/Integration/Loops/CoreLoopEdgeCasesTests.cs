@@ -14,8 +14,8 @@ public sealed class CoreLoopEdgeCasesTests(CoreFixture fixture) : IClassFixture<
 	[Fact]
 	public void ZeroIterations_LoopStillValid()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddFor(0).AddWait(5f).AddEndFor();
 
 		driver.IsValid.Should().BeTrue("a zero-iteration loop is structurally valid");
@@ -26,8 +26,8 @@ public sealed class CoreLoopEdgeCasesTests(CoreFixture fixture) : IClassFixture<
 	[Fact]
 	public void NegativeIterations_LoopStillValid()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddFor(-5).AddWait(5f).AddEndFor();
 
 		driver.IsValid.Should().BeTrue("a negative-iteration loop is structurally valid");
@@ -38,9 +38,9 @@ public sealed class CoreLoopEdgeCasesTests(CoreFixture fixture) : IClassFixture<
 	[Fact]
 	public void EnclosingLoops_OrderedOuterToInner()
 	{
-		fixture.Workspace.Reset();
+		fixture.Session.Reset();
 
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver
 			.AddFor(3)
 			.AddFor(2)

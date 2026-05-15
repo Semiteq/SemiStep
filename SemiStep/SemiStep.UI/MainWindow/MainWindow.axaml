@@ -28,7 +28,6 @@
         <DataGrid Grid.Row="1"
                   x:Name="RecipeGrid"
                   ItemsSource="{Binding RecipeGrid.RecipeRows}"
-                  SelectedIndex="{Binding RecipeGrid.SelectedRowIndex}"
                   AutoGenerateColumns="False"
                   CanUserReorderColumns="False"
                   CanUserResizeColumns="True"

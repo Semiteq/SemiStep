@@ -11,15 +11,27 @@ namespace SemiStep.Tests.Core.Helpers;
 
 public static class CoreTestHelper
 {
-	public static async Task<(IServiceProvider Services, RecipeWorkspace Workspace, RecipeEditor Editor, PlcLifecycleManager Plc)> BuildAsync(
+	public static async Task<(IServiceProvider Services, RecipeSession Session, PlcLifecycleManager Plc)> BuildAsync(
 		string configName = "Standard")
+	{
+		var services = await BuildServicesAsync(configName);
+
+		var session = services.GetRequiredService<RecipeSession>();
+		var plc = services.GetRequiredService<PlcLifecycleManager>();
+		plc.Initialize();
+		session.Reset().EnsureSuccess("Session reset");
+
+		return (services, session, plc);
+	}
+
+	private static async Task<IServiceProvider> BuildServicesAsync(string configName)
 	{
 		var configDir = GetConfigDirectory(configName);
 
 		var configLoadResult = await ConfigFacade.LoadAndValidateAsync(configDir);
 		var configuration = configLoadResult.EnsureSuccess("Test config load");
 
-		var services = new ServiceCollection()
+		return new ServiceCollection()
 			.AddLogging()
 			.AddSingleton(configuration)
 			.AddRecipe()
@@ -31,14 +43,6 @@ public static class CoreTestHelper
 			.AddSingleton<IS7ExecutionStream>(sp => sp.GetRequiredService<StubS7Service>())
 			.AddSingleton<IPlcSyncService, StubPlcSyncService>()
 			.BuildServiceProvider();
-
-		var workspace = services.GetRequiredService<RecipeWorkspace>();
-		var editor = services.GetRequiredService<RecipeEditor>();
-		var plc = services.GetRequiredService<PlcLifecycleManager>();
-		plc.Initialize();
-		workspace.Reset().EnsureSuccess("Workspace reset");
-
-		return (services, workspace, editor, plc);
 	}
 
 	private static string GetConfigDirectory(string configName)

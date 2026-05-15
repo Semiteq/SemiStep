@@ -7,8 +7,7 @@ namespace SemiStep.Tests.Core.Helpers;
 
 public sealed class CoreFixture : IAsyncLifetime
 {
-	public RecipeWorkspace Workspace { get; private set; } = null!;
-	public RecipeEditor Editor { get; private set; } = null!;
+	public RecipeSession Session { get; private set; } = null!;
 	public PlcLifecycleManager Plc { get; private set; } = null!;
 
 	public IServiceProvider Services => _services!;
@@ -17,10 +16,9 @@ public sealed class CoreFixture : IAsyncLifetime
 
 	public async ValueTask InitializeAsync()
 	{
-		var (services, workspace, editor, plc) = await CoreTestHelper.BuildAsync("WithGroups");
+		var (services, session, plc) = await CoreTestHelper.BuildAsync("WithGroups");
 		_services = services;
-		Workspace = workspace;
-		Editor = editor;
+		Session = session;
 		Plc = plc;
 	}
 

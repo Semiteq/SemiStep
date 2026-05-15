@@ -31,10 +31,10 @@ internal static class CsvTestHelper
 			.AddSingleton<IPlcSyncService, StubPlcSyncService>()
 			.BuildServiceProvider();
 
-		var workspace = services.GetRequiredService<RecipeWorkspace>();
+		var session = services.GetRequiredService<RecipeSession>();
 		var plc = services.GetRequiredService<PlcLifecycleManager>();
 		plc.Initialize();
-		workspace.Reset().EnsureSuccess("Workspace reset");
+		session.Reset().EnsureSuccess("Session reset");
 
 		var fileSerializer = services.GetRequiredService<CsvFileSerializer>();
 		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();

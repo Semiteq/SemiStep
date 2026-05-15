@@ -21,17 +21,15 @@ namespace SemiStep.Tests.UI;
 [Trait("Category", "Integration")]
 public sealed class RecipeRowViewModelTests : IAsyncLifetime
 {
-	private RecipeWorkspace _workspace = null!;
-	private RecipeEditor _editor = null!;
+	private RecipeSession _session = null!;
 	private RecipeMetadataRegistry _recipeMetadataRegistry = null!;
 
 	public async ValueTask InitializeAsync()
 	{
-		var (services, workspace, editor, _) = await CoreTestHelper.BuildAsync("WithGroups");
-		_workspace = workspace;
-		_editor = editor;
+		var (services, session, _) = await CoreTestHelper.BuildAsync("WithGroups");
+		_session = session;
 		_recipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
-		_workspace.Reset();
+		_session.Reset();
 	}
 
 	public ValueTask DisposeAsync()
@@ -41,8 +39,8 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 
 	private RecipeRowViewModel CreateRow(int actionId = RecipeTestDriver.WaitActionId)
 	{
-		_editor.AppendStep(actionId);
-		var step = _workspace.CurrentRecipe.Steps[0];
+		_session.AppendStep(actionId);
+		var step = _session.Current.Steps[0];
 		var action = _recipeMetadataRegistry.GetAction(step.ActionKey).Value;
 		var cellStates = BuildCellStates(action);
 		return new RecipeRowViewModel(1, step, action, _recipeMetadataRegistry, cellStates);
@@ -169,13 +167,76 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	public void SetPropertyValue_ActionWithSameId_DoesNotFireEvent()
+	{
+		var row = CreateRow(RecipeTestDriver.WaitActionId);
+		var eventFired = false;
+		row.ActionChanged += _ => eventFired = true;
+
+		row.SetPropertyValue("action", RecipeTestDriver.WaitActionId.ToString());
+
+		eventFired.Should().BeFalse();
+	}
+
+	[AvaloniaFact]
+	public void SetPropertyValue_ActionWithDifferentId_FiresEvent()
+	{
+		var row = CreateRow(RecipeTestDriver.WaitActionId);
+		var receivedActionId = -1;
+		row.ActionChanged += id => receivedActionId = id;
+
+		row.SetPropertyValue("action", RecipeTestDriver.ForLoopActionId.ToString());
+
+		receivedActionId.Should().Be(RecipeTestDriver.ForLoopActionId);
+	}
+
+	[AvaloniaFact]
+	public void SetPropertyValue_PropertyWithSameValue_DoesNotFirePropertyChanged()
+	{
+		var row = CreateRow();
+		// Update underlying state through the editor so the row's _step reflects the canonical value.
+		_session.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "5");
+		row.UpdateStep(_session.Current.Steps[0]);
+		var canonicalValue = row.GetPropertyValue(RecipeTestDriver.StepDurationColumn)?.ToString();
+
+		var eventFired = false;
+		row.PropertyValueChanged += (_, _) => eventFired = true;
+
+		row.SetPropertyValue(RecipeTestDriver.StepDurationColumn, canonicalValue);
+
+		eventFired.Should().BeFalse();
+	}
+
+	[AvaloniaFact]
+	public void SetPropertyValue_PropertyWithDifferentValue_FiresPropertyChanged()
+	{
+		var row = CreateRow();
+		// Establish the underlying state via the editor so the row reflects the canonical value.
+		_session.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "5");
+		row.UpdateStep(_session.Current.Steps[0]);
+
+		var receivedColumnKey = string.Empty;
+		var receivedValue = string.Empty;
+		row.PropertyValueChanged += (key, value) =>
+		{
+			receivedColumnKey = key;
+			receivedValue = value ?? string.Empty;
+		};
+
+		row.SetPropertyValue(RecipeTestDriver.StepDurationColumn, "7");
+
+		receivedColumnKey.Should().Be(RecipeTestDriver.StepDurationColumn);
+		receivedValue.Should().Be("7");
+	}
+
+	[AvaloniaFact]
 	public void UpdateStep_RaisesItemArrayPropertyChanged()
 	{
 		var row = CreateRow();
 		var changedProperties = new List<string>();
 		row.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName ?? "");
 
-		var updatedStep = _workspace.CurrentRecipe.Steps[0];
+		var updatedStep = _session.Current.Steps[0];
 		row.UpdateStep(updatedStep);
 
 		changedProperties.Should().Contain("Item[]");
@@ -218,46 +279,40 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void GroupItemsByColumn_ExposesItems_ForGroupBoundColumn()
+	public void GetGroupNameForColumn_ReturnsGroupName_ForGroupBoundColumn()
 	{
 		var row = CreateRow(RecipeTestDriver.WithGroupActionId);
 
-		row.GroupItemsByColumn.Should().ContainKey(RecipeTestDriver.TargetColumn);
-		var items = row.GroupItemsByColumn[RecipeTestDriver.TargetColumn];
-		items.Should().NotBeEmpty();
-		items.Select(item => item.Id).Should().BeInAscendingOrder();
+		var groupName = row.GetGroupNameForColumn(RecipeTestDriver.TargetColumn);
+
+		groupName.Should().NotBeNullOrEmpty();
 	}
 
 	[AvaloniaFact]
-	public void GroupItemsByColumn_OmitsKey_ForNonGroupBoundColumn()
+	public void GetGroupNameForColumn_ReturnsNull_ForNonGroupColumn()
 	{
-		// Pre-population is intentionally scoped to ActionTargetComboBox columns so non-group
-		// columns (text/property/action) do not accumulate empty-list entries.
 		var row = CreateRow(RecipeTestDriver.WithGroupActionId);
 
-		row.GroupItemsByColumn.Should().NotContainKey(RecipeTestDriver.StepDurationColumn);
-		row.GroupItemsByColumn.Should().NotContainKey(RecipeTestDriver.CommentColumn);
+		row.GetGroupNameForColumn(RecipeTestDriver.StepDurationColumn).Should().BeNull();
+		row.GetGroupNameForColumn(RecipeTestDriver.CommentColumn).Should().BeNull();
 	}
 
 	[AvaloniaFact]
-	public void GroupItemsByColumn_PrepopulatesEmptyList_ForGroupColumnAbsentFromActionProperties()
+	public void GetGroupNameForColumn_ReturnsNull_WhenActionLacksProperty()
 	{
-		// Wait action has no `target` property, but `target` is a group-bound column in the registry.
-		// The dictionary pre-populates such keys so bindings for cross-action grids never hit
-		// a missing key (which would yield UnsetValue and bypass the converter contract).
+		// Wait action has no `target` property, so even though `target` is a group-bound column
+		// in the registry, the row reports no group name for it.
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 
-		row.GroupItemsByColumn.Should().ContainKey(RecipeTestDriver.TargetColumn);
-		row.GroupItemsByColumn[RecipeTestDriver.TargetColumn].Should().BeEmpty();
+		row.GetGroupNameForColumn(RecipeTestDriver.TargetColumn).Should().BeNull();
 	}
 
 	[AvaloniaFact]
-	public void GroupItemsByColumn_OmitsKey_WhenActionGroupResolutionFails()
+	public void GetGroupNameForColumn_ReturnsGroupName_EvenIfGroupCannotBeResolved()
 	{
 		// When an action property references a group that does not exist in the metadata registry,
-		// the view-model skips it rather than surfacing the property key with an empty list. The
-		// property key is also not a registered group-bound column, so the pre-population loop
-		// does not insert it either — the key is fully absent from the dictionary.
+		// the row still surfaces the configured group name. The factory-level cache is responsible
+		// for resolving (or rejecting) the group lookup.
 		var unresolvedGroupProperty = new ActionPropertyDefinition(
 			Key: "phantom_column",
 			GroupName: "nonexistent_group",
@@ -273,7 +328,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 
 		var row = new RecipeRowViewModel(1, step, actionWithUnresolvedGroup, _recipeMetadataRegistry, cellStates);
 
-		row.GroupItemsByColumn.Should().NotContainKey("phantom_column");
+		row.GetGroupNameForColumn("phantom_column").Should().Be("nonexistent_group");
 	}
 
 	public static TheoryData<string, string> ColumnUnitsData => new()

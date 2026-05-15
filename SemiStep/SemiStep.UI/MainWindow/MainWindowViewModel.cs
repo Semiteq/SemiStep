@@ -25,12 +25,12 @@ namespace SemiStep.UI.MainWindow;
 
 public class MainWindowViewModel : ReactiveObject, IDisposable
 {
-	private readonly RecipeMutationCoordinator _coordinator;
+	private readonly RecipeCoordinator _coordinator;
 	private readonly CompositeDisposable _disposables = new();
 	private readonly ILogger<MainWindowViewModel> _logger;
 
 	public MainWindowViewModel(
-		RecipeMutationCoordinator coordinator,
+		RecipeCoordinator coordinator,
 		RecipeGridViewModel recipeGrid,
 		RecipeCommandsViewModel recipeCommands,
 		ClipboardViewModel clipboard,
@@ -58,18 +58,14 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			.Subscribe(ex => messagePanel.AddError($"Sync toggle failed: {ex.Message}", "PLC"))
 			.DisposeWith(_disposables);
 
-		_coordinator.StateChanged
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(_ => RaiseAllStateProperties())
-			.DisposeWith(_disposables);
+		_coordinator.Mutated += RaiseAllStateProperties;
+		_disposables.Add(Disposable.Create(() => _coordinator.Mutated -= RaiseAllStateProperties));
 
 		_coordinator.PlcStateChanged
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(_ => RaiseConnectionStateProperties())
 			.DisposeWith(_disposables);
 
 		_coordinator.PlcRecipeConflictDetected
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(conflict => _ = HandleConflictAsync(conflict.Local, conflict.Plc))
 			.DisposeWith(_disposables);
 
@@ -113,9 +109,9 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public bool IsSyncEnabled => _coordinator.IsSyncEnabled;
 
-	public string PlcSyncStatusText => MapSyncStatus(_coordinator.QueryService.SyncStatus);
+	public string PlcSyncStatusText => MapSyncStatus(_coordinator.SyncStatus);
 
-	public string LastSyncTimeText => FormatLastSyncTime(_coordinator.QueryService.LastSyncTime);
+	public string LastSyncTimeText => FormatLastSyncTime(_coordinator.LastSyncTime);
 
 	public void Dispose()
 	{

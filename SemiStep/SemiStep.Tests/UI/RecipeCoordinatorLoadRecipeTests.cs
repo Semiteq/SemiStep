@@ -14,6 +14,7 @@ using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
+using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.MessageService;
@@ -25,7 +26,7 @@ namespace SemiStep.Tests.UI;
 [Trait("Component", "UI")]
 [Trait("Area", "Coordinator")]
 [Trait("Category", "Integration")]
-public sealed class RecipeMutationCoordinatorLoadRecipeTests
+public sealed class RecipeCoordinatorLoadRecipeTests
 {
 	private const string TempFilePrefix = "SemiStep.CoordinatorTest";
 
@@ -82,12 +83,12 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 
 		try
 		{
-			var signals = new List<MutationSignal>();
-			using var sub = coordinator.StateChanged.Subscribe(signals.Add);
+			var sink = new RecordingRecipeSink();
+			coordinator.Attach(sink);
 
 			await coordinator.LoadRecipeAsync("nonexistent/path/recipe.csv");
 
-			signals.Should().BeEmpty();
+			sink.Signals.Should().BeEmpty();
 		}
 		finally
 		{
@@ -173,7 +174,7 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 		}
 	}
 
-	private static async Task<(RecipeMutationCoordinator Coordinator, MessagePanelViewModel Panel)>
+	private static async Task<(RecipeCoordinator Coordinator, MessagePanelViewModel Panel)>
 		BuildCoordinatorAsync(Action<IServiceCollection> registerCsvService)
 	{
 		var configDir = TestConfigLocator.GetConfigDirectory("WithGroups");
@@ -195,34 +196,25 @@ public sealed class RecipeMutationCoordinatorLoadRecipeTests
 
 		var services = serviceCollection.BuildServiceProvider();
 
-		var workspace = services.GetRequiredService<RecipeWorkspace>();
-		var editor = services.GetRequiredService<RecipeEditor>();
+		var session = services.GetRequiredService<RecipeSession>();
 		var plc = services.GetRequiredService<PlcLifecycleManager>();
 		plc.Initialize();
-		workspace.Reset().EnsureSuccess("Workspace reset");
+		session.Reset().EnsureSuccess("Session reset");
 
 		var recipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 		var panel = new MessagePanelViewModel();
-		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
-		var queryService = new RecipeQueryService(
-			workspace,
-			plc,
-			clipboardSerializer,
-			importedRecipeValidator,
-			recipeMetadataRegistry);
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
 		var csvService = services.GetRequiredService<CsvService>();
-		var coordinator = new RecipeMutationCoordinator(
-			workspace,
-			editor,
+		var coordinator = new RecipeCoordinator(
+			session,
 			plc,
 			csvService,
 			importedRecipeValidator,
 			appConfiguration,
-			queryService,
+			recipeMetadataRegistry,
 			panel,
-			NullLogger<RecipeMutationCoordinator>.Instance);
+			NullLogger<RecipeCoordinator>.Instance);
 		coordinator.Initialize();
 
 		return (coordinator, panel);

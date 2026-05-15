@@ -2,6 +2,7 @@
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 using ReactiveUI;
 
@@ -11,39 +12,42 @@ namespace SemiStep.UI.RecipeGrid;
 
 public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 {
-	private readonly RecipeMutationCoordinator _coordinator;
+	private readonly RecipeCoordinator _coordinator;
 	private readonly CompositeDisposable _disposables = new();
+	private readonly BehaviorSubject<bool> _canUndo = new(false);
+	private readonly BehaviorSubject<bool> _canRedo = new(false);
 	private readonly RecipeGridViewModel _recipeGrid;
 
 	public RecipeCommandsViewModel(
-		RecipeMutationCoordinator coordinator,
+		RecipeCoordinator coordinator,
 		RecipeGridViewModel recipeGrid)
 	{
 		_coordinator = coordinator;
 		_recipeGrid = recipeGrid;
 
-		var canUndo = _coordinator.StateChanged
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Select(_ => _coordinator.CanUndo)
-			.StartWith(false);
-
-		var canRedo = _coordinator.StateChanged
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Select(_ => _coordinator.CanRedo)
-			.StartWith(false);
+		_coordinator.Mutated += OnCoordinatorMutated;
+		_disposables.Add(Disposable.Create(() => _coordinator.Mutated -= OnCoordinatorMutated));
+		_disposables.Add(_canUndo);
+		_disposables.Add(_canRedo);
 
 		var canDelete = _recipeGrid
 			.WhenAnyValue(x => x.CanDeleteStep);
 
 		AddStepCommand = ReactiveCommand.Create(AddStep);
 		DeleteStepCommand = ReactiveCommand.Create(DeleteStep, canDelete);
-		UndoCommand = ReactiveCommand.Create(Undo, canUndo);
-		RedoCommand = ReactiveCommand.Create(Redo, canRedo);
+		UndoCommand = ReactiveCommand.Create(Undo, _canUndo);
+		RedoCommand = ReactiveCommand.Create(Redo, _canRedo);
 
 		AddStepCommand.DisposeWith(_disposables);
 		DeleteStepCommand.DisposeWith(_disposables);
 		UndoCommand.DisposeWith(_disposables);
 		RedoCommand.DisposeWith(_disposables);
+	}
+
+	private void OnCoordinatorMutated()
+	{
+		_canUndo.OnNext(_coordinator.CanUndo);
+		_canRedo.OnNext(_coordinator.CanRedo);
 	}
 
 	public ReactiveCommand<Unit, Unit> AddStepCommand { get; }
@@ -62,16 +66,15 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 
 	private void AddStep()
 	{
-		var firstActionId = _coordinator.QueryService.GetDefaultActionId();
+		var firstActionId = _coordinator.GetDefaultActionId();
 
-		if (_recipeGrid.SelectedRowIndex >= 0)
+		var result = _recipeGrid.SelectedRowIndex >= 0
+			? _coordinator.InsertStep(_recipeGrid.SelectedRowIndex + 1, firstActionId)
+			: _coordinator.AppendStep(firstActionId);
+
+		if (result.IsSuccess)
 		{
-			var newRowIndex = _recipeGrid.SelectedRowIndex + 1;
-			_coordinator.InsertStep(newRowIndex, firstActionId);
-		}
-		else
-		{
-			_coordinator.AppendStep(firstActionId);
+			_recipeGrid.RequestSelection(result.Value);
 		}
 	}
 
@@ -83,13 +86,13 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
-		if (indices.Count == 1)
+		var result = indices.Count == 1
+			? _coordinator.RemoveStep(indices[0])
+			: _coordinator.RemoveSteps(indices);
+
+		if (result.IsSuccess)
 		{
-			_coordinator.RemoveStep(indices[0]);
-		}
-		else
-		{
-			_coordinator.RemoveSteps(indices);
+			_recipeGrid.RequestSelection(result.Value);
 		}
 	}
 

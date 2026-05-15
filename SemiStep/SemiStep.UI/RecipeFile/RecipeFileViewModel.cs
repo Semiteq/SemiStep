@@ -13,13 +13,13 @@ namespace SemiStep.UI.RecipeFile;
 public class RecipeFileViewModel : ReactiveObject, IDisposable
 {
 	private const string FileSource = "File";
-	private readonly RecipeMutationCoordinator _coordinator;
+	private readonly RecipeCoordinator _coordinator;
 
 	private readonly CompositeDisposable _disposables = new();
 	private readonly MessagePanelViewModel _messagePanel;
 
 	public RecipeFileViewModel(
-		RecipeMutationCoordinator coordinator,
+		RecipeCoordinator coordinator,
 		MessagePanelViewModel messagePanel)
 	{
 		_coordinator = coordinator;

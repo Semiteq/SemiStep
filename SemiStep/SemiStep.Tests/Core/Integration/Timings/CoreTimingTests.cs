@@ -14,8 +14,8 @@ public sealed class CoreTimingTests(CoreFixture fixture) : IClassFixture<CoreFix
 	[Fact]
 	public void EmptyRecipe_ZeroDuration()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.Zero);
 	}
@@ -23,11 +23,11 @@ public sealed class CoreTimingTests(CoreFixture fixture) : IClassFixture<CoreFix
 	[Fact]
 	public void SingleWaitStep_TotalDurationMatchesStepDuration()
 	{
-		fixture.Workspace.Reset();
+		fixture.Session.Reset();
 
 		const float Duration = 15f;
 
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(Duration);
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(Duration));
@@ -36,8 +36,8 @@ public sealed class CoreTimingTests(CoreFixture fixture) : IClassFixture<CoreFix
 	[Fact]
 	public void MultipleWaitSteps_TotalDurationIsCumulative()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(10f).AddWait(20f).AddWait(30f);
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(60));
@@ -46,8 +46,8 @@ public sealed class CoreTimingTests(CoreFixture fixture) : IClassFixture<CoreFix
 	[Fact]
 	public void StepStartTimes_AccumulateCorrectly()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(10f).AddWait(20f).AddWait(30f);
 
 		var startTimes = driver.Snapshot.StepStartTimes;
@@ -60,8 +60,8 @@ public sealed class CoreTimingTests(CoreFixture fixture) : IClassFixture<CoreFix
 	[Fact]
 	public void ImmediateAction_ZeroDuration()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddPause();
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.Zero);
@@ -70,8 +70,8 @@ public sealed class CoreTimingTests(CoreFixture fixture) : IClassFixture<CoreFix
 	[Fact]
 	public void MixedActions_OnlyLongLastingContributeToTotalDuration()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 
 		driver.AddPause().AddWait(15f).AddFor(3);
 
@@ -81,8 +81,8 @@ public sealed class CoreTimingTests(CoreFixture fixture) : IClassFixture<CoreFix
 	[Fact]
 	public void UpdateDuration_RecalculatesTotal()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(10f).AddWait(10f);
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(20));
@@ -95,8 +95,8 @@ public sealed class CoreTimingTests(CoreFixture fixture) : IClassFixture<CoreFix
 	[Fact]
 	public void RemoveStep_RecalculatesTotalDuration()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(10f).AddWait(20f).AddWait(30f);
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(60));

@@ -10,6 +10,7 @@ using SemiStep.Core.Recipes;
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.Dialogs;
 using SemiStep.UI.MainWindow;
+using SemiStep.UI.RecipeGrid;
 
 using Serilog;
 
@@ -17,6 +18,8 @@ namespace SemiStep.UI;
 
 public class App : Application
 {
+	private static bool _started;
+
 	private IServiceProvider? _serviceProvider;
 	private IReadOnlyList<string>? _startupErrors;
 
@@ -64,6 +67,7 @@ public class App : Application
 	public static void Run(IServiceProvider serviceProvider)
 	{
 		ArgumentNullException.ThrowIfNull(serviceProvider);
+		EnsureSingleStart();
 		BuildAvaloniaApp()
 			.AfterSetup(_ =>
 				// UseReactiveUI() above has already registered AvaloniaScheduler as
@@ -81,20 +85,29 @@ public class App : Application
 
 	private static void InitializeServices(IServiceProvider provider)
 	{
-		var workspace = provider.GetRequiredService<RecipeWorkspace>();
-		var resetResult = workspace.Reset();
+		var session = provider.GetRequiredService<RecipeSession>();
+
+		// session.Reset() returns Result<RecipeSnapshot> from analyzing Recipe.Empty.
+		// Empty-recipe analysis can surface configuration validator warnings that should
+		// be logged but never block startup — the MessagePanel rebuild on first PLC tick
+		// will surface them to the user. Logged for diagnostic visibility only.
+		var resetResult = session.Reset();
 		if (resetResult.IsFailed)
 		{
-			Log.Warning("Workspace reset reported failures at startup: {Errors}",
+			Log.Warning("Session reset reported failures at startup: {Errors}",
 				string.Join("; ", resetResult.Errors.Select(e => e.Message)));
 		}
 
-		var coordinator = provider.GetRequiredService<RecipeMutationCoordinator>();
+		var coordinator = provider.GetRequiredService<RecipeCoordinator>();
 		coordinator.Initialize();
+
+		var gridViewModel = provider.GetRequiredService<RecipeGridViewModel>();
+		coordinator.Attach(gridViewModel);
 	}
 
 	public static void RunErrorWindow(IReadOnlyList<string> errors)
 	{
+		EnsureSingleStart();
 		BuildAvaloniaApp()
 			.AfterSetup(builder =>
 			{
@@ -102,5 +115,16 @@ public class App : Application
 				app._startupErrors = errors;
 			})
 			.StartWithClassicDesktopLifetime([]);
+	}
+
+	private static void EnsureSingleStart()
+	{
+		if (_started)
+		{
+			throw new InvalidOperationException(
+				"App has already been started. Run() and RunErrorWindow() must be called at most once per process.");
+		}
+
+		_started = true;
 	}
 }

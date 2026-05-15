@@ -2,6 +2,8 @@
 
 using FluentAssertions;
 
+using FluentResults;
+
 using Microsoft.Extensions.DependencyInjection;
 
 using SemiStep.Core.Configuration.Facade;
@@ -26,8 +28,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 
 	private static async Task<(
 		PlcLifecycleManager Plc,
-		RecipeWorkspace Workspace,
-		RecipeEditor Editor,
+		RecipeSession Session,
 		StubS7Service S7Service,
 		StubPlcSyncService SyncService)> BuildAsync()
 	{
@@ -49,13 +50,12 @@ public sealed class PlcLifecycleManagerReconnectTests
 			.AddSingleton<IPlcSyncService>(syncService)
 			.BuildServiceProvider();
 
-		var workspace = services.GetRequiredService<RecipeWorkspace>();
-		var editor = services.GetRequiredService<RecipeEditor>();
+		var session = services.GetRequiredService<RecipeSession>();
 		var plc = services.GetRequiredService<PlcLifecycleManager>();
 		plc.Initialize();
-		workspace.Reset();
+		session.Reset();
 
-		return (plc, workspace, editor, s7Service, syncService);
+		return (plc, session, s7Service, syncService);
 	}
 
 	private static Recipe BuildSingleStepRecipe()
@@ -70,10 +70,10 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task StateChanged_Connected_WhenRecipesDiffer_FiresConflictDetected()
 	{
-		var (plc, _, editor, s7Service, _) = await BuildAsync();
+		var (plc, session, s7Service, _) = await BuildAsync();
 
 		// Populate local recipe so it is non-empty.
-		var appendResult = editor.AppendStep(WaitActionId);
+		var appendResult = session.AppendStep(WaitActionId);
 		appendResult.IsSuccess.Should().BeTrue();
 
 		// Configure stub: committed=true, PLC recipe different from local.
@@ -109,7 +109,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task StateChanged_Connected_WhenNotCommitted_PushesLocalRecipe()
 	{
-		var (plc, _, _, s7Service, syncService) = await BuildAsync();
+		var (plc, _, s7Service, syncService) = await BuildAsync();
 
 		// Configure stub: committed=false, so reconciliation should push local recipe.
 		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: false, RecipeLines: 0);
@@ -135,7 +135,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task StateChanged_Disconnected_WhenSyncEnabled_CallsReset()
 	{
-		var (plc, _, _, s7Service, syncService) = await BuildAsync();
+		var (plc, _, s7Service, syncService) = await BuildAsync();
 
 		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
@@ -150,7 +150,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task DisableSync_CallsResetOnSyncService()
 	{
-		var (plc, _, _, _, syncService) = await BuildAsync();
+		var (plc, _, _, syncService) = await BuildAsync();
 
 		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
@@ -159,5 +159,81 @@ public sealed class PlcLifecycleManagerReconnectTests
 
 		syncService.WasResetCalled.Should().BeTrue(
 			"IPlcSyncService.Reset() must be called when sync is manually disabled");
+	}
+
+	[Fact]
+	public async Task StateChanged_Connected_WhenLocalEmptyAndPlcNonEmpty_InvokesReconnectApplyCallback()
+	{
+		var (plc, _, s7Service, _) = await BuildAsync();
+
+		var plcRecipe = BuildSingleStepRecipe();
+		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
+		s7Service.RecipeToReturn = plcRecipe;
+
+		Recipe? appliedRecipe = null;
+		plc.RegisterReconnectApplyCallback(recipe =>
+		{
+			appliedRecipe = recipe;
+			return Task.FromResult(Result.Ok());
+		});
+
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
+		enableResult.IsSuccess.Should().BeTrue();
+
+		s7Service.RaiseStateChanged(PlcConnectionState.Connected);
+
+		await TestHelpers.WaitUntilAsync(
+			() => appliedRecipe is not null,
+			cancellationToken: TestContext.Current.CancellationToken);
+
+		appliedRecipe.Should().Be(plcRecipe,
+			"reconnect reconciliation must route the PLC recipe through the registered callback "
+			+ "so the coordinator can marshal to the UI thread and dispatch the mutation signal");
+	}
+
+	[Fact]
+	public async Task StateChanged_Connected_WhenLocalEmptyAndPlcNonEmpty_DoesNotMutateSessionDirectly()
+	{
+		var (plc, session, s7Service, _) = await BuildAsync();
+
+		var plcRecipe = BuildSingleStepRecipe();
+		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
+		s7Service.RecipeToReturn = plcRecipe;
+
+		// Register a no-op callback so the path completes without applying anything to the session.
+		// The session must remain empty: the lifecycle manager is forbidden from mutating it directly,
+		// because such a mutation skips UI-thread marshalling and the mutation-signal channel.
+		var callbackInvoked = false;
+		plc.RegisterReconnectApplyCallback(_ =>
+		{
+			callbackInvoked = true;
+			return Task.FromResult(Result.Ok());
+		});
+
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
+		enableResult.IsSuccess.Should().BeTrue();
+
+		s7Service.RaiseStateChanged(PlcConnectionState.Connected);
+
+		await TestHelpers.WaitUntilAsync(
+			() => callbackInvoked,
+			cancellationToken: TestContext.Current.CancellationToken);
+
+		session.Current.StepCount.Should().Be(0,
+			"the lifecycle manager must delegate session mutation to the registered callback; "
+			+ "direct mutation would silently desynchronize the grid VM from the session");
+	}
+
+	[Fact]
+	public async Task RegisterReconnectApplyCallback_CalledTwice_Throws()
+	{
+		var (plc, _, _, _) = await BuildAsync();
+
+		plc.RegisterReconnectApplyCallback(_ => Task.FromResult(Result.Ok()));
+
+		var act = () => plc.RegisterReconnectApplyCallback(_ => Task.FromResult(Result.Ok()));
+
+		act.Should().Throw<InvalidOperationException>(
+			"a single coordinator owns the reconnect-apply pipeline; double registration indicates a wiring bug");
 	}
 }

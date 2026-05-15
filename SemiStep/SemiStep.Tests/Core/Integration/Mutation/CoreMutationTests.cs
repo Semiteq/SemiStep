@@ -19,8 +19,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void AppendStep_CreatesStepWithDefaults()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait();
 
 		driver.StepCount.Should().Be(1);
@@ -30,8 +30,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void AppendStep_MultipleSteps_IncreasesCount()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait().AddWait().AddWait();
 
 		driver.StepCount.Should().Be(3);
@@ -41,8 +41,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void InsertStep_AtBeginning_ShiftsExistingSteps()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(5f).AddWait(10f);
 
 		driver.InsertWait(0, 15f);
@@ -56,8 +56,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void InsertStep_InMiddle_ShiftsStartTimes()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(10f).AddWait(10f);
 
 		var beforeSecond = driver.Snapshot.StepStartTimes[1];
@@ -72,8 +72,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void RemoveStep_RecalculatesStartTimes()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(10f).AddWait(10f).AddWait(10f);
 
 		driver.Snapshot.StepStartTimes[2].Should().Be(TimeSpan.FromSeconds(20));
@@ -87,8 +87,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void RemoveStep_LastStep_LeavesEmptyRecipe()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait();
 
 		driver.StepCount.Should().Be(1);
@@ -101,11 +101,11 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void ReplaceAction_LongLastingToImmediate_RemovesDurationEffect()
 	{
-		fixture.Workspace.Reset();
+		fixture.Session.Reset();
 
 		const float CustomDuration = 12f;
 
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(CustomDuration);
 
 		var before = driver.Snapshot.TotalDuration;
@@ -120,8 +120,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void ReplaceAction_ImmediateToLongLasting_AddsDuration()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddPause();
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.Zero);
@@ -135,8 +135,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void UpdateProperty_ChangesDuration()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(10f);
 
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(10));
@@ -149,10 +149,10 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void UpdateProperty_InvalidIndex_DoesNotModifyState()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 
-		var result = fixture.Editor.UpdateStepProperty(5, RecipeTestDriver.StepDurationColumn, "10");
+		var result = fixture.Session.UpdateStepProperty(5, RecipeTestDriver.StepDurationColumn, "10");
 
 		result.IsFailed.Should().BeTrue();
 		driver.StepCount.Should().Be(0);
@@ -161,8 +161,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void NewRecipe_ResetsToEmpty()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait().AddWait().AddWait();
 
 		driver.StepCount.Should().Be(3);
@@ -175,8 +175,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void InsertSteps_InsertsMultipleStepsAtPosition()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(5f).AddWait(10f);
 
 		var stepsToInsert = new List<Step>
@@ -199,8 +199,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void InsertSteps_AtEnd_AppendsSteps()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(5f);
 
 		var stepsToInsert = new List<Step>
@@ -219,8 +219,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void RemoveSteps_NonContiguousIndices_RemovesCorrectSteps()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait(5f).AddWait(10f).AddWait(15f).AddWait(20f);
 
 		driver.StepCount.Should().Be(4);
@@ -236,8 +236,8 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	[Fact]
 	public void RemoveSteps_AllSteps_LeavesEmptyRecipe()
 	{
-		fixture.Workspace.Reset();
-		var driver = new RecipeTestDriver(fixture.Workspace, fixture.Editor);
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddWait().AddWait().AddWait();
 
 		driver.RemoveSteps([0, 1, 2]);

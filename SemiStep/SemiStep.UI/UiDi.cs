@@ -18,8 +18,7 @@ public static class UiDi
 	{
 		services.AddSingleton(sp => sp.GetRequiredService<AppConfiguration>().GridStyle);
 		services.AddSingleton<MessagePanelViewModel>();
-		services.AddSingleton<RecipeQueryService>();
-		services.AddSingleton<RecipeMutationCoordinator>();
+		services.AddSingleton<RecipeCoordinator>();
 		services.AddSingleton<RecipeGridViewModel>();
 		services.AddSingleton<RecipeCommandsViewModel>();
 		services.AddSingleton<ClipboardViewModel>();

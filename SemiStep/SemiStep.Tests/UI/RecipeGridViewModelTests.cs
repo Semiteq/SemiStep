@@ -1,11 +1,17 @@
-﻿using Avalonia.Headless.XUnit;
+﻿using System.Collections.Immutable;
+
+using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Logging;
+
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
+using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
+using SemiStep.UI.Coordinator;
 using SemiStep.UI.RecipeGrid;
 
 using Xunit;
@@ -18,12 +24,18 @@ namespace SemiStep.Tests.UI;
 public sealed class RecipeGridViewModelTests : IAsyncLifetime
 {
 	private readonly UIFixture _fixture = new();
+	private readonly RecordingLogger<RecipeGridViewModel> _logger = new();
 	private RecipeGridViewModel _grid = null!;
 
 	public async ValueTask InitializeAsync()
 	{
 		await _fixture.InitializeAsync();
-		_grid = new RecipeGridViewModel(_fixture.Coordinator, _fixture.RecipeMetadataRegistry, _fixture.MessagePanel);
+		_grid = new RecipeGridViewModel(
+			_fixture.Coordinator,
+			_fixture.RecipeMetadataRegistry,
+			_fixture.MessagePanel,
+			_logger);
+		_fixture.Coordinator.Attach(_grid);
 		_grid.Initialize();
 	}
 
@@ -34,7 +46,7 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void Initialize_EmptyRecipe_HasZeroRows()
+	public void NewRecipe_LeavesGridEmpty()
 	{
 		_fixture.Coordinator.NewRecipe();
 
@@ -186,13 +198,50 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void SelectedRowIndex_UpdatedAfterAppend()
+	public void SelectedRowIndex_DerivedFromSelectedRowIndices_FirstElement()
 	{
 		_fixture.Coordinator.NewRecipe();
-
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		_grid.SelectedRowIndex.Should().Be(0);
+		_grid.SelectedRowIndices = new[] { 1 };
+
+		_grid.SelectedRowIndex.Should().Be(1);
+	}
+
+	[AvaloniaFact]
+	public void SelectedRowIndex_NegativeOne_WhenNoSelection()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		_grid.SelectedRowIndices = Array.Empty<int>();
+
+		_grid.SelectedRowIndex.Should().Be(-1);
+	}
+
+	[AvaloniaFact]
+	public void RequestSelection_RaisesSelectionRequestedEvent()
+	{
+		_fixture.Coordinator.NewRecipe();
+		int? captured = -100;
+		_grid.SelectionRequested += idx => captured = idx;
+
+		_grid.RequestSelection(5);
+
+		captured.Should().Be(5);
+	}
+
+	[AvaloniaFact]
+	public void RequestSelection_WithNull_RaisesSelectionRequestedEventWithNull()
+	{
+		_fixture.Coordinator.NewRecipe();
+		int? captured = -100;
+		_grid.SelectionRequested += idx => captured = idx;
+
+		_grid.RequestSelection(null);
+
+		captured.Should().BeNull();
 	}
 
 	[AvaloniaFact]
@@ -250,5 +299,133 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
 		_grid.RecipeRows[0].StepStartTime.Should().NotBeNull();
+	}
+
+	[AvaloniaFact]
+	public void OnMutation_PropertyUpdated_OutOfRange_LogsWarningAndDoesNotThrow()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		var act = () => _grid.OnMutation(new MutationSignal.PropertyUpdated(99));
+
+		act.Should().NotThrow();
+		_logger.Entries.Should().Contain(entry =>
+			entry.Level == LogLevel.Warning && entry.Message.Contains("PropertyUpdated"));
+	}
+
+	[AvaloniaFact]
+	public void OnMutation_StepAppended_OutOfRange_LogsWarningAndDoesNotThrow()
+	{
+		_fixture.Coordinator.NewRecipe();
+
+		var act = () => _grid.OnMutation(new MutationSignal.StepAppended(50));
+
+		act.Should().NotThrow();
+		_logger.Entries.Should().Contain(entry =>
+			entry.Level == LogLevel.Warning && entry.Message.Contains("StepAppended"));
+	}
+
+	[AvaloniaFact]
+	public void OnMutation_StepsInserted_OutOfRange_LogsWarningAndDoesNotThrow()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		var act = () => _grid.OnMutation(new MutationSignal.StepsInserted(10, 3));
+
+		act.Should().NotThrow();
+		_logger.Entries.Should().Contain(entry =>
+			entry.Level == LogLevel.Warning && entry.Message.Contains("StepsInserted"));
+	}
+
+	[AvaloniaFact]
+	public void OnMutation_StepActionChanged_OutOfRange_LogsWarningAndDoesNotThrow()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		var act = () => _grid.OnMutation(new MutationSignal.StepActionChanged(42));
+
+		act.Should().NotThrow();
+		_logger.Entries.Should().Contain(entry =>
+			entry.Level == LogLevel.Warning && entry.Message.Contains("StepActionChanged"));
+	}
+
+	[AvaloniaFact]
+	public void OnMutation_StepAppended_InRange_DoesNotLogWarning()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		_logger.Entries.Should().NotContain(entry =>
+			entry.Level == LogLevel.Warning && entry.Message.Contains("Stale"));
+	}
+
+	[AvaloniaFact]
+	public void OnMutation_StepRemoved_OutOfRange_LogsWarningAndDoesNotThrow()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		var act = () => _grid.OnMutation(new MutationSignal.StepRemoved(42));
+
+		act.Should().NotThrow();
+		_logger.Entries.Should().Contain(entry =>
+			entry.Level == LogLevel.Warning && entry.Message.Contains("StepRemoved"));
+	}
+
+	[AvaloniaFact]
+	public void OnMutation_StepRemoved_NegativeIndex_LogsWarningAndDoesNotThrow()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		var act = () => _grid.OnMutation(new MutationSignal.StepRemoved(-1));
+
+		act.Should().NotThrow();
+		_logger.Entries.Should().Contain(entry =>
+			entry.Level == LogLevel.Warning && entry.Message.Contains("StepRemoved"));
+	}
+
+	[AvaloniaFact]
+	public void OnMutation_StepsRemoved_AnyIndexOutOfRange_LogsWarningAndDoesNotThrow()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		var act = () => _grid.OnMutation(
+			new MutationSignal.StepsRemoved(ImmutableArray.Create(0, 99)));
+
+		act.Should().NotThrow();
+		_logger.Entries.Should().Contain(entry =>
+			entry.Level == LogLevel.Warning && entry.Message.Contains("StepsRemoved"));
+	}
+
+	[AvaloniaFact]
+	public void OnMutation_StepRemoved_InRange_DoesNotLogWarning()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		_fixture.Coordinator.RemoveStep(0);
+
+		_logger.Entries.Should().NotContain(entry =>
+			entry.Level == LogLevel.Warning && entry.Message.Contains("Stale"));
+	}
+
+	[AvaloniaFact]
+	public void OnMutation_StepsRemoved_InRange_DoesNotLogWarning()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		_fixture.Coordinator.RemoveSteps(new[] { 0, 2 });
+
+		_logger.Entries.Should().NotContain(entry =>
+			entry.Level == LogLevel.Warning && entry.Message.Contains("Stale"));
 	}
 }

@@ -13,13 +13,13 @@ public sealed class RecipeRowViewModel(
 	IReadOnlyDictionary<string, CellState> cellStates)
 	: ReactiveObject, IDisposable
 {
-	private Step _step = step;
-
 	private readonly (IReadOnlyDictionary<string, string?> Units, IReadOnlyDictionary<string, string> FormatKinds) _columnMetadata
 		= BuildColumnMetadata(action, recipeMetadataRegistry);
 
-	private readonly IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> _groupItemsByColumn
-		= BuildGroupItemsByColumn(action, recipeMetadataRegistry);
+	private readonly IReadOnlyDictionary<string, string> _groupNamesByColumn
+		= BuildGroupNamesByColumn(action);
+
+	private Step _step = step;
 
 	public int StepNumber
 	{
@@ -52,8 +52,6 @@ public sealed class RecipeRowViewModel(
 	public IReadOnlyDictionary<string, string?> ColumnUnits => _columnMetadata.Units;
 
 	public IReadOnlyDictionary<string, string> ColumnFormatKinds => _columnMetadata.FormatKinds;
-
-	public IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> GroupItemsByColumn => _groupItemsByColumn;
 
 	public object? this[string columnKey]
 	{
@@ -112,15 +110,32 @@ public sealed class RecipeRowViewModel(
 	{
 		if (columnKey == ColumnTypes.Action)
 		{
-			if (int.TryParse(value, out var actionId))
+			if (!int.TryParse(value, out var actionId))
 			{
-				ActionChanged?.Invoke(actionId);
+				return;
 			}
 
+			if (actionId == _step.ActionKey)
+			{
+				return;
+			}
+
+			ActionChanged?.Invoke(actionId);
+			return;
+		}
+
+		var currentValue = GetPropertyValue(columnKey)?.ToString();
+		if (string.Equals(currentValue, value, StringComparison.Ordinal))
+		{
 			return;
 		}
 
 		PropertyValueChanged?.Invoke(columnKey, value);
+	}
+
+	public string? GetGroupNameForColumn(string columnKey)
+	{
+		return _groupNamesByColumn.TryGetValue(columnKey, out var groupName) ? groupName : null;
 	}
 
 	private static PropertyTypeDefinition? ResolvePropertyType(
@@ -131,21 +146,9 @@ public sealed class RecipeRowViewModel(
 		return propertyResult.IsSuccess ? propertyResult.Value : null;
 	}
 
-	private static IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> BuildGroupItemsByColumn(
-		ActionDefinition actionDefinition,
-		RecipeMetadataRegistry recipeMetadataRegistry)
+	private static IReadOnlyDictionary<string, string> BuildGroupNamesByColumn(ActionDefinition actionDefinition)
 	{
-		var groupItemsByColumn = new Dictionary<string, IReadOnlyList<ComboBoxItemViewModel>>(StringComparer.OrdinalIgnoreCase);
-
-		foreach (var columnDefinition in recipeMetadataRegistry.GetAllColumns())
-		{
-			if (!ColumnTypes.IsGroupBoundColumn(columnDefinition.ColumnType))
-			{
-				continue;
-			}
-
-			groupItemsByColumn[columnDefinition.Key] = Array.Empty<ComboBoxItemViewModel>();
-		}
+		var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
 		foreach (var actionProperty in actionDefinition.Properties)
 		{
@@ -154,19 +157,10 @@ public sealed class RecipeRowViewModel(
 				continue;
 			}
 
-			var groupResult = recipeMetadataRegistry.GetGroup(actionProperty.GroupName);
-			if (groupResult.IsFailed)
-			{
-				continue;
-			}
-
-			groupItemsByColumn[actionProperty.Key] = groupResult.Value.Items
-				.Select(kvp => new ComboBoxItemViewModel(kvp.Key, kvp.Value))
-				.OrderBy(item => item.Id)
-				.ToList();
+			result[actionProperty.Key] = actionProperty.GroupName;
 		}
 
-		return groupItemsByColumn;
+		return result;
 	}
 
 	private static (IReadOnlyDictionary<string, string?> Units, IReadOnlyDictionary<string, string> FormatKinds) BuildColumnMetadata(

@@ -15,13 +15,16 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 {
 	private static readonly CellStateToBoolConverter _cellStateToBoolConverter = new();
 	private static readonly HitTestVisibleMultiConverter _hitTestVisibleMultiConverter = new();
-	private static readonly ComboBoxItemMultiSelectionConverter _groupSelectionConverter = new();
+
+	private readonly Dictionary<string, IReadOnlyList<ComboBoxItemViewModel>> _groupItemsByGroupName
+		= new(StringComparer.OrdinalIgnoreCase);
 
 	private List<ComboBoxItemViewModel>? _cachedActionItems;
 
 	public void InvalidateCaches()
 	{
 		_cachedActionItems = null;
+		_groupItemsByGroupName.Clear();
 	}
 
 	public DataGridColumn CreateActionColumn(GridColumnDefinition columnDef, DataGridLength width)
@@ -74,34 +77,28 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 				BuildHitTestVisibleBinding(ColumnTypes.Action, isColumnReadOnly));
 
 			return CellPresenter.Wrap(comboBox, cellStateConverter);
-		}, supportsRecycling: true);
+		}, supportsRecycling: false);
 	}
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateGroupCellTemplate(string columnKey, bool isColumnReadOnly)
 	{
 		var cellStateConverter = new CellStateConverter(columnKey);
-		var itemsSourcePath = ColumnTypes.GroupItemsPath(columnKey);
 		var valueIndexerPath = ColumnTypes.IndexerPath(columnKey);
 
-		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
+		return new FuncDataTemplate<RecipeRowViewModel>((row, _) =>
 		{
 			var comboBox = CreateStyledComboBox();
+			var items = GetOrCreateGroupItems(row, columnKey);
+			var selectionConverter = new ComboBoxItemSelectionConverter(items);
 
-			comboBox.Bind(
-				ComboBox.ItemsSourceProperty,
-				new Binding(itemsSourcePath));
+			comboBox.ItemsSource = items;
 
 			comboBox.Bind(
 				ComboBox.SelectedItemProperty,
-				new MultiBinding
+				new Binding(valueIndexerPath)
 				{
 					Mode = BindingMode.TwoWay,
-					Converter = _groupSelectionConverter,
-					Bindings =
-					{
-						new Binding(valueIndexerPath) { Mode = BindingMode.TwoWay },
-						new Binding(itemsSourcePath)
-					}
+					Converter = selectionConverter
 				});
 
 			comboBox.Bind(
@@ -109,7 +106,7 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 				BuildHitTestVisibleBinding(columnKey, isColumnReadOnly));
 
 			return CellPresenter.Wrap(comboBox, cellStateConverter);
-		}, supportsRecycling: true);
+		}, supportsRecycling: false);
 	}
 
 	private static ComboBox CreateStyledComboBox()
@@ -168,5 +165,34 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 			.ToList();
 
 		return _cachedActionItems;
+	}
+
+	private IReadOnlyList<ComboBoxItemViewModel> GetOrCreateGroupItems(RecipeRowViewModel? row, string columnKey)
+	{
+		var groupName = row?.GetGroupNameForColumn(columnKey);
+		if (groupName is null)
+		{
+			return Array.Empty<ComboBoxItemViewModel>();
+		}
+
+		if (_groupItemsByGroupName.TryGetValue(groupName, out var cached))
+		{
+			return cached;
+		}
+
+		var groupResult = recipeMetadataRegistry.GetGroup(groupName);
+		if (groupResult.IsFailed)
+		{
+			return Array.Empty<ComboBoxItemViewModel>();
+		}
+
+		var items = groupResult.Value.Items
+			.Select(kvp => new ComboBoxItemViewModel(kvp.Key, kvp.Value))
+			.OrderBy(item => item.Id)
+			.ToList();
+
+		_groupItemsByGroupName[groupName] = items;
+
+		return items;
 	}
 }

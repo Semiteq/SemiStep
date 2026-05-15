@@ -15,14 +15,6 @@ public sealed class ColumnBuilder(
 	private readonly TextCellFactory _textCellFactory = new();
 	private readonly ColumnWidthCalculator _widthCalculator = new(recipeMetadataRegistry, gridStyle);
 
-	public void BuildColumnsFromConfiguration(DataGrid grid, AppConfiguration config)
-	{
-		grid.Columns.Clear();
-		_comboBoxCellFactory.InvalidateCaches();
-		AddNumberingColumn(grid);
-		AddColumnsFromConfig(grid, config);
-	}
-
 	public void BuildColumns(DataGrid grid)
 	{
 		grid.Columns.Clear();
@@ -48,20 +40,11 @@ public sealed class ColumnBuilder(
 		});
 	}
 
-	private void AddColumnsFromConfig(DataGrid grid, AppConfiguration config)
-	{
-		foreach (var columnDef in config.Columns.Values)
-		{
-			var column = CreateColumn(columnDef);
-			grid.Columns.Add(column);
-		}
-	}
-
 	private DataGridColumn CreateColumn(GridColumnDefinition columnDef)
 	{
 		var width = _widthCalculator.CalculateColumnWidth(columnDef);
 
-		if (columnDef.Key == ColumnTypes.Action)
+		if (columnDef.ColumnType == ColumnTypes.ActionComboBox)
 		{
 			return _comboBoxCellFactory.CreateActionColumn(columnDef, width);
 		}

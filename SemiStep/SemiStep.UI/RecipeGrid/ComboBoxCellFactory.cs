@@ -63,7 +63,7 @@ public sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataReg
 
 			comboBox.Bind(
 				ComboBox.SelectedItemProperty,
-				new Binding(ColumnTypes.ActionIndexerBindingPath)
+				new Binding(ColumnTypes.IndexerPath(ColumnTypes.Action))
 				{
 					Mode = BindingMode.TwoWay,
 					Converter = selectionConverter

@@ -40,8 +40,7 @@
                   Background="White"
                   SelectionMode="Extended"
                   ClipboardCopyMode="None"
-                  LoadingRow="OnDataGridLoadingRow"
-                  UnloadingRow="OnDataGridUnloadingRow">
+                  LoadingRow="OnDataGridLoadingRow">
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Add Step"

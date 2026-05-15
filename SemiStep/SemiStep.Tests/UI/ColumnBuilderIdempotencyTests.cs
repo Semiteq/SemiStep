@@ -63,6 +63,20 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 		actionColumn.CellTemplate.Should().NotBeNull("the action ComboBox must materialize from CellTemplate");
 		actionColumn.CellEditingTemplate.Should().BeNull(
 			"the Avalonia 12 broken CellEditingTemplate path must not be wired up");
+		actionColumn.CellTheme.Should().NotBeNull(
+			"InapplicableCellTheme must be attached so the [IsInapplicable=True] selector paints disabled cells");
+	}
+
+	[AvaloniaFact]
+	public void BuildColumns_AllColumns_HaveInapplicableCellTheme()
+	{
+		var grid = BuildGrid();
+
+		foreach (var column in grid.Columns.OfType<DataGridTemplateColumn>())
+		{
+			column.CellTheme.Should().NotBeNull(
+				$"column {column.Tag} must have InapplicableCellTheme so the greyed-disabled visual fires");
+		}
 	}
 
 	[AvaloniaFact]
@@ -134,11 +148,11 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 	private IReadOnlySet<string> BuildInapplicableColumns(ActionDefinition action)
 	{
 		var inapplicable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-		foreach (var col in _fixture.RecipeMetadataRegistry.GetAllColumns())
+		foreach (var column in _fixture.RecipeMetadataRegistry.GetAllColumns())
 		{
-			if (CellStateResolver.IsInapplicable(col, action))
+			if (CellStateResolver.IsInapplicable(column, action))
 			{
-				inapplicable.Add(col.Key);
+				inapplicable.Add(column.Key);
 			}
 		}
 		return inapplicable;

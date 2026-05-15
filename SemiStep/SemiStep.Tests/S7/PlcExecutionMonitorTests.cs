@@ -258,7 +258,8 @@ public sealed class PlcExecutionMonitorTests
 		monitor.Stop();
 
 		received.Should().Contain(info => info.RecipeActive,
-			"the poll loop must continue after a transient (non-NotConnectedError) failure and eventually deliver a valid result");
+			"the poll loop must continue after a transient (non-NotConnectedError) failure "
+			+ "and eventually deliver a valid result");
 	}
 
 	[Fact]

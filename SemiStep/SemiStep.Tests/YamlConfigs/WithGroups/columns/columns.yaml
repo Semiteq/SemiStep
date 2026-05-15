@@ -28,7 +28,7 @@ task:
     save_to_csv: true
 
 target:
-  column_type: enum_combo_box
+  column_type: action_target_combo_box
   ui:
     ui_name: "Target"
   business_logic:

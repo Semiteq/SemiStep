@@ -12,13 +12,13 @@ namespace SemiStep.Tests.Core.Unit.Properties;
 [Trait("Area", "PropertyState")]
 public sealed class CorePropertyStateTests
 {
-	private static readonly ActionPropertyDefinition _stepDurationProperties = new(
+	private static readonly ActionPropertyDefinition _stepDurationProperty = new(
 		Key: "step_duration",
 		GroupName: null,
 		PropertyTypeId: "time",
 		DefaultValue: "10");
 
-	private static readonly ActionPropertyDefinition _commentProperties = new(
+	private static readonly ActionPropertyDefinition _commentProperty = new(
 		Key: "comment",
 		GroupName: null,
 		PropertyTypeId: "string",
@@ -28,7 +28,7 @@ public sealed class CorePropertyStateTests
 		Id: 10,
 		UiName: "Wait",
 		DeployDuration: DeployDuration.LongLasting,
-		Properties: [_stepDurationProperties, _commentProperties]);
+		Properties: [_stepDurationProperty, _commentProperty]);
 
 	[Theory]
 	[InlineData("unsupported_column", "property_field", "float", false, CellState.Disabled)]

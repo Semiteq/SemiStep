@@ -40,8 +40,10 @@ public sealed class PlcSyncCoordinatorTests
 			layout);
 	}
 
-	private static (PlcSyncCoordinator Coordinator, FakeS7Transport Transport, StubS7ServiceForSync ConnectionService) Build(
-		bool connected = false)
+	private static (
+		PlcSyncCoordinator Coordinator,
+		FakeS7Transport Transport,
+		StubS7ServiceForSync ConnectionService) Build(bool connected = false)
 	{
 		var transport = new FakeS7Transport();
 		transport.SetConnected(connected);
@@ -149,7 +151,8 @@ public sealed class PlcSyncCoordinatorTests
 		await coordinator.WaitForPendingSyncAsync(TestContext.Current.CancellationToken);
 
 		// (a) Observable state: WaitForPendingSyncAsync returns when the pending sync is scheduled to complete,
-		// but PlcState propagation through the Rx pipeline is not strictly synchronous — poll the observable side effect.
+		// but PlcState propagation through the Rx pipeline is not strictly synchronous —
+		// poll the observable side effect.
 		await TestHelpers.WaitUntilAsync(
 			() => transport.WriteLog.Count > 0,
 			timeout: TimeSpan.FromMilliseconds(2500),

@@ -66,7 +66,7 @@ public sealed class ColumnBuilder(
 			return _comboBoxCellFactory.CreateActionColumn(columnDef, width);
 		}
 
-		if (IsGroupBasedComboBox(columnDef.ColumnType))
+		if (ColumnTypes.IsGroupBoundColumn(columnDef.ColumnType))
 		{
 			return _comboBoxCellFactory.CreateGroupComboBoxColumn(columnDef, width);
 		}
@@ -77,10 +77,5 @@ public sealed class ColumnBuilder(
 		}
 
 		return _textCellFactory.CreateEditableColumn(columnDef, width);
-	}
-
-	private static bool IsGroupBasedComboBox(string columnType)
-	{
-		return string.Equals(columnType, ColumnTypes.ActionTargetComboBox, StringComparison.OrdinalIgnoreCase);
 	}
 }

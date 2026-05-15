@@ -15,7 +15,7 @@ using SemiStep.UI.RecipeGrid;
 
 using Xunit;
 
-namespace SemiStep.Tests.SemiStep.UI.Helpers;
+namespace SemiStep.Tests.UI.Helpers;
 
 public sealed class UIFixture : IAsyncLifetime
 {
@@ -26,7 +26,6 @@ public sealed class UIFixture : IAsyncLifetime
 	public MessagePanelViewModel MessagePanel { get; private set; } = null!;
 	public RecipeQueryService QueryService { get; private set; } = null!;
 	public RecipeMutationCoordinator Coordinator { get; private set; } = null!;
-	public RecipeGridViewModel Grid { get; private set; } = null!;
 
 	public async ValueTask InitializeAsync()
 	{
@@ -38,7 +37,12 @@ public sealed class UIFixture : IAsyncLifetime
 		MessagePanel = new MessagePanelViewModel();
 		var clipboardSerializer = services.GetRequiredService<ClipboardSerializer>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
-		QueryService = new RecipeQueryService(Workspace, plc, clipboardSerializer, importedRecipeValidator, RecipeMetadataRegistry);
+		QueryService = new RecipeQueryService(
+			Workspace,
+			Plc,
+			clipboardSerializer,
+			importedRecipeValidator,
+			RecipeMetadataRegistry);
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
 		var csvService = services.GetRequiredService<CsvService>();
 		Coordinator = new RecipeMutationCoordinator(
@@ -52,13 +56,10 @@ public sealed class UIFixture : IAsyncLifetime
 			MessagePanel,
 			NullLogger<RecipeMutationCoordinator>.Instance);
 		Coordinator.Initialize();
-		Grid = new RecipeGridViewModel(Coordinator, RecipeMetadataRegistry, MessagePanel);
-		Grid.Initialize();
 	}
 
 	public ValueTask DisposeAsync()
 	{
-		Grid.Dispose();
 		Coordinator.Dispose();
 		MessagePanel.Dispose();
 		return ValueTask.CompletedTask;

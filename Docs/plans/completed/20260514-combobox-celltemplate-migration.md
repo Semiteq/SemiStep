@@ -79,6 +79,8 @@ public IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> GroupIt
 
 Built once at row construction by iterating `action.Properties`, resolving each property's `GroupName` through `recipeMetadataRegistry.GetGroup`, materializing the items list with `ComboBoxItemViewModel` projections. For columns with no group (string/numeric properties), the dictionary omits the key entirely — bindings against missing keys yield null which Avalonia treats as empty `ItemsSource`. Lifecycle is identical to `ColumnUnits` / `ColumnFormatKinds`.
 
+> **Post-review footnote (iteration 1/2):** the as-merged implementation pre-populates `Array.Empty<ComboBoxItemViewModel>()` entries for every `ColumnTypes.ActionTargetComboBox` column from the registry instead of omitting non-group keys. This prevents cross-action grids from observing `UnsetValue` on rows whose action lacks a registry-known target column, while keeping the pre-population scope narrow (only group-bound columns). Non-group-bound columns (text/property/numbering/action) still omit the key.
+
 The factory-level `_groupItemsByGroupName` cache in `ComboBoxCellFactory` is removed (Task 4). **Deliberate allocation regression:** previously the cache shared group lists across all rows with the same action; now each row builds its own. Group sizes are small (<20 items typically) and the trade is justified by closure elimination — without it `supportsRecycling: true` is unsafe. If post-Round-8 profiling shows this dominates allocation, a registry-level cache can be reintroduced (the items projection is a pure function of `ActionDefinition` and the registry's group data).
 
 ### Action ComboBox template (CellTemplate, recycling enabled)
@@ -173,11 +175,11 @@ Inside `CreateColumn`, action and group columns return `DataGridTemplateColumn {
 - Modify: `SemiStep/SemiStep.UI/RecipeGrid/RecipeRowViewModel.cs`
 - Modify: `SemiStep/SemiStep.Tests/UI/RecipeRowViewModelTests.cs`
 
-- [ ] Add a private `_groupItemsByColumn` backing field populated by a new `BuildGroupItemsByColumn(ActionDefinition, RecipeMetadataRegistry)` static helper, called from the constructor next to the existing `BuildColumnMetadata` call.
-- [ ] Expose public `IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> GroupItemsByColumn { get; }`.
-- [ ] The helper iterates `action.Properties`; for each property with a non-null `GroupName`, resolves the group via `recipeMetadataRegistry.GetGroup`; on success materializes a `List<ComboBoxItemViewModel>` (`new(kvp.Key, kvp.Value)`) ordered by `Id`; on failure inserts an empty list. For properties without a group, omit the key entirely — bindings against missing keys return null which Avalonia treats as empty `ItemsSource`.
-- [ ] Write tests: row with at least one group-bound property exposes a non-empty list under the property key; row with a non-group property has no key for that property; row with an action whose group does not resolve has an empty list under the key (negative path).
-- [ ] Run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — 309/309+ pass.
+- [x] Add a private `_groupItemsByColumn` backing field populated by a new `BuildGroupItemsByColumn(ActionDefinition, RecipeMetadataRegistry)` static helper, called from the constructor next to the existing `BuildColumnMetadata` call.
+- [x] Expose public `IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> GroupItemsByColumn { get; }`.
+- [x] The helper iterates `action.Properties`; for each property with a non-null `GroupName`, resolves the group via `recipeMetadataRegistry.GetGroup`; on success materializes a `List<ComboBoxItemViewModel>` (`new(kvp.Key, kvp.Value)`) ordered by `Id`; on failure inserts an empty list. For properties without a group, omit the key entirely — bindings against missing keys return null which Avalonia treats as empty `ItemsSource`.
+- [x] Write tests: row with at least one group-bound property exposes a non-empty list under the property key; row with a non-group property has no key for that property; row with an action whose group does not resolve has an empty list under the key (negative path).
+- [x] Run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — 309/309+ pass.
 
 ### Task 2: Rewrite action ComboBox template (CellTemplate, recycling on)
 
@@ -186,11 +188,11 @@ Inside `CreateColumn`, action and group columns return `DataGridTemplateColumn {
 - Possibly create: `SemiStep/SemiStep.UI/RecipeGrid/CellStateToBoolConverter.cs` (for the hit-test-visible multi-converter component, if no existing converter fits)
 - Possibly create: `SemiStep/SemiStep.UI/RecipeGrid/HitTestVisibleMultiConverter.cs` (multi-converter for the IsHitTestVisible binding)
 
-- [ ] In `ComboBoxCellFactory`, replace `CreateActionColumn` body to build a `DataGridTemplateColumn { Header, Tag, Width, IsReadOnly = true, CanUserSort = false, CellTemplate = CreateActionCellTemplate(columnDef.ReadOnly) }`. Remove `CellEditingTemplate` assignment.
-- [ ] Replace `CreateActionDisplayTemplate` and `CreateActionEditingTemplate` with a single private `CreateActionCellTemplate(bool isColumnReadOnly)` returning a `FuncDataTemplate<RecipeRowViewModel>` with `supportsRecycling: true`. No closure over `row`. ComboBox binds `SelectedItem` TwoWay via `ComboBoxItemSelectionConverter` (action items captured as a closure constant — same for every row, never mutates per-row).
-- [ ] Add `BuildHitTestVisibleBinding(string columnKey, bool isColumnReadOnly)` private helper. Returns either a constant `false` binding (when `isColumnReadOnly == true`) or a `MultiBinding` combining `CellStates[columnKey]` projected to bool (Enabled → true, else false) AND negated `DataGrid.IsReadOnly` from a `RelativeSource = new RelativeSource { Mode = FindAncestor, AncestorType = typeof(DataGrid) }`. The multi-converter ANDs the two sources.
-- [ ] Add unit tests for `HitTestVisibleMultiConverter.Convert`: (Enabled, gridReadOnly=false) → true; (Enabled, gridReadOnly=true) → false; (Disabled, _) → false; (Readonly, _) → false. ConvertBack is OneWay-only; return `BindingOperations.DoNothing` or throw `NotSupportedException`.
-- [ ] Run `dotnet build` + `dotnet test` — all green.
+- [x] In `ComboBoxCellFactory`, replace `CreateActionColumn` body to build a `DataGridTemplateColumn { Header, Tag, Width, IsReadOnly = true, CanUserSort = false, CellTemplate = CreateActionCellTemplate(columnDef.ReadOnly) }`. Remove `CellEditingTemplate` assignment.
+- [x] Replace `CreateActionDisplayTemplate` and `CreateActionEditingTemplate` with a single private `CreateActionCellTemplate(bool isColumnReadOnly)` returning a `FuncDataTemplate<RecipeRowViewModel>` with `supportsRecycling: true`. No closure over `row`. ComboBox binds `SelectedItem` TwoWay via `ComboBoxItemSelectionConverter` (action items captured as a closure constant — same for every row, never mutates per-row).
+- [x] Add `BuildHitTestVisibleBinding(string columnKey, bool isColumnReadOnly)` private helper. Returns either a constant `false` binding (when `isColumnReadOnly == true`) or a `MultiBinding` combining `CellStates[columnKey]` projected to bool (Enabled → true, else false) AND negated `DataGrid.IsReadOnly` from a `RelativeSource = new RelativeSource { Mode = FindAncestor, AncestorType = typeof(DataGrid) }`. The multi-converter ANDs the two sources.
+- [x] Add unit tests for `HitTestVisibleMultiConverter.Convert`: (Enabled, gridReadOnly=false) → true; (Enabled, gridReadOnly=true) → false; (Disabled, _) → false; (Readonly, _) → false. ConvertBack is OneWay-only; return `BindingOperations.DoNothing` or throw `NotSupportedException`.
+- [x] Run `dotnet build` + `dotnet test` — all green.
 
 ### Task 3: Introduce `ComboBoxItemMultiSelectionConverter` and rewrite group template
 
@@ -199,14 +201,14 @@ Inside `CreateColumn`, action and group columns return `DataGridTemplateColumn {
 - Create: `SemiStep/SemiStep.Tests/UI/ComboBoxItemMultiSelectionConverterTests.cs`
 - Modify: `SemiStep/SemiStep.UI/RecipeGrid/ComboBoxCellFactory.cs`
 
-- [ ] Create `ComboBoxItemMultiSelectionConverter` implementing `IMultiValueConverter`. `Convert(values, ...)`: source 0 is the int id, source 1 is `IReadOnlyList<ComboBoxItemViewModel>` — return matching item or null. `ConvertBack(value, targetTypes, ...)`: when `value is ComboBoxItemViewModel item` return `new object?[] { item.Id, BindingOperations.DoNothing }`; otherwise both `DoNothing`.
-- [ ] Write tests: round-trip (int 7 with list → matching VM → int 7 back), missing id (int 99 not in list → null), null inputs, non-int source, ConvertBack with non-ComboBoxItemViewModel input → DoNothing.
-- [ ] Replace `CreateGroupComboBoxColumn` body to set `IsReadOnly = true` and only `CellTemplate = CreateGroupCellTemplate(columnDef.Key, columnDef.ReadOnly)`. Drop `CellEditingTemplate` assignment.
-- [ ] Replace `CreateGroupDisplayTemplate` and `CreateGroupEditingTemplate` with a single `CreateGroupCellTemplate(string columnKey, bool isColumnReadOnly)` returning a `FuncDataTemplate<RecipeRowViewModel>` with `supportsRecycling: true`. No closure over `row`.
-- [ ] ComboBox binds `ItemsSource` to path `GroupItemsByColumn[<columnKey>]` (string built once at template-build time).
-- [ ] ComboBox binds `SelectedItem` TwoWay using a `MultiBinding` with the new `ComboBoxItemMultiSelectionConverter`: source 0 is `[<columnKey>]`, source 1 is `GroupItemsByColumn[<columnKey>]`.
-- [ ] ComboBox binds `IsHitTestVisible` via `BuildHitTestVisibleBinding(columnKey, isColumnReadOnly)` from Task 2.
-- [ ] Run `dotnet build` + `dotnet test` — all green.
+- [x] Create `ComboBoxItemMultiSelectionConverter` implementing `IMultiValueConverter`. `Convert(values, ...)`: source 0 is the int id, source 1 is `IReadOnlyList<ComboBoxItemViewModel>` — return matching item or null. `ConvertBack(value, targetTypes, ...)`: when `value is ComboBoxItemViewModel item` return `new object?[] { item.Id, BindingOperations.DoNothing }`; otherwise both `DoNothing`.
+- [x] Write tests: round-trip (int 7 with list → matching VM → int 7 back), missing id (int 99 not in list → null), null inputs, non-int source, ConvertBack with non-ComboBoxItemViewModel input → DoNothing.
+- [x] Replace `CreateGroupComboBoxColumn` body to set `IsReadOnly = true` and only `CellTemplate = CreateGroupCellTemplate(columnDef.Key, columnDef.ReadOnly)`. Drop `CellEditingTemplate` assignment.
+- [x] Replace `CreateGroupDisplayTemplate` and `CreateGroupEditingTemplate` with a single `CreateGroupCellTemplate(string columnKey, bool isColumnReadOnly)` returning a `FuncDataTemplate<RecipeRowViewModel>` with `supportsRecycling: true`. No closure over `row`.
+- [x] ComboBox binds `ItemsSource` to path `GroupItemsByColumn[<columnKey>]` (string built once at template-build time).
+- [x] ComboBox binds `SelectedItem` TwoWay using a `MultiBinding` with the new `ComboBoxItemMultiSelectionConverter`: source 0 is `[<columnKey>]`, source 1 is `GroupItemsByColumn[<columnKey>]`.
+- [x] ComboBox binds `IsHitTestVisible` via `BuildHitTestVisibleBinding(columnKey, isColumnReadOnly)` from Task 2.
+- [x] Run `dotnet build` + `dotnet test` — all green.
 
 ### Task 4: Remove dead code (factory + row VM)
 
@@ -215,11 +217,11 @@ Inside `CreateColumn`, action and group columns return `DataGridTemplateColumn {
 - Modify: `SemiStep/SemiStep.UI/RecipeGrid/RecipeRowViewModel.cs`
 - Modify: `SemiStep/SemiStep.Tests/UI/RecipeRowViewModelTests.cs`
 
-- [ ] In `ComboBoxCellFactory`: confirm `CreateActionDisplayTemplate`, `CreateActionEditingTemplate`, `CreateGroupDisplayTemplate`, `CreateGroupEditingTemplate`, `ResolveGroupDisplayText`, `GetOrCreateGroupItems`, and the `_groupItemsByGroupName` field are all removed (most should already be gone from Tasks 2–3; this task is the audit pass). `InvalidateCaches()` keeps only `_cachedActionItems = null`.
-- [ ] In `RecipeRowViewModel`: remove `GetGroupNameForColumn(string columnKey)` and `GetGroupItemsForColumn(string columnKey)` — no remaining production consumers after Task 1 added `GroupItemsByColumn` and Task 4 removed the factory's display template that called `GetGroupItemsForColumn` indirectly. Verify with grep before deleting.
-- [ ] In `RecipeRowViewModelTests`: remove tests covering the deleted methods (`RecipeRowViewModelTests.cs:197,207` neighborhood — locate exact tests by scanning the file).
-- [ ] Verify `using` directives in both files — drop unused ones.
-- [ ] Run `dotnet build` — 0 warnings, 0 errors. `dotnet test` — all green.
+- [x] In `ComboBoxCellFactory`: confirm `CreateActionDisplayTemplate`, `CreateActionEditingTemplate`, `CreateGroupDisplayTemplate`, `CreateGroupEditingTemplate`, `ResolveGroupDisplayText`, `GetOrCreateGroupItems`, and the `_groupItemsByGroupName` field are all removed (most should already be gone from Tasks 2–3; this task is the audit pass). `InvalidateCaches()` keeps only `_cachedActionItems = null`.
+- [x] In `RecipeRowViewModel`: remove `GetGroupNameForColumn(string columnKey)` and `GetGroupItemsForColumn(string columnKey)` — no remaining production consumers after Task 1 added `GroupItemsByColumn` and Task 4 removed the factory's display template that called `GetGroupItemsForColumn` indirectly. Verify with grep before deleting.
+- [x] In `RecipeRowViewModelTests`: remove tests covering the deleted methods (`RecipeRowViewModelTests.cs:197,207` neighborhood — locate exact tests by scanning the file).
+- [x] Verify `using` directives in both files — drop unused ones.
+- [x] Run `dotnet build` — 0 warnings, 0 errors. `dotnet test` — all green.
 
 ### Task 5: Tests for column shape and binding wiring
 
@@ -227,18 +229,18 @@ Inside `CreateColumn`, action and group columns return `DataGridTemplateColumn {
 - Modify: `SemiStep/SemiStep.Tests/UI/ColumnBuilderIdempotencyTests.cs` — add assertions on action/group column `IsReadOnly` and absence of `CellEditingTemplate`.
 - Possibly create: `SemiStep/SemiStep.Tests/UI/ComboBoxCellFactoryTests.cs` — direct tests on the factory if the existing `ColumnBuilder`-level coverage is insufficient.
 
-- [ ] In `ColumnBuilderIdempotencyTests`, add a test that the column produced for the action key has `IsReadOnly == true` and `CellEditingTemplate == null` and `CellTemplate != null`. Same for at least one group column.
-- [ ] Add a test that exercises the `ActionChanged` data-flow path: change `SelectedItem` on the ComboBox materialized from the template (use `IDataTemplate.Build(row)`); verify `row.ActionChanged` fires with the expected id. This covers the TwoWay binding contract without needing hit-test simulation.
-- [ ] If headless materialization of the template is awkward (binding evaluation needs visual tree), accept the limitation and document with a one-line `// Manual verification required: …` comment in the test seam.
-- [ ] Run `dotnet test` — all green.
+- [x] In `ColumnBuilderIdempotencyTests`, add a test that the column produced for the action key has `IsReadOnly == true` and `CellEditingTemplate == null` and `CellTemplate != null`. Same for at least one group column.
+- [x] Add a test that exercises the `ActionChanged` data-flow path: change `SelectedItem` on the ComboBox materialized from the template (use `IDataTemplate.Build(row)`); verify `row.ActionChanged` fires with the expected id. This covers the TwoWay binding contract without needing hit-test simulation.
+- [x] If headless materialization of the template is awkward (binding evaluation needs visual tree), accept the limitation and document with a one-line `// Manual verification required: …` comment in the test seam.
+- [x] Run `dotnet test` — all green.
 
 ### Task 6: Verify acceptance criteria
 
-- [ ] `dotnet build SemiStep/SemiStep.slnx` — 0 errors, 0 warnings.
-- [ ] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — 309/309+ green.
-- [ ] `dotnet format SemiStep/SemiStep.slnx --verify-no-changes` — pass.
-- [ ] `git diff master..HEAD --stat` review — scope confined to `RecipeRowViewModel.cs`, `ComboBoxCellFactory.cs`, `ColumnBuilderIdempotencyTests.cs`, `RecipeRowViewModelTests.cs`, optionally `ColumnBuilder.cs`, plan/docs files. No incidental edits.
-- [ ] Manual UI verification per the Testing Strategy section (7 scenarios). Document any deviation as `⚠️` in this file.
+- [x] `dotnet build SemiStep/SemiStep.slnx` — 0 errors, 0 warnings.
+- [x] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — 351/351 green after iteration-1/2 fixers (309+ requirement met).
+- [x] `dotnet format SemiStep/SemiStep.slnx --verify-no-changes` — pass.
+- [x] `git diff f601445^..HEAD --stat` review — Round-8 scope confined to the planned files (`RecipeRowViewModel.cs`, `ComboBoxCellFactory.cs`, new converters, plan/test files) plus a pre-existing post-review fix carried in `dd0d7f7` (not added by this plan).
+- [x] Manual UI verification per the Testing Strategy section (7 scenarios) (skipped - not automatable; manual smoke remains a pre-PR gate per Testing Strategy).
 
 ### Task 7: Archive plan + document Round-8
 
@@ -246,8 +248,8 @@ Inside `CreateColumn`, action and group columns return `DataGridTemplateColumn {
 - Move: `Docs/plans/20260514-combobox-celltemplate-migration.md` → `Docs/plans/completed/`
 - Modify: `Docs/07-non-functional.md`
 
-- [ ] `git mv Docs/plans/20260514-combobox-celltemplate-migration.md Docs/plans/completed/`
-- [ ] In `Docs/07-non-functional.md`, add a Round-8 subsection after Round-7 covering:
+- [x] `git mv Docs/plans/20260514-combobox-celltemplate-migration.md Docs/plans/completed/`
+- [x] In `Docs/07-non-functional.md`, add a Round-8 subsection after Round-7 covering:
   - Avalonia.Controls.DataGrid#236: `CellEditingTemplate` + ComboBox broken in 12.0.0, no upstream fix planned.
   - Migration to CellTemplate-only ComboBoxes with `IsReadOnly = true` — the only working pattern in Avalonia 12 per official samples and accepted community answers.
   - `supportsRecycling: true` flip across all four (now two) ComboBox templates — closes the Round-7-deferred recycling work. `row` closures eliminated by exposing `RecipeRowViewModel.GroupItemsByColumn` as a bindable lookup and introducing `ComboBoxItemMultiSelectionConverter` for the group case (action items remain global, no multi-binding needed).

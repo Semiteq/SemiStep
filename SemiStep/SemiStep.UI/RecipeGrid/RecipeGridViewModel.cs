@@ -346,10 +346,21 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		var stepStartTimes = _coordinator.Snapshot.StepStartTimes;
 		for (var i = 0; i < RecipeRows.Count; i++)
 		{
-			var rawSeconds = stepStartTimes.TryGetValue(i, out var time)
-				? time.TotalSeconds.ToString(CultureInfo.InvariantCulture)
-				: string.Empty;
-			RecipeRows[i].UpdateStepStartTime(rawSeconds);
+			string formattedTime;
+			if (stepStartTimes.TryGetValue(i, out var time))
+			{
+				var rawSeconds = time.TotalSeconds.ToString(CultureInfo.InvariantCulture);
+				formattedTime = TimeFormatHelper.FormatValue(
+					rawSeconds,
+					TimeFormatHelper.TimeHmsFormat,
+					TimeFormatHelper.TimeUnits);
+			}
+			else
+			{
+				formattedTime = string.Empty;
+			}
+
+			RecipeRows[i].UpdateStepStartTime(formattedTime);
 		}
 	}
 
@@ -368,7 +379,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		ActionDefinition action,
 		int stepNumber)
 	{
-		var cellStates = new Dictionary<string, CellState>();
+		var cellStates = new Dictionary<string, CellState>(StringComparer.OrdinalIgnoreCase);
 		foreach (var col in RecipeMetadataRegistry.GetAllColumns())
 		{
 			cellStates[col.Key] = _coordinator.QueryService.GetCellState(col, action);

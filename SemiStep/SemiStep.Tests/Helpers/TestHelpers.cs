@@ -23,8 +23,8 @@ public static class TestHelpers
 		CancellationToken cancellationToken = default,
 		[CallerArgumentExpression(nameof(predicate))] string? predicateExpression = null)
 	{
-		var sw = Stopwatch.StartNew();
-		while (sw.Elapsed < timeout)
+		var stopwatch = Stopwatch.StartNew();
+		while (stopwatch.Elapsed < timeout)
 		{
 			if (predicate())
 			{

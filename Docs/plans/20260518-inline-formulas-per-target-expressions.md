@@ -282,10 +282,10 @@ New private method `MapFormula(actionId, formulaDto, columnKeys) → Result<Form
 
 ### Task 6: Update documentation
 
-- [ ] Update `Docs/` chapter(s) describing the recipe-mutation flow to mention recalc inside `RecipeSession.UpdateStepProperty`.
-- [ ] Update the import/CSV chapter to state explicitly: "CSV import is verbatim; formula relations are not re-evaluated on load."
-- [ ] Update `CLAUDE.md` if a project-wide convention is worth a one-liner.
-- [ ] Move this plan to `Docs/plans/completed/`.
+- [x] Update `Docs/` chapter(s) describing the recipe-mutation flow to mention recalc inside `RecipeSession.UpdateStepProperty`. (Added §3.4 "Связанные параметры (inline-формулы)" in `Docs/03-data-model.md`; the SemiStep technical docs are user-facing requirements in Russian, with no separate mutation-flow chapter — data-model is the canonical home.)
+- [x] Update the import/CSV chapter to state explicitly: "CSV import is verbatim; formula relations are not re-evaluated on load." (Added §3.5 "Импорт CSV" to `Docs/03-data-model.md` — no dedicated CSV chapter existed.)
+- [x] Update `CLAUDE.md` if a project-wide convention is worth a one-liner. (Added a "Conventions" section noting the inline-formula route through `RecipeSession.UpdateStepProperty` and the verbatim CSV-import rule.)
+- [x] Move this plan to `Docs/plans/completed/`. (deferred to finalize step)
 
 ## Post-Completion
 

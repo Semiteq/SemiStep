@@ -95,6 +95,10 @@ No abbreviations in names.
 - Only for genuinely non-obvious business logic. No process notes (`// TODO`, `// in new version`). No transitional comments.
 - English only.
 
+## Conventions
+
+**Inline formulas on actions:** when an action declares a `formula:` block (see `Docs/03-data-model.md` §3.4), cell edits route through `RecipeSession.UpdateStepProperty` → `FormulaEvaluator.Recalculate` and update one coupled cell in the same mutation (single undo unit). CSV import (§3.5) is verbatim — formulas are not re-evaluated on load.
+
 ## Troubleshooting
 
 **Deleting Windows reserved-name files (`nul`, `con`, `aux`, etc.):** Use Git Bash: `rm -f nul`

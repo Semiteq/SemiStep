@@ -240,12 +240,12 @@ New private method `MapFormula(actionId, formulaDto, columnKeys) → Result<Form
 - Modify: `SemiStep/SemiStep.Core/Configuration/Mapping/ActionMapper.cs`
 - Create: `SemiStep/SemiStep.Tests/Core/Configuration/Mapping/ActionMapperFormulaTests.cs`
 
-- [ ] `FormulaDto { List<string>? RecalcOrder; Dictionary<string, string>? Expressions; }`.
-- [ ] Wire `FormulaDto? Formula` onto `ActionDto`.
-- [ ] `ActionMapper.MapFormula` enforces all rules from Technical Details (≥ 2 recalc entries, entries match action columns, expressions covers exactly recalc_order keys both ways, every expression parses, every identifier in expression is in recalc_order). Use `FormulaIdentifierExtractor` from Task 1.
-- [ ] Failures as `ConfigError` with `section`, `actionId`, `actionName`, `target`, `expression`.
-- [ ] Tests: valid block; missing expression for one recalc entry; extra expression key not in recalc_order; unparseable expression; expression referencing variable absent from recalc_order; recalc_order entry referencing a column not on the action; recalc_order has only one entry; duplicate entries in recalc_order.
-- [ ] Green.
+- [x] `FormulaDto { List<string>? RecalcOrder; Dictionary<string, string>? Expressions; }`.
+- [x] Wire `FormulaDto? Formula` onto `ActionDto`.
+- [x] `ActionMapper.MapFormula` enforces all rules from Technical Details (≥ 2 recalc entries, entries match action columns, expressions covers exactly recalc_order keys both ways, every expression parses, every identifier in expression is in recalc_order). Use `FormulaIdentifierExtractor` from Task 1.
+- [x] Failures as FluentResults `Result` failures with `section`, `actionId`, `actionName`, `target`, `expression` content (codebase uses string-message Errors via FluentResults, no `ConfigError` class exists).
+- [x] Tests: valid block; missing expression for one recalc entry; extra expression key not in recalc_order; unparseable expression; expression referencing variable absent from recalc_order; recalc_order entry referencing a column not on the action; recalc_order has only one entry; duplicate entries in recalc_order.
+- [x] Green.
 
 ### Task 4: Register `FormulaEvaluator`, wire into `RecipeSession.UpdateStepProperty`, integration tests
 

@@ -6,4 +6,6 @@ internal sealed class ActionDto
 	public string? UiName { get; set; }
 	public string? DeployDuration { get; set; }
 	public List<ActionColumnDto>? Columns { get; set; }
+
+	public FormulaDto? Formula { get; set; }
 }

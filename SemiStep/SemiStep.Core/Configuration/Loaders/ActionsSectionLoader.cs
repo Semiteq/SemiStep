@@ -118,7 +118,8 @@ internal static class ActionsSectionLoader
 			Id = id,
 			UiName = source.UiName,
 			DeployDuration = source.DeployDuration,
-			Columns = source.Columns
+			Columns = source.Columns,
+			Formula = source.Formula
 		};
 	}
 

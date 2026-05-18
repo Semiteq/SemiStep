@@ -177,14 +177,13 @@ Zed debug args (per preset):
 - Create: `SemiStep/.run/Debug MBE.run.xml`
 - Create: `SemiStep/.run/Debug MOCVD.run.xml`
 
-- [ ] delete the untracked `Debug Semistep.run.xml`
-- [ ] create `Debug MBE.run.xml` based on the structure of the deleted file, with
+- [x] delete the untracked `Debug Semistep.run.xml`
+- [x] create `Debug MBE.run.xml` based on the structure of the deleted file, with
       `name="Debug MBE"` and `PROGRAM_PARAMETERS` set to
       `--config-dir "$PROJECT_DIR$/../ConfigFiles/MBE" --log-file "$USER_HOME$/AppData/Local/Temp/semistep.log" --logging-level verbose`
-- [ ] create `Debug MOCVD.run.xml` as a duplicate with `name="Debug MOCVD"` and the MOCVD
+- [x] create `Debug MOCVD.run.xml` as a duplicate with `name="Debug MOCVD"` and the MOCVD
       path
-- [ ] manual verification: open the solution in Rider and confirm both configurations appear
-      in the run-configuration dropdown and launch successfully
+- [x] manual verification (skipped — Rider not available in this session)
 
 ### Task 3: Update Zed tasks and debug configurations
 

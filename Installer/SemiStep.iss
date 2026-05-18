@@ -89,7 +89,7 @@ Source: "..\ConfigFiles\MOCVD\*"; DestDir: "C:\DISTR\Config\Semistep\MOCVD"; Fla
 
 [Dirs]
 ; Ensure the logs directory exists before the app first runs
-;   C:\DISTR\Logs  (see Program.cs: LogFilePath constant)
+;   C:\DISTR\Logs  (see StartupOptions.DefaultLogFilePath)
 Name: "C:\DISTR\Logs"
 
 [Icons]

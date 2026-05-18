@@ -1,4 +1,6 @@
-﻿using Avalonia.Controls;
+﻿using System.Globalization;
+
+using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Input;
@@ -11,13 +13,6 @@ namespace SemiStep.UI.RecipeGrid;
 
 internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataRegistry)
 {
-	private List<ComboBoxItemViewModel>? _cachedActionItems;
-
-	public void InvalidateCaches()
-	{
-		_cachedActionItems = null;
-	}
-
 	public DataGridColumn CreateActionColumn(GridColumnDefinition columnDef, DataGridLength width)
 	{
 		return new DataGridTemplateColumn
@@ -46,7 +41,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateActionCellTemplate(bool isColumnReadOnly)
 	{
-		var items = GetOrCreateActionItems();
+		var items = recipeMetadataRegistry.GetActionComboBoxItems();
 		var selectionConverter = new ComboBoxItemSelectionConverter(items);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
@@ -106,7 +101,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 					return;
 				}
 
-				row.SetPropertyValue(columnKey, selected.Id.ToString());
+				row.SetPropertyValue(columnKey, selected.Id.ToString(CultureInfo.InvariantCulture));
 			};
 
 			ApplyInputBlocking(comboBox, columnKey, isColumnReadOnly);
@@ -136,19 +131,5 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 
 		comboBox.Bind(InputElement.IsHitTestVisibleProperty, CellApplicabilityBinding.CreateApplicableBinding(columnKey));
 		comboBox.Bind(InputElement.FocusableProperty, CellApplicabilityBinding.CreateApplicableBinding(columnKey));
-	}
-
-	private List<ComboBoxItemViewModel> GetOrCreateActionItems()
-	{
-		if (_cachedActionItems is not null)
-		{
-			return _cachedActionItems;
-		}
-
-		_cachedActionItems = recipeMetadataRegistry.GetAllActions()
-			.Select(action => new ComboBoxItemViewModel(action.Id, action.UiName))
-			.ToList();
-
-		return _cachedActionItems;
 	}
 }

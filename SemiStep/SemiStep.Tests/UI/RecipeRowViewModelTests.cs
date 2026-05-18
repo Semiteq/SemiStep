@@ -18,7 +18,7 @@ namespace SemiStep.Tests.UI;
 
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeRow")]
-[Trait("Category", "Integration")]
+[Trait("Category", "Unit")]
 public sealed class RecipeRowViewModelTests : IAsyncLifetime
 {
 	private RecipeSession _session = null!;
@@ -49,11 +49,11 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	private IReadOnlySet<string> BuildInapplicableColumns(ActionDefinition action)
 	{
 		var inapplicable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-		foreach (var col in _recipeMetadataRegistry.GetAllColumns())
+		foreach (var column in _recipeMetadataRegistry.GetAllColumns())
 		{
-			if (CellStateResolver.IsInapplicable(col, action))
+			if (CellStateResolver.IsInapplicable(column, action))
 			{
-				inapplicable.Add(col.Key);
+				inapplicable.Add(column.Key);
 			}
 		}
 		return inapplicable;
@@ -306,11 +306,12 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void GroupItemsByColumn_ReturnsEmptyList_WhenActionGroupResolutionFails()
+	public void GroupItemsByColumn_DoesNotInject_NonGroupBoundColumnKeys()
 	{
-		// When an action property references a group that does not exist in the metadata registry,
-		// RecipeMetadataRegistry.GetComboBoxItems returns Array.Empty<>(). The row VM stores this
-		// reference so the key is present with an empty list — binding never sees UnsetValue.
+		// Defensive invariant: GroupItemsByColumn carries only column keys that the registry
+		// declares as ActionTargetComboBox. If an action property references a column key that
+		// isn't a registered group-bound column (production validators reject this at startup;
+		// the guard exists for validator drift), the row VM must not silently inject it.
 		var unresolvedGroupProperty = new ActionPropertyDefinition(
 			Key: "phantom_column",
 			GroupName: "nonexistent_group",
@@ -326,8 +327,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 
 		var row = new RecipeRowViewModel(1, step, actionWithUnresolvedGroup, _recipeMetadataRegistry, inapplicableColumns);
 
-		row.GroupItemsByColumn.Should().ContainKey("phantom_column");
-		row.GroupItemsByColumn["phantom_column"].Should().BeEmpty();
+		row.GroupItemsByColumn.Should().NotContainKey("phantom_column");
 	}
 
 	public static TheoryData<string, string> ColumnUnitsData => new()

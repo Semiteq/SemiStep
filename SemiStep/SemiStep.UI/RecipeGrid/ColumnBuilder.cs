@@ -18,7 +18,6 @@ public sealed class ColumnBuilder(
 	public void BuildColumns(DataGrid grid)
 	{
 		grid.Columns.Clear();
-		_comboBoxCellFactory.InvalidateCaches();
 		AddNumberingColumn(grid);
 
 		foreach (var columnDef in recipeMetadataRegistry.GetAllColumns())

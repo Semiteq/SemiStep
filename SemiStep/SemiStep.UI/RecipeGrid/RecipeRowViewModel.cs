@@ -1,4 +1,6 @@
-﻿using ReactiveUI;
+﻿using System.Globalization;
+
+using ReactiveUI;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
@@ -118,7 +120,7 @@ public sealed class RecipeRowViewModel(
 	{
 		if (columnKey == ColumnTypes.Action)
 		{
-			if (!int.TryParse(value, out var actionId))
+			if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var actionId))
 			{
 				return;
 			}
@@ -170,6 +172,15 @@ public sealed class RecipeRowViewModel(
 		foreach (var actionProperty in actionDefinition.Properties)
 		{
 			if (actionProperty.GroupName is null)
+			{
+				continue;
+			}
+
+			// Only overlay onto columns that were pre-populated above (group-bound columns).
+			// Cross-reference validation rejects actions that reference non-existent column keys
+			// at startup, but this guard keeps the dictionary's documented invariant explicit
+			// and protects against future config-validator drift.
+			if (!result.ContainsKey(actionProperty.Key))
 			{
 				continue;
 			}

@@ -16,8 +16,6 @@ internal sealed class ComboBoxItemMultiSelectionConverter : IMultiValueConverter
 {
 	public static readonly ComboBoxItemMultiSelectionConverter Instance = new();
 
-	private static readonly object?[] _doNothingResult = [BindingOperations.DoNothing];
-
 	public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
 	{
 		if (values.Count < 2)
@@ -48,6 +46,6 @@ internal sealed class ComboBoxItemMultiSelectionConverter : IMultiValueConverter
 
 	public object?[] ConvertBack(object? value, IList<Type> targetTypes, object? parameter, CultureInfo culture)
 	{
-		return _doNothingResult;
+		return [BindingOperations.DoNothing, BindingOperations.DoNothing];
 	}
 }

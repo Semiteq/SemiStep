@@ -212,7 +212,7 @@ Zed debug args (per preset):
 
 ### Task 5: Move plan to completed
 
-- [ ] move this plan to `Docs/plans/completed/`
+- [x] move this plan to `Docs/plans/completed/`
 
 ## Post-Completion
 

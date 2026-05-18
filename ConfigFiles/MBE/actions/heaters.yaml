@@ -51,6 +51,13 @@
       default_value: "600"
     - key: comment
       property_type_id: string
+  formula:
+    recalc_order: [step_duration, speed, task, initial_value]
+    expressions:
+      step_duration: "(task - initial_value) / speed * 60"
+      speed:         "(task - initial_value) / step_duration * 60"
+      task:          "initial_value + speed * step_duration / 60"
+      initial_value: "task - speed * step_duration / 60"
 
 # Power setpoint, step change
 120:
@@ -105,3 +112,10 @@
       default_value: "600"
     - key: comment
       property_type_id: string
+  formula:
+    recalc_order: [step_duration, speed, task, initial_value]
+    expressions:
+      step_duration: "(task - initial_value) / speed * 60"
+      speed:         "(task - initial_value) / step_duration * 60"
+      task:          "initial_value + speed * step_duration / 60"
+      initial_value: "task - speed * step_duration / 60"

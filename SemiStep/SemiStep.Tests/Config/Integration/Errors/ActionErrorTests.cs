@@ -67,4 +67,18 @@ public sealed class ActionErrorTests
 		result.Errors.Should().Contain(e =>
 			e.Message.Contains(expectedSubstring, StringComparison.OrdinalIgnoreCase));
 	}
+
+	[Theory]
+	[InlineData("FormulaUnknownVariable", "unknown_var")]
+	[InlineData("FormulaUnparseable", "failed to parse")]
+	[InlineData("FormulaMissingExpression", "missing entry for recalc_order variable 'initial_value'")]
+	[InlineData("FormulaRecalcOrderUnknownColumn", "'pressure' is not a column of this action")]
+	public async Task FormulaInvalidCase_HasExpectedError(string caseName, string expectedSubstring)
+	{
+		var result = await ConfigTestHelper.LoadInvalidCaseAsync(caseName);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains(expectedSubstring, StringComparison.OrdinalIgnoreCase));
+	}
 }

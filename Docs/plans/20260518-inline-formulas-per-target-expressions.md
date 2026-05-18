@@ -275,10 +275,10 @@ New private method `MapFormula(actionId, formulaDto, columnKeys) → Result<Form
 - Create: `SemiStep/SemiStep.Tests/YamlConfigs/Invalid/FormulaRecalcOrderUnknownColumn/...`
 - Modify: existing invalid-config integration test
 
-- [ ] Add `formula:` blocks to action `110` (`t°C плавно`) and `140` (`P% плавно`) in `heaters.yaml`. The relation is structurally identical between the two — copy verbatim except for the keys/labels — but **the algebraic rearrangements must still be hand-verified per Post-Completion before merging**.
-- [ ] Add four overlay directories under `Invalid/Formula*/`, each with the minimal diff needed to break the standard fixture in exactly one way.
-- [ ] Wire each invalid case into the existing invalid-config integration test (the overlay-pattern test that loads `Standard/ + overlay` and asserts `ConfigError` content).
-- [ ] Standard fixture still loads green end-to-end.
+- [x] Add `formula:` blocks to action `110` (`t°C плавно`) and `140` (`P% плавно`) in `heaters.yaml`. The relation is structurally identical between the two — copy verbatim except for the keys/labels — but **the algebraic rearrangements must still be hand-verified per Post-Completion before merging**. (Adapted path: `ConfigFiles/actions/heaters.yaml` — repo layout in this worktree does not yet contain the planned `ConfigFiles/MBE/` subtree. Required columns `task`, `initial_value`, `speed` added to `ConfigFiles/columns/columns.yaml`.)
+- [x] Add four overlay directories under `Invalid/Formula*/`, each with the minimal diff needed to break the standard fixture in exactly one way. (Each overlay carries an extended `columns/columns.yaml` plus a `actions/heaters.yaml` broken in exactly one way; Standard's columns intentionally stay slim so existing CSV/integration tests are unaffected.)
+- [x] Wire each invalid case into the existing invalid-config integration test (the overlay-pattern test that loads `Standard/ + overlay` and asserts `ConfigError` content). (`ActionErrorTests.FormulaInvalidCase_HasExpectedError`.)
+- [x] Standard fixture still loads green end-to-end. (Standard unchanged; full test suite green.)
 
 ### Task 6: Update documentation
 

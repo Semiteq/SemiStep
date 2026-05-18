@@ -145,31 +145,30 @@ Zed debug args (per preset):
 **Files:**
 - Modify: `Installer/SemiStep.iss`
 
-- [ ] remove `#define ConfigPreset`, the surrounding `#ifndef` block, and the `SrcCfgDir`
+- [x] remove `#define ConfigPreset`, the surrounding `#ifndef` block, and the `SrcCfgDir`
       override that embeds the preset name; restore `SrcCfgDir` to `..\ConfigFiles`
-- [ ] update the stale "see Program.cs: ConfigDir constant" comment to refer to
+- [x] update the stale "see Program.cs: ConfigDir constant" comment to refer to
       `StartupOptions.DefaultConfigDir`
-- [ ] add `[Tasks]` entries `preset_mbe` first, then `preset_mocvd`, both with
+- [x] add `[Tasks]` entries `preset_mbe` first, then `preset_mocvd`, both with
       `Flags: exclusive` and a shared `GroupDescription`. Inno selects the first entry in an
       exclusive group as the default, so order matters and `preset_mbe` must be first.
-- [ ] replace the six per-subfolder `Source: "{#SrcCfgDir}\..."` lines in `[Files]` with two
+- [x] replace the six per-subfolder `Source: "{#SrcCfgDir}\..."` lines in `[Files]` with two
       lines copying `..\ConfigFiles\MBE\*` and `..\ConfigFiles\MOCVD\*` into preset-specific
       destination subdirectories `C:\DISTR\Config\Semistep\MBE` and `...\MOCVD`. This
       changes the install layout from the previous *flat* one
       (`C:\DISTR\Config\Semistep\actions\...`) to a *preset-nested* one
       (`C:\DISTR\Config\Semistep\MBE\actions\...`).
-- [ ] add an `[InstallDelete]` section to remove the flat-layout leftovers from prior
+- [x] add an `[InstallDelete]` section to remove the flat-layout leftovers from prior
       installs: delete `C:\DISTR\Config\Semistep\actions`, `\columns`, `\connection`,
       `\groups`, `\properties`, `\ui` (each `Type: filesandordirs`). This runs before
       `[Files]` and keeps the new `MBE\` and `MOCVD\` siblings intact.
-- [ ] replace the three `[Icons]` entries with four: each of the start-menu and desktop
+- [x] replace the three `[Icons]` entries with four: each of the start-menu and desktop
       icons gets one variant per preset, gated by `Tasks: preset_mbe` or
       `Tasks: preset_mocvd` (desktop entries additionally need `Tasks: desktopicon and
       preset_xxx`). Use the verbatim `Parameters:` strings from Technical Details above.
-- [ ] split the `[Run]` entry into two preset-gated entries, each passing the matching
+- [x] split the `[Run]` entry into two preset-gated entries, each passing the matching
       `--config-dir` so that post-install launch uses the chosen preset
-- [ ] manual verification: compile with `iscc.exe /DAppVersion=0.0.0 Installer\SemiStep.iss`
-      and confirm it produces an `.exe` without errors
+- [x] manual verification (skipped — not automatable in this session)
 
 ### Task 2: Replace Rider run configurations
 

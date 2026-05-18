@@ -191,14 +191,13 @@ Zed debug args (per preset):
 - Modify: `.zed/tasks.json`
 - Modify: `.zed/debug.json`
 
-- [ ] in `tasks.json`, replace the `Run UI` task with two tasks named `Run UI (MBE)` and
+- [x] in `tasks.json`, replace the `Run UI` task with two tasks named `Run UI (MBE)` and
       `Run UI (MOCVD)`, each passing `--`, `--config-dir`, and the preset path under
       `$ZED_WORKTREE_ROOT/ConfigFiles/`
-- [ ] in `debug.json`, replace `Launch SemiStep.UI` with two entries
+- [x] in `debug.json`, replace `Launch SemiStep.UI` with two entries
       `Launch SemiStep.UI (MBE)` and `Launch SemiStep.UI (MOCVD)`, each adding an `args`
       array with `--config-dir` and the preset path under `${ZED_WORKTREE_ROOT}/ConfigFiles/`
-- [ ] manual verification: open the repository in Zed and confirm both task and debug
-      entries are listed
+- [x] manual verification (skipped — Zed not available in this session)
 
 ### Task 4: Verify acceptance criteria
 

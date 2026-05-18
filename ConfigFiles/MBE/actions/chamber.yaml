@@ -1,0 +1,33 @@
+# Chamber preheat, step change
+200:
+  ui_name: "Прогрев скачком"
+  deploy_duration: immediate
+  columns:
+    - key: target
+      group_name: chamber_heater
+      property_type_id: enum
+    - key: task
+      property_type_id: chamber_temp
+      default_value: "100"
+    - key: comment
+      property_type_id: string
+
+# Chamber preheat, ramp
+210:
+  ui_name: "Прогрев плавно"
+  deploy_duration: immediate
+  columns:
+    - key: target
+      group_name: chamber_heater
+      property_type_id: enum
+    - key: initial_value
+      property_type_id: chamber_temp
+      default_value: "100"
+    - key: task
+      property_type_id: chamber_temp
+      default_value: "200"
+    - key: speed
+      property_type_id: chamber_temp_speed
+      default_value: "10"
+    - key: comment
+      property_type_id: string

@@ -1,0 +1,10 @@
+# NH3 supply
+220:
+  ui_name: "Подача NH3"
+  deploy_duration: immediate
+  columns:
+    - key: task
+      property_type_id: arsenic_source_flow
+      default_value: "10"
+    - key: comment
+      property_type_id: string

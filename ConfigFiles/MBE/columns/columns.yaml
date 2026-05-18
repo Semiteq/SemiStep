@@ -1,0 +1,71 @@
+action:
+  column_type: action_combo_box
+  ui:
+    ui_name: "Имя команды"
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+
+target:
+  column_type: action_target_combo_box
+  ui:
+    ui_name: "Объект"
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+
+initial_value:
+  column_type: property_field
+  ui:
+    ui_name: "Начальное значение"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+task:
+  column_type: property_field
+  ui:
+    ui_name: "Задание"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+speed:
+  column_type: property_field
+  ui:
+    ui_name: "Скорость"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+step_duration:
+  column_type: property_field
+  ui:
+    ui_name: "Время"
+  business_logic:
+    property_type_id: time
+    read_only: false
+    save_to_csv: true
+
+step_start_time:
+  column_type: step_start_time_field
+  ui:
+    ui_name: "Время абс."
+  business_logic:
+    property_type_id: string
+    save_to_csv: false
+    read_only: true
+
+comment:
+  column_type: text_field
+  ui:
+    ui_name: "Комментарий"
+  business_logic:
+    property_type_id: string
+    save_to_csv: true
+    read_only: false

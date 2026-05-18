@@ -1,4 +1,6 @@
-﻿using FluentResults;
+﻿using System.Collections.Concurrent;
+
+using FluentResults;
 
 using SemiStep.Core.Configuration;
 
@@ -13,6 +15,13 @@ public sealed class RecipeMetadataRegistry
 	private readonly Dictionary<string, GridColumnDefinition> _columns;
 	private readonly IReadOnlyList<GridColumnDefinition> _allColumns;
 	private readonly Dictionary<string, GroupDefinition> _groups;
+
+	// Concurrent because RecipeMetadataRegistry is a DI singleton and the typed caches are
+	// populated lazily on first access from any consumer.
+	private readonly ConcurrentDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> _comboItemsByGroup
+		= new(StringComparer.OrdinalIgnoreCase);
+
+	private IReadOnlyList<ComboBoxItemViewModel>? _actionComboBoxItems;
 
 	public RecipeMetadataRegistry(AppConfiguration config)
 	{
@@ -105,6 +114,42 @@ public sealed class RecipeMetadataRegistry
 	public Result GroupExists(string groupId)
 	{
 		return ContainsOrFail(_groups, groupId, $"Group '{groupId}' not found");
+	}
+
+	/// <summary>
+	/// Returns the cached list of ComboBox items for the given group name. Diverges from the
+	/// Result&lt;T&gt; pattern used elsewhere in this class: returns Array.Empty when the group
+	/// is unknown so that UI bindings (per-row dictionaries on RecipeRowViewModel) can hold an
+	/// empty-but-valid reference without surfacing a failure to the binding pipeline.
+	/// </summary>
+	public IReadOnlyList<ComboBoxItemViewModel> GetComboBoxItems(string groupName)
+	{
+		ArgumentNullException.ThrowIfNull(groupName);
+
+		return _comboItemsByGroup.GetOrAdd(groupName, static (key, self) =>
+		{
+			var groupResult = self.GetGroup(key);
+			if (groupResult.IsFailed)
+			{
+				return Array.Empty<ComboBoxItemViewModel>();
+			}
+
+			return groupResult.Value.Items
+				.Select(entry => new ComboBoxItemViewModel(entry.Key, entry.Value))
+				.OrderBy(item => item.Id)
+				.ToList();
+		}, this);
+	}
+
+	/// <summary>
+	/// Returns the cached list of ComboBox items for all actions. Mirrors GetComboBoxItems for
+	/// the action ComboBox column so the cell factory does not need its own cache layer.
+	/// </summary>
+	public IReadOnlyList<ComboBoxItemViewModel> GetActionComboBoxItems()
+	{
+		return _actionComboBoxItems ??= _allActions
+			.Select(action => new ComboBoxItemViewModel(action.Id, action.UiName))
+			.ToList();
 	}
 
 	public Result GroupHasIntKey(int key, string groupId)

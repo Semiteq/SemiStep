@@ -1,0 +1,42 @@
+# Close shutter
+50:
+  ui_name: "Закрыть"
+  deploy_duration: immediate
+  columns:
+    - key: target
+      group_name: shutter
+      property_type_id: enum
+    - key: comment
+      property_type_id: string
+
+# Open shutter
+60:
+  ui_name: "Открыть"
+  deploy_duration: immediate
+  columns:
+    - key: target
+      group_name: shutter
+      property_type_id: enum
+    - key: comment
+      property_type_id: string
+
+# Open for a fixed duration
+70:
+  ui_name: "Открыть на время"
+  deploy_duration: immediate
+  columns:
+    - key: target
+      group_name: shutter
+      property_type_id: enum
+    - key: step_duration
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+# Close all shutters
+80:
+  ui_name: "Закрыть все"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string

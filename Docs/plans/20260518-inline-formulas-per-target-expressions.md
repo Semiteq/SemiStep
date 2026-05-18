@@ -218,19 +218,19 @@ New private method `MapFormula(actionId, formulaDto, columnKeys) → Result<Form
 - Create: `SemiStep/SemiStep.Core/Recipes/Formulas/Errors/FormulaTargetOutOfRangeError.cs`
 - Create: `SemiStep/SemiStep.Tests/Core/Recipes/Formulas/FormulaEvaluatorTests.cs`
 
-- [ ] Implement `FormulaEvaluator.Recalculate` per Solution Overview. Construct a fresh `NCalc.Expression` from the cached `LogicalExpression` (`new Expression(formula.CompiledExpressions[target])`) — parse-free wrap. Assign `Parameters`, evaluate, cast to `double`, NaN/Infinity guard.
-- [ ] Explicit upfront pre-check: every `recalc_order` variable is present in the step's properties as a numeric `PropertyValue`; missing → `InvalidOperationException` (programmer-error guard).
-- [ ] Precondition guard via `InvalidOperationException` when caller passes `action.Formula = null`.
-- [ ] Two error classes as listed (`FormulaComputationFailedError`, `FormulaTargetOutOfRangeError`).
-- [ ] Integer-target conversion uses `Math.Round(value, MidpointRounding.ToEven)`; float-target conversion is a direct cast.
-- [ ] Tests — success ramp formula, change `task` 500→700 with `initial_value=500, speed=10, step_duration=600`: expect `step_duration` = 1200.
-- [ ] Tests — symmetric: change `speed` 10→20 with same baseline, expect `step_duration` recomputed; verify target follows recalc_order priority.
-- [ ] Tests — divide-by-zero (`speed=0`, change `task`): expect `FormulaComputationFailedError`.
-- [ ] Tests — NaN/Infinity guard.
-- [ ] Tests — out-of-range result: target with tight `temp` bound, algebra overflows: expect `FormulaTargetOutOfRangeError`.
-- [ ] Tests — integer-target rounding: configure a synthetic action with an `int`-typed target column, compute a value that lands on `.5` (e.g. expression result `4.5`); expect `Math.Round` to `ToEven` yields `4` (not `5`). One additional case for `3.5 → 4`.
-- [ ] Tests — programmer-error guards: call with `Formula = null` throws `InvalidOperationException`; call where a recalc-order variable is missing from `Step.Properties` throws `InvalidOperationException`.
-- [ ] Green.
+- [x] Implement `FormulaEvaluator.Recalculate` per Solution Overview. Construct a fresh `NCalc.Expression` from the cached `LogicalExpression` (`new Expression(formula.CompiledExpressions[target])`) — parse-free wrap. Assign `Parameters`, evaluate, cast to `double`, NaN/Infinity guard.
+- [x] Explicit upfront pre-check: every `recalc_order` variable is present in the step's properties as a numeric `PropertyValue`; missing → `InvalidOperationException` (programmer-error guard).
+- [x] Precondition guard via `InvalidOperationException` when caller passes `action.Formula = null`.
+- [x] Two error classes as listed (`FormulaComputationFailedError`, `FormulaTargetOutOfRangeError`).
+- [x] Integer-target conversion uses `Math.Round(value, MidpointRounding.ToEven)`; float-target conversion is a direct cast.
+- [x] Tests — success ramp formula, change `task` 500→700 with `initial_value=500, speed=10, step_duration=600`: expect `step_duration` = 1200.
+- [x] Tests — symmetric: change `speed` 10→20 with same baseline, expect `step_duration` recomputed; verify target follows recalc_order priority.
+- [x] Tests — divide-by-zero (`speed=0`, change `task`): expect `FormulaComputationFailedError`.
+- [x] Tests — NaN/Infinity guard.
+- [x] Tests — out-of-range result: target with tight `temp` bound, algebra overflows: expect `FormulaTargetOutOfRangeError`.
+- [x] Tests — integer-target rounding: configure a synthetic action with an `int`-typed target column, compute a value that lands on `.5` (e.g. expression result `4.5`); expect `Math.Round` to `ToEven` yields `4` (not `5`). One additional case for `3.5 → 4`.
+- [x] Tests — programmer-error guards: call with `Formula = null` throws `InvalidOperationException`; call where a recalc-order variable is missing from `Step.Properties` throws `InvalidOperationException`.
+- [x] Green.
 
 ### Task 3: Formula DTO + Mapper with config-load validation
 

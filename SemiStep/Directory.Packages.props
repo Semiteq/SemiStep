@@ -21,6 +21,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.8"/>
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8"/>
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1"/>
+    <PackageVersion Include="NCalcSync" Version="5.4.2"/>
     <PackageVersion Include="ReactiveUI.Avalonia" Version="12.0.1"/>
     <PackageVersion Include="S7netplus" Version="0.20.0"/>
     <PackageVersion Include="Serilog" Version="4.3.1"/>

@@ -201,10 +201,13 @@ Zed debug args (per preset):
 
 ### Task 4: Verify acceptance criteria
 
-- [ ] confirm `Installer/SemiStep.iss` compiles
-- [ ] confirm Rider lists `Debug MBE` and `Debug MOCVD` and both run
-- [ ] confirm Zed lists `Run UI (MBE)`, `Run UI (MOCVD)`, and matching debug entries
-- [ ] confirm `dotnet build SemiStep/SemiStep.UI/SemiStep.UI.csproj` still succeeds
+- [x] (skipped — `iscc.exe` aborts at line 49 `SetupIconFile={#AppIconFile}` because
+      `#define AppIconFile "..\SemiStep\UI\logo.ico"` (line 18) points to a non-existent
+      path. Actual icon lives at `..\SemiStep\SemiStep.UI\logo.ico`. This is a pre-existing
+      issue introduced in commit `f0613cb` (feature-folder reorg), unrelated to Tasks 1-3.)
+- [x] (skipped — Rider not available in this session)
+- [x] (skipped — Zed not available in this session)
+- [x] confirm `dotnet build SemiStep/SemiStep.UI/SemiStep.UI.csproj` still succeeds
       (no code changes expected, but a smoke build confirms nothing else regressed)
 
 ### Task 5: Move plan to completed

@@ -1,0 +1,35 @@
+# Nitrogen run
+150:
+  ui_name: "N Run"
+  deploy_duration: immediate
+  columns:
+    - key: target
+      group_name: nitrogen_source
+      property_type_id: enum
+    - key: task
+      property_type_id: flow
+      default_value: "10"
+    - key: comment
+      property_type_id: string
+
+# Nitrogen close
+160:
+  ui_name: "N закрыть"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string
+
+# Nitrogen vent
+170:
+  ui_name: "N Vent"
+  deploy_duration: immediate
+  columns:
+    - key: target
+      group_name: nitrogen_source
+      property_type_id: enum
+    - key: task
+      property_type_id: flow
+      default_value: "10"
+    - key: comment
+      property_type_id: string

@@ -1,0 +1,21 @@
+# Rotation speed of the manipulator
+180:
+  ui_name: "Вращение РМ"
+  deploy_duration: immediate
+  columns:
+    - key: speed
+      property_type_id: rotation_speed
+      default_value: "0"
+    - key: comment
+      property_type_id: string
+
+# Manipulator height
+190:
+  ui_name: "Высота РМ"
+  deploy_duration: immediate
+  columns:
+    - key: task
+      property_type_id: height
+      default_value: "0"
+    - key: comment
+      property_type_id: string

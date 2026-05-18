@@ -1,0 +1,107 @@
+# Temperature setpoint, step change
+90:
+  ui_name: "t°C скачком"
+  deploy_duration: immediate
+  columns:
+    - key: target
+      group_name: heater
+      property_type_id: enum
+    - key: task
+      property_type_id: temp
+      default_value: "500"
+    - key: comment
+      property_type_id: string
+
+# Temperature setpoint, step change + wait
+100:
+  ui_name: "t°C скачком + ждать"
+  deploy_duration: longlasting
+  columns:
+    - key: target
+      group_name: heater
+      property_type_id: enum
+    - key: task
+      property_type_id: temp
+      default_value: "500"
+    - key: step_duration
+      property_type_id: time
+      default_value: "60"
+    - key: comment
+      property_type_id: string
+
+# Temperature setpoint, ramp
+110:
+  ui_name: "t°C плавно"
+  deploy_duration: immediate
+  columns:
+    - key: target
+      group_name: heater
+      property_type_id: enum
+    - key: initial_value
+      property_type_id: temp
+      default_value: "500"
+    - key: task
+      property_type_id: temp
+      default_value: "600"
+    - key: speed
+      property_type_id: temp_speed
+      default_value: "10"
+    - key: step_duration
+      property_type_id: time
+      default_value: "600"
+    - key: comment
+      property_type_id: string
+
+# Power setpoint, step change
+120:
+  ui_name: "P% скачком"
+  deploy_duration: immediate
+  columns:
+    - key: target
+      group_name: heater
+      property_type_id: enum
+    - key: task
+      property_type_id: percent
+      default_value: "10"
+    - key: comment
+      property_type_id: string
+
+# Power setpoint, step change + wait
+130:
+  ui_name: "P% скачком + ждать"
+  deploy_duration: longlasting
+  columns:
+    - key: target
+      group_name: heater
+      property_type_id: enum
+    - key: task
+      property_type_id: percent
+      default_value: "10"
+    - key: step_duration
+      property_type_id: time
+      default_value: "60"
+    - key: comment
+      property_type_id: string
+
+# Power setpoint, ramp
+140:
+  ui_name: "P% плавно"
+  deploy_duration: immediate
+  columns:
+    - key: target
+      group_name: heater
+      property_type_id: enum
+    - key: initial_value
+      property_type_id: percent
+      default_value: "10"
+    - key: task
+      property_type_id: percent
+      default_value: "20"
+    - key: speed
+      property_type_id: power_speed
+      default_value: "1"
+    - key: step_duration
+      property_type_id: time
+      default_value: "600"
+    - key: comment
+      property_type_id: string

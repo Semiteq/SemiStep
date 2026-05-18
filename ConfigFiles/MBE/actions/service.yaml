@@ -1,0 +1,37 @@
+# Wait by time
+10:
+  ui_name: "Ждать"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+# For loop start
+20:
+  ui_name: "Цикл начало"
+  deploy_duration: immediate
+  columns:
+    - key: task
+      default_value: "1"
+      property_type_id: float_as_int
+    - key: comment
+      property_type_id: string
+
+# For loop end
+30:
+  ui_name: "Цикл конец"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string
+
+# Pause until user confirms
+40:
+  ui_name: "Пауза"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string

@@ -2,6 +2,7 @@
 
 using SemiStep.Core.Plc;
 using SemiStep.Core.Recipes.Analysis;
+using SemiStep.Core.Recipes.Formulas;
 using SemiStep.Core.Recipes.Helpers;
 
 namespace SemiStep.Core.Recipes;
@@ -14,6 +15,7 @@ public static class RecipeDi
 
 		services.AddSingleton<RecipeMetadataRegistry>();
 		services.AddSingleton<ImportedRecipeValidator>();
+		services.AddSingleton<FormulaEvaluator>();
 
 		services.AddSingleton<RecipeSession>();
 		services.AddSingleton<PlcLifecycleManager>();

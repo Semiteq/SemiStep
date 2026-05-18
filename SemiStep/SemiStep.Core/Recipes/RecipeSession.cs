@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 
 using SemiStep.Core.Plc;
 using SemiStep.Core.Recipes.Analysis;
+using SemiStep.Core.Recipes.Formulas;
 using SemiStep.Core.Recipes.Helpers;
 
 namespace SemiStep.Core.Recipes;
@@ -20,6 +21,7 @@ public sealed class RecipeSession
 	private const int MaxHistoryDepth = 100;
 
 	private readonly RecipeAnalyzer _analyzer;
+	private readonly FormulaEvaluator _formulaEvaluator;
 	private readonly ILogger<RecipeSession> _logger;
 	private readonly RecipeMetadataRegistry _recipeMetadataRegistry;
 	private readonly List<Recipe> _redoStack = new(MaxHistoryDepth);
@@ -33,11 +35,13 @@ public sealed class RecipeSession
 	public RecipeSession(
 		RecipeAnalyzer analyzer,
 		RecipeMetadataRegistry recipeMetadataRegistry,
+		FormulaEvaluator formulaEvaluator,
 		IPlcSyncService syncService,
 		ILogger<RecipeSession> logger)
 	{
 		_analyzer = analyzer;
 		_recipeMetadataRegistry = recipeMetadataRegistry;
+		_formulaEvaluator = formulaEvaluator;
 		_syncService = syncService;
 		_logger = logger;
 	}
@@ -437,6 +441,24 @@ public sealed class RecipeSession
 		}
 
 		var updatedStep = step.WithProperty(columnKey, parsedValue);
+
+		if (action.Formula is not null
+			&& action.Formula.RecalcOrder.Contains(columnKey, StringComparer.OrdinalIgnoreCase))
+		{
+			var recalcResult = _formulaEvaluator.Recalculate(updatedStep, action, columnKey, _recipeMetadataRegistry);
+			if (recalcResult.IsFailed)
+			{
+				_logger.LogInformation(
+					"Formula recalculation rejected edit on StepIndex={StepIndex}, ColumnKey={ColumnKey}: {Errors}",
+					stepIndex,
+					columnKey,
+					string.Join("; ", recalcResult.Errors.Select(e => e.Message)));
+				return recalcResult.ToResult();
+			}
+
+			updatedStep = recalcResult.Value;
+		}
+
 		var newRecipe = current.ReplaceStep(stepIndex, updatedStep);
 
 		return Apply(newRecipe);

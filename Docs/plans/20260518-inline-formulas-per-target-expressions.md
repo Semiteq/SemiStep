@@ -254,15 +254,15 @@ New private method `MapFormula(actionId, formulaDto, columnKeys) → Result<Form
 - Modify: `SemiStep/SemiStep.Core/Recipes/RecipeSession.cs`
 - Create (or modify): `SemiStep/SemiStep.Tests/Core/Recipes/RecipeSessionFormulaIntegrationTests.cs`
 
-- [ ] Register `FormulaEvaluator` as singleton in `AddRecipe()`.
-- [ ] Inject `FormulaEvaluator` into `RecipeSession`.
-- [ ] In `UpdateStepProperty` (after line 439): if `action.Formula is not null` and `changedKey in RecalcOrder`, call `Recalculate`; on failure return `Result.Fail` with the reason (reject edit), on success use the returned step.
-- [ ] Verify undo invariant: one user edit that triggers a recalc grows `_undoStack` by exactly one entry.
-- [ ] Integration test — success: build a `RecipeSession` with a real `RecipeMetadataRegistry` carrying a formula-enabled action; mutate `task`, assert `step_duration` updates on the resulting Step; assert `_undoStack.Count` grew by 1.
-- [ ] Integration test — reject: mutate with values that force divide-by-zero; assert `Result.IsFailed`; assert recipe is unchanged (`Current.Steps[stepIndex]` equals pre-mutation); assert `_undoStack` did not grow.
-- [ ] Integration test — reason propagation: capture the failure `Result`, assert its `Errors` contains a `FormulaComputationFailedError`; assert this propagates through `RecipeCoordinator.UpdateStepProperty` to a caller (mock or capture the `Result`).
-- [ ] Integration test — action without formula: confirm path unchanged for actions that have `Formula = null` (e.g. action `90` `t°C скачком`).
-- [ ] Green.
+- [x] Register `FormulaEvaluator` as singleton in `AddRecipe()`.
+- [x] Inject `FormulaEvaluator` into `RecipeSession`.
+- [x] In `UpdateStepProperty` (after line 439): if `action.Formula is not null` and `changedKey in RecalcOrder`, call `Recalculate`; on failure return `Result.Fail` with the reason (reject edit), on success use the returned step.
+- [x] Verify undo invariant: one user edit that triggers a recalc grows `_undoStack` by exactly one entry.
+- [x] Integration test — success: build a `RecipeSession` with a real `RecipeMetadataRegistry` carrying a formula-enabled action; mutate `task`, assert `step_duration` updates on the resulting Step; assert `_undoStack.Count` grew by 1.
+- [x] Integration test — reject: mutate with values that force divide-by-zero; assert `Result.IsFailed`; assert recipe is unchanged (`Current.Steps[stepIndex]` equals pre-mutation); assert `_undoStack` did not grow.
+- [x] Integration test — reason propagation: capture the failure `Result`, assert its `Errors` contains a `FormulaComputationFailedError`; assert this propagates through `RecipeCoordinator.UpdateStepProperty` to a caller (mock or capture the `Result`).
+- [x] Integration test — action without formula: confirm path unchanged for actions that have `Formula = null` (e.g. action `90` `t°C скачком`).
+- [x] Green.
 
 ### Task 5: Add real formulas to `ConfigFiles/MBE/actions/heaters.yaml` + invalid-config fixtures
 

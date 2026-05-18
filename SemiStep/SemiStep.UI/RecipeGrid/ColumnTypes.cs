@@ -18,4 +18,9 @@ internal static class ColumnTypes
 	{
 		return $"[{columnKey}]";
 	}
+
+	public static string GroupItemsPath(string columnKey)
+	{
+		return $"GroupItemsByColumn[{columnKey}]";
+	}
 }

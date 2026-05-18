@@ -272,35 +272,45 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void GetGroupNameForColumn_ReturnsGroupName_ForGroupBoundColumn()
+	public void GroupItemsByColumn_ExposesItems_ForGroupBoundColumn()
 	{
 		var row = CreateRow(RecipeTestDriver.WithGroupActionId);
 
-		var groupName = row.GetGroupNameForColumn(RecipeTestDriver.TargetColumn);
-
-		groupName.Should().NotBeNullOrEmpty();
+		row.GroupItemsByColumn.Should().ContainKey(RecipeTestDriver.TargetColumn);
+		var items = row.GroupItemsByColumn[RecipeTestDriver.TargetColumn];
+		items.Should().NotBeEmpty();
+		items.Select(item => item.Id).Should().BeInAscendingOrder();
 	}
 
 	[AvaloniaFact]
-	public void GetGroupNameForColumn_ReturnsNull_ForNonGroupColumn()
+	public void GroupItemsByColumn_OmitsKey_ForNonGroupBoundColumn()
 	{
+		// Pre-population is intentionally scoped to ActionTargetComboBox columns so non-group
+		// columns (text/property/action) do not accumulate empty-list entries.
 		var row = CreateRow(RecipeTestDriver.WithGroupActionId);
 
-		row.GetGroupNameForColumn(RecipeTestDriver.StepDurationColumn).Should().BeNull();
-		row.GetGroupNameForColumn(RecipeTestDriver.CommentColumn).Should().BeNull();
+		row.GroupItemsByColumn.Should().NotContainKey(RecipeTestDriver.StepDurationColumn);
+		row.GroupItemsByColumn.Should().NotContainKey(RecipeTestDriver.CommentColumn);
 	}
 
 	[AvaloniaFact]
-	public void GetGroupNameForColumn_ReturnsNull_WhenActionLacksProperty()
+	public void GroupItemsByColumn_PrepopulatesEmptyList_ForActionWithoutGroupProperty()
 	{
+		// Wait action has no `target` property, but `target` is a registered ActionTargetComboBox
+		// column. The dict pre-populates with an empty list so that, when a group cell is recycled
+		// onto this row, ItemsSourceBinding resolves cleanly without KeyNotFoundException.
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 
-		row.GetGroupNameForColumn(RecipeTestDriver.TargetColumn).Should().BeNull();
+		row.GroupItemsByColumn.Should().ContainKey(RecipeTestDriver.TargetColumn);
+		row.GroupItemsByColumn[RecipeTestDriver.TargetColumn].Should().BeEmpty();
 	}
 
 	[AvaloniaFact]
-	public void GetGroupNameForColumn_ReturnsGroupName_EvenIfGroupCannotBeResolved()
+	public void GroupItemsByColumn_ReturnsEmptyList_WhenActionGroupResolutionFails()
 	{
+		// When an action property references a group that does not exist in the metadata registry,
+		// RecipeMetadataRegistry.GetComboBoxItems returns Array.Empty<>(). The row VM stores this
+		// reference so the key is present with an empty list — binding never sees UnsetValue.
 		var unresolvedGroupProperty = new ActionPropertyDefinition(
 			Key: "phantom_column",
 			GroupName: "nonexistent_group",
@@ -316,7 +326,8 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 
 		var row = new RecipeRowViewModel(1, step, actionWithUnresolvedGroup, _recipeMetadataRegistry, inapplicableColumns);
 
-		row.GetGroupNameForColumn("phantom_column").Should().Be("nonexistent_group");
+		row.GroupItemsByColumn.Should().ContainKey("phantom_column");
+		row.GroupItemsByColumn["phantom_column"].Should().BeEmpty();
 	}
 
 	public static TheoryData<string, string> ColumnUnitsData => new()

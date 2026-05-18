@@ -18,8 +18,8 @@ public sealed class RecipeRowViewModel(
 	private readonly (IReadOnlyDictionary<string, string?> Units, IReadOnlyDictionary<string, string> FormatKinds) _columnMetadata
 		= BuildColumnMetadata(action, recipeMetadataRegistry);
 
-	private readonly IReadOnlyDictionary<string, string> _groupNamesByColumn
-		= BuildGroupNamesByColumn(action);
+	private readonly IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> _groupItemsByColumn
+		= BuildGroupItemsByColumn(action, recipeMetadataRegistry);
 
 	private Step _step = step;
 
@@ -54,6 +54,8 @@ public sealed class RecipeRowViewModel(
 	public IReadOnlyDictionary<string, string?> ColumnUnits => _columnMetadata.Units;
 
 	public IReadOnlyDictionary<string, string> ColumnFormatKinds => _columnMetadata.FormatKinds;
+
+	public IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> GroupItemsByColumn => _groupItemsByColumn;
 
 	public object? this[string columnKey]
 	{
@@ -139,11 +141,6 @@ public sealed class RecipeRowViewModel(
 		PropertyValueChanged?.Invoke(columnKey, value);
 	}
 
-	public string? GetGroupNameForColumn(string columnKey)
-	{
-		return _groupNamesByColumn.TryGetValue(columnKey, out var groupName) ? groupName : null;
-	}
-
 	private static PropertyTypeDefinition? ResolvePropertyType(
 		ActionPropertyDefinition actionProperty,
 		RecipeMetadataRegistry recipeMetadataRegistry)
@@ -152,9 +149,23 @@ public sealed class RecipeRowViewModel(
 		return propertyResult.IsSuccess ? propertyResult.Value : null;
 	}
 
-	private static IReadOnlyDictionary<string, string> BuildGroupNamesByColumn(ActionDefinition actionDefinition)
+	private static IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> BuildGroupItemsByColumn(
+		ActionDefinition actionDefinition,
+		RecipeMetadataRegistry recipeMetadataRegistry)
 	{
-		var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		// Pre-populate every group-bound column with an empty items list, regardless of whether
+		// the current action defines that property. When a cell is recycled onto a row whose
+		// action lacks the property, the binding still resolves to an empty list instead of
+		// throwing KeyNotFoundException and logging a binding error on every recycle.
+		var result = new Dictionary<string, IReadOnlyList<ComboBoxItemViewModel>>(StringComparer.OrdinalIgnoreCase);
+
+		foreach (var column in recipeMetadataRegistry.GetAllColumns())
+		{
+			if (ColumnTypes.IsGroupBoundColumn(column.ColumnType))
+			{
+				result[column.Key] = Array.Empty<ComboBoxItemViewModel>();
+			}
+		}
 
 		foreach (var actionProperty in actionDefinition.Properties)
 		{
@@ -163,7 +174,7 @@ public sealed class RecipeRowViewModel(
 				continue;
 			}
 
-			result[actionProperty.Key] = actionProperty.GroupName;
+			result[actionProperty.Key] = recipeMetadataRegistry.GetComboBoxItems(actionProperty.GroupName);
 		}
 
 		return result;

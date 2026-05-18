@@ -13,7 +13,12 @@
 
 ; Paths relative to the location of this .iss file (Installer/)
 #define SrcBinDir    "..\SemiStep\Artifacts\publish\SemiStep.UI\release_win-x64"
-#define SrcCfgDir    "..\ConfigFiles"
+
+; Configuration preset (subfolder of ConfigFiles). Pass /DConfigPreset=MBE to override.
+#ifndef ConfigPreset
+  #define ConfigPreset "MOCVD"
+#endif
+#define SrcCfgDir    "..\ConfigFiles\" + ConfigPreset
 #define AppIconFile       "..\SemiStep\UI\logo.ico"
 #define LicenseFile       ".\LICENSE.txt"
 #define WizardImageLarge  ".\WizardImageFile.bmp"

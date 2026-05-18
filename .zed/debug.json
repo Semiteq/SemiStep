@@ -1,10 +1,21 @@
 [
 	{
-		"label": "Launch SemiStep.UI",
+		"label": "Launch SemiStep.UI (MBE)",
 		"adapter": "netcoredbg",
 		"request": "launch",
 		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/SemiStep.UI.dll",
 		"cwd": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug",
+		"args": ["--config-dir", "${ZED_WORKTREE_ROOT}/ConfigFiles/MBE"],
+		"stopAtEntry": false,
+		"build": "Build UI"
+	},
+	{
+		"label": "Launch SemiStep.UI (MOCVD)",
+		"adapter": "netcoredbg",
+		"request": "launch",
+		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/SemiStep.UI.dll",
+		"cwd": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug",
+		"args": ["--config-dir", "${ZED_WORKTREE_ROOT}/ConfigFiles/MOCVD"],
 		"stopAtEntry": false,
 		"build": "Build UI"
 	}

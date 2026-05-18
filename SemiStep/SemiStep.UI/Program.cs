@@ -9,24 +9,28 @@ using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Import;
 
 using Serilog;
+using Serilog.Events;
 
 namespace SemiStep.UI;
 
 public static class Program
 {
-	private const string ConfigDir = @"C:\DISTR\Config\Semistep";
-	private const string LogFilePath = @"C:\DISTR\Logs\Semistep\semistep.log";
 
 	[STAThread]
-	public static void Main()
+	public static void Main(string[] args)
 	{
-		CreateLogger(LogFilePath);
+		var options = StartupOptions.Parse(args);
+
+		CreateLogger(
+			options.LogFilePath,
+			options.LoggingLevel
+			);
 
 		try
 		{
 			// Phase 1: pre-flight validation. Anything that can fail BEFORE Avalonia is
 			// initialised runs here. The outcome decides which window (and only one) is shown.
-			var outcome = ValidateStartup();
+			var outcome = ValidateStartup(options.ConfigDir);
 
 			// Phase 2: launch exactly one window. Both branches call BuildAvaloniaApp()
 			// exactly once; the catch below intentionally does NOT fall back to RunErrorWindow,
@@ -51,11 +55,11 @@ public static class Program
 		}
 	}
 
-	private static StartupOutcome ValidateStartup()
+	private static StartupOutcome ValidateStartup(string configDir)
 	{
 		try
 		{
-			return Task.Run(StartupAsync).GetAwaiter().GetResult();
+			return Task.Run(() => StartupAsync(configDir)).GetAwaiter().GetResult();
 		}
 		catch (Exception ex)
 		{
@@ -64,9 +68,9 @@ public static class Program
 		}
 	}
 
-	private static async Task<StartupOutcome> StartupAsync()
+	private static async Task<StartupOutcome> StartupAsync(string configDir)
 	{
-		var result = await ConfigFacade.LoadAndValidateAsync(ConfigDir);
+		var result = await ConfigFacade.LoadAndValidateAsync(configDir);
 
 		if (result.IsFailed)
 		{
@@ -92,9 +96,13 @@ public static class Program
 		return StartupOutcome.Succeeded(services.BuildServiceProvider());
 	}
 
-	private static void CreateLogger(string logFilePath)
+	private static void CreateLogger(
+		string logFilePath,
+		LogEventLevel logLevel)
 	{
-		const string Template = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}";
+		const string Template =
+			"{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}";
+
 		var invariant = CultureInfo.InvariantCulture;
 
 		if (!EnsureLogDirExists(logFilePath))
@@ -104,19 +112,20 @@ public static class Program
 
 		var config =
 			new LoggerConfiguration()
-				.MinimumLevel.Verbose()
+				.MinimumLevel.Is(logLevel)
 				.Enrich.FromLogContext()
-				.WriteTo.Console(outputTemplate: Template, formatProvider: invariant);
-
-		config = config.WriteTo.File(
-			path: logFilePath,
-			rollingInterval: RollingInterval.Infinite,
-			fileSizeLimitBytes: 5 * 1024 * 1024,
-			rollOnFileSizeLimit: true,
-			retainedFileCountLimit: 5,
-			shared: true,
-			outputTemplate: Template,
-			formatProvider: invariant);
+				.WriteTo.Console(
+					outputTemplate: Template,
+					formatProvider: invariant)
+				.WriteTo.File(
+					path: logFilePath,
+					rollingInterval: RollingInterval.Infinite,
+					fileSizeLimitBytes: 5 * 1024 * 1024,
+					rollOnFileSizeLimit: true,
+					retainedFileCountLimit: 5,
+					shared: true,
+					outputTemplate: Template,
+					formatProvider: invariant);
 
 		Log.Logger = config.CreateLogger();
 	}

@@ -3,9 +3,11 @@
 using Avalonia.Data;
 using Avalonia.Data.Converters;
 
+using SemiStep.Core.Recipes;
+
 namespace SemiStep.UI.RecipeGrid;
 
-public sealed class ComboBoxItemSelectionConverter(IReadOnlyList<ComboBoxItemViewModel> items) : IValueConverter
+internal sealed class ComboBoxItemSelectionConverter(IReadOnlyList<ComboBoxItemViewModel> items) : IValueConverter
 {
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
 	{

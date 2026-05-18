@@ -14,6 +14,12 @@ public sealed class RecipeMetadataRegistry
 	private readonly IReadOnlyList<GridColumnDefinition> _allColumns;
 	private readonly Dictionary<string, GroupDefinition> _groups;
 
+	// UI-thread-only cache. The registry is a DI singleton; UI consumes this lazily from
+	// RecipeRowViewModel construction which runs on the dispatcher thread. If a future consumer
+	// needs to call GetComboBoxItems from a background thread, switch this to ConcurrentDictionary.
+	private readonly Dictionary<string, IReadOnlyList<ComboBoxItemViewModel>> _comboItemsByGroup
+		= new(StringComparer.OrdinalIgnoreCase);
+
 	public RecipeMetadataRegistry(AppConfiguration config)
 	{
 		_actionsById = new Dictionary<int, ActionDefinition>(config.Actions);
@@ -105,6 +111,36 @@ public sealed class RecipeMetadataRegistry
 	public Result GroupExists(string groupId)
 	{
 		return ContainsOrFail(_groups, groupId, $"Group '{groupId}' not found");
+	}
+
+	/// <summary>
+	/// Returns the cached list of ComboBox items for the given group name. Diverges from the
+	/// Result&lt;T&gt; pattern used elsewhere in this class: returns Array.Empty when the group
+	/// is unknown so that UI bindings (per-row dictionaries on RecipeRowViewModel) can hold an
+	/// empty-but-valid reference without surfacing a failure to the binding pipeline.
+	/// </summary>
+	public IReadOnlyList<ComboBoxItemViewModel> GetComboBoxItems(string groupName)
+	{
+		ArgumentNullException.ThrowIfNull(groupName);
+
+		if (_comboItemsByGroup.TryGetValue(groupName, out var cached))
+		{
+			return cached;
+		}
+
+		var groupResult = GetGroup(groupName);
+		if (groupResult.IsFailed)
+		{
+			return Array.Empty<ComboBoxItemViewModel>();
+		}
+
+		var items = groupResult.Value.Items
+			.Select(entry => new ComboBoxItemViewModel(entry.Key, entry.Value))
+			.OrderBy(item => item.Id)
+			.ToList();
+
+		_comboItemsByGroup[groupName] = items;
+		return items;
 	}
 
 	public Result GroupHasIntKey(int key, string groupId)

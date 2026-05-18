@@ -4,6 +4,9 @@ SemiStep is a recipe table editor/runtime for PLC integration (S7 protocol).
 Platform: .NET 10, Windows, C# 14. UI: Avalonia 12.0.3 + ReactiveUI (MVVM).
 Solution: `SemiStep/SemiStep.slnx`. All commands run from repository root.
 
+Inline-formula recalculation (per-action `formula:` blocks) is evaluated via the
+`NCalcSync` package (`SemiStep.Core/Recipes/Formulas`). See `Docs/03-data-model.md` §3.4.
+
 ## Build
 
 ```powershell

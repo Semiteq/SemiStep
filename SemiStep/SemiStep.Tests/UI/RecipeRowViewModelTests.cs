@@ -318,10 +318,10 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 			PropertyTypeId: "enum",
 			DefaultValue: null);
 		var actionWithUnresolvedGroup = new ActionDefinition(
-			Id: 999,
-			UiName: "Phantom",
-			DeployDuration: DeployDuration.Immediate,
-			Properties: new[] { unresolvedGroupProperty });
+			id: 999,
+			uiName: "Phantom",
+			deployDuration: DeployDuration.Immediate,
+			properties: new[] { unresolvedGroupProperty });
 		var step = new Step(999, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
 		var inapplicableColumns = new HashSet<string>();
 

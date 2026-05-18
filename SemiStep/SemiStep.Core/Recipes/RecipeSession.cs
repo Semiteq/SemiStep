@@ -60,6 +60,8 @@ public sealed class RecipeSession
 
 	public bool CanUndo => _undoStack.Count > 0;
 
+	internal int UndoCount => _undoStack.Count;
+
 	public bool CanRedo => _redoStack.Count > 0;
 
 	public Result Apply(Recipe newRecipe)
@@ -442,26 +444,38 @@ public sealed class RecipeSession
 
 		var updatedStep = step.WithProperty(columnKey, parsedValue);
 
-		if (action.Formula is not null
-			&& action.Formula.RecalcOrder.Contains(columnKey, StringComparer.OrdinalIgnoreCase))
+		var recalcResult = TryApplyFormulaRecalc(updatedStep, action, columnKey, stepIndex);
+		if (recalcResult.IsFailed)
 		{
-			var recalcResult = _formulaEvaluator.Recalculate(updatedStep, action, columnKey, _recipeMetadataRegistry);
-			if (recalcResult.IsFailed)
-			{
-				_logger.LogInformation(
-					"Formula recalculation rejected edit on StepIndex={StepIndex}, ColumnKey={ColumnKey}: {Errors}",
-					stepIndex,
-					columnKey,
-					string.Join("; ", recalcResult.Errors.Select(e => e.Message)));
-				return recalcResult.ToResult();
-			}
-
-			updatedStep = recalcResult.Value;
+			return recalcResult.ToResult();
 		}
+
+		updatedStep = recalcResult.Value;
 
 		var newRecipe = current.ReplaceStep(stepIndex, updatedStep);
 
 		return Apply(newRecipe);
+	}
+
+	private Result<Step> TryApplyFormulaRecalc(Step step, ActionDefinition action, string columnKey, int stepIndex)
+	{
+		if (action.Formula is null
+			|| !action.Formula.RecalcOrder.Contains(columnKey, StringComparer.OrdinalIgnoreCase))
+		{
+			return Result.Ok(step);
+		}
+
+		var recalcResult = _formulaEvaluator.Recalculate(step, action, columnKey);
+		if (recalcResult.IsFailed)
+		{
+			_logger.LogInformation(
+				"Formula recalculation rejected edit on StepIndex={StepIndex}, ColumnKey={ColumnKey}: {Errors}",
+				stepIndex,
+				columnKey,
+				string.Join("; ", recalcResult.Errors.Select(e => e.Message)));
+		}
+
+		return recalcResult;
 	}
 
 	private void UpdateSnapshot(Result<RecipeSnapshot> snapshot)

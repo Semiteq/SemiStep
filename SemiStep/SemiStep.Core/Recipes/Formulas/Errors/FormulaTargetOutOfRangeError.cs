@@ -1,4 +1,6 @@
-﻿using FluentResults;
+﻿using System.Globalization;
+
+using FluentResults;
 
 namespace SemiStep.Core.Recipes.Formulas.Errors;
 
@@ -11,17 +13,6 @@ public sealed class FormulaTargetOutOfRangeError : Error
 		Value = value;
 		Min = min;
 		Max = max;
-		Metadata["target"] = target;
-		Metadata["value"] = value;
-		if (min.HasValue)
-		{
-			Metadata["min"] = min.Value;
-		}
-
-		if (max.HasValue)
-		{
-			Metadata["max"] = max.Value;
-		}
 	}
 
 	public string Target { get; }
@@ -34,14 +25,15 @@ public sealed class FormulaTargetOutOfRangeError : Error
 
 	private static string BuildMessage(string target, double value, double? min, double? max)
 	{
+		var culture = CultureInfo.InvariantCulture;
 		var bounds = (min, max) switch
 		{
-			(double minimum, double maximum) => $"[{minimum}; {maximum}]",
-			(double minimum, null) => $"[{minimum}; +∞)",
-			(null, double maximum) => $"(-∞; {maximum}]",
+			(double minimum, double maximum) => $"[{minimum.ToString(culture)}; {maximum.ToString(culture)}]",
+			(double minimum, null) => $"[{minimum.ToString(culture)}; +∞)",
+			(null, double maximum) => $"(-∞; {maximum.ToString(culture)}]",
 			_ => "(unbounded)"
 		};
 
-		return $"Recalculated value {value} for target '{target}' is outside allowed range {bounds}.";
+		return $"Recalculated value {value.ToString(culture)} for target '{target}' is outside allowed range {bounds}.";
 	}
 }

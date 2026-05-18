@@ -42,10 +42,10 @@ public sealed class ImportedRecipeValidatorTests
 		var actions = new Dictionary<int, ActionDefinition>
 		{
 			[ValveActionId] = new ActionDefinition(
-				Id: ValveActionId,
-				UiName: "Valve",
-				DeployDuration: DeployDuration.Immediate,
-				Properties: new[]
+				id: ValveActionId,
+				uiName: "Valve",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
 				{
 					new ActionPropertyDefinition(
 						Key: TargetColumnKey,
@@ -121,10 +121,10 @@ public sealed class ImportedRecipeValidatorTests
 		var actions = new Dictionary<int, ActionDefinition>
 		{
 			[10] = new ActionDefinition(
-				Id: 10,
-				UiName: "Wait",
-				DeployDuration: DeployDuration.LongLasting,
-				Properties: new[]
+				id: 10,
+				uiName: "Wait",
+				deployDuration: DeployDuration.LongLasting,
+				properties: new[]
 				{
 					new ActionPropertyDefinition(
 						Key: "step_duration",

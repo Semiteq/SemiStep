@@ -12,91 +12,81 @@ namespace SemiStep.Tests.Core.Unit.Recipes.Formulas;
 public sealed class FormulaIdentifierExtractorTests
 {
 	[Fact]
-	public void Extract_SimpleSum_ReturnsBothOperands()
+	public void Parse_SimpleSum_ReturnsBothOperands()
 	{
-		var result = FormulaIdentifierExtractor.Extract("a + b");
+		var result = FormulaIdentifierExtractor.Parse("a + b");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Should().BeEquivalentTo(new[] { "a", "b" });
+		result.Value.Identifiers.Should().BeEquivalentTo(new[] { "a", "b" });
 	}
 
 	[Fact]
-	public void Extract_NestedExpression_ReturnsAllIdentifiers()
+	public void Parse_NestedExpression_ReturnsAllIdentifiers()
 	{
-		var result = FormulaIdentifierExtractor.Extract("(x - y) / z * 60");
+		var result = FormulaIdentifierExtractor.Parse("(x - y) / z * 60");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Should().BeEquivalentTo(new[] { "x", "y", "z" });
+		result.Value.Identifiers.Should().BeEquivalentTo(new[] { "x", "y", "z" });
 	}
 
 	[Fact]
-	public void Extract_LiteralsOnly_ReturnsEmptySet()
+	public void Parse_LiteralsOnly_ReturnsEmptySet()
 	{
-		var result = FormulaIdentifierExtractor.Extract("3.14 * 2");
+		var result = FormulaIdentifierExtractor.Parse("3.14 * 2");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Should().BeEmpty();
+		result.Value.Identifiers.Should().BeEmpty();
 	}
 
 	[Fact]
-	public void Extract_SqrtBuiltIn_ExcludesFunctionName()
+	public void Parse_SqrtBuiltIn_ExcludesFunctionName()
 	{
-		var result = FormulaIdentifierExtractor.Extract("Sqrt(a*a + b*b)");
+		var result = FormulaIdentifierExtractor.Parse("Sqrt(a*a + b*b)");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Should().BeEquivalentTo(new[] { "a", "b" });
+		result.Value.Identifiers.Should().BeEquivalentTo(new[] { "a", "b" });
 	}
 
 	[Fact]
-	public void Extract_PowAbsBuiltIns_ExcludeFunctionNames()
+	public void Parse_PowAbsBuiltIns_ExcludeFunctionNames()
 	{
-		var result = FormulaIdentifierExtractor.Extract("Pow(x, 2) + Abs(y)");
+		var result = FormulaIdentifierExtractor.Parse("Pow(x, 2) + Abs(y)");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Should().BeEquivalentTo(new[] { "x", "y" });
+		result.Value.Identifiers.Should().BeEquivalentTo(new[] { "x", "y" });
 	}
 
 	[Fact]
-	public void Extract_UnparseableExpression_ReturnsFailure()
+	public void Parse_UnparseableExpression_ReturnsFailure()
 	{
-		var result = FormulaIdentifierExtractor.Extract("a +");
+		var result = FormulaIdentifierExtractor.Parse("a +");
 
 		result.IsFailed.Should().BeTrue();
 	}
 
 	[Fact]
-	public void Extract_CaseInsensitive_TreatsSameIdentifier()
+	public void Parse_DistinctCasings_PreservesBothIdentifiers()
 	{
-		var result = FormulaIdentifierExtractor.Extract("A + a");
+		var result = FormulaIdentifierExtractor.Parse("A + a");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Should().HaveCount(1);
-		result.Value.Contains("a").Should().BeTrue();
-		result.Value.Contains("A").Should().BeTrue();
+		result.Value.Identifiers.Should().BeEquivalentTo(new[] { "A", "a" });
 	}
 
 	[Fact]
-	public void Extract_EmptySource_ReturnsFailure()
+	public void Parse_EmptySource_ReturnsFailure()
 	{
-		var result = FormulaIdentifierExtractor.Extract("");
+		var result = FormulaIdentifierExtractor.Parse("");
 
 		result.IsFailed.Should().BeTrue();
 	}
 
 	[Fact]
-	public void ParseAndCompile_ValidExpression_ReturnsLogicalExpression()
+	public void Parse_ValidExpression_PopulatesLogicalExpression()
 	{
-		var result = FormulaIdentifierExtractor.ParseAndCompile("(a - b) / c * 60");
+		var result = FormulaIdentifierExtractor.Parse("(a - b) / c * 60");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Should().NotBeNull();
-	}
-
-	[Fact]
-	public void ParseAndCompile_InvalidExpression_ReturnsFailure()
-	{
-		var result = FormulaIdentifierExtractor.ParseAndCompile("a +");
-
-		result.IsFailed.Should().BeTrue();
+		result.Value.LogicalExpression.Should().NotBeNull();
 	}
 }

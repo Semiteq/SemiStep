@@ -12,8 +12,6 @@ namespace SemiStep.Core.Configuration.Facade;
 
 public static class ConfigFacade
 {
-	// ConfigFacade is a static class, so it cannot be used as a type argument.
-	// Log.ForContext(typeof(...)) is the supported alternative.
 	private static readonly ILogger _logger = Log.ForContext(typeof(ConfigFacade));
 
 	public static async Task<Result<AppConfiguration>> LoadAndValidateAsync(string configDirectory)
@@ -45,9 +43,7 @@ public static class ConfigFacade
 			return LogAndPropagate(defaultsResult, loadResult, xrefResult);
 		}
 
-		var mapResult = Result.Try(
-			() => MapToDomain(properties, columns, groups, actions, gridStyle, connection),
-			ex => new Error("Failed to map configuration to domain: " + ex.Message).CausedBy(ex));
+		var mapResult = MapToDomain(properties, columns, groups, actions, gridStyle, connection);
 
 		if (mapResult.IsFailed)
 		{
@@ -121,7 +117,7 @@ public static class ConfigFacade
 		return Result.Ok(sections).WithReasons(merged.Reasons);
 	}
 
-	private static AppConfiguration MapToDomain(
+	private static Result<AppConfiguration> MapToDomain(
 		List<Dto.PropertyDto> properties,
 		List<Dto.ColumnDto> columns,
 		Dictionary<string, Dictionary<int, string>> groups,
@@ -129,28 +125,41 @@ public static class ConfigFacade
 		Dto.GridStyleOptionsDto? gridStyle,
 		Dto.ConnectionDto? connection)
 	{
-		var mappedProperties = PropertyMapper.MapMany(properties)
-			.ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase);
-
-		var mappedColumns = ColumnMapper.MapMany(columns)
-			.ToDictionary(c => c.Key, StringComparer.OrdinalIgnoreCase);
-
-		var mappedGroups = new Dictionary<string, GroupDefinition>(StringComparer.OrdinalIgnoreCase);
-		foreach (var (groupId, items) in groups)
+		try
 		{
-			mappedGroups[groupId] = new GroupDefinition(groupId, items.AsReadOnly());
+			var mappedProperties = PropertyMapper.MapMany(properties)
+				.ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase);
+
+			var mappedColumns = ColumnMapper.MapMany(columns)
+				.ToDictionary(c => c.Key, StringComparer.OrdinalIgnoreCase);
+
+			var mappedGroups = new Dictionary<string, GroupDefinition>(StringComparer.OrdinalIgnoreCase);
+			foreach (var (groupId, items) in groups)
+			{
+				mappedGroups[groupId] = new GroupDefinition(groupId, items.AsReadOnly());
+			}
+
+			var actionsResult = ActionMapper.TryMapMany(actions, mappedProperties);
+			if (actionsResult.IsFailed)
+			{
+				return actionsResult.ToResult<AppConfiguration>();
+			}
+
+			var mappedActions = actionsResult.Value.ToDictionary(a => a.Id);
+
+			var mappedGridStyle = GridStyleMapper.Map(gridStyle);
+
+			var plcConfiguration = ConnectionMapper.Map(connection);
+
+			return Result.Ok(new AppConfiguration(
+				mappedProperties, mappedColumns, mappedGroups,
+				mappedActions, mappedGridStyle, plcConfiguration));
 		}
-
-		var mappedActions = ActionMapper.MapMany(actions)
-			.ToDictionary(a => a.Id);
-
-		var mappedGridStyle = GridStyleMapper.Map(gridStyle);
-
-		var plcConfiguration = ConnectionMapper.Map(connection);
-
-		return new AppConfiguration(
-			mappedProperties, mappedColumns, mappedGroups,
-			mappedActions, mappedGridStyle, plcConfiguration);
+		catch (Exception ex)
+		{
+			return Result.Fail<AppConfiguration>(
+				new Error("Failed to map configuration to domain: " + ex.Message).CausedBy(ex));
+		}
 	}
 
 	private sealed record LoadedSections(

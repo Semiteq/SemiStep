@@ -8,19 +8,9 @@ namespace SemiStep.Core.Configuration.Mapping;
 
 internal static class ActionMapper
 {
-	public static ActionDefinition Map(ActionDto dto)
-	{
-		var result = TryMap(dto);
-		if (result.IsFailed)
-		{
-			throw new InvalidOperationException(
-				string.Join("; ", result.Errors.Select(e => e.Message)));
-		}
-
-		return result.Value;
-	}
-
-	public static Result<ActionDefinition> TryMap(ActionDto dto)
+	public static Result<ActionDefinition> TryMap(
+		ActionDto dto,
+		IReadOnlyDictionary<string, PropertyTypeDefinition> properties)
 	{
 		if (dto.Id <= 0)
 		{
@@ -58,18 +48,18 @@ internal static class ActionMapper
 			return deployDurationResult.ToResult<ActionDefinition>();
 		}
 
-		var formulaResult = MapFormula(dto.Id, dto.UiName, dto.Formula, columns);
+		var formulaResult = MapFormula(dto.Id, dto.UiName, dto.Formula, columns, properties);
 		if (formulaResult.IsFailed)
 		{
 			return formulaResult.ToResult<ActionDefinition>();
 		}
 
 		return Result.Ok(new ActionDefinition(
-			Id: dto.Id,
-			UiName: dto.UiName,
-			DeployDuration: deployDurationResult.Value,
-			Properties: columns,
-			Formula: formulaResult.Value));
+			id: dto.Id,
+			uiName: dto.UiName,
+			deployDuration: deployDurationResult.Value,
+			properties: columns,
+			formula: formulaResult.Value));
 	}
 
 	private static Result<DeployDuration> MapDeployDuration(string? value, int actionId)
@@ -83,19 +73,16 @@ internal static class ActionMapper
 		};
 	}
 
-	public static IReadOnlyList<ActionDefinition> MapMany(IEnumerable<ActionDto> dtos)
-	{
-		return dtos.Select(Map).ToList();
-	}
-
-	public static Result<IReadOnlyList<ActionDefinition>> TryMapMany(IEnumerable<ActionDto> dtos)
+	public static Result<IReadOnlyList<ActionDefinition>> TryMapMany(
+		IEnumerable<ActionDto> dtos,
+		IReadOnlyDictionary<string, PropertyTypeDefinition> properties)
 	{
 		var results = new List<ActionDefinition>();
 		var failures = new List<Result>();
 
 		foreach (var dto in dtos)
 		{
-			var mapped = TryMap(dto);
+			var mapped = TryMap(dto, properties);
 			if (mapped.IsFailed)
 			{
 				failures.Add(mapped.ToResult());
@@ -138,7 +125,8 @@ internal static class ActionMapper
 		int actionId,
 		string actionName,
 		FormulaDto? formulaDto,
-		IReadOnlyList<ActionPropertyDefinition> columns)
+		IReadOnlyList<ActionPropertyDefinition> columns,
+		IReadOnlyDictionary<string, PropertyTypeDefinition> properties)
 	{
 		if (formulaDto is null)
 		{
@@ -147,47 +135,94 @@ internal static class ActionMapper
 
 		var section = $"actions, Id={actionId}, UiName='{actionName}'";
 
-		var recalcOrder = formulaDto.RecalcOrder ?? new List<string>();
-		var expressions = formulaDto.Expressions ?? new Dictionary<string, string>();
+		var rawRecalcOrder = formulaDto.RecalcOrder ?? new List<string>();
+		var rawExpressions = formulaDto.Expressions ?? new Dictionary<string, string>();
 
 		var failures = new List<Result>();
 
-		if (recalcOrder.Count < 2)
+		// Normalize expression dictionary to a case-insensitive lookup once; reject case-only duplicates.
+		var expressionsByKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		foreach (var (key, value) in rawExpressions)
 		{
-			failures.Add(Result.Fail(
-				$"[{section}] formula.recalc_order must contain at least two entries (got {recalcOrder.Count})"));
+			if (expressionsByKey.ContainsKey(key))
+			{
+				failures.Add(Result.Fail(
+					$"[{section}] formula.expressions contains duplicate entry for '{key}' (case-insensitive)"));
+				continue;
+			}
+
+			expressionsByKey[key] = value;
 		}
 
-		var distinctRecalcOrder = new HashSet<string>(recalcOrder, StringComparer.OrdinalIgnoreCase);
-		if (distinctRecalcOrder.Count != recalcOrder.Count)
+		if (rawRecalcOrder.Count < 2)
+		{
+			failures.Add(Result.Fail(
+				$"[{section}] formula.recalc_order must contain at least two entries (got {rawRecalcOrder.Count})"));
+		}
+
+		var distinctRecalcOrder = new HashSet<string>(rawRecalcOrder, StringComparer.OrdinalIgnoreCase);
+		if (distinctRecalcOrder.Count != rawRecalcOrder.Count)
 		{
 			failures.Add(Result.Fail(
 				$"[{section}] formula.recalc_order contains duplicate entries"));
 		}
 
-		var columnKeys = new HashSet<string>(
-			columns.Select(c => c.Key),
-			StringComparer.OrdinalIgnoreCase);
-
-		foreach (var variable in recalcOrder)
+		// Map case-insensitively to action column key (canonical casing).
+		var columnByKey = new Dictionary<string, ActionPropertyDefinition>(StringComparer.OrdinalIgnoreCase);
+		foreach (var column in columns)
 		{
-			if (!columnKeys.Contains(variable))
+			columnByKey[column.Key] = column;
+		}
+
+		// Normalize recalc_order entries to canonical column casing.
+		var canonicalRecalcOrder = new List<string>(rawRecalcOrder.Count);
+		foreach (var variable in rawRecalcOrder)
+		{
+			if (columnByKey.TryGetValue(variable, out var column))
 			{
+				canonicalRecalcOrder.Add(column.Key);
+			}
+			else
+			{
+				canonicalRecalcOrder.Add(variable);
 				failures.Add(Result.Fail(
 					$"[{section}] formula.recalc_order entry '{variable}' is not a column of this action"));
 			}
 		}
 
-		foreach (var variable in distinctRecalcOrder)
+		// Validate system_type is numeric (int/float).
+		foreach (var variable in canonicalRecalcOrder)
 		{
-			if (!expressions.Keys.Contains(variable, StringComparer.OrdinalIgnoreCase))
+			if (!columnByKey.TryGetValue(variable, out var column))
+			{
+				continue;
+			}
+
+			if (!properties.TryGetValue(column.PropertyTypeId, out var propertyDef))
+			{
+				failures.Add(Result.Fail(
+					$"[{section}] formula.recalc_order entry '{variable}' references unknown property type '{column.PropertyTypeId}'"));
+				continue;
+			}
+
+			if (!SystemTypes.Comparer.Equals(propertyDef.SystemType, SystemTypes.Int)
+				&& !SystemTypes.Comparer.Equals(propertyDef.SystemType, SystemTypes.Float))
+			{
+				failures.Add(Result.Fail(
+					$"[{section}] formula.recalc_order entry '{variable}' has non-numeric system_type '{propertyDef.SystemType}'"));
+			}
+		}
+
+		foreach (var variable in canonicalRecalcOrder)
+		{
+			if (!expressionsByKey.ContainsKey(variable))
 			{
 				failures.Add(Result.Fail(
 					$"[{section}] formula.expressions is missing entry for recalc_order variable '{variable}'"));
 			}
 		}
 
-		foreach (var expressionKey in expressions.Keys)
+		foreach (var expressionKey in expressionsByKey.Keys)
 		{
 			if (!distinctRecalcOrder.Contains(expressionKey))
 			{
@@ -196,21 +231,16 @@ internal static class ActionMapper
 			}
 		}
 
-		if (failures.Count > 0)
+		var compiled = new Dictionary<string, NCalc.Domain.LogicalExpression>(StringComparer.Ordinal);
+
+		foreach (var variable in canonicalRecalcOrder)
 		{
-			return Result.Merge(failures.ToArray()).ToResult<FormulaDefinition?>();
-		}
+			if (!expressionsByKey.TryGetValue(variable, out var expressionSource))
+			{
+				continue;
+			}
 
-		var compiled = new Dictionary<string, NCalc.Domain.LogicalExpression>(
-			StringComparer.OrdinalIgnoreCase);
-		var sources = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-		foreach (var variable in recalcOrder)
-		{
-			var expressionSource = expressions.First(kv =>
-				string.Equals(kv.Key, variable, StringComparison.OrdinalIgnoreCase)).Value;
-
-			var parseResult = FormulaIdentifierExtractor.ParseAndCompile(expressionSource);
+			var parseResult = FormulaIdentifierExtractor.Parse(expressionSource);
 			if (parseResult.IsFailed)
 			{
 				failures.Add(Result.Fail(
@@ -219,27 +249,26 @@ internal static class ActionMapper
 				continue;
 			}
 
-			var identifierResult = FormulaIdentifierExtractor.Extract(expressionSource);
-			if (identifierResult.IsFailed)
+			foreach (var identifier in parseResult.Value.Identifiers)
 			{
-				failures.Add(Result.Fail(
-					$"[{section}] formula.expressions['{variable}'] failed identifier extraction: "
-					+ string.Join("; ", identifierResult.Errors.Select(e => e.Message))));
-				continue;
-			}
-
-			foreach (var identifier in identifierResult.Value)
-			{
-				if (!distinctRecalcOrder.Contains(identifier))
+				if (!distinctRecalcOrder.Contains(identifier)
+					|| !columnByKey.TryGetValue(identifier, out var column))
 				{
 					failures.Add(Result.Fail(
 						$"[{section}] formula.expressions['{variable}'] references variable '{identifier}' "
 						+ $"that is not declared in recalc_order"));
+					continue;
+				}
+
+				if (!string.Equals(identifier, column.Key, StringComparison.Ordinal))
+				{
+					failures.Add(Result.Fail(
+						$"[{section}] formula.expressions['{variable}'] references variable '{identifier}' "
+						+ $"with casing that does not match recalc_order entry '{column.Key}'"));
 				}
 			}
 
-			compiled[variable] = parseResult.Value;
-			sources[variable] = expressionSource;
+			compiled[variable] = parseResult.Value.LogicalExpression;
 		}
 
 		if (failures.Count > 0)
@@ -248,8 +277,7 @@ internal static class ActionMapper
 		}
 
 		var definition = new FormulaDefinition(
-			recalcOrder: recalcOrder.ToList(),
-			expressionSources: sources,
+			recalcOrder: canonicalRecalcOrder,
 			compiledExpressions: compiled);
 
 		return Result.Ok<FormulaDefinition?>(definition);

@@ -180,12 +180,12 @@ Bundled because deleting the constants breaks the build until both the codec and
 
 ### Task 6: Verify acceptance criteria
 
-- [ ] `Grep` confirms `WStringMaxChars` and the old `WStringElementSize` are gone (only the new property on `ArrayCodec` remains)
-- [ ] no static mutable state introduced (grep for `public static.*set`)
-- [ ] `GridColumnDefinition` has no `MaxLength` field
-- [ ] manual trace: CSV → CsvRowConverter → PropertyValidator; UI typing → existing RecipeSession path → PropertyValidator; clipboard paste → ImportedRecipeValidator → PropertyValidator; PLC read → ImportedRecipeValidator → PropertyValidator; S7 write → ArrayCodec (throws on over-length)
-- [ ] run full test suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`
-- [ ] `dotnet format SemiStep/SemiStep.slnx`
+- [x] `Grep` confirms `WStringMaxChars` and the old `WStringElementSize` are gone (only the new property on `ArrayCodec` remains)
+- [x] no static mutable state introduced (grep for `public static.*set`)
+- [x] `GridColumnDefinition` has no `MaxLength` field
+- [x] manual trace: CSV → CsvRowConverter → PropertyValidator; UI typing → existing RecipeSession path → PropertyValidator; clipboard paste → ImportedRecipeValidator → PropertyValidator; PLC read → ImportedRecipeValidator → PropertyValidator; S7 write → ArrayCodec (throws on over-length)
+- [x] run full test suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`
+- [x] `dotnet format SemiStep/SemiStep.slnx`
 
 ### Task 7: Final — close out
 

@@ -157,12 +157,12 @@ Bundled because deleting the constants breaks the build until both the codec and
 - Modify: `SemiStep/SemiStep.Core/Recipes/Import/CsvRowConverter.cs`
 - Create: `SemiStep/SemiStep.Tests/Csv/Integration/CsvPropertyValidationTests.cs`
 
-- [ ] after parsing each property value in `CsvRowConverter`, invoke `PropertyValidator.Validate(propertyDef, parsedValue)` and aggregate failures into the existing pipeline
-- [ ] error messages identify the row/column for the user
-- [ ] integration test: CSV with over-length string fails import with descriptive error including row/column
-- [ ] integration test: CSV with out-of-range int fails (general-coverage check)
-- [ ] integration test: CSV with valid values imports successfully
-- [ ] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=Csv"` — must pass before Task 5
+- [x] after parsing each property value in `CsvRowConverter`, invoke `PropertyValidator.Validate(propertyDef, parsedValue)` and aggregate failures into the existing pipeline
+- [x] error messages identify the row/column for the user
+- [x] integration test: CSV with over-length string fails import with descriptive error including row/column
+- [x] integration test: CSV with out-of-range int fails (general-coverage check)
+- [x] integration test: CSV with valid values imports successfully
+- [x] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=Csv"` — must pass before Task 5
 
 ### Task 5: UI — bind `TextBox.MaxLength` for string columns
 

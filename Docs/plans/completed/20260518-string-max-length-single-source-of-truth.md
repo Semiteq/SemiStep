@@ -189,9 +189,9 @@ Bundled because deleting the constants breaks the build until both the codec and
 
 ### Task 7: Final — close out
 
-- [ ] `CLAUDE.md` unchanged (no new pattern, reuses existing registry + DI factory patterns)
-- [ ] move this plan to `Docs/plans/completed/`
-- [ ] reference plan path in commit message
+- [x] `CLAUDE.md` unchanged (no new pattern, reuses existing registry + DI factory patterns)
+- [x] move this plan to `Docs/plans/completed/`
+- [x] reference plan path in commit message
 
 ## Post-Completion
 

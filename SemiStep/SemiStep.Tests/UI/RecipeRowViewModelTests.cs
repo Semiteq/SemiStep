@@ -231,8 +231,11 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void UpdateStep_RaisesItemArrayPropertyChanged()
+	public void UpdateStep_RaisesIndexerPropertyChanged()
 	{
+		// Avalonia's IndexerNode invalidates indexer bindings only when PropertyChanged carries
+		// the declared CLR indexer name ("Item" by default). The WPF "Item[]" convention is not
+		// recognized — see Avalonia.Data.Core.ExpressionNodes.Reflection.ReflectionIndexerNode.
 		var row = CreateRow();
 		var changedProperties = new List<string>();
 		row.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName ?? "");
@@ -240,7 +243,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var updatedStep = _session.Current.Steps[0];
 		row.UpdateStep(updatedStep);
 
-		changedProperties.Should().Contain("Item[]");
+		changedProperties.Should().Contain("Item");
 	}
 
 	[AvaloniaFact]

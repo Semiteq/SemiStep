@@ -15,7 +15,7 @@ public sealed class RecipeRowViewModel(
 	IReadOnlySet<string> inapplicableColumns)
 	: ReactiveObject, IDisposable
 {
-	private const string IndexerName = "Item[]";
+	private const string IndexerName = "Item";
 
 	private readonly (IReadOnlyDictionary<string, string?> Units, IReadOnlyDictionary<string, string> FormatKinds) _columnMetadata
 		= BuildColumnMetadata(action, recipeMetadataRegistry);

@@ -25,10 +25,10 @@ public sealed class CorePropertyStateTests
 		DefaultValue: null);
 
 	private static readonly ActionDefinition _waitAction = new(
-		Id: 10,
-		UiName: "Wait",
-		DeployDuration: DeployDuration.LongLasting,
-		Properties: [_stepDurationProperty, _commentProperty]);
+		id: 10,
+		uiName: "Wait",
+		deployDuration: DeployDuration.LongLasting,
+		properties: [_stepDurationProperty, _commentProperty]);
 
 	[Theory]
 	[InlineData("unsupported_column", "property_field", "float", false, true)]

@@ -12,8 +12,6 @@ namespace SemiStep.Core.Configuration.Facade;
 
 public static class ConfigFacade
 {
-	// ConfigFacade is a static class, so it cannot be used as a type argument.
-	// Log.ForContext(typeof(...)) is the supported alternative.
 	private static readonly ILogger _logger = Log.ForContext(typeof(ConfigFacade));
 
 	public static async Task<Result<AppConfiguration>> LoadAndValidateAsync(string configDirectory)
@@ -45,9 +43,7 @@ public static class ConfigFacade
 			return LogAndPropagate(defaultsResult, loadResult, xrefResult);
 		}
 
-		var mapResult = Result.Try(
-			() => MapToDomain(properties, columns, groups, actions, gridStyle, connection),
-			ex => new Error("Failed to map configuration to domain: " + ex.Message).CausedBy(ex));
+		var mapResult = MapToDomain(properties, columns, groups, actions, gridStyle, connection);
 
 		if (mapResult.IsFailed)
 		{
@@ -121,7 +117,7 @@ public static class ConfigFacade
 		return Result.Ok(sections).WithReasons(merged.Reasons);
 	}
 
-	private static AppConfiguration MapToDomain(
+	private static Result<AppConfiguration> MapToDomain(
 		List<Dto.PropertyDto> properties,
 		List<Dto.ColumnDto> columns,
 		Dictionary<string, Dictionary<int, string>> groups,
@@ -141,16 +137,31 @@ public static class ConfigFacade
 			mappedGroups[groupId] = new GroupDefinition(groupId, items.AsReadOnly());
 		}
 
-		var mappedActions = ActionMapper.MapMany(actions)
-			.ToDictionary(a => a.Id);
+		var actionsResult = ActionMapper.TryMapMany(actions, mappedProperties);
+		if (actionsResult.IsFailed)
+		{
+			return actionsResult.ToResult<AppConfiguration>();
+		}
+
+		var mappedActions = new Dictionary<int, ActionDefinition>();
+		foreach (var action in actionsResult.Value)
+		{
+			if (mappedActions.ContainsKey(action.Id))
+			{
+				return Result.Fail<AppConfiguration>(
+					$"Duplicate action Id '{action.Id}' detected during domain mapping.");
+			}
+
+			mappedActions.Add(action.Id, action);
+		}
 
 		var mappedGridStyle = GridStyleMapper.Map(gridStyle);
 
 		var plcConfiguration = ConnectionMapper.Map(connection);
 
-		return new AppConfiguration(
+		return Result.Ok(new AppConfiguration(
 			mappedProperties, mappedColumns, mappedGroups,
-			mappedActions, mappedGridStyle, plcConfiguration);
+			mappedActions, mappedGridStyle, plcConfiguration));
 	}
 
 	private sealed record LoadedSections(

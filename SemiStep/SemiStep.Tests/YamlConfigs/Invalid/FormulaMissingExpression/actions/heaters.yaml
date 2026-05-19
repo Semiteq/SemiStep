@@ -1,0 +1,51 @@
+# Invalid: expressions map is missing entry for recalc_order variable 'initial_value'
+110:
+  ui_name: "t°C smoothly"
+  deploy_duration: longlasting
+  columns:
+    - key: initial_value
+      default_value: "0"
+      property_type_id: float
+    - key: task
+      default_value: "0"
+      property_type_id: float
+    - key: speed
+      default_value: "1"
+      property_type_id: float
+    - key: step_duration
+      default_value: "0"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+  formula:
+    recalc_order: [step_duration, speed, task, initial_value]
+    expressions:
+      step_duration: "(task - initial_value) / speed * 60"
+      speed:         "(task - initial_value) / step_duration * 60"
+      task:          "initial_value + speed * step_duration / 60"
+
+140:
+  ui_name: "P% smoothly"
+  deploy_duration: longlasting
+  columns:
+    - key: initial_value
+      default_value: "0"
+      property_type_id: float
+    - key: task
+      default_value: "0"
+      property_type_id: float
+    - key: speed
+      default_value: "1"
+      property_type_id: float
+    - key: step_duration
+      default_value: "0"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+  formula:
+    recalc_order: [step_duration, speed, task, initial_value]
+    expressions:
+      step_duration: "(task - initial_value) / speed * 60"
+      speed:         "(task - initial_value) / step_duration * 60"
+      task:          "initial_value + speed * step_duration / 60"
+      initial_value: "task - speed * step_duration / 60"

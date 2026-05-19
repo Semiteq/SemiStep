@@ -4,6 +4,9 @@ SemiStep is a recipe table editor/runtime for PLC integration (S7 protocol).
 Platform: .NET 10, Windows, C# 14. UI: Avalonia 12.0.3 + ReactiveUI (MVVM).
 Solution: `SemiStep/SemiStep.slnx`. All commands run from repository root.
 
+Inline-formula recalculation (per-action `formula:` blocks) is evaluated via the
+`NCalcSync` package (`SemiStep.Core/Recipes/Formulas`). See `Docs/03-data-model.md` §3.4.
+
 ## Build
 
 ```powershell
@@ -94,6 +97,10 @@ No abbreviations in names.
 
 - Only for genuinely non-obvious business logic. No process notes (`// TODO`, `// in new version`). No transitional comments.
 - English only.
+
+## Conventions
+
+**Inline formulas on actions:** when an action declares a `formula:` block (see `Docs/03-data-model.md` §3.4), cell edits route through `RecipeSession.UpdateStepProperty` → `FormulaEvaluator.Recalculate` and update one coupled cell in the same mutation (single undo unit). CSV import (§3.5) is verbatim — formulas are not re-evaluated on load.
 
 ## Troubleshooting
 

@@ -125,10 +125,10 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		var template = GetGroupColumnCellTemplate();
 
 		var firstAction = new ActionDefinition(
-			Id: 9001,
-			UiName: "FirstGroupAction",
-			DeployDuration: DeployDuration.Immediate,
-			Properties: new[]
+			id: 9001,
+			uiName: "FirstGroupAction",
+			deployDuration: DeployDuration.Immediate,
+			properties: new[]
 			{
 				new ActionPropertyDefinition(
 					Key: RecipeTestDriver.TargetColumn,
@@ -137,10 +137,10 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 					DefaultValue: null),
 			});
 		var secondAction = new ActionDefinition(
-			Id: 9002,
-			UiName: "SecondGroupAction",
-			DeployDuration: DeployDuration.Immediate,
-			Properties: new[]
+			id: 9002,
+			uiName: "SecondGroupAction",
+			deployDuration: DeployDuration.Immediate,
+			properties: new[]
 			{
 				new ActionPropertyDefinition(
 					Key: RecipeTestDriver.TargetColumn,

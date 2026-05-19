@@ -4,22 +4,23 @@ using Microsoft.Extensions.Logging;
 
 using SemiStep.Core.Plc;
 using SemiStep.Core.Recipes.Analysis;
+using SemiStep.Core.Recipes.Formulas;
 using SemiStep.Core.Recipes.Helpers;
 
 namespace SemiStep.Core.Recipes;
 
 /// <summary>
-/// Owns the live recipe along with its undo/redo history, dirty-flag state, and
-/// the mutation methods that act upon it. Consolidates the responsibilities of
-/// <c>RecipeWorkspace</c>, <c>RecipeStateManager</c>, <c>RecipeHistoryManager</c>,
-/// and <c>RecipeEditor</c> into a single class so that recipe mutations and the
-/// state transitions they imply are expressed in one place.
+/// Owns the live recipe, its undo/redo history, the dirty-flag state, and the
+/// mutation methods that produce new recipe revisions. Coordinates analyzer and
+/// formula-evaluator passes on each mutation and synchronises accepted snapshots
+/// with the PLC sync service.
 /// </summary>
 public sealed class RecipeSession
 {
 	private const int MaxHistoryDepth = 100;
 
 	private readonly RecipeAnalyzer _analyzer;
+	private readonly FormulaEvaluator _formulaEvaluator;
 	private readonly ILogger<RecipeSession> _logger;
 	private readonly RecipeMetadataRegistry _recipeMetadataRegistry;
 	private readonly List<Recipe> _redoStack = new(MaxHistoryDepth);
@@ -33,11 +34,13 @@ public sealed class RecipeSession
 	public RecipeSession(
 		RecipeAnalyzer analyzer,
 		RecipeMetadataRegistry recipeMetadataRegistry,
+		FormulaEvaluator formulaEvaluator,
 		IPlcSyncService syncService,
 		ILogger<RecipeSession> logger)
 	{
 		_analyzer = analyzer;
 		_recipeMetadataRegistry = recipeMetadataRegistry;
+		_formulaEvaluator = formulaEvaluator;
 		_syncService = syncService;
 		_logger = logger;
 	}
@@ -55,6 +58,8 @@ public sealed class RecipeSession
 	public Result<RecipeSnapshot> Snapshot => _latestSnapshot;
 
 	public bool CanUndo => _undoStack.Count > 0;
+
+	internal int UndoCount => _undoStack.Count;
 
 	public bool CanRedo => _redoStack.Count > 0;
 
@@ -437,9 +442,39 @@ public sealed class RecipeSession
 		}
 
 		var updatedStep = step.WithProperty(columnKey, parsedValue);
+
+		var recalcResult = TryApplyFormulaRecalc(updatedStep, action, columnKey, stepIndex);
+		if (recalcResult.IsFailed)
+		{
+			return recalcResult.ToResult();
+		}
+
+		updatedStep = recalcResult.Value;
+
 		var newRecipe = current.ReplaceStep(stepIndex, updatedStep);
 
 		return Apply(newRecipe);
+	}
+
+	private Result<Step> TryApplyFormulaRecalc(Step step, ActionDefinition action, string columnKey, int stepIndex)
+	{
+		if (action.Formula is null
+			|| !action.Formula.RecalcOrder.Contains(columnKey, StringComparer.OrdinalIgnoreCase))
+		{
+			return Result.Ok(step);
+		}
+
+		var recalcResult = _formulaEvaluator.Recalculate(step, action, columnKey);
+		if (recalcResult.IsFailed)
+		{
+			_logger.LogInformation(
+				"Formula recalculation rejected edit on StepIndex={StepIndex}, ColumnKey={ColumnKey}: {Errors}",
+				stepIndex,
+				columnKey,
+				string.Join("; ", recalcResult.Errors.Select(e => e.Message)));
+		}
+
+		return recalcResult;
 	}
 
 	private void UpdateSnapshot(Result<RecipeSnapshot> snapshot)

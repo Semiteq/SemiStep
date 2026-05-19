@@ -8,3 +8,11 @@ public sealed record PropertyTypeDefinition(
 	double? Min,
 	double? Max,
 	int? MaxLength);
+
+public static class SystemTypes
+{
+	public const string Int = "int";
+	public const string Float = "float";
+
+	public static readonly StringComparer Comparer = StringComparer.OrdinalIgnoreCase;
+}

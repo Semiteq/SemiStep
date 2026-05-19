@@ -33,7 +33,7 @@ internal static class ActionsSectionLoader
 			return Result.Fail($"No YAML files found in actions directory: {actionsDirectory}");
 		}
 
-		var seenActionIds = new HashSet<short>();
+		var seenActionIds = new HashSet<int>();
 		var fileResults = new List<Result<List<ActionDto>>>();
 
 		foreach (var file in yamlFiles)
@@ -57,14 +57,14 @@ internal static class ActionsSectionLoader
 
 	private static async Task<Result<List<ActionDto>>> LoadFileActionsAsync(
 		string filePath,
-		HashSet<short> seenActionIds)
+		HashSet<int> seenActionIds)
 	{
 		try
 		{
 			var fileContent = await File.ReadAllTextAsync(filePath);
 
 			var actionsDictionary =
-				_deserializer.Deserialize<Dictionary<short, ActionDto>>(fileContent);
+				_deserializer.Deserialize<Dictionary<int, ActionDto>>(fileContent);
 
 			if (actionsDictionary is null || actionsDictionary.Count == 0)
 			{
@@ -82,9 +82,9 @@ internal static class ActionsSectionLoader
 	}
 
 	private static Result<List<ActionDto>> ValidateActionsFromFile(
-		Dictionary<short, ActionDto> actionsDictionary,
+		Dictionary<int, ActionDto> actionsDictionary,
 		string filePath,
-		HashSet<short> seenActionIds)
+		HashSet<int> seenActionIds)
 	{
 		var actions = new List<ActionDto>();
 		var validationResults = new List<Result>();
@@ -111,21 +111,22 @@ internal static class ActionsSectionLoader
 		return Result.Ok(actions).WithReasons(merged.Reasons);
 	}
 
-	private static ActionDto CreateAction(short id, ActionDto source)
+	private static ActionDto CreateAction(int id, ActionDto source)
 	{
 		return new ActionDto
 		{
 			Id = id,
 			UiName = source.UiName,
 			DeployDuration = source.DeployDuration,
-			Columns = source.Columns
+			Columns = source.Columns,
+			Formula = source.Formula
 		};
 	}
 
 	private static Result ValidateAction(
 		ActionDto action,
 		string filePath,
-		HashSet<short> seenActionIds)
+		HashSet<int> seenActionIds)
 	{
 		var location = $"{Path.GetFileName(filePath)}, Id={action.Id}";
 
@@ -138,9 +139,9 @@ internal static class ActionsSectionLoader
 	}
 
 	private static Result ValidateActionId(
-		short actionId,
+		int actionId,
 		string location,
-		HashSet<short> seenActionIds)
+		HashSet<int> seenActionIds)
 	{
 		if (actionId <= 0)
 		{
@@ -182,7 +183,7 @@ internal static class ActionsSectionLoader
 
 	private static Result ValidateColumns(ActionDto action, string location)
 	{
-		if (action.Columns == null || action.Columns.Count == 0)
+		if (action.Columns is null || action.Columns.Count == 0)
 		{
 			return Result.Ok().WithWarning($"[{location}] Action has no columns defined");
 		}

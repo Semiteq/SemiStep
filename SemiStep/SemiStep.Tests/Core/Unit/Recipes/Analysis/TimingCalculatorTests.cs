@@ -25,10 +25,10 @@ public sealed class TimingCalculatorTests
 		var actions = new Dictionary<int, ActionDefinition>
 		{
 			[ImmediateActionId] = new ActionDefinition(
-				Id: ImmediateActionId,
-				UiName: "ImmediateAction",
-				DeployDuration: DeployDuration.Immediate,
-				Properties: new[]
+				id: ImmediateActionId,
+				uiName: "ImmediateAction",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
 				{
 					new ActionPropertyDefinition(
 						Key: StepDurationKey,
@@ -37,10 +37,10 @@ public sealed class TimingCalculatorTests
 						DefaultValue: "0")
 				}),
 			[LongLastingActionId] = new ActionDefinition(
-				Id: LongLastingActionId,
-				UiName: "LongLastingAction",
-				DeployDuration: DeployDuration.LongLasting,
-				Properties: new[]
+				id: LongLastingActionId,
+				uiName: "LongLastingAction",
+				deployDuration: DeployDuration.LongLasting,
+				properties: new[]
 				{
 					new ActionPropertyDefinition(
 						Key: StepDurationKey,

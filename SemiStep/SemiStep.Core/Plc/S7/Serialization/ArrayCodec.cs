@@ -19,14 +19,6 @@ internal sealed class ArrayCodec
 		DataDbLayout stringLayout,
 		int wStringMaxChars)
 	{
-		if (wStringMaxChars <= 0)
-		{
-			throw new ArgumentOutOfRangeException(
-				nameof(wStringMaxChars),
-				wStringMaxChars,
-				"WString max chars must be positive");
-		}
-
 		_intLayout = intLayout;
 		_floatLayout = floatLayout;
 		_stringLayout = stringLayout;
@@ -137,21 +129,23 @@ internal sealed class ArrayCodec
 
 	private string ReadWString(byte[] data, int offset)
 	{
-		var maxLength = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(offset));
+		// Header capacity field is informational; codec sizing is driven by _wStringMaxChars.
+		_ = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(offset));
 		var actualLength = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(offset + 2));
 
-		var charCount = Math.Min((int)actualLength, (int)maxLength);
-		var boundedCount = Math.Min(charCount, _wStringMaxChars);
+		if (actualLength > _wStringMaxChars)
+		{
+			throw new InvalidDataException(
+				$"PLC WString actual length {actualLength} exceeds configured max chars {_wStringMaxChars}");
+		}
 
-		var sb = new StringBuilder(boundedCount);
-		for (var i = 0; i < boundedCount; i++)
+		var charCount = (int)actualLength;
+
+		var sb = new StringBuilder(charCount);
+		for (var i = 0; i < charCount; i++)
 		{
 			var charOffset = offset + ProtocolConstants.WStringHeaderSize + i * 2;
 			var ch = (char)BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(charOffset));
-			if (ch == '\0')
-			{
-				break;
-			}
 			sb.Append(ch);
 		}
 
@@ -164,6 +158,13 @@ internal sealed class ArrayCodec
 		{
 			throw new ArgumentException(
 				$"String length {value.Length} exceeds WString max chars {_wStringMaxChars}",
+				nameof(value));
+		}
+
+		if (value.Contains('\0'))
+		{
+			throw new ArgumentException(
+				"WString values must not contain embedded NUL characters",
 				nameof(value));
 		}
 

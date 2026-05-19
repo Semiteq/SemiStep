@@ -36,10 +36,10 @@ public sealed class PlcExecutionMonitorTests
 			layout);
 	}
 
-	private static RecipeMetadataRegistry BuildEmptyRecipeMetadataRegistry()
+	private static RecipeMetadataRegistry BuildMinimalRecipeMetadataRegistry()
 	{
 		var config = new AppConfiguration(
-			Properties: new Dictionary<string, PropertyTypeDefinition>(),
+			Properties: TestRecipeMetadataRegistryFactory.DefaultStringProperty(),
 			Columns: new Dictionary<string, GridColumnDefinition>(),
 			Groups: new Dictionary<string, GroupDefinition>(),
 			Actions: new Dictionary<int, ActionDefinition>(),
@@ -67,7 +67,7 @@ public sealed class PlcExecutionMonitorTests
 				ForLoopCount2: 0,
 				ForLoopCount3: 0));
 
-		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
+		var converter = new RecipeConverter(BuildMinimalRecipeMetadataRegistry());
 		var arrayCodec = TestArrayCodecFactory.Create(configuration);
 		var executor = new PlcTransactionExecutor(
 			transport, converter, arrayCodec, configuration, NullLogger<PlcTransactionExecutor>.Instance);
@@ -236,7 +236,7 @@ public sealed class PlcExecutionMonitorTests
 
 		var innerTransport = new FakeExecutionTransport(configuration.Layout, successState);
 		var transport = new FailFirstExecutionTransport(innerTransport, configuration.Layout.ExecutionDb.DbNumber);
-		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
+		var converter = new RecipeConverter(BuildMinimalRecipeMetadataRegistry());
 		var arrayCodec = TestArrayCodecFactory.Create(configuration);
 		var executor = new PlcTransactionExecutor(
 			transport, converter, arrayCodec, configuration, NullLogger<PlcTransactionExecutor>.Instance);

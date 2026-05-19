@@ -3,9 +3,9 @@
 using FluentAssertions;
 
 using SemiStep.Core.Configuration;
-using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
+using SemiStep.Tests.Helpers;
 
 using Xunit;
 
@@ -25,55 +25,22 @@ public sealed class ImportedRecipeValidatorTests
 	private static RecipeMetadataRegistry BuildRecipeMetadataRegistry(
 		Dictionary<int, ActionDefinition>? actions = null,
 		Dictionary<string, GroupDefinition>? groups = null,
-		Dictionary<string, PropertyTypeDefinition>? properties = null)
+		IEnumerable<PropertyTypeDefinition>? properties = null)
 	{
-		var config = new AppConfiguration(
-			Properties: properties ?? DefaultProperties(),
-			Columns: new Dictionary<string, GridColumnDefinition>(),
-			Groups: groups ?? new Dictionary<string, GroupDefinition>(),
-			Actions: actions ?? new Dictionary<int, ActionDefinition>(),
-			GridStyle: GridStyleOptions.Default,
-			PlcConfiguration: PlcConfiguration.Default);
-
-		return new RecipeMetadataRegistry(config);
+		return TestRecipeMetadataRegistryFactory.Build(
+			properties ?? DefaultProperties(),
+			actions,
+			groups);
 	}
 
-	private static Dictionary<string, PropertyTypeDefinition> DefaultProperties()
+	private static IEnumerable<PropertyTypeDefinition> DefaultProperties()
 	{
-		return new Dictionary<string, PropertyTypeDefinition>(StringComparer.OrdinalIgnoreCase)
+		return new[]
 		{
-			["enum"] = new PropertyTypeDefinition(
-				Id: "enum",
-				SystemType: "int",
-				FormatKind: "numeric",
-				Units: null,
-				Min: null,
-				Max: null,
-				MaxLength: null),
-			["time"] = new PropertyTypeDefinition(
-				Id: "time",
-				SystemType: "float",
-				FormatKind: "numeric",
-				Units: null,
-				Min: null,
-				Max: null,
-				MaxLength: null),
-			["text"] = new PropertyTypeDefinition(
-				Id: "text",
-				SystemType: "string",
-				FormatKind: "text",
-				Units: null,
-				Min: null,
-				Max: null,
-				MaxLength: 8),
-			["int_bounded"] = new PropertyTypeDefinition(
-				Id: "int_bounded",
-				SystemType: "int",
-				FormatKind: "numeric",
-				Units: null,
-				Min: 0,
-				Max: 100,
-				MaxLength: null)
+			TestPropertyTypeDefinitionBuilder.CreateInt("enum"),
+			TestPropertyTypeDefinitionBuilder.CreateFloat("time"),
+			TestPropertyTypeDefinitionBuilder.CreateString("text", maxLength: 8),
+			TestPropertyTypeDefinitionBuilder.CreateInt("int_bounded", min: 0, max: 100)
 		};
 	}
 
@@ -156,7 +123,7 @@ public sealed class ImportedRecipeValidatorTests
 	}
 
 	[Fact]
-	public void Validate_NonGroupColumn_IsNotChecked()
+	public void Validate_NonGroupColumnWithoutConstraints_PassesValidation()
 	{
 		var actions = new Dictionary<int, ActionDefinition>
 		{
@@ -184,7 +151,81 @@ public sealed class ImportedRecipeValidatorTests
 
 		var result = validator.Validate(recipe);
 
-		result.IsSuccess.Should().BeTrue("non-group columns are not subject to group membership checks");
+		result.IsSuccess.Should().BeTrue(
+			"non-group columns without Min/Max/MaxLength constraints have no PropertyValidator rules to violate");
+	}
+
+	[Fact]
+	public void Validate_NonGroupColumnWithViolatingValue_IsRejected()
+	{
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[11] = new ActionDefinition(
+				Id: 11,
+				UiName: "Bound",
+				DeployDuration: DeployDuration.Immediate,
+				Properties: new[]
+				{
+					new ActionPropertyDefinition(
+						Key: "amount",
+						GroupName: null,
+						PropertyTypeId: "int_bounded",
+						DefaultValue: null)
+				})
+		};
+
+		var registry = BuildRecipeMetadataRegistry(actions);
+		var validator = new ImportedRecipeValidator(registry);
+		var step = new Step(
+			11,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId("amount"), PropertyValue.FromInt(500)));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		result.IsFailed.Should().BeTrue(
+			"non-group columns ARE validated against their property's Min/Max/MaxLength via PropertyValidator");
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("Step 1")
+			&& error.Message.Contains("amount")
+			&& error.Message.Contains("exceeds maximum"));
+	}
+
+	[Fact]
+	public void Validate_NonGroupColumnWithTypeMismatch_IsRejected()
+	{
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[12] = new ActionDefinition(
+				Id: 12,
+				UiName: "Bound",
+				DeployDuration: DeployDuration.Immediate,
+				Properties: new[]
+				{
+					new ActionPropertyDefinition(
+						Key: "amount",
+						GroupName: null,
+						PropertyTypeId: "int_bounded",
+						DefaultValue: null)
+				})
+		};
+
+		var registry = BuildRecipeMetadataRegistry(actions);
+		var validator = new ImportedRecipeValidator(registry);
+		var step = new Step(
+			12,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId("amount"), PropertyValue.FromString("not-an-int")));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("Step 1")
+			&& error.Message.Contains("amount")
+			&& error.Message.Contains("Expected int"));
 	}
 
 	[Fact]
@@ -262,7 +303,9 @@ public sealed class ImportedRecipeValidatorTests
 		result.Errors.Should().Contain(error =>
 			error.Message.Contains("Step 1")
 			&& error.Message.Contains(CommentColumnKey)
-			&& error.Message.Contains("maximum"));
+			&& error.Message.Contains("exceeds maximum")
+			&& error.Message.Contains("9")
+			&& error.Message.Contains("8"));
 	}
 
 	[Fact]
@@ -280,7 +323,9 @@ public sealed class ImportedRecipeValidatorTests
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(error =>
 			error.Message.Contains("Step 1")
-			&& error.Message.Contains(IntColumnKey));
+			&& error.Message.Contains(IntColumnKey)
+			&& error.Message.Contains("exceeds maximum")
+			&& error.Message.Contains("100"));
 	}
 
 	[Fact]

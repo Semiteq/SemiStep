@@ -26,7 +26,7 @@ internal sealed class TextCellFactory
 		};
 	}
 
-	public DataGridColumn CreateEditableColumn(GridColumnDefinition columnDef, DataGridLength width, int? maxLength = null)
+	public DataGridColumn CreateEditableColumn(GridColumnDefinition columnDef, DataGridLength width, int? maxLength)
 	{
 		return new DataGridTemplateColumn
 		{
@@ -101,7 +101,7 @@ internal sealed class TextCellFactory
 		}, supportsRecycling: true);
 	}
 
-	public static FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(string columnKey, int? maxLength = null)
+	public static FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(string columnKey, int? maxLength)
 	{
 		var bindingPath = ResolveBindingPath(columnKey);
 

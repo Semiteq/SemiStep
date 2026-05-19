@@ -1,8 +1,7 @@
 ﻿using FluentAssertions;
 
-using SemiStep.Core.Configuration;
-using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Recipes;
+using SemiStep.Tests.Helpers;
 
 using Xunit;
 
@@ -16,8 +15,10 @@ public sealed class RecipeMetadataRegistryStringMaxLengthTests
 	[Fact]
 	public void GetStringMaxLength_SingleStringProperty_ReturnsItsMaxLength()
 	{
-		var registry = BuildRegistry(
-			Property("comment", "string", maxLength: 32));
+		var registry = TestRecipeMetadataRegistryFactory.Build(new[]
+		{
+			TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: 32)
+		});
 
 		var result = registry.GetStringMaxLength();
 
@@ -27,9 +28,11 @@ public sealed class RecipeMetadataRegistryStringMaxLengthTests
 	[Fact]
 	public void GetStringMaxLength_MultipleStringPropertiesWithSameMaxLength_ReturnsThatValue()
 	{
-		var registry = BuildRegistry(
-			Property("comment", "string", maxLength: 32),
-			Property("note", "string", maxLength: 32));
+		var registry = TestRecipeMetadataRegistryFactory.Build(new[]
+		{
+			TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: 32),
+			TestPropertyTypeDefinitionBuilder.CreateString("note", maxLength: 32)
+		});
 
 		var result = registry.GetStringMaxLength();
 
@@ -37,13 +40,13 @@ public sealed class RecipeMetadataRegistryStringMaxLengthTests
 	}
 
 	[Fact]
-	public void GetStringMaxLength_StringPropertiesWithDifferentMaxLength_Throws()
+	public void Constructor_StringPropertiesWithDifferentMaxLength_Throws()
 	{
-		var registry = BuildRegistry(
-			Property("comment", "string", maxLength: 32),
-			Property("note", "string", maxLength: 64));
-
-		var action = registry.GetStringMaxLength;
+		var action = () => TestRecipeMetadataRegistryFactory.Build(new[]
+		{
+			TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: 32),
+			TestPropertyTypeDefinitionBuilder.CreateString("note", maxLength: 64)
+		});
 
 		action.Should().Throw<InvalidOperationException>()
 			.WithMessage("*comment*")
@@ -51,69 +54,57 @@ public sealed class RecipeMetadataRegistryStringMaxLengthTests
 	}
 
 	[Fact]
-	public void GetStringMaxLength_StringPropertyWithNullMaxLength_Throws()
+	public void Constructor_StringPropertyWithNullMaxLength_Throws()
 	{
-		var registry = BuildRegistry(
-			Property("comment", "string", maxLength: null));
+		var action = () => TestRecipeMetadataRegistryFactory.Build(new[]
+		{
+			TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: null)
+		});
 
-		var action = registry.GetStringMaxLength;
+		action.Should().Throw<InvalidOperationException>()
+			.WithMessage("*max_length*")
+			.WithMessage("*comment*");
+	}
+
+	[Theory]
+	[InlineData(0)]
+	[InlineData(-1)]
+	public void Constructor_StringPropertyWithNonPositiveMaxLength_Throws(int maxLength)
+	{
+		var action = () => TestRecipeMetadataRegistryFactory.Build(new[]
+		{
+			TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: maxLength)
+		});
 
 		action.Should().Throw<InvalidOperationException>()
 			.WithMessage("*comment*");
 	}
 
 	[Fact]
-	public void GetStringMaxLength_NoStringProperty_Throws()
+	public void Constructor_NoStringProperty_Throws()
 	{
-		var registry = BuildRegistry(
-			Property("temperature", "float", maxLength: null));
+		var action = () => TestRecipeMetadataRegistryFactory.Build(new[]
+		{
+			TestPropertyTypeDefinitionBuilder.CreateFloat("temperature")
+		});
 
-		var action = registry.GetStringMaxLength;
-
-		action.Should().Throw<InvalidOperationException>();
+		action.Should().Throw<InvalidOperationException>()
+			.WithMessage("*no property*")
+			.WithMessage("*system_type*");
 	}
 
 	[Fact]
 	public void GetStringMaxLength_IgnoresNonStringProperties()
 	{
-		var registry = BuildRegistry(
-			Property("comment", "string", maxLength: 16),
-			Property("temperature", "float", maxLength: null),
-			Property("count", "int", maxLength: null));
+		var registry = TestRecipeMetadataRegistryFactory.Build(new[]
+		{
+			TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: 16),
+			TestPropertyTypeDefinitionBuilder.CreateFloat("temperature"),
+			TestPropertyTypeDefinitionBuilder.CreateInt("count")
+		});
 
 		var result = registry.GetStringMaxLength();
 
 		result.Should().Be(16);
-	}
-
-	private static PropertyTypeDefinition Property(string id, string systemType, int? maxLength)
-	{
-		return new PropertyTypeDefinition(
-			Id: id,
-			SystemType: systemType,
-			FormatKind: "numeric",
-			Units: null,
-			Min: null,
-			Max: null,
-			MaxLength: maxLength);
-	}
-
-	private static RecipeMetadataRegistry BuildRegistry(params PropertyTypeDefinition[] properties)
-	{
-		var propertyMap = new Dictionary<string, PropertyTypeDefinition>(StringComparer.OrdinalIgnoreCase);
-		foreach (var property in properties)
-		{
-			propertyMap[property.Id] = property;
-		}
-
-		var config = new AppConfiguration(
-			Properties: propertyMap,
-			Columns: new Dictionary<string, GridColumnDefinition>(),
-			Groups: new Dictionary<string, GroupDefinition>(),
-			Actions: new Dictionary<int, ActionDefinition>(),
-			GridStyle: GridStyleOptions.Default,
-			PlcConfiguration: PlcConfiguration.Default);
-
-		return new RecipeMetadataRegistry(config);
 	}
 }

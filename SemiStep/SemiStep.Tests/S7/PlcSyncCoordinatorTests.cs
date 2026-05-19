@@ -49,7 +49,7 @@ public sealed class PlcSyncCoordinatorTests
 		transport.SetConnected(connected);
 
 		var connectionService = new StubS7ServiceForSync(connected);
-		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
+		var converter = new RecipeConverter(BuildMinimalRecipeMetadataRegistry());
 		var configuration = BuildTestConfiguration();
 		var arrayCodec = TestArrayCodecFactory.Create(configuration);
 		var executor = new PlcTransactionExecutor(
@@ -60,10 +60,10 @@ public sealed class PlcSyncCoordinatorTests
 		return (coordinator, transport, connectionService);
 	}
 
-	private static RecipeMetadataRegistry BuildEmptyRecipeMetadataRegistry()
+	private static RecipeMetadataRegistry BuildMinimalRecipeMetadataRegistry()
 	{
 		var config = new AppConfiguration(
-			Properties: new Dictionary<string, PropertyTypeDefinition>(),
+			Properties: TestRecipeMetadataRegistryFactory.DefaultStringProperty(),
 			Columns: new Dictionary<string, GridColumnDefinition>(),
 			Groups: new Dictionary<string, GroupDefinition>(),
 			Actions: new Dictionary<int, ActionDefinition>(),

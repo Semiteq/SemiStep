@@ -23,6 +23,8 @@ public sealed class RecipeMetadataRegistry
 
 	private IReadOnlyList<ComboBoxItemViewModel>? _actionComboBoxItems;
 
+	private readonly int _stringMaxLength;
+
 	public RecipeMetadataRegistry(AppConfiguration config)
 	{
 		_actionsById = new Dictionary<int, ActionDefinition>(config.Actions);
@@ -54,6 +56,8 @@ public sealed class RecipeMetadataRegistry
 		{
 			_groups[key] = group;
 		}
+
+		_stringMaxLength = ResolveStringMaxLength(_properties.Values);
 	}
 
 	public Result<ActionDefinition> GetAction(int id)
@@ -153,15 +157,17 @@ public sealed class RecipeMetadataRegistry
 	}
 
 	/// <summary>
-	/// Returns the unique <c>max_length</c> for all properties whose <c>system_type</c> is <c>string</c>.
-	/// Acts as the single source of truth for the maximum number of characters in a recipe string value.
-	/// Throws when no string property is defined, when any string property lacks a <c>MaxLength</c>,
-	/// or when string properties disagree on the value — registry construction runs once at startup,
-	/// so any violation surfaces immediately via the standard error window.
+	/// Single source of truth for recipe string max_length; the SoT contract is validated at
+	/// registry construction so violations fail fast rather than at lazy call time.
 	/// </summary>
 	public int GetStringMaxLength()
 	{
-		var stringProperties = _properties.Values
+		return _stringMaxLength;
+	}
+
+	private static int ResolveStringMaxLength(IEnumerable<PropertyTypeDefinition> properties)
+	{
+		var stringProperties = properties
 			.Where(property => string.Equals(property.SystemType, "string", StringComparison.OrdinalIgnoreCase))
 			.ToList();
 
@@ -172,28 +178,54 @@ public sealed class RecipeMetadataRegistry
 				"cannot resolve string max_length.");
 		}
 
+		EnsureAllHaveMaxLength(stringProperties);
+		EnsureAllPositive(stringProperties);
+
+		return EnsureUniqueMaxLength(stringProperties);
+	}
+
+	private static void EnsureAllHaveMaxLength(IReadOnlyList<PropertyTypeDefinition> stringProperties)
+	{
 		var missing = stringProperties.Where(property => !property.MaxLength.HasValue).ToList();
-		if (missing.Count > 0)
+		if (missing.Count == 0)
 		{
-			var ids = string.Join(", ", missing.Select(property => $"'{property.Id}'"));
-			throw new InvalidOperationException(
-				$"RecipeMetadataRegistry: string property max_length is required but missing for: {ids}.");
+			return;
 		}
 
+		var ids = string.Join(", ", missing.Select(property => $"'{property.Id}'"));
+		throw new InvalidOperationException(
+			$"RecipeMetadataRegistry: string property max_length is required but missing for: {ids}.");
+	}
+
+	private static void EnsureAllPositive(IReadOnlyList<PropertyTypeDefinition> stringProperties)
+	{
+		var nonPositive = stringProperties.Where(property => property.MaxLength!.Value <= 0).ToList();
+		if (nonPositive.Count == 0)
+		{
+			return;
+		}
+
+		var ids = string.Join(", ", nonPositive.Select(property => $"'{property.Id}'={property.MaxLength!.Value}"));
+		throw new InvalidOperationException(
+			$"RecipeMetadataRegistry: string property max_length must be positive but got: {ids}.");
+	}
+
+	private static int EnsureUniqueMaxLength(IReadOnlyList<PropertyTypeDefinition> stringProperties)
+	{
 		var distinctValues = stringProperties
 			.Select(property => property.MaxLength!.Value)
 			.Distinct()
 			.ToList();
 
-		if (distinctValues.Count > 1)
+		if (distinctValues.Count == 1)
 		{
-			var ids = string.Join(", ", stringProperties.Select(property => $"'{property.Id}'={property.MaxLength!.Value}"));
-			throw new InvalidOperationException(
-				$"RecipeMetadataRegistry: string properties disagree on max_length: {ids}. " +
-				"All system_type='string' properties must share the same max_length.");
+			return distinctValues[0];
 		}
 
-		return distinctValues[0];
+		var ids = string.Join(", ", stringProperties.Select(property => $"'{property.Id}'={property.MaxLength!.Value}"));
+		throw new InvalidOperationException(
+			$"RecipeMetadataRegistry: string properties disagree on max_length: {ids}. " +
+			"All system_type='string' properties must share the same max_length.");
 	}
 
 	public Result GroupHasIntKey(int key, string groupId)

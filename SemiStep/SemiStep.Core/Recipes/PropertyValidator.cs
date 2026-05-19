@@ -56,7 +56,18 @@ internal static class PropertyValidator
 
 	private static Result ValidateStringLength(PropertyTypeDefinition property, object value)
 	{
-		if (value is string str && property.MaxLength.HasValue && str.Length > property.MaxLength.Value)
+		if (value is not string str)
+		{
+			return Result.Ok();
+		}
+
+		if (str.Contains('\0'))
+		{
+			return Result.Fail(
+				$"String value contains embedded NUL character for '{property.Id}'");
+		}
+
+		if (property.MaxLength.HasValue && str.Length > property.MaxLength.Value)
 		{
 			return Result.Fail(
 				$"String length {str.Length} exceeds maximum {property.MaxLength.Value} for '{property.Id}'");

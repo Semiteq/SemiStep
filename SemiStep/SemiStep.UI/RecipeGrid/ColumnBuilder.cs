@@ -65,18 +65,7 @@ public sealed class ColumnBuilder(
 			return _textCellFactory.CreateReadOnlyColumn(columnDef, width);
 		}
 
-		var maxLength = ResolveMaxLength(columnDef);
+		var maxLength = recipeMetadataRegistry.GetProperty(columnDef.PropertyTypeId).Value.MaxLength;
 		return _textCellFactory.CreateEditableColumn(columnDef, width, maxLength);
-	}
-
-	private int? ResolveMaxLength(GridColumnDefinition columnDef)
-	{
-		var propertyResult = recipeMetadataRegistry.GetProperty(columnDef.PropertyTypeId);
-		if (propertyResult.IsFailed)
-		{
-			return null;
-		}
-
-		return propertyResult.Value.MaxLength;
 	}
 }

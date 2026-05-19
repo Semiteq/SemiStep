@@ -11,6 +11,7 @@ using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.S7.Serialization;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Recipes;
+using SemiStep.Tests.Helpers;
 using SemiStep.Tests.S7.Helpers;
 
 using Xunit;
@@ -44,10 +45,10 @@ public sealed class PlcTransactionExecutorTests
 			layout);
 	}
 
-	private static RecipeMetadataRegistry BuildEmptyRecipeMetadataRegistry()
+	private static RecipeMetadataRegistry BuildMinimalRecipeMetadataRegistry()
 	{
 		var config = new AppConfiguration(
-			Properties: new Dictionary<string, PropertyTypeDefinition>(),
+			Properties: TestRecipeMetadataRegistryFactory.DefaultStringProperty(),
 			Columns: new Dictionary<string, GridColumnDefinition>(),
 			Groups: new Dictionary<string, GroupDefinition>(),
 			Actions: new Dictionary<int, ActionDefinition>(),
@@ -60,7 +61,7 @@ public sealed class PlcTransactionExecutorTests
 	private static (PlcTransactionExecutor executor, FakeS7Transport transport) BuildExecutor()
 	{
 		var transport = new FakeS7Transport();
-		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
+		var converter = new RecipeConverter(BuildMinimalRecipeMetadataRegistry());
 		var configuration = BuildTestConfiguration();
 		var arrayCodec = TestArrayCodecFactory.Create(configuration);
 		var executor = new PlcTransactionExecutor(

@@ -126,7 +126,7 @@ Bundled because deleting the constants breaks the build until both the codec and
 - [x] delete `WStringMaxChars` and `WStringElementSize` from `ProtocolConstants` (keep `WStringHeaderSize`, `IntElementSize`, `FloatElementSize`)
 - [x] `ArrayCodec` ctor accepts `int wStringMaxChars`; field is `private readonly`
 - [x] expose `WStringElementSize` as a readonly property computed from the field
-- [x] `WriteWString` throws `ArgumentException` (with property id / value length in the message) when `value.Length > _wStringMaxChars`; remove the silent truncation branch
+- [x] `WriteWString` throws `ArgumentException` (with value length in the message) when `value.Length > _wStringMaxChars`; remove the silent truncation branch (property id intentionally not propagated — `ArrayCodec` is property-agnostic by design)
 - [x] `ReadWString` uses injected value as the upper bound
 - [x] register `ArrayCodec` in `S7Di` via factory consulting `RecipeMetadataRegistry.GetStringMaxLength()`
 - [x] `PlcTransactionExecutor` ctor receives `ArrayCodec` (no `RecipeMetadataRegistry`); update the ~line 88 read-size calculation to use `_arrayCodec.WStringElementSize`

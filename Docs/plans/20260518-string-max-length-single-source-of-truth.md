@@ -171,12 +171,12 @@ Bundled because deleting the constants breaks the build until both the codec and
 - Modify: `SemiStep/SemiStep.UI/RecipeGrid/ColumnBuilder.cs`
 - Modify or Create: `SemiStep/SemiStep.Tests/UI/RecipeGridStringMaxLengthTests.cs`
 
-- [ ] `TextCellFactory.CreateEditingTemplate` accepts `int? maxLength`; when present, sets `TextBox.MaxLength`
-- [ ] `ColumnBuilder` looks up `PropertyTypeDefinition` via `recipeMetadataRegistry.GetProperty(columnDef.PropertyTypeId)`, reads `MaxLength`, forwards into `TextCellFactory`
-- [ ] do NOT cache/denormalise `MaxLength` into `GridColumnDefinition`
-- [ ] `[AvaloniaFact]` test: invoke the editing template factory for the `comment` column against a row VM, cast the produced control to `TextBox`, assert `MaxLength` equals the property's `MaxLength`
-- [ ] `[AvaloniaFact]` test: column whose property has no `MaxLength` leaves `TextBox.MaxLength` at default (`0` meaning unlimited)
-- [ ] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=UI"` — must pass before Task 6
+- [x] `TextCellFactory.CreateEditingTemplate` accepts `int? maxLength`; when present, sets `TextBox.MaxLength`
+- [x] `ColumnBuilder` looks up `PropertyTypeDefinition` via `recipeMetadataRegistry.GetProperty(columnDef.PropertyTypeId)`, reads `MaxLength`, forwards into `TextCellFactory`
+- [x] do NOT cache/denormalise `MaxLength` into `GridColumnDefinition`
+- [x] `[AvaloniaFact]` test: invoke the editing template factory for the `comment` column against a row VM, cast the produced control to `TextBox`, assert `MaxLength` equals the property's `MaxLength`
+- [x] `[AvaloniaFact]` test: column whose property has no `MaxLength` leaves `TextBox.MaxLength` at default (`0` meaning unlimited)
+- [x] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=UI"` — must pass before Task 6
 
 ### Task 6: Verify acceptance criteria
 

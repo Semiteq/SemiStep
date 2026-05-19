@@ -26,7 +26,7 @@ internal sealed class TextCellFactory
 		};
 	}
 
-	public DataGridColumn CreateEditableColumn(GridColumnDefinition columnDef, DataGridLength width)
+	public DataGridColumn CreateEditableColumn(GridColumnDefinition columnDef, DataGridLength width, int? maxLength = null)
 	{
 		return new DataGridTemplateColumn
 		{
@@ -38,7 +38,7 @@ internal sealed class TextCellFactory
 			CellTemplate = columnDef.ColumnType == ColumnTypes.StepStartTimeField
 				? CreateStepStartTimeTemplate()
 				: CreateMultiBindingTemplate(columnDef.Key),
-			CellEditingTemplate = CreateEditingTemplate(columnDef.Key),
+			CellEditingTemplate = CreateEditingTemplate(columnDef.Key, maxLength),
 		};
 	}
 
@@ -101,7 +101,7 @@ internal sealed class TextCellFactory
 		}, supportsRecycling: true);
 	}
 
-	private static FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(string columnKey)
+	public static FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(string columnKey, int? maxLength = null)
 	{
 		var bindingPath = ResolveBindingPath(columnKey);
 
@@ -120,6 +120,11 @@ internal sealed class TextCellFactory
 				Padding = new Thickness(4, 2),
 				TextAlignment = TextAlignment.Center,
 			};
+
+			if (maxLength.HasValue)
+			{
+				textBox.MaxLength = maxLength.Value;
+			}
 
 			textBox.Bind(TextBox.TextProperty, new Binding(bindingPath)
 			{

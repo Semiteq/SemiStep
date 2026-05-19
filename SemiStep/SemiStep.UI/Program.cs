@@ -114,9 +114,6 @@ public static class Program
 			new LoggerConfiguration()
 				.MinimumLevel.Is(logLevel)
 				.Enrich.FromLogContext()
-				.WriteTo.Console(
-					outputTemplate: Template,
-					formatProvider: invariant)
 				.WriteTo.File(
 					path: logFilePath,
 					rollingInterval: RollingInterval.Infinite,

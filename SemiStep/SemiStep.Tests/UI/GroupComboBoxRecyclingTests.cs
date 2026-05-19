@@ -11,6 +11,7 @@ using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
+using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.RecipeGrid;
@@ -204,8 +205,11 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 				SaveToCsv: false),
 		};
 
+		var properties = TestRecipeMetadataRegistryFactory.DefaultStringProperty();
+		properties["enum"] = TestPropertyTypeDefinitionBuilder.CreateInt("enum");
+
 		var config = new AppConfiguration(
-			Properties: new Dictionary<string, PropertyTypeDefinition>(),
+			Properties: properties,
 			Columns: columns,
 			Groups: groups,
 			Actions: new Dictionary<int, ActionDefinition>(),

@@ -3,9 +3,9 @@
 using FluentAssertions;
 
 using SemiStep.Core.Configuration;
-using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
+using SemiStep.Tests.Helpers;
 
 using Xunit;
 
@@ -24,17 +24,24 @@ public sealed class ImportedRecipeValidatorTests
 
 	private static RecipeMetadataRegistry BuildRecipeMetadataRegistry(
 		Dictionary<int, ActionDefinition>? actions = null,
-		Dictionary<string, GroupDefinition>? groups = null)
+		Dictionary<string, GroupDefinition>? groups = null,
+		IEnumerable<PropertyTypeDefinition>? properties = null)
 	{
-		var config = new AppConfiguration(
-			Properties: new Dictionary<string, PropertyTypeDefinition>(),
-			Columns: new Dictionary<string, GridColumnDefinition>(),
-			Groups: groups ?? new Dictionary<string, GroupDefinition>(),
-			Actions: actions ?? new Dictionary<int, ActionDefinition>(),
-			GridStyle: GridStyleOptions.Default,
-			PlcConfiguration: PlcConfiguration.Default);
+		return TestRecipeMetadataRegistryFactory.Build(
+			properties ?? DefaultProperties(),
+			actions,
+			groups);
+	}
 
-		return new RecipeMetadataRegistry(config);
+	private static IEnumerable<PropertyTypeDefinition> DefaultProperties()
+	{
+		return new[]
+		{
+			TestPropertyTypeDefinitionBuilder.CreateInt("enum"),
+			TestPropertyTypeDefinitionBuilder.CreateFloat("time"),
+			TestPropertyTypeDefinitionBuilder.CreateString("text", maxLength: 8),
+			TestPropertyTypeDefinitionBuilder.CreateInt("int_bounded", min: 0, max: 100)
+		};
 	}
 
 	private static ImportedRecipeValidator BuildValidator()
@@ -116,7 +123,7 @@ public sealed class ImportedRecipeValidatorTests
 	}
 
 	[Fact]
-	public void Validate_NonGroupColumn_IsNotChecked()
+	public void Validate_NonGroupColumnWithoutConstraints_PassesValidation()
 	{
 		var actions = new Dictionary<int, ActionDefinition>
 		{
@@ -144,7 +151,81 @@ public sealed class ImportedRecipeValidatorTests
 
 		var result = validator.Validate(recipe);
 
-		result.IsSuccess.Should().BeTrue("non-group columns are not subject to group membership checks");
+		result.IsSuccess.Should().BeTrue(
+			"non-group columns without Min/Max/MaxLength constraints have no PropertyValidator rules to violate");
+	}
+
+	[Fact]
+	public void Validate_NonGroupColumnWithViolatingValue_IsRejected()
+	{
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[11] = new ActionDefinition(
+				id: 11,
+				uiName: "Bound",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
+				{
+					new ActionPropertyDefinition(
+						Key: "amount",
+						GroupName: null,
+						PropertyTypeId: "int_bounded",
+						DefaultValue: null)
+				})
+		};
+
+		var registry = BuildRecipeMetadataRegistry(actions);
+		var validator = new ImportedRecipeValidator(registry);
+		var step = new Step(
+			11,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId("amount"), PropertyValue.FromInt(500)));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		result.IsFailed.Should().BeTrue(
+			"non-group columns ARE validated against their property's Min/Max/MaxLength via PropertyValidator");
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("Step 1")
+			&& error.Message.Contains("amount")
+			&& error.Message.Contains("exceeds maximum"));
+	}
+
+	[Fact]
+	public void Validate_NonGroupColumnWithTypeMismatch_IsRejected()
+	{
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[12] = new ActionDefinition(
+				id: 12,
+				uiName: "Bound",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
+				{
+					new ActionPropertyDefinition(
+						Key: "amount",
+						GroupName: null,
+						PropertyTypeId: "int_bounded",
+						DefaultValue: null)
+				})
+		};
+
+		var registry = BuildRecipeMetadataRegistry(actions);
+		var validator = new ImportedRecipeValidator(registry);
+		var step = new Step(
+			12,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId("amount"), PropertyValue.FromString("not-an-int")));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("Step 1")
+			&& error.Message.Contains("amount")
+			&& error.Message.Contains("Expected int"));
 	}
 
 	[Fact]
@@ -173,5 +254,115 @@ public sealed class ImportedRecipeValidatorTests
 		var result = validator.Validate(recipe);
 
 		result.Errors.Should().HaveCount(2);
+	}
+
+	private const int CommentActionId = 200;
+	private const string CommentColumnKey = "comment";
+	private const string IntColumnKey = "amount";
+
+	private static ImportedRecipeValidator BuildPropertyAwareValidator()
+	{
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[CommentActionId] = new ActionDefinition(
+				id: CommentActionId,
+				uiName: "Annotate",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
+				{
+					new ActionPropertyDefinition(
+						Key: CommentColumnKey,
+						GroupName: null,
+						PropertyTypeId: "text",
+						DefaultValue: null),
+					new ActionPropertyDefinition(
+						Key: IntColumnKey,
+						GroupName: null,
+						PropertyTypeId: "int_bounded",
+						DefaultValue: null)
+				})
+		};
+
+		var registry = BuildRecipeMetadataRegistry(actions);
+		return new ImportedRecipeValidator(registry);
+	}
+
+	[Fact]
+	public void Validate_StepWithOverLengthString_IsRejectedWithMaxLengthError()
+	{
+		var validator = BuildPropertyAwareValidator();
+		var step = new Step(
+			CommentActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(CommentColumnKey), PropertyValue.FromString("XXXXXXXXX")));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("Step 1")
+			&& error.Message.Contains(CommentColumnKey)
+			&& error.Message.Contains("exceeds maximum")
+			&& error.Message.Contains("9")
+			&& error.Message.Contains("8"));
+	}
+
+	[Fact]
+	public void Validate_StepWithOutOfRangeInt_IsRejected()
+	{
+		var validator = BuildPropertyAwareValidator();
+		var step = new Step(
+			CommentActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(IntColumnKey), PropertyValue.FromInt(500)));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("Step 1")
+			&& error.Message.Contains(IntColumnKey)
+			&& error.Message.Contains("exceeds maximum")
+			&& error.Message.Contains("100"));
+	}
+
+	[Fact]
+	public void Validate_StepWithValidPropertyValues_PassesThrough()
+	{
+		var validator = BuildPropertyAwareValidator();
+		var step = new Step(
+			CommentActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(CommentColumnKey), PropertyValue.FromString("ok"))
+				.Add(new PropertyId(IntColumnKey), PropertyValue.FromInt(42)));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Fact]
+	public void Validate_MultiplePropertyViolationsAcrossSteps_AllReported()
+	{
+		var validator = BuildPropertyAwareValidator();
+		var step1 = new Step(
+			CommentActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(CommentColumnKey), PropertyValue.FromString("XXXXXXXXX")));
+		var step2 = new Step(
+			CommentActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(IntColumnKey), PropertyValue.FromInt(500)));
+		var recipe = new Recipe(ImmutableList.Create(step1, step2));
+
+		var result = validator.Validate(recipe);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().HaveCount(2);
+		result.Errors.Should().Contain(error => error.Message.Contains("Step 1"));
+		result.Errors.Should().Contain(error => error.Message.Contains("Step 2"));
 	}
 }

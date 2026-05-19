@@ -43,30 +43,61 @@ public sealed class ImportedRecipeValidator(
 
 		foreach (var column in action.Properties)
 		{
-			if (column.GroupName is null)
-			{
-				continue;
-			}
-
 			var propertyId = new PropertyId(column.Key);
 			if (!step.Properties.TryGetValue(propertyId, out var propertyValue))
 			{
 				continue;
 			}
 
-			if (propertyValue.Value is not int intKey)
+			if (column.GroupName is not null)
 			{
-				errors.Add($"Group property '{column.Key}' must be integer, got {propertyValue.Type}");
+				ValidateGroupColumn(column, propertyValue, errors);
 				continue;
 			}
 
-			if (recipeMetadataRegistry.GroupHasIntKey(intKey, column.GroupName).IsFailed)
-			{
-				errors.Add(
-					$"Value {intKey} is not a valid member of group '{column.GroupName}' for column '{column.Key}'");
-			}
+			ValidatePropertyColumn(column, propertyValue, errors);
 		}
 
 		return errors;
+	}
+
+	private void ValidateGroupColumn(
+		ActionPropertyDefinition column,
+		PropertyValue propertyValue,
+		List<string> errors)
+	{
+		if (propertyValue.Value is not int intKey)
+		{
+			errors.Add($"Group property '{column.Key}' must be integer, got {propertyValue.Type}");
+			return;
+		}
+
+		if (recipeMetadataRegistry.GroupHasIntKey(intKey, column.GroupName!).IsFailed)
+		{
+			errors.Add(
+				$"Value {intKey} is not a valid member of group '{column.GroupName}' for column '{column.Key}'");
+		}
+	}
+
+	private void ValidatePropertyColumn(
+		ActionPropertyDefinition column,
+		PropertyValue propertyValue,
+		List<string> errors)
+	{
+		var propertyDefResult = recipeMetadataRegistry.GetProperty(column.PropertyTypeId);
+		if (propertyDefResult.IsFailed)
+		{
+			errors.Add($"Property '{column.Key}': {string.Join("; ", propertyDefResult.Errors.Select(e => e.Message))}");
+			return;
+		}
+
+		var validationResult = PropertyValidator.Validate(propertyDefResult.Value, propertyValue.Value);
+		if (validationResult.IsFailed)
+		{
+			foreach (var error in validationResult.Errors)
+			{
+				errors.Add($"Property '{column.Key}': {error.Message}");
+			}
+		}
 	}
 }

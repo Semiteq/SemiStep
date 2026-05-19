@@ -88,11 +88,22 @@ public sealed class CsvRowConverter(AppConfiguration config)
 				{
 					errors.Add(new Error($"Column '{columnKey}': {e.Message}"));
 				}
+
+				continue;
 			}
-			else
+
+			var validationResult = PropertyValidator.Validate(propertyTypeDef, parseResult.Value.Value);
+			if (validationResult.IsFailed)
 			{
-				properties.Add(new PropertyId(columnKey), parseResult.Value);
+				foreach (var e in validationResult.Errors)
+				{
+					errors.Add(new Error($"Column '{columnKey}': {e.Message}"));
+				}
+
+				continue;
 			}
+
+			properties.Add(new PropertyId(columnKey), parseResult.Value);
 		}
 
 		if (errors.Count > 0)

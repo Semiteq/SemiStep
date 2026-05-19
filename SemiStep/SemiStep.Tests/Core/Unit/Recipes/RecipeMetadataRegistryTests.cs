@@ -3,6 +3,7 @@
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Recipes;
+using SemiStep.Tests.Helpers;
 
 using Xunit;
 
@@ -29,7 +30,7 @@ public sealed class RecipeMetadataRegistryTests
 		};
 
 		var config = new AppConfiguration(
-			Properties: new Dictionary<string, PropertyTypeDefinition>(),
+			Properties: TestRecipeMetadataRegistryFactory.DefaultStringProperty(),
 			Columns: new Dictionary<string, GridColumnDefinition>(),
 			Groups: groups,
 			Actions: new Dictionary<int, ActionDefinition>(),

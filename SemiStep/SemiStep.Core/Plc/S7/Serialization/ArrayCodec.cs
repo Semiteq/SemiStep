@@ -6,11 +6,30 @@ using SemiStep.Core.Plc.S7.Protocol;
 
 namespace SemiStep.Core.Plc.S7.Serialization;
 
-internal sealed class ArrayCodec(DataDbLayout intLayout, DataDbLayout floatLayout, DataDbLayout stringLayout)
+internal sealed class ArrayCodec
 {
+	private readonly DataDbLayout _intLayout;
+	private readonly DataDbLayout _floatLayout;
+	private readonly DataDbLayout _stringLayout;
+	private readonly int _wStringMaxChars;
+
+	public ArrayCodec(
+		DataDbLayout intLayout,
+		DataDbLayout floatLayout,
+		DataDbLayout stringLayout,
+		int wStringMaxChars)
+	{
+		_intLayout = intLayout;
+		_floatLayout = floatLayout;
+		_stringLayout = stringLayout;
+		_wStringMaxChars = wStringMaxChars;
+	}
+
+	public int WStringElementSize => ProtocolConstants.WStringHeaderSize + _wStringMaxChars * 2;
+
 	public int[] DecodeIntArray(byte[] data, int count)
 	{
-		var startOffset = intLayout.DataStartOffset;
+		var startOffset = _intLayout.DataStartOffset;
 		var result = new int[count];
 
 		for (var i = 0; i < count; i++)
@@ -24,7 +43,7 @@ internal sealed class ArrayCodec(DataDbLayout intLayout, DataDbLayout floatLayou
 
 	public float[] DecodeFloatArray(byte[] data, int count)
 	{
-		var startOffset = floatLayout.DataStartOffset;
+		var startOffset = _floatLayout.DataStartOffset;
 		var result = new float[count];
 
 		for (var i = 0; i < count; i++)
@@ -39,12 +58,12 @@ internal sealed class ArrayCodec(DataDbLayout intLayout, DataDbLayout floatLayou
 
 	public string[] DecodeStringArray(byte[] data, int count)
 	{
-		var startOffset = stringLayout.DataStartOffset;
+		var startOffset = _stringLayout.DataStartOffset;
 		var result = new string[count];
 
 		for (var i = 0; i < count; i++)
 		{
-			var offset = startOffset + i * ProtocolConstants.WStringElementSize;
+			var offset = startOffset + i * WStringElementSize;
 			result[i] = ReadWString(data, offset);
 		}
 
@@ -53,15 +72,15 @@ internal sealed class ArrayCodec(DataDbLayout intLayout, DataDbLayout floatLayou
 
 	public byte[] EncodeIntArray(int[] values)
 	{
-		var dataSize = intLayout.DataStartOffset + values.Length * ProtocolConstants.IntElementSize;
+		var dataSize = _intLayout.DataStartOffset + values.Length * ProtocolConstants.IntElementSize;
 		var bytes = new byte[dataSize];
 
-		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(intLayout.CapacityOffset), (uint)values.Length);
-		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(intLayout.CurrentSizeOffset), (uint)values.Length);
+		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(_intLayout.CapacityOffset), (uint)values.Length);
+		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(_intLayout.CurrentSizeOffset), (uint)values.Length);
 
 		for (var i = 0; i < values.Length; i++)
 		{
-			var offset = intLayout.DataStartOffset + i * ProtocolConstants.IntElementSize;
+			var offset = _intLayout.DataStartOffset + i * ProtocolConstants.IntElementSize;
 			BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(offset), values[i]);
 		}
 
@@ -70,15 +89,15 @@ internal sealed class ArrayCodec(DataDbLayout intLayout, DataDbLayout floatLayou
 
 	public byte[] EncodeFloatArray(float[] values)
 	{
-		var dataSize = floatLayout.DataStartOffset + values.Length * ProtocolConstants.FloatElementSize;
+		var dataSize = _floatLayout.DataStartOffset + values.Length * ProtocolConstants.FloatElementSize;
 		var bytes = new byte[dataSize];
 
-		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(floatLayout.CapacityOffset), (uint)values.Length);
-		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(floatLayout.CurrentSizeOffset), (uint)values.Length);
+		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(_floatLayout.CapacityOffset), (uint)values.Length);
+		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(_floatLayout.CurrentSizeOffset), (uint)values.Length);
 
 		for (var i = 0; i < values.Length; i++)
 		{
-			var offset = floatLayout.DataStartOffset + i * ProtocolConstants.FloatElementSize;
+			var offset = _floatLayout.DataStartOffset + i * ProtocolConstants.FloatElementSize;
 			var intBits = BitConverter.SingleToInt32Bits(values[i]);
 			BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(offset), intBits);
 		}
@@ -88,15 +107,15 @@ internal sealed class ArrayCodec(DataDbLayout intLayout, DataDbLayout floatLayou
 
 	public byte[] EncodeStringArray(string[] values)
 	{
-		var dataSize = stringLayout.DataStartOffset + values.Length * ProtocolConstants.WStringElementSize;
+		var dataSize = _stringLayout.DataStartOffset + values.Length * WStringElementSize;
 		var bytes = new byte[dataSize];
 
-		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(stringLayout.CapacityOffset), (uint)values.Length);
-		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(stringLayout.CurrentSizeOffset), (uint)values.Length);
+		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(_stringLayout.CapacityOffset), (uint)values.Length);
+		BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(_stringLayout.CurrentSizeOffset), (uint)values.Length);
 
 		for (var i = 0; i < values.Length; i++)
 		{
-			var offset = stringLayout.DataStartOffset + i * ProtocolConstants.WStringElementSize;
+			var offset = _stringLayout.DataStartOffset + i * WStringElementSize;
 			WriteWString(bytes, offset, values[i]);
 		}
 
@@ -108,42 +127,54 @@ internal sealed class ArrayCodec(DataDbLayout intLayout, DataDbLayout floatLayou
 		return (int)BinaryPrimitives.ReadUInt32BigEndian(headerData.AsSpan(layout.CurrentSizeOffset));
 	}
 
-	private static string ReadWString(byte[] data, int offset)
+	private string ReadWString(byte[] data, int offset)
 	{
-		var maxLength = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(offset));
+		// Header capacity field is informational; codec sizing is driven by _wStringMaxChars.
+		_ = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(offset));
 		var actualLength = BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(offset + 2));
 
-		var charCount = Math.Min((int)actualLength, (int)maxLength);
-		var charCount2 = Math.Min(charCount, ProtocolConstants.WStringMaxChars);
+		if (actualLength > _wStringMaxChars)
+		{
+			throw new InvalidDataException(
+				$"PLC WString actual length {actualLength} exceeds configured max chars {_wStringMaxChars}");
+		}
 
-		var sb = new StringBuilder(charCount2);
-		for (var i = 0; i < charCount2; i++)
+		var charCount = (int)actualLength;
+
+		var sb = new StringBuilder(charCount);
+		for (var i = 0; i < charCount; i++)
 		{
 			var charOffset = offset + ProtocolConstants.WStringHeaderSize + i * 2;
 			var ch = (char)BinaryPrimitives.ReadUInt16BigEndian(data.AsSpan(charOffset));
-			if (ch == '\0')
-			{
-				break;
-			}
 			sb.Append(ch);
 		}
 
 		return sb.ToString();
 	}
 
-	private static void WriteWString(byte[] data, int offset, string value)
+	private void WriteWString(byte[] data, int offset, string value)
 	{
-		var truncated = value.Length > ProtocolConstants.WStringMaxChars
-			? value[..ProtocolConstants.WStringMaxChars]
-			: value;
+		if (value.Length > _wStringMaxChars)
+		{
+			throw new ArgumentException(
+				$"String length {value.Length} exceeds WString max chars {_wStringMaxChars}",
+				nameof(value));
+		}
 
-		BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(offset), (ushort)ProtocolConstants.WStringMaxChars);
-		BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(offset + 2), (ushort)truncated.Length);
+		if (value.Contains('\0'))
+		{
+			throw new ArgumentException(
+				"WString values must not contain embedded NUL characters",
+				nameof(value));
+		}
 
-		for (var i = 0; i < truncated.Length; i++)
+		BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(offset), (ushort)_wStringMaxChars);
+		BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(offset + 2), (ushort)value.Length);
+
+		for (var i = 0; i < value.Length; i++)
 		{
 			var charOffset = offset + ProtocolConstants.WStringHeaderSize + i * 2;
-			BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(charOffset), truncated[i]);
+			BinaryPrimitives.WriteUInt16BigEndian(data.AsSpan(charOffset), value[i]);
 		}
 	}
 }

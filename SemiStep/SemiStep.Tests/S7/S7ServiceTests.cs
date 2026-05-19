@@ -37,10 +37,10 @@ public sealed class S7ServiceTests
 			PlcProtocolLayout.Default);
 	}
 
-	private static RecipeMetadataRegistry BuildEmptyRecipeMetadataRegistry()
+	private static RecipeMetadataRegistry BuildMinimalRecipeMetadataRegistry()
 	{
 		var config = new AppConfiguration(
-			Properties: new Dictionary<string, PropertyTypeDefinition>(),
+			Properties: TestRecipeMetadataRegistryFactory.DefaultStringProperty(),
 			Columns: new Dictionary<string, GridColumnDefinition>(),
 			Groups: new Dictionary<string, GroupDefinition>(),
 			Actions: new Dictionary<int, ActionDefinition>(),
@@ -53,9 +53,10 @@ public sealed class S7ServiceTests
 	private static (S7Service Service, FakeS7Driver Driver) BuildService(PlcConfiguration configuration)
 	{
 		var driver = new FakeS7Driver();
-		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
+		var converter = new RecipeConverter(BuildMinimalRecipeMetadataRegistry());
+		var arrayCodec = TestArrayCodecFactory.Create(configuration);
 		var executor = new PlcTransactionExecutor(
-			driver, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
+			driver, converter, arrayCodec, configuration, NullLogger<PlcTransactionExecutor>.Instance);
 
 		S7Service? service = null;
 		var monitor = new PlcExecutionMonitor(

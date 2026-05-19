@@ -68,8 +68,9 @@ public sealed class PlcExecutionMonitorTests
 				ForLoopCount3: 0));
 
 		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
+		var arrayCodec = TestArrayCodecFactory.Create(configuration);
 		var executor = new PlcTransactionExecutor(
-			transport, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
+			transport, converter, arrayCodec, configuration, NullLogger<PlcTransactionExecutor>.Instance);
 		var monitor = new PlcExecutionMonitor(
 			executor,
 			configuration.ProtocolSettings,
@@ -236,8 +237,9 @@ public sealed class PlcExecutionMonitorTests
 		var innerTransport = new FakeExecutionTransport(configuration.Layout, successState);
 		var transport = new FailFirstExecutionTransport(innerTransport, configuration.Layout.ExecutionDb.DbNumber);
 		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
+		var arrayCodec = TestArrayCodecFactory.Create(configuration);
 		var executor = new PlcTransactionExecutor(
-			transport, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
+			transport, converter, arrayCodec, configuration, NullLogger<PlcTransactionExecutor>.Instance);
 		var monitor = new PlcExecutionMonitor(
 			executor,
 			configuration.ProtocolSettings,

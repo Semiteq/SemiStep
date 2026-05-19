@@ -51,8 +51,9 @@ public sealed class PlcSyncCoordinatorTests
 		var connectionService = new StubS7ServiceForSync(connected);
 		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
 		var configuration = BuildTestConfiguration();
+		var arrayCodec = TestArrayCodecFactory.Create(configuration);
 		var executor = new PlcTransactionExecutor(
-			transport, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
+			transport, converter, arrayCodec, configuration, NullLogger<PlcTransactionExecutor>.Instance);
 		var coordinator = new PlcSyncCoordinator(
 			executor, connectionService, NullLoggerFactory.Instance);
 

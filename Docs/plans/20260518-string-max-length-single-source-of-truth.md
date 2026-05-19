@@ -123,18 +123,18 @@ Bundled because deleting the constants breaks the build until both the codec and
 - Modify: existing `SemiStep/SemiStep.Tests/S7/` tests touching `ArrayCodec`/`PlcTransactionExecutor`
 - Create: `SemiStep/SemiStep.Tests/S7/ArrayCodecWStringMaxCharsTests.cs`
 
-- [ ] delete `WStringMaxChars` and `WStringElementSize` from `ProtocolConstants` (keep `WStringHeaderSize`, `IntElementSize`, `FloatElementSize`)
-- [ ] `ArrayCodec` ctor accepts `int wStringMaxChars`; field is `private readonly`
-- [ ] expose `WStringElementSize` as a readonly property computed from the field
-- [ ] `WriteWString` throws `ArgumentException` (with property id / value length in the message) when `value.Length > _wStringMaxChars`; remove the silent truncation branch
-- [ ] `ReadWString` uses injected value as the upper bound
-- [ ] register `ArrayCodec` in `S7Di` via factory consulting `RecipeMetadataRegistry.GetStringMaxLength()`
-- [ ] `PlcTransactionExecutor` ctor receives `ArrayCodec` (no `RecipeMetadataRegistry`); update the ~line 88 read-size calculation to use `_arrayCodec.WStringElementSize`
-- [ ] update existing executor/codec tests to construct via the new shape (test helper supplies a known `wStringMaxChars`)
-- [ ] new tests: round-trip with `wStringMaxChars=16` and `=32` produces correct slot size and bytes
-- [ ] new tests: `WriteWString` with over-length input throws
-- [ ] new tests: `WStringElementSize == 4 + maxChars * 2`
-- [ ] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — must pass before Task 3
+- [x] delete `WStringMaxChars` and `WStringElementSize` from `ProtocolConstants` (keep `WStringHeaderSize`, `IntElementSize`, `FloatElementSize`)
+- [x] `ArrayCodec` ctor accepts `int wStringMaxChars`; field is `private readonly`
+- [x] expose `WStringElementSize` as a readonly property computed from the field
+- [x] `WriteWString` throws `ArgumentException` (with property id / value length in the message) when `value.Length > _wStringMaxChars`; remove the silent truncation branch
+- [x] `ReadWString` uses injected value as the upper bound
+- [x] register `ArrayCodec` in `S7Di` via factory consulting `RecipeMetadataRegistry.GetStringMaxLength()`
+- [x] `PlcTransactionExecutor` ctor receives `ArrayCodec` (no `RecipeMetadataRegistry`); update the ~line 88 read-size calculation to use `_arrayCodec.WStringElementSize`
+- [x] update existing executor/codec tests to construct via the new shape (test helper supplies a known `wStringMaxChars`)
+- [x] new tests: round-trip with `wStringMaxChars=16` and `=32` produces correct slot size and bytes
+- [x] new tests: `WriteWString` with over-length input throws
+- [x] new tests: `WStringElementSize == 4 + maxChars * 2`
+- [x] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — must pass before Task 3
 
 ### Task 3: Route `ImportedRecipeValidator` through `PropertyValidator` (covers clipboard + PLC-read)
 

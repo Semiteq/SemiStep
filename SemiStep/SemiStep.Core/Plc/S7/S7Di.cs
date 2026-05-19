@@ -5,6 +5,7 @@ using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.S7.Serialization;
 using SemiStep.Core.Plc.Sync;
+using SemiStep.Core.Recipes;
 
 namespace SemiStep.Core.Plc.S7;
 
@@ -15,6 +16,12 @@ public static class S7Di
 		services.AddSingleton<S7Driver>();
 		services.AddSingleton<IS7Transport>(sp => sp.GetRequiredService<S7Driver>());
 		services.AddSingleton<RecipeConverter>();
+		services.AddSingleton(sp =>
+		{
+			var layout = sp.GetRequiredService<PlcConfiguration>().Layout;
+			var registry = sp.GetRequiredService<RecipeMetadataRegistry>();
+			return new ArrayCodec(layout.IntDb, layout.FloatDb, layout.StringDb, registry.GetStringMaxLength());
+		});
 		services.AddSingleton<PlcTransactionExecutor>();
 		services.AddSingleton<PlcSyncCoordinator>();
 		services.AddSingleton<IPlcSyncService>(sp => sp.GetRequiredService<PlcSyncCoordinator>());

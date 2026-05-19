@@ -25,15 +25,16 @@ internal sealed class PlcTransactionExecutor
 	public PlcTransactionExecutor(
 		IS7Transport transport,
 		RecipeConverter converter,
+		ArrayCodec arrayCodec,
 		PlcConfiguration plcConfiguration,
 		ILogger<PlcTransactionExecutor> logger)
 	{
 		_transport = transport;
 		_converter = converter;
+		_arrayCodec = arrayCodec;
 		_layout = plcConfiguration.Layout;
 		_protocolSettings = plcConfiguration.ProtocolSettings;
 		_logger = logger;
-		_arrayCodec = new ArrayCodec(_layout.IntDb, _layout.FloatDb, _layout.StringDb);
 		_executionCodec = new ExecutionStateCodec(_layout.ExecutionDb);
 		_managingCodec = new ManagingAreaCodec(_layout.ManagingDb);
 	}
@@ -85,7 +86,7 @@ internal sealed class PlcTransactionExecutor
 
 			var intDataSize = _layout.IntDb.DataStartOffset + intCount * ProtocolConstants.IntElementSize;
 			var floatDataSize = _layout.FloatDb.DataStartOffset + floatCount * ProtocolConstants.FloatElementSize;
-			var stringDataSize = _layout.StringDb.DataStartOffset + stringCount * ProtocolConstants.WStringElementSize;
+			var stringDataSize = _layout.StringDb.DataStartOffset + stringCount * _arrayCodec.WStringElementSize;
 
 			var intData = await _transport.ReadBytesAsync(_layout.IntDb.DbNumber, 0, intDataSize, ct);
 			var floatData = await _transport.ReadBytesAsync(_layout.FloatDb.DbNumber, 0, floatDataSize, ct);

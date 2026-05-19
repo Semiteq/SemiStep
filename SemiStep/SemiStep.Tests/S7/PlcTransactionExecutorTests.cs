@@ -62,8 +62,9 @@ public sealed class PlcTransactionExecutorTests
 		var transport = new FakeS7Transport();
 		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
 		var configuration = BuildTestConfiguration();
+		var arrayCodec = TestArrayCodecFactory.Create(configuration);
 		var executor = new PlcTransactionExecutor(
-			transport, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
+			transport, converter, arrayCodec, configuration, NullLogger<PlcTransactionExecutor>.Instance);
 
 		return (executor, transport);
 	}

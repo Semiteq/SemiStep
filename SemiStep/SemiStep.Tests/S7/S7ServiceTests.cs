@@ -54,8 +54,9 @@ public sealed class S7ServiceTests
 	{
 		var driver = new FakeS7Driver();
 		var converter = new RecipeConverter(BuildEmptyRecipeMetadataRegistry());
+		var arrayCodec = TestArrayCodecFactory.Create(configuration);
 		var executor = new PlcTransactionExecutor(
-			driver, converter, configuration, NullLogger<PlcTransactionExecutor>.Instance);
+			driver, converter, arrayCodec, configuration, NullLogger<PlcTransactionExecutor>.Instance);
 
 		S7Service? service = null;
 		var monitor = new PlcExecutionMonitor(

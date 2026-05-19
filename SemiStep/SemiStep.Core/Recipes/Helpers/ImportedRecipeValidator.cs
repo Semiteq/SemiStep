@@ -67,6 +67,31 @@ public sealed class ImportedRecipeValidator(
 			}
 		}
 
+		foreach (var column in action.Properties)
+		{
+			var propertyId = new PropertyId(column.Key);
+			if (!step.Properties.TryGetValue(propertyId, out var propertyValue))
+			{
+				continue;
+			}
+
+			var propertyDefResult = recipeMetadataRegistry.GetProperty(column.PropertyTypeId);
+			if (propertyDefResult.IsFailed)
+			{
+				errors.Add($"Property '{column.Key}': {string.Join("; ", propertyDefResult.Errors.Select(e => e.Message))}");
+				continue;
+			}
+
+			var validationResult = PropertyValidator.Validate(propertyDefResult.Value, propertyValue.Value);
+			if (validationResult.IsFailed)
+			{
+				foreach (var error in validationResult.Errors)
+				{
+					errors.Add($"Property '{column.Key}': {error.Message}");
+				}
+			}
+		}
+
 		return errors;
 	}
 }

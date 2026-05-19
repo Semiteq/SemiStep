@@ -24,10 +24,11 @@ public sealed class ImportedRecipeValidatorTests
 
 	private static RecipeMetadataRegistry BuildRecipeMetadataRegistry(
 		Dictionary<int, ActionDefinition>? actions = null,
-		Dictionary<string, GroupDefinition>? groups = null)
+		Dictionary<string, GroupDefinition>? groups = null,
+		Dictionary<string, PropertyTypeDefinition>? properties = null)
 	{
 		var config = new AppConfiguration(
-			Properties: new Dictionary<string, PropertyTypeDefinition>(),
+			Properties: properties ?? DefaultProperties(),
 			Columns: new Dictionary<string, GridColumnDefinition>(),
 			Groups: groups ?? new Dictionary<string, GroupDefinition>(),
 			Actions: actions ?? new Dictionary<int, ActionDefinition>(),
@@ -35,6 +36,45 @@ public sealed class ImportedRecipeValidatorTests
 			PlcConfiguration: PlcConfiguration.Default);
 
 		return new RecipeMetadataRegistry(config);
+	}
+
+	private static Dictionary<string, PropertyTypeDefinition> DefaultProperties()
+	{
+		return new Dictionary<string, PropertyTypeDefinition>(StringComparer.OrdinalIgnoreCase)
+		{
+			["enum"] = new PropertyTypeDefinition(
+				Id: "enum",
+				SystemType: "int",
+				FormatKind: "numeric",
+				Units: null,
+				Min: null,
+				Max: null,
+				MaxLength: null),
+			["time"] = new PropertyTypeDefinition(
+				Id: "time",
+				SystemType: "float",
+				FormatKind: "numeric",
+				Units: null,
+				Min: null,
+				Max: null,
+				MaxLength: null),
+			["text"] = new PropertyTypeDefinition(
+				Id: "text",
+				SystemType: "string",
+				FormatKind: "text",
+				Units: null,
+				Min: null,
+				Max: null,
+				MaxLength: 8),
+			["int_bounded"] = new PropertyTypeDefinition(
+				Id: "int_bounded",
+				SystemType: "int",
+				FormatKind: "numeric",
+				Units: null,
+				Min: 0,
+				Max: 100,
+				MaxLength: null)
+		};
 	}
 
 	private static ImportedRecipeValidator BuildValidator()
@@ -173,5 +213,111 @@ public sealed class ImportedRecipeValidatorTests
 		var result = validator.Validate(recipe);
 
 		result.Errors.Should().HaveCount(2);
+	}
+
+	private const int CommentActionId = 200;
+	private const string CommentColumnKey = "comment";
+	private const string IntColumnKey = "amount";
+
+	private static ImportedRecipeValidator BuildPropertyAwareValidator()
+	{
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[CommentActionId] = new ActionDefinition(
+				Id: CommentActionId,
+				UiName: "Annotate",
+				DeployDuration: DeployDuration.Immediate,
+				Properties: new[]
+				{
+					new ActionPropertyDefinition(
+						Key: CommentColumnKey,
+						GroupName: null,
+						PropertyTypeId: "text",
+						DefaultValue: null),
+					new ActionPropertyDefinition(
+						Key: IntColumnKey,
+						GroupName: null,
+						PropertyTypeId: "int_bounded",
+						DefaultValue: null)
+				})
+		};
+
+		var registry = BuildRecipeMetadataRegistry(actions);
+		return new ImportedRecipeValidator(registry);
+	}
+
+	[Fact]
+	public void Validate_StepWithOverLengthString_IsRejectedWithMaxLengthError()
+	{
+		var validator = BuildPropertyAwareValidator();
+		var step = new Step(
+			CommentActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(CommentColumnKey), PropertyValue.FromString("XXXXXXXXX")));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("Step 1")
+			&& error.Message.Contains(CommentColumnKey)
+			&& error.Message.Contains("maximum"));
+	}
+
+	[Fact]
+	public void Validate_StepWithOutOfRangeInt_IsRejected()
+	{
+		var validator = BuildPropertyAwareValidator();
+		var step = new Step(
+			CommentActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(IntColumnKey), PropertyValue.FromInt(500)));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("Step 1")
+			&& error.Message.Contains(IntColumnKey));
+	}
+
+	[Fact]
+	public void Validate_StepWithValidPropertyValues_PassesThrough()
+	{
+		var validator = BuildPropertyAwareValidator();
+		var step = new Step(
+			CommentActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(CommentColumnKey), PropertyValue.FromString("ok"))
+				.Add(new PropertyId(IntColumnKey), PropertyValue.FromInt(42)));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Fact]
+	public void Validate_MultiplePropertyViolationsAcrossSteps_AllReported()
+	{
+		var validator = BuildPropertyAwareValidator();
+		var step1 = new Step(
+			CommentActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(CommentColumnKey), PropertyValue.FromString("XXXXXXXXX")));
+		var step2 = new Step(
+			CommentActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(IntColumnKey), PropertyValue.FromInt(500)));
+		var recipe = new Recipe(ImmutableList.Create(step1, step2));
+
+		var result = validator.Validate(recipe);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().HaveCount(2);
+		result.Errors.Should().Contain(error => error.Message.Contains("Step 1"));
+		result.Errors.Should().Contain(error => error.Message.Contains("Step 2"));
 	}
 }

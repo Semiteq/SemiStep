@@ -142,14 +142,14 @@ Bundled because deleting the constants breaks the build until both the codec and
 - Modify: `SemiStep/SemiStep.Core/Recipes/Helpers/ImportedRecipeValidator.cs`
 - Modify or Create: `SemiStep/SemiStep.Tests/Core/Unit/Properties/ImportedRecipeValidatorTests.cs`
 
-- [ ] for each step's property values, invoke `PropertyValidator.Validate(propertyDef, value)` and merge into the existing `Result` aggregation
-- [ ] preserve existing group-key validation; do not reorder or short-circuit
-- [ ] error messages include step index + property id
-- [ ] unit test: step with over-length string is rejected with a `MaxLength`-related error
-- [ ] unit test: step with out-of-range int is rejected (locks in that the new seam is general, not string-specific)
-- [ ] unit test: valid step passes through unchanged
-- [ ] unit test: multiple violations across steps are all reported (Result.Merge behaviour)
-- [ ] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=Core"` — must pass before Task 4
+- [x] for each step's property values, invoke `PropertyValidator.Validate(propertyDef, value)` and merge into the existing `Result` aggregation
+- [x] preserve existing group-key validation; do not reorder or short-circuit
+- [x] error messages include step index + property id
+- [x] unit test: step with over-length string is rejected with a `MaxLength`-related error
+- [x] unit test: step with out-of-range int is rejected (locks in that the new seam is general, not string-specific)
+- [x] unit test: valid step passes through unchanged
+- [x] unit test: multiple violations across steps are all reported (Result.Merge behaviour)
+- [x] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=Core"` — must pass before Task 4
 
 ### Task 4: Route CSV import through `PropertyValidator`
 

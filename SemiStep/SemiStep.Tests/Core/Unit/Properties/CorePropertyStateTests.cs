@@ -32,6 +32,7 @@ public sealed class CorePropertyStateTests
 
 	[Theory]
 	[InlineData("unsupported_column", "property_field", "float", false, true)]
+	[InlineData("step_duration", "property_field", "time", false, false)]
 	[InlineData("step_duration", "property_field", "time", true, false)]
 	[InlineData("step_start_time", "step_start_time_field", "time", true, false)]
 	[InlineData("action", "action_combo_box", "enum", false, false)]

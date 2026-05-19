@@ -10,6 +10,8 @@ public sealed class ColumnBuilder(
 	GridStyleOptions gridStyle,
 	RecipeMetadataRegistry recipeMetadataRegistry)
 {
+	private const string ReadOnlyColumnClass = "read-only-column";
+
 	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(recipeMetadataRegistry);
 
 	private readonly TextCellFactory _textCellFactory = new();
@@ -43,6 +45,10 @@ public sealed class ColumnBuilder(
 	{
 		var width = _widthCalculator.CalculateColumnWidth(columnDef);
 		var column = CreateColumnInner(columnDef, width);
+		if (columnDef.ReadOnly)
+		{
+			column.CellStyleClasses.Add(ReadOnlyColumnClass);
+		}
 		column.CellTheme = InapplicableCellTheme.Create(columnDef.Key);
 
 		return column;

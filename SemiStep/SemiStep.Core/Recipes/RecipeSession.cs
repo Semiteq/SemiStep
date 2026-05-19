@@ -10,11 +10,10 @@ using SemiStep.Core.Recipes.Helpers;
 namespace SemiStep.Core.Recipes;
 
 /// <summary>
-/// Owns the live recipe along with its undo/redo history, dirty-flag state, and
-/// the mutation methods that act upon it. Consolidates the responsibilities of
-/// <c>RecipeWorkspace</c>, <c>RecipeStateManager</c>, <c>RecipeHistoryManager</c>,
-/// and <c>RecipeEditor</c> into a single class so that recipe mutations and the
-/// state transitions they imply are expressed in one place.
+/// Owns the live recipe, its undo/redo history, the dirty-flag state, and the
+/// mutation methods that produce new recipe revisions. Coordinates analyzer and
+/// formula-evaluator passes on each mutation and synchronises accepted snapshots
+/// with the PLC sync service.
 /// </summary>
 public sealed class RecipeSession
 {

@@ -5,6 +5,7 @@ using FluentResults;
 using Microsoft.Extensions.Logging;
 
 using NCalc;
+using NCalc.Domain;
 
 using SemiStep.Core.Recipes.Formulas.Errors;
 
@@ -33,7 +34,10 @@ public sealed class FormulaEvaluator
 		}
 
 		var formula = action.Formula;
-		var target = SelectTarget(formula, changedColumnKey);
+		// Mapper enforces recalc_order has >= 2 distinct entries, so a target distinct from
+		// changedColumnKey is guaranteed to exist.
+		var target = formula.RecalcOrder.First(variable =>
+			!string.Equals(variable, changedColumnKey, StringComparison.OrdinalIgnoreCase));
 
 		if (!formula.CompiledExpressions.TryGetValue(target, out var compiled))
 		{
@@ -51,7 +55,23 @@ public sealed class FormulaEvaluator
 
 		var computed = evaluationResult.Value;
 
-		var propertyDefinition = ResolveTargetPropertyDefinition(action, target);
+		var targetActionPropertyResult = action.FindProperty(target);
+		if (targetActionPropertyResult.IsFailed)
+		{
+			throw new InvalidOperationException(
+				$"Target '{target}' is in recalc_order but not in action '{action.UiName}'.");
+		}
+
+		var targetActionProperty = targetActionPropertyResult.Value;
+
+		var propertyDefinitionResult = _registry.GetProperty(targetActionProperty.PropertyTypeId);
+		if (propertyDefinitionResult.IsFailed)
+		{
+			throw new InvalidOperationException(
+				$"Property type '{targetActionProperty.PropertyTypeId}' for target '{target}' not found in registry.");
+		}
+
+		var propertyDefinition = propertyDefinitionResult.Value;
 
 		var convertResult = ConvertToPropertyValue(target, computed, propertyDefinition);
 		if (convertResult.IsFailed)
@@ -61,7 +81,11 @@ public sealed class FormulaEvaluator
 
 		var newPropertyValue = convertResult.Value;
 
-		var validationResult = ValidateNewValue(action, target, newPropertyValue, propertyDefinition);
+		var validationResult = ValidateNewValue(
+			targetActionProperty,
+			target,
+			newPropertyValue,
+			propertyDefinition);
 		if (validationResult.IsFailed)
 		{
 			return validationResult.ToResult<Step>();
@@ -71,7 +95,7 @@ public sealed class FormulaEvaluator
 	}
 
 	private Result<double> EvaluateExpression(
-		NCalc.Domain.LogicalExpression compiled,
+		LogicalExpression compiled,
 		Dictionary<string, object> variableValues,
 		string target,
 		int actionId)
@@ -116,57 +140,20 @@ public sealed class FormulaEvaluator
 		return Result.Ok(computed);
 	}
 
-	private PropertyTypeDefinition ResolveTargetPropertyDefinition(ActionDefinition action, string target)
-	{
-		var targetActionPropertyResult = action.FindProperty(target);
-		if (targetActionPropertyResult.IsFailed)
-		{
-			throw new InvalidOperationException(
-				$"Target '{target}' is in recalc_order but not in action '{action.UiName}'.");
-		}
-
-		var propertyDefinitionResult = _registry.GetProperty(targetActionPropertyResult.Value.PropertyTypeId);
-		if (propertyDefinitionResult.IsFailed)
-		{
-			throw new InvalidOperationException(
-				$"Property type '{targetActionPropertyResult.Value.PropertyTypeId}' for target '{target}' not found in registry.");
-		}
-
-		return propertyDefinitionResult.Value;
-	}
-
 	private Result ValidateNewValue(
-		ActionDefinition action,
+		ActionPropertyDefinition targetActionProperty,
 		string target,
 		PropertyValue newPropertyValue,
 		PropertyTypeDefinition propertyDefinition)
 	{
-		var rangeCheckValue = Convert.ToDouble(newPropertyValue.Value, CultureInfo.InvariantCulture);
-
 		var validation = PropertyValidator.Validate(propertyDefinition, newPropertyValue.Value);
 		if (validation.IsFailed)
 		{
-			var min = propertyDefinition.Min;
-			var max = propertyDefinition.Max;
-			var isOutOfRange =
-				(min.HasValue && rangeCheckValue < min.Value)
-				|| (max.HasValue && rangeCheckValue > max.Value);
-
-			if (isOutOfRange)
-			{
-				return Result.Fail(new FormulaTargetOutOfRangeError(
-					target,
-					rangeCheckValue,
-					min,
-					max).CausedBy(validation.Errors));
-			}
-
 			return Result.Fail(new FormulaComputationFailedError(
 				target,
-				string.Join("; ", validation.Errors.Select(e => e.Message))).CausedBy(validation.Errors));
+				validation.Errors[0].Message).CausedBy(validation.Errors));
 		}
 
-		var targetActionProperty = action.FindProperty(target).Value;
 		var groupCheck = PropertyValidator.ValidateGroupValue(targetActionProperty, newPropertyValue, _registry);
 		if (groupCheck.IsFailed)
 		{
@@ -202,14 +189,6 @@ public sealed class FormulaEvaluator
 		}
 
 		return map;
-	}
-
-	private static string SelectTarget(FormulaDefinition formula, string changedColumnKey)
-	{
-		// Mapper enforces recalc_order has >= 2 distinct entries, so a target distinct from
-		// changedColumnKey is guaranteed to exist.
-		return formula.RecalcOrder.First(variable =>
-			!string.Equals(variable, changedColumnKey, StringComparison.OrdinalIgnoreCase));
 	}
 
 	private static Result<PropertyValue> ConvertToPropertyValue(

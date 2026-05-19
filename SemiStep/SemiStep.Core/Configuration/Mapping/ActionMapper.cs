@@ -1,5 +1,7 @@
 ﻿using FluentResults;
 
+using NCalc.Domain;
+
 using SemiStep.Core.Configuration.Dto;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Formulas;
@@ -184,7 +186,6 @@ internal static class ActionMapper
 			}
 			else
 			{
-				canonicalRecalcOrder.Add(variable);
 				failures.Add(Result.Fail(
 					$"[{section}] formula.recalc_order entry '{variable}' is not a column of this action"));
 			}
@@ -231,7 +232,7 @@ internal static class ActionMapper
 			}
 		}
 
-		var compiled = new Dictionary<string, NCalc.Domain.LogicalExpression>(StringComparer.Ordinal);
+		var compiled = new Dictionary<string, LogicalExpression>(StringComparer.Ordinal);
 
 		foreach (var variable in canonicalRecalcOrder)
 		{
@@ -249,7 +250,9 @@ internal static class ActionMapper
 				continue;
 			}
 
-			foreach (var identifier in parseResult.Value.Identifiers)
+			var (logicalExpression, identifiers) = parseResult.Value;
+
+			foreach (var identifier in identifiers)
 			{
 				if (!distinctRecalcOrder.Contains(identifier)
 					|| !columnByKey.TryGetValue(identifier, out var column))
@@ -268,7 +271,7 @@ internal static class ActionMapper
 				}
 			}
 
-			compiled[variable] = parseResult.Value.LogicalExpression;
+			compiled[variable] = logicalExpression;
 		}
 
 		if (failures.Count > 0)

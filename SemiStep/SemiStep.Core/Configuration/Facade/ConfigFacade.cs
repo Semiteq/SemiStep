@@ -125,41 +125,43 @@ public static class ConfigFacade
 		Dto.GridStyleOptionsDto? gridStyle,
 		Dto.ConnectionDto? connection)
 	{
-		try
+		var mappedProperties = PropertyMapper.MapMany(properties)
+			.ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase);
+
+		var mappedColumns = ColumnMapper.MapMany(columns)
+			.ToDictionary(c => c.Key, StringComparer.OrdinalIgnoreCase);
+
+		var mappedGroups = new Dictionary<string, GroupDefinition>(StringComparer.OrdinalIgnoreCase);
+		foreach (var (groupId, items) in groups)
 		{
-			var mappedProperties = PropertyMapper.MapMany(properties)
-				.ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase);
+			mappedGroups[groupId] = new GroupDefinition(groupId, items.AsReadOnly());
+		}
 
-			var mappedColumns = ColumnMapper.MapMany(columns)
-				.ToDictionary(c => c.Key, StringComparer.OrdinalIgnoreCase);
+		var actionsResult = ActionMapper.TryMapMany(actions, mappedProperties);
+		if (actionsResult.IsFailed)
+		{
+			return actionsResult.ToResult<AppConfiguration>();
+		}
 
-			var mappedGroups = new Dictionary<string, GroupDefinition>(StringComparer.OrdinalIgnoreCase);
-			foreach (var (groupId, items) in groups)
+		var mappedActions = new Dictionary<int, ActionDefinition>();
+		foreach (var action in actionsResult.Value)
+		{
+			if (mappedActions.ContainsKey(action.Id))
 			{
-				mappedGroups[groupId] = new GroupDefinition(groupId, items.AsReadOnly());
+				return Result.Fail<AppConfiguration>(
+					$"Duplicate action Id '{action.Id}' detected during domain mapping.");
 			}
 
-			var actionsResult = ActionMapper.TryMapMany(actions, mappedProperties);
-			if (actionsResult.IsFailed)
-			{
-				return actionsResult.ToResult<AppConfiguration>();
-			}
-
-			var mappedActions = actionsResult.Value.ToDictionary(a => a.Id);
-
-			var mappedGridStyle = GridStyleMapper.Map(gridStyle);
-
-			var plcConfiguration = ConnectionMapper.Map(connection);
-
-			return Result.Ok(new AppConfiguration(
-				mappedProperties, mappedColumns, mappedGroups,
-				mappedActions, mappedGridStyle, plcConfiguration));
+			mappedActions.Add(action.Id, action);
 		}
-		catch (Exception ex)
-		{
-			return Result.Fail<AppConfiguration>(
-				new Error("Failed to map configuration to domain: " + ex.Message).CausedBy(ex));
-		}
+
+		var mappedGridStyle = GridStyleMapper.Map(gridStyle);
+
+		var plcConfiguration = ConnectionMapper.Map(connection);
+
+		return Result.Ok(new AppConfiguration(
+			mappedProperties, mappedColumns, mappedGroups,
+			mappedActions, mappedGridStyle, plcConfiguration));
 	}
 
 	private sealed record LoadedSections(

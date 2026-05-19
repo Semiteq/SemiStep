@@ -4,6 +4,8 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
+using NCalc.Domain;
+
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Recipes;
@@ -106,7 +108,7 @@ public sealed class RecipeSessionFormulaIntegrationTests
 		var result = harness.Session.UpdateStepProperty(0, Task, "10000");
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().ContainItemsAssignableTo<FormulaTargetOutOfRangeError>();
+		result.Errors.Should().ContainItemsAssignableTo<FormulaComputationFailedError>();
 		harness.Session.Current.Steps[0].Should().Be(stepBefore);
 		harness.Session.UndoCount.Should().Be(undoBefore);
 	}
@@ -213,7 +215,7 @@ public sealed class RecipeSessionFormulaIntegrationTests
 			[InitialValue] = "task - speed * step_duration / 60"
 		};
 
-		var compiled = new Dictionary<string, NCalc.Domain.LogicalExpression>(StringComparer.OrdinalIgnoreCase);
+		var compiled = new Dictionary<string, LogicalExpression>(StringComparer.OrdinalIgnoreCase);
 		foreach (var (key, src) in sources)
 		{
 			compiled[key] = FormulaIdentifierExtractor.Parse(src).Value.LogicalExpression;

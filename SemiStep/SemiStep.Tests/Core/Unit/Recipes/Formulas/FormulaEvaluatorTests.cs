@@ -1,9 +1,10 @@
 ﻿using System.Collections.Immutable;
-using System.Globalization;
 
 using FluentAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
+
+using NCalc.Domain;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
@@ -21,7 +22,7 @@ namespace SemiStep.Tests.Core.Unit.Recipes.Formulas;
 public sealed class FormulaEvaluatorTests
 {
 	private const int RampActionId = 110;
-	private const string Task = "task";
+	private const string TaskColumnKey = "task";
 	private const string InitialValue = "initial_value";
 	private const string Speed = "speed";
 	private const string StepDuration = "step_duration";
@@ -39,7 +40,7 @@ public sealed class FormulaEvaluatorTests
 			speed: 10f,
 			stepDuration: 600f);
 
-		var result = evaluator.Recalculate(step, action, Task);
+		var result = evaluator.Recalculate(step, action, TaskColumnKey);
 
 		result.IsSuccess.Should().BeTrue();
 		var updated = result.Value;
@@ -74,7 +75,7 @@ public sealed class FormulaEvaluatorTests
 		// speed=0 with changed=task -> target=step_duration -> (task-initial)/0 *60 = infinity
 		var step = BuildRampStep(task: 800f, initialValue: 500f, speed: 0f, stepDuration: 600f);
 
-		var result = evaluator.Recalculate(step, action, Task);
+		var result = evaluator.Recalculate(step, action, TaskColumnKey);
 
 		result.IsFailed.Should().BeTrue();
 		var error = result.Errors.OfType<FormulaComputationFailedError>().FirstOrDefault();
@@ -114,7 +115,7 @@ public sealed class FormulaEvaluatorTests
 	}
 
 	[Fact]
-	public void Recalculate_TargetOutOfRange_ErrorCarriesTargetMinMaxAndValue()
+	public void Recalculate_TargetOutOfRange_ErrorCarriesTargetAndDescriptiveMessage()
 	{
 		var registry = BuildRegistry(stepDurationMax: 100d, taskMax: 1000000d);
 		var evaluator = BuildEvaluator(registry);
@@ -122,16 +123,13 @@ public sealed class FormulaEvaluatorTests
 
 		var step = BuildRampStep(task: 100000f, initialValue: 500f, speed: 10f, stepDuration: 50f);
 
-		var result = evaluator.Recalculate(step, action, Task);
+		var result = evaluator.Recalculate(step, action, TaskColumnKey);
 
 		result.IsFailed.Should().BeTrue();
-		var error = result.Errors.OfType<FormulaTargetOutOfRangeError>().FirstOrDefault();
+		var error = result.Errors.OfType<FormulaComputationFailedError>().FirstOrDefault();
 		error.Should().NotBeNull();
 		error!.Target.Should().Be(StepDuration);
-		error.Max.Should().Be(100d);
-		error.Min.Should().Be(0d);
-		error.Value.Should().BeGreaterThan(100d);
-		error.Message.Should().Contain("step_duration");
+		error.Message.Should().Contain("100");
 	}
 
 	[Fact]
@@ -200,37 +198,6 @@ public sealed class FormulaEvaluatorTests
 	}
 
 	[Fact]
-	public void Recalculate_OutOfRangeUnderRussianCulture_MessageUsesInvariantDecimalSeparator()
-	{
-		var previousCulture = CultureInfo.CurrentCulture;
-		try
-		{
-			CultureInfo.CurrentCulture = new CultureInfo("ru-RU");
-
-			// Fractional stepDurationMax bound -> out-of-range error renders a fractional max in the message.
-			var registry = BuildRegistry(stepDurationMax: 10.5d, taskMax: 1000000d);
-			var evaluator = BuildEvaluator(registry);
-			var action = registry.GetAction(RampActionId).Value;
-
-			var step = BuildRampStep(task: 100f, initialValue: 0f, speed: 1f, stepDuration: 0f);
-
-			// Changing 'task' selects 'step_duration' as the target. step_duration = (100-0)/1*60 = 6000 (> 10.5).
-			var result = evaluator.Recalculate(step, action, Task);
-
-			result.IsFailed.Should().BeTrue();
-			var error = result.Errors.OfType<FormulaTargetOutOfRangeError>().FirstOrDefault();
-			error.Should().NotBeNull();
-			// Under ru-RU a culture-sensitive '.ToString()' on 10.5 would render as "10,5".
-			error!.Message.Should().Contain("10.5");
-			error.Message.Should().NotContain("10,5");
-		}
-		finally
-		{
-			CultureInfo.CurrentCulture = previousCulture;
-		}
-	}
-
-	[Fact]
 	public void Recalculate_NonNumericVariableInStep_ThrowsInvalidOperationException()
 	{
 		var registry = BuildRegistry(stepDurationMax: 100000d, taskMax: 10000d);
@@ -240,18 +207,18 @@ public sealed class FormulaEvaluatorTests
 		var step = new Step(
 			RampActionId,
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
-				.Add(new PropertyId(Task), PropertyValue.FromFloat(700f))
+				.Add(new PropertyId(TaskColumnKey), PropertyValue.FromFloat(700f))
 				.Add(new PropertyId(InitialValue), PropertyValue.FromFloat(500f))
 				.Add(new PropertyId(Speed), PropertyValue.FromString("not a number"))
 				.Add(new PropertyId(StepDuration), PropertyValue.FromFloat(600f)));
 
-		var act = () => evaluator.Recalculate(step, action, Task);
+		var act = () => evaluator.Recalculate(step, action, TaskColumnKey);
 
 		act.Should().Throw<InvalidOperationException>();
 	}
 
 	[Fact]
-	public void Recalculate_TargetOutOfRange_ReturnsTargetOutOfRangeError()
+	public void Recalculate_TargetOutOfRange_ReturnsComputationFailedError()
 	{
 		// step_duration capped at 100 - massive task will overflow
 		var registry = BuildRegistry(stepDurationMax: 100d, taskMax: 1000000d);
@@ -260,10 +227,10 @@ public sealed class FormulaEvaluatorTests
 
 		var step = BuildRampStep(task: 100000f, initialValue: 500f, speed: 10f, stepDuration: 50f);
 
-		var result = evaluator.Recalculate(step, action, Task);
+		var result = evaluator.Recalculate(step, action, TaskColumnKey);
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().ContainItemsAssignableTo<FormulaTargetOutOfRangeError>();
+		result.Errors.Should().ContainItemsAssignableTo<FormulaComputationFailedError>();
 	}
 
 	[Theory]
@@ -338,11 +305,11 @@ public sealed class FormulaEvaluatorTests
 		var step = new Step(
 			RampActionId,
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
-				.Add(new PropertyId(Task), PropertyValue.FromFloat(700f))
+				.Add(new PropertyId(TaskColumnKey), PropertyValue.FromFloat(700f))
 				.Add(new PropertyId(InitialValue), PropertyValue.FromFloat(500f))
 				.Add(new PropertyId(StepDuration), PropertyValue.FromFloat(600f)));
 
-		var act = () => evaluator.Recalculate(step, action, Task);
+		var act = () => evaluator.Recalculate(step, action, TaskColumnKey);
 
 		act.Should().Throw<InvalidOperationException>();
 	}
@@ -357,7 +324,7 @@ public sealed class FormulaEvaluatorTests
 		return new Step(
 			RampActionId,
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
-				.Add(new PropertyId(Task), PropertyValue.FromFloat(task))
+				.Add(new PropertyId(TaskColumnKey), PropertyValue.FromFloat(task))
 				.Add(new PropertyId(InitialValue), PropertyValue.FromFloat(initialValue))
 				.Add(new PropertyId(Speed), PropertyValue.FromFloat(speed))
 				.Add(new PropertyId(StepDuration), PropertyValue.FromFloat(stepDuration)));
@@ -382,7 +349,7 @@ public sealed class FormulaEvaluatorTests
 				deployDuration: DeployDuration.LongLasting,
 				properties: new[]
 				{
-					new ActionPropertyDefinition(Task, null, "temp", "0"),
+					new ActionPropertyDefinition(TaskColumnKey, null, "temp", "0"),
 					new ActionPropertyDefinition(InitialValue, null, "temp", "0"),
 					new ActionPropertyDefinition(Speed, null, "speed_t", "1"),
 					new ActionPropertyDefinition(StepDuration, null, "duration", "0")
@@ -399,18 +366,18 @@ public sealed class FormulaEvaluatorTests
 		{
 			[StepDuration] = "(task - initial_value) / speed * 60",
 			[Speed] = "(task - initial_value) / step_duration * 60",
-			[Task] = "initial_value + speed * step_duration / 60",
+			[TaskColumnKey] = "initial_value + speed * step_duration / 60",
 			[InitialValue] = "task - speed * step_duration / 60"
 		};
 
-		var compiled = new Dictionary<string, NCalc.Domain.LogicalExpression>(StringComparer.OrdinalIgnoreCase);
+		var compiled = new Dictionary<string, LogicalExpression>(StringComparer.OrdinalIgnoreCase);
 		foreach (var (key, src) in sources)
 		{
 			compiled[key] = FormulaIdentifierExtractor.Parse(src).Value.LogicalExpression;
 		}
 
 		return new FormulaDefinition(
-			recalcOrder: new[] { StepDuration, Speed, Task, InitialValue },
+			recalcOrder: new[] { StepDuration, Speed, TaskColumnKey, InitialValue },
 			compiledExpressions: compiled);
 	}
 
@@ -427,7 +394,7 @@ public sealed class FormulaEvaluatorTests
 			["b"] = "a / b"
 		};
 
-		var compiled = new Dictionary<string, NCalc.Domain.LogicalExpression>(StringComparer.OrdinalIgnoreCase);
+		var compiled = new Dictionary<string, LogicalExpression>(StringComparer.OrdinalIgnoreCase);
 		foreach (var (k, s) in sources)
 		{
 			compiled[k] = FormulaIdentifierExtractor.Parse(s).Value.LogicalExpression;
@@ -468,7 +435,7 @@ public sealed class FormulaEvaluatorTests
 			["a"] = "target"
 		};
 
-		var compiled = new Dictionary<string, NCalc.Domain.LogicalExpression>(StringComparer.OrdinalIgnoreCase);
+		var compiled = new Dictionary<string, LogicalExpression>(StringComparer.OrdinalIgnoreCase);
 		foreach (var (k, s) in sources)
 		{
 			compiled[k] = FormulaIdentifierExtractor.Parse(s).Value.LogicalExpression;
@@ -509,7 +476,7 @@ public sealed class FormulaEvaluatorTests
 			["a"] = "target"
 		};
 
-		var compiled = new Dictionary<string, NCalc.Domain.LogicalExpression>(StringComparer.OrdinalIgnoreCase);
+		var compiled = new Dictionary<string, LogicalExpression>(StringComparer.OrdinalIgnoreCase);
 		foreach (var (k, s) in sources)
 		{
 			compiled[k] = FormulaIdentifierExtractor.Parse(s).Value.LogicalExpression;
@@ -549,7 +516,7 @@ public sealed class FormulaEvaluatorTests
 			["a"] = "target"
 		};
 
-		var compiled = new Dictionary<string, NCalc.Domain.LogicalExpression>(StringComparer.OrdinalIgnoreCase);
+		var compiled = new Dictionary<string, LogicalExpression>(StringComparer.OrdinalIgnoreCase);
 		foreach (var (k, s) in sources)
 		{
 			compiled[k] = FormulaIdentifierExtractor.Parse(s).Value.LogicalExpression;

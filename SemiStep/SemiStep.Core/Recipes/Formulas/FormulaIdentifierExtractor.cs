@@ -1,16 +1,17 @@
 ﻿using FluentResults;
 
 using NCalc;
+using NCalc.Domain;
 
 namespace SemiStep.Core.Recipes.Formulas;
 
 public static class FormulaIdentifierExtractor
 {
-	public static Result<ParsedExpression> Parse(string source)
+	public static Result<(LogicalExpression LogicalExpression, IReadOnlySet<string> Identifiers)> Parse(string source)
 	{
 		if (string.IsNullOrWhiteSpace(source))
 		{
-			return Result.Fail<ParsedExpression>("Expression source is empty.");
+			return Result.Fail<(LogicalExpression, IReadOnlySet<string>)>("Expression source is empty.");
 		}
 
 		try
@@ -22,11 +23,12 @@ public static class FormulaIdentifierExtractor
 			// mismatches between identifiers and recalc_order entries.
 			var identifiers = new HashSet<string>(parameterNames, StringComparer.Ordinal);
 
-			return Result.Ok(new ParsedExpression(expression.LogicalExpression!, identifiers));
+			return Result.Ok<(LogicalExpression, IReadOnlySet<string>)>(
+				(expression.LogicalExpression!, identifiers));
 		}
 		catch (Exception parseException)
 		{
-			return Result.Fail<ParsedExpression>(
+			return Result.Fail<(LogicalExpression, IReadOnlySet<string>)>(
 				$"Failed to parse expression '{source}': {parseException.Message}");
 		}
 	}

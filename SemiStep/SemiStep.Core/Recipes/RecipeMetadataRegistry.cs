@@ -152,6 +152,50 @@ public sealed class RecipeMetadataRegistry
 			.ToList();
 	}
 
+	/// <summary>
+	/// Returns the unique <c>max_length</c> for all properties whose <c>system_type</c> is <c>string</c>.
+	/// Acts as the single source of truth for the maximum number of characters in a recipe string value.
+	/// Throws when no string property is defined, when any string property lacks a <c>MaxLength</c>,
+	/// or when string properties disagree on the value — registry construction runs once at startup,
+	/// so any violation surfaces immediately via the standard error window.
+	/// </summary>
+	public int GetStringMaxLength()
+	{
+		var stringProperties = _properties.Values
+			.Where(property => string.Equals(property.SystemType, "string", StringComparison.OrdinalIgnoreCase))
+			.ToList();
+
+		if (stringProperties.Count == 0)
+		{
+			throw new InvalidOperationException(
+				"RecipeMetadataRegistry: no property with system_type 'string' is defined; " +
+				"cannot resolve string max_length.");
+		}
+
+		var missing = stringProperties.Where(property => !property.MaxLength.HasValue).ToList();
+		if (missing.Count > 0)
+		{
+			var ids = string.Join(", ", missing.Select(property => $"'{property.Id}'"));
+			throw new InvalidOperationException(
+				$"RecipeMetadataRegistry: string property max_length is required but missing for: {ids}.");
+		}
+
+		var distinctValues = stringProperties
+			.Select(property => property.MaxLength!.Value)
+			.Distinct()
+			.ToList();
+
+		if (distinctValues.Count > 1)
+		{
+			var ids = string.Join(", ", stringProperties.Select(property => $"'{property.Id}'={property.MaxLength!.Value}"));
+			throw new InvalidOperationException(
+				$"RecipeMetadataRegistry: string properties disagree on max_length: {ids}. " +
+				"All system_type='string' properties must share the same max_length.");
+		}
+
+		return distinctValues[0];
+	}
+
 	public Result GroupHasIntKey(int key, string groupId)
 	{
 		var groupResult = GetGroup(groupId);

@@ -102,14 +102,14 @@ Single SoT: `PropertyTypeDefinition.MaxLength` for `system_type=string`. `Recipe
 - Modify: `SemiStep/SemiStep.Core/Recipes/RecipeMetadataRegistry.cs`
 - Create: `SemiStep/SemiStep.Tests/Core/Unit/Properties/RecipeMetadataRegistryStringMaxLengthTests.cs`
 
-- [ ] add `GetStringMaxLength()` returning `int`
-- [ ] internal logic: collect all `PropertyTypeDefinition` with `SystemType == "string"`; if multiple distinct `MaxLength` values, throw with a clear message naming the conflicting property ids; if no string property or `MaxLength` is null, throw
-- [ ] unit tests: single string property with `MaxLength=32` → returns 32
-- [ ] unit tests: two string properties with same `MaxLength=32` → returns 32
-- [ ] unit tests: two string properties with different `MaxLength` → throws with both ids in the message
-- [ ] unit tests: string property with `MaxLength=null` → throws
-- [ ] unit tests: no string property at all → throws
-- [ ] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — must pass before Task 2
+- [x] add `GetStringMaxLength()` returning `int`
+- [x] internal logic: collect all `PropertyTypeDefinition` with `SystemType == "string"`; if multiple distinct `MaxLength` values, throw with a clear message naming the conflicting property ids; if no string property or `MaxLength` is null, throw
+- [x] unit tests: single string property with `MaxLength=32` → returns 32
+- [x] unit tests: two string properties with same `MaxLength=32` → returns 32
+- [x] unit tests: two string properties with different `MaxLength` → throws with both ids in the message
+- [x] unit tests: string property with `MaxLength=null` → throws
+- [x] unit tests: no string property at all → throws
+- [x] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — must pass before Task 2
 
 ### Task 2: Refactor `ArrayCodec` + register via DI + rewire executor (single atomic task)
 

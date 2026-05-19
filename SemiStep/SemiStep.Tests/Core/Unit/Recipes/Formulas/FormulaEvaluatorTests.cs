@@ -509,6 +509,7 @@ public sealed class FormulaEvaluatorTests
 		{
 			["intp"] = new PropertyTypeDefinition("intp", "int", "decimal", null, -1000d, 1000d, null)
 		};
+		EnsureStringSentinelProperty(properties);
 
 		var sources = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 		{
@@ -581,6 +582,8 @@ public sealed class FormulaEvaluatorTests
 		Dictionary<string, PropertyTypeDefinition> properties,
 		Dictionary<int, ActionDefinition> actions)
 	{
+		EnsureStringSentinelProperty(properties);
+
 		return new AppConfiguration(
 			Properties: properties,
 			Columns: new Dictionary<string, GridColumnDefinition>(),
@@ -588,5 +591,23 @@ public sealed class FormulaEvaluatorTests
 			Actions: actions,
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default);
+	}
+
+	private static void EnsureStringSentinelProperty(Dictionary<string, PropertyTypeDefinition> properties)
+	{
+		if (properties.Values.Any(property =>
+			string.Equals(property.SystemType, "string", StringComparison.OrdinalIgnoreCase)))
+		{
+			return;
+		}
+
+		properties["comment"] = new PropertyTypeDefinition(
+			Id: "comment",
+			SystemType: "string",
+			FormatKind: "text",
+			Units: null,
+			Min: null,
+			Max: null,
+			MaxLength: 32);
 	}
 }

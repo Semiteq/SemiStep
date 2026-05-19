@@ -161,10 +161,10 @@ public sealed class ImportedRecipeValidatorTests
 		var actions = new Dictionary<int, ActionDefinition>
 		{
 			[11] = new ActionDefinition(
-				Id: 11,
-				UiName: "Bound",
-				DeployDuration: DeployDuration.Immediate,
-				Properties: new[]
+				id: 11,
+				uiName: "Bound",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
 				{
 					new ActionPropertyDefinition(
 						Key: "amount",
@@ -198,10 +198,10 @@ public sealed class ImportedRecipeValidatorTests
 		var actions = new Dictionary<int, ActionDefinition>
 		{
 			[12] = new ActionDefinition(
-				Id: 12,
-				UiName: "Bound",
-				DeployDuration: DeployDuration.Immediate,
-				Properties: new[]
+				id: 12,
+				uiName: "Bound",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
 				{
 					new ActionPropertyDefinition(
 						Key: "amount",
@@ -265,10 +265,10 @@ public sealed class ImportedRecipeValidatorTests
 		var actions = new Dictionary<int, ActionDefinition>
 		{
 			[CommentActionId] = new ActionDefinition(
-				Id: CommentActionId,
-				UiName: "Annotate",
-				DeployDuration: DeployDuration.Immediate,
-				Properties: new[]
+				id: CommentActionId,
+				uiName: "Annotate",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
 				{
 					new ActionPropertyDefinition(
 						Key: CommentColumnKey,

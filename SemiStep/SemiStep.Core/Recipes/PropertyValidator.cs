@@ -58,7 +58,8 @@ internal static class PropertyValidator
 	{
 		if (value is not string str)
 		{
-			return Result.Ok();
+			return Result.Fail(
+				$"Expected string value but got {value.GetType().Name} for '{property.Id}'");
 		}
 
 		if (str.Contains('\0'))

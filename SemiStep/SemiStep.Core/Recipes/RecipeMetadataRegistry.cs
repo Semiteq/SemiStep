@@ -58,6 +58,30 @@ public sealed class RecipeMetadataRegistry
 		}
 
 		_stringMaxLength = ResolveStringMaxLength(_properties.Values);
+
+		EnsureColumnPropertyReferencesResolve(_columns.Values, _properties);
+	}
+
+	private static void EnsureColumnPropertyReferencesResolve(
+		IEnumerable<GridColumnDefinition> columns,
+		IReadOnlyDictionary<string, PropertyTypeDefinition> properties)
+	{
+		var unresolved = columns
+			.Where(column => !string.IsNullOrEmpty(column.PropertyTypeId))
+			.Where(column => !properties.ContainsKey(column.PropertyTypeId))
+			.ToList();
+
+		if (unresolved.Count == 0)
+		{
+			return;
+		}
+
+		var details = string.Join(
+			", ",
+			unresolved.Select(column => $"column '{column.Key}' -> property '{column.PropertyTypeId}'"));
+
+		throw new InvalidOperationException(
+			$"RecipeMetadataRegistry: grid columns reference unknown property types: {details}.");
 	}
 
 	public Result<ActionDefinition> GetAction(int id)

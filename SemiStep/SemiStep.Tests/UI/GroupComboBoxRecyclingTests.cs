@@ -205,8 +205,11 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 				SaveToCsv: false),
 		};
 
+		var properties = TestRecipeMetadataRegistryFactory.DefaultStringProperty();
+		properties["enum"] = TestPropertyTypeDefinitionBuilder.CreateInt("enum");
+
 		var config = new AppConfiguration(
-			Properties: TestRecipeMetadataRegistryFactory.DefaultStringProperty(),
+			Properties: properties,
 			Columns: columns,
 			Groups: groups,
 			Actions: new Dictionary<int, ActionDefinition>(),

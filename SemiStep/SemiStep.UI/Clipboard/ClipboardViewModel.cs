@@ -46,10 +46,13 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		_messagePanel = messagePanel;
 
 		var canCopyOrCut = _recipeGrid.WhenAnyValue(x => x.CanDeleteStep);
+		var canEdit = _coordinator.CanEditRecipe;
 
 		CopyStepCommand = ReactiveCommand.CreateFromTask(CopyStepsAsync, canCopyOrCut);
-		CutStepCommand = ReactiveCommand.CreateFromTask(CutStepsAsync, canCopyOrCut);
-		PasteStepCommand = ReactiveCommand.CreateFromTask(PasteStepsAsync);
+		CutStepCommand = ReactiveCommand.CreateFromTask(
+			CutStepsAsync,
+			canEdit.CombineLatest(canCopyOrCut, (left, right) => left && right));
+		PasteStepCommand = ReactiveCommand.CreateFromTask(PasteStepsAsync, canEdit);
 
 		CopyStepCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)

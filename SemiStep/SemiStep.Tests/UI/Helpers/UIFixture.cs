@@ -1,12 +1,16 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FluentResults;
+
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
+using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 using SemiStep.Tests.Core.Helpers;
+using SemiStep.Tests.Helpers;
 
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.MessageService;
@@ -20,6 +24,8 @@ public sealed class UIFixture : IAsyncLifetime
 {
 	public RecipeSession Session { get; private set; } = null!;
 	public PlcLifecycleManager Plc { get; private set; } = null!;
+	public StubPlcSyncService PlcSyncService { get; private set; } = null!;
+	public StubS7Service S7Service { get; private set; } = null!;
 	public RecipeMetadataRegistry RecipeMetadataRegistry { get; private set; } = null!;
 	public MessagePanelViewModel MessagePanel { get; private set; } = null!;
 	public RecipeCoordinator Coordinator { get; private set; } = null!;
@@ -29,6 +35,8 @@ public sealed class UIFixture : IAsyncLifetime
 		var (services, session, plc) = await CoreTestHelper.BuildAsync("WithGroups");
 		Session = session;
 		Plc = plc;
+		PlcSyncService = (StubPlcSyncService)services.GetRequiredService<IPlcSyncService>();
+		S7Service = services.GetRequiredService<StubS7Service>();
 		RecipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 		MessagePanel = new MessagePanelViewModel();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
@@ -51,5 +59,12 @@ public sealed class UIFixture : IAsyncLifetime
 		Coordinator.Dispose();
 		MessagePanel.Dispose();
 		return ValueTask.CompletedTask;
+	}
+
+	public void SetSyncEnabled(bool isSyncEnabled)
+	{
+		PlcSyncService.SetSyncEnabled(isSyncEnabled);
+		PlcSyncService.PushPlcState(Result.Ok(
+			new PlcSessionSnapshot(PlcConnectionState.Disconnected, PlcSyncStatus.Idle, isSyncEnabled)));
 	}
 }

@@ -24,6 +24,8 @@ namespace SemiStep.UI.Coordinator;
 public sealed class RecipeCoordinator : IDisposable
 {
 	private readonly AppConfiguration _appConfiguration;
+	private readonly IObservable<bool> _canEditRecipe;
+	private readonly IDisposable _canEditRecipeConnection;
 	private readonly CsvService _csvService;
 	private readonly object _disposeLock = new();
 	// PLC channels: hop to MainThreadScheduler once here at the source, expose via
@@ -78,10 +80,19 @@ public sealed class RecipeCoordinator : IDisposable
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Publish()
 			.RefCount();
+
+		var canEditConnectable = _plcStateChangedShared
+			.Select(plcState => plcState.IsSuccess ? !plcState.Value.IsSyncEnabled : !IsSyncEnabled)
+			.StartWith(!IsSyncEnabled)
+			.DistinctUntilChanged()
+			.Replay(1);
+		_canEditRecipeConnection = canEditConnectable.Connect();
+		_canEditRecipe = canEditConnectable;
 	}
 
 	public IObservable<(Recipe Local, Recipe Plc)> PlcRecipeConflictDetected => _plcRecipeConflictDetectedShared;
 	public IObservable<Result<PlcSessionSnapshot>> PlcStateChanged => _plcStateChangedShared;
+	public IObservable<bool> CanEditRecipe => _canEditRecipe;
 
 	public event Action<MutationSignal>? Mutated;
 
@@ -145,6 +156,7 @@ public sealed class RecipeCoordinator : IDisposable
 			_plc.PlcRecipeConflictDetected -= OnPlcRecipeConflictDetected;
 
 			_plcStateSubscription?.Dispose();
+			_canEditRecipeConnection.Dispose();
 
 			_plcRecipeConflictDetected.Dispose();
 			_plcStateChanged.Dispose();

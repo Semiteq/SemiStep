@@ -1,4 +1,5 @@
 ﻿using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 using FluentResults;
 
@@ -9,13 +10,21 @@ using SemiStep.Core.Recipes;
 
 namespace SemiStep.Tests.Helpers;
 
-public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
+public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream, IDisposable
 {
+	private readonly Subject<PlcExecutionInfo> _executionState = new();
+	private bool _disposed;
+
 	public bool IsConnected => true;
 
 	public bool IsRecipeActive => false;
 
-	public IObservable<PlcExecutionInfo> ExecutionState => Observable.Empty<PlcExecutionInfo>();
+	public IObservable<PlcExecutionInfo> ExecutionState => _executionState;
+
+	public void PushExecutionState(PlcExecutionInfo info)
+	{
+		_executionState.OnNext(info);
+	}
 
 	public event Action<PlcConnectionState>? StateChanged;
 
@@ -67,6 +76,18 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 
 	public ValueTask DisposeAsync()
 	{
+		Dispose();
 		return ValueTask.CompletedTask;
+	}
+
+	public void Dispose()
+	{
+		if (_disposed)
+		{
+			return;
+		}
+
+		_disposed = true;
+		_executionState.Dispose();
 	}
 }

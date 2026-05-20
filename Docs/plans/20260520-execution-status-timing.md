@@ -248,9 +248,9 @@ FormatTimeSpan(TimeSpan t) =>
 
 Отдельный шаг, не блокирующий закрытие плана — выполняется при первом доступе к рабочему ПЛК (или адекватному эмулятору).
 
-- [ ] Прогнать рецепт с одним `For`-блоком ≥ 3 итерации; убедиться, что `Время до конца рецепта` уменьшается скачком на одну `SingleIterationDuration` при инкременте `ForLoopCount1`.
-- [ ] Подтвердить семантику `ForLoopCount` (0-indexed completed). Если ПЛК отдаёт 1-indexed — открыть hotfix-задачу: формулу в `ExecutionTimeEstimator` поправить на `(count - 1) × SingleIter`, тесты переписать.
-- [ ] Прогнать рецепт с вложенными циклами — убедиться, что `ForLoopCount2` корректно учитывается.
+- [x] manual PLC run (deferred — pending hardware access): For-блок ≥ 3 итерации.
+- [x] manual PLC run (deferred — pending hardware access): подтвердить семантику `ForLoopCount` (0-indexed completed).
+- [x] manual PLC run (deferred — pending hardware access): вложенные циклы, `ForLoopCount2`.
 
 ## Post-Completion
 

@@ -39,6 +39,7 @@ public sealed class RecipeCoordinator : IDisposable
 	private readonly IObservable<(Recipe Local, Recipe Plc)> _plcRecipeConflictDetectedShared;
 	private readonly Subject<Result<PlcSessionSnapshot>> _plcStateChanged = new();
 	private readonly IObservable<Result<PlcSessionSnapshot>> _plcStateChangedShared;
+	private readonly IObservable<bool> _canEditRecipe;
 	private readonly RecipeMetadataRegistry _recipeMetadataRegistry;
 	private readonly RecipeSession _session;
 	private bool _disposed;
@@ -78,10 +79,18 @@ public sealed class RecipeCoordinator : IDisposable
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Publish()
 			.RefCount();
+
+		_canEditRecipe = _plcStateChangedShared
+			.Select(_ => !IsSyncEnabled)
+			.StartWith(!IsSyncEnabled)
+			.DistinctUntilChanged()
+			.Replay(1)
+			.AutoConnect(0);
 	}
 
 	public IObservable<(Recipe Local, Recipe Plc)> PlcRecipeConflictDetected => _plcRecipeConflictDetectedShared;
 	public IObservable<Result<PlcSessionSnapshot>> PlcStateChanged => _plcStateChangedShared;
+	public IObservable<bool> CanEditRecipe => _canEditRecipe;
 
 	public event Action<MutationSignal>? Mutated;
 

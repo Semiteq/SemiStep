@@ -131,10 +131,10 @@ Windows are independent: each has its own `MainWindowViewModel` + `RecipeCoordin
 - Modify: `SemiStep/SemiStep.UI/RecipeFile/RecipeFileViewModel.cs`
 - Create: `SemiStep/SemiStep.Tests/UI/RecipeFile/RecipeFileViewModelCanExecuteTests.cs`
 
-- [ ] `LoadRecipeCommand` and `NewRecipeCommand` gated on `_coordinator.CanEditRecipe`.
-- [ ] `SaveRecipeCommand` / `SaveAsRecipeCommand` — confirmed pure-disk via `RecipeCoordinator.SaveRecipeAsync` (lines 346-386: `_csvService.SaveAsync` + `_session.MarkSaved()`, no step mutation). Remain unconditional.
-- [ ] Tests: `Load` and `NewRecipe` blocked in `Connect`; `Save`/`SaveAs` available in both modes.
-- [ ] Run tests.
+- [x] `LoadRecipeCommand` and `NewRecipeCommand` gated on `_coordinator.CanEditRecipe`.
+- [x] `SaveRecipeCommand` / `SaveAsRecipeCommand` — confirmed pure-disk via `RecipeCoordinator.SaveRecipeAsync` (lines 346-386: `_csvService.SaveAsync` + `_session.MarkSaved()`, no step mutation). Remain unconditional.
+- [x] Tests: `Load` and `NewRecipe` blocked in `Connect`; `Save`/`SaveAs` available in both modes.
+- [x] Run tests.
 
 ### Task 5: Re-source `RecipeGridViewModel.IsReadOnly` and add `EditorMustClose`
 

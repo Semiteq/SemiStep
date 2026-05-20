@@ -28,10 +28,12 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		OpenFileInteraction = new Interaction<Unit, string?>();
 		SaveFileInteraction = new Interaction<string?, string?>();
 
+		var canEdit = _coordinator.CanEditRecipe;
+
 		SaveRecipeCommand = ReactiveCommand.CreateFromTask(SaveRecipeAsync);
 		SaveAsRecipeCommand = ReactiveCommand.CreateFromTask(SaveAsRecipeAsync);
-		LoadRecipeCommand = ReactiveCommand.CreateFromTask(LoadRecipeAsync);
-		NewRecipeCommand = ReactiveCommand.Create(NewRecipe);
+		LoadRecipeCommand = ReactiveCommand.CreateFromTask(LoadRecipeAsync, canEdit);
+		NewRecipeCommand = ReactiveCommand.Create(NewRecipe, canEdit);
 
 		SaveRecipeCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)

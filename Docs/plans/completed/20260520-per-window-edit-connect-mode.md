@@ -171,9 +171,9 @@ Windows are independent: each has its own `MainWindowViewModel` + `RecipeCoordin
 
 ### Task 7: Documentation, follow-up, close-out
 
-- [ ] Verify `Docs/02-ui-requirements.md` §2.5–§2.7 still match the implementation (no edits expected).
-- [ ] File a follow-up plan stub for missing §2.4 shortcuts (`Ctrl+Y` for Redo, `Ctrl+C`/`Ctrl+V`/`Ctrl+X`/`Del`/`Ctrl+Shift+T`) — outside this plan's scope, but flagged.
-- [ ] Move this plan to `Docs/plans/completed/`.
+- [x] Verify `Docs/02-ui-requirements.md` §2.5–§2.7 still match the implementation (no edits expected).
+- [x] File a follow-up plan stub for missing §2.4 shortcuts (`Ctrl+Y` for Redo, `Ctrl+C`/`Ctrl+V`/`Ctrl+X`/`Del`/`Ctrl+Shift+T`) — outside this plan's scope, but flagged.
+- [x] Move this plan to `Docs/plans/completed/`.
 
 ## Post-Completion
 

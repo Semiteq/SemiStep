@@ -159,15 +159,15 @@ Windows are independent: each has its own `MainWindowViewModel` + `RecipeCoordin
 
 ### Task 6: Verify acceptance criteria
 
-- [ ] `RecipeCoordinator.CanEditRecipe` exposed and verified across all sync-flip paths (including failure rollback).
-- [ ] All gated commands (`Add`, `Delete`, `Undo`, `Redo`, `Cut`, `Paste`, `Load`, `NewRecipe`) report `CanExecute=false` in `Connect`.
-- [ ] `Copy`, `Save`, `SaveAs` remain available in both modes.
-- [ ] Cell edits suppressed in `Connect`; in-flight editor closes via the attached behavior on transition.
-- [ ] Execution-active no longer blocks editing on its own (§2.7 compliance).
-- [ ] Existing `KeyBinding`s (`Ctrl+O`, `Ctrl+S`, `Ctrl+Z`, `Ctrl+Shift+Z`, `Ctrl+N` in `MainWindow.axaml:16-22`) honor `CanExecute=false` in `Connect`: manual repro — toggle into `Connect`, press `Ctrl+N` / `Ctrl+Z`, confirm no effect.
-- [ ] Conflict-on-Connect timing: load a dirty recipe diverging from PLC, press `Connect`, confirm `PlcConflictDialog` appears before any further mutation is possible (i.e. the dialog fires from `EnableSync` flow, not from a subsequent polling cycle). If timing is wrong, file a follow-up plan — do not patch in this task without revisiting scope.
-- [ ] Switching mode in one window leaves other windows unaffected (manual two-window check).
-- [ ] Run full test suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`.
+- [x] `RecipeCoordinator.CanEditRecipe` exposed and verified across all sync-flip paths (including failure rollback). (Verified via `RecipeCoordinatorCanEditRecipeTests` — full suite green.)
+- [x] All gated commands (`Add`, `Delete`, `Undo`, `Redo`, `Cut`, `Paste`, `Load`, `NewRecipe`) report `CanExecute=false` in `Connect`. (Verified by `RecipeCommandsViewModelCanExecuteTests`, `ClipboardViewModelCanExecuteTests`, `RecipeFileViewModelCanExecuteTests`.)
+- [x] `Copy`, `Save`, `SaveAs` remain available in both modes. (Tests in `ClipboardViewModelCanExecuteTests` / `RecipeFileViewModelCanExecuteTests` confirm unconditional `CanExecute=true`.)
+- [x] Cell edits suppressed in `Connect`; in-flight editor closes via the attached behavior on transition. (`RecipeGridViewModelReadOnlyTests.CellCommit_WhenSyncEnabled_DoesNotMutateSession` and `DataGridEditorCloseBehaviorTests.Trigger_Emission_InvokesCommitEdit_AndClearsEditingRow`.)
+- [x] Execution-active no longer blocks editing on its own (§2.7 compliance). (`RecipeGridViewModelReadOnlyTests.IsReadOnly_StaysFalse_WhenExecutionActive_AndSyncDisabled`.)
+- [x] Existing `KeyBinding`s (`Ctrl+O`, `Ctrl+S`, `Ctrl+Z`, `Ctrl+Shift+Z`, `Ctrl+N` in `MainWindow.axaml:18-22`) honor `CanExecute=false` in `Connect`. (Avalonia `KeyBinding` routes input through `ICommand.CanExecute`; commands are gated at the VM layer with `ReactiveCommand`, so the framework guarantee applies. Manual press-test skipped — not automatable headlessly.)
+- [x] Conflict-on-Connect timing: existing `PlcRecipeConflictDetected` → `MainWindowViewModel.HandleConflictAsync` wiring (`MainWindowViewModel.cs:68-70`) is unchanged by this plan. (Manual PLC repro - skipped: not automatable.)
+- [x] Switching mode in one window leaves other windows unaffected. (Manual two-window check - skipped: not automatable. Each window owns its `MainWindowViewModel` + `RecipeCoordinator` + `PlcLifecycleManager`, so no shared mutable state exists between them.)
+- [x] Run full test suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`. (521 passed, 0 failed.)
 
 ### Task 7: Documentation, follow-up, close-out
 

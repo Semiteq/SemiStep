@@ -1,0 +1,60 @@
+int:
+  system_type: int
+  format_kind: numeric
+  units: ""
+
+float:
+  system_type: float
+  format_kind: numeric
+  units: ""
+
+string:
+  system_type: string
+  format_kind: numeric
+  units: ""
+  max_length: 255
+
+enum:
+  system_type: int
+  format_kind: numeric
+  units: ""
+
+flow_sccm:
+  system_type: float
+  format_kind: numeric
+  units: "sccm"
+  min: 0
+  max: 2000
+
+percent:
+  system_type: float
+  format_kind: numeric
+  units: "%"
+  min: 0
+  max: 100
+
+power_icp:
+  system_type: float
+  format_kind: numeric
+  units: "Вт"
+  min: 0
+  max: 2000
+
+power_rie:
+  system_type: float
+  format_kind: numeric
+  units: "Вт"
+  min: 0
+  max: 1000
+
+gate_setpoint:
+  system_type: float
+  format_kind: numeric
+  units: ""
+
+time:
+  system_type: float
+  format_kind: time_hms
+  units: "с"
+  min: 0
+  max: 86400

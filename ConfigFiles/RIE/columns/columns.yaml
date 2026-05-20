@@ -1,0 +1,188 @@
+action:
+  column_type: action_combo_box
+  ui:
+    ui_name: "Действие"
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+
+ar:
+  column_type: property_field
+  ui:
+    ui_name: "Ar"
+  business_logic:
+    property_type_id: flow_sccm
+    read_only: false
+    save_to_csv: true
+
+o2:
+  column_type: property_field
+  ui:
+    ui_name: "O2"
+  business_logic:
+    property_type_id: flow_sccm
+    read_only: false
+    save_to_csv: true
+
+n2:
+  column_type: property_field
+  ui:
+    ui_name: "N2"
+  business_logic:
+    property_type_id: flow_sccm
+    read_only: false
+    save_to_csv: true
+
+sf6:
+  column_type: property_field
+  ui:
+    ui_name: "SF6"
+  business_logic:
+    property_type_id: flow_sccm
+    read_only: false
+    save_to_csv: true
+
+cf4:
+  column_type: property_field
+  ui:
+    ui_name: "CF4"
+  business_logic:
+    property_type_id: flow_sccm
+    read_only: false
+    save_to_csv: true
+
+cl2:
+  column_type: property_field
+  ui:
+    ui_name: "Cl2"
+  business_logic:
+    property_type_id: flow_sccm
+    read_only: false
+    save_to_csv: true
+
+he:
+  column_type: property_field
+  ui:
+    ui_name: "He"
+  business_logic:
+    property_type_id: flow_sccm
+    read_only: false
+    save_to_csv: true
+
+gate_mode:
+  column_type: action_target_combo_box
+  ui:
+    ui_name: "Шибер реж."
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+
+gate_setpoint:
+  column_type: property_field
+  ui:
+    ui_name: "Шибер зад."
+  business_logic:
+    property_type_id: gate_setpoint
+    read_only: false
+    save_to_csv: true
+
+icp_power:
+  column_type: property_field
+  ui:
+    ui_name: "ICP"
+  business_logic:
+    property_type_id: power_icp
+    read_only: false
+    save_to_csv: true
+
+icp_match:
+  column_type: action_target_combo_box
+  ui:
+    ui_name: "ICP согл"
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+
+icp_load:
+  column_type: property_field
+  ui:
+    ui_name: "ICP Load"
+  business_logic:
+    property_type_id: percent
+    read_only: false
+    save_to_csv: true
+
+icp_tune:
+  column_type: property_field
+  ui:
+    ui_name: "ICP Tune"
+  business_logic:
+    property_type_id: percent
+    read_only: false
+    save_to_csv: true
+
+rie_power:
+  column_type: property_field
+  ui:
+    ui_name: "RIE"
+  business_logic:
+    property_type_id: power_rie
+    read_only: false
+    save_to_csv: true
+
+rie_match:
+  column_type: action_target_combo_box
+  ui:
+    ui_name: "RIE согл"
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+
+rie_load:
+  column_type: property_field
+  ui:
+    ui_name: "RIE Load"
+  business_logic:
+    property_type_id: percent
+    read_only: false
+    save_to_csv: true
+
+rie_tune:
+  column_type: property_field
+  ui:
+    ui_name: "RIE Tune"
+  business_logic:
+    property_type_id: percent
+    read_only: false
+    save_to_csv: true
+
+step_duration:
+  column_type: property_field
+  ui:
+    ui_name: "Время шага"
+  business_logic:
+    property_type_id: time
+    read_only: false
+    save_to_csv: true
+
+step_start_time:
+  column_type: step_start_time_field
+  ui:
+    ui_name: "Время абс."
+  business_logic:
+    property_type_id: string
+    save_to_csv: false
+    read_only: true
+
+comment:
+  column_type: text_field
+  ui:
+    ui_name: "Комментарий"
+  business_logic:
+    property_type_id: string
+    save_to_csv: true
+    read_only: false

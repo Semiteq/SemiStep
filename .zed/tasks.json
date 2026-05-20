@@ -31,6 +31,14 @@
     "use_new_terminal": true,
   },
   {
+    "label": "Run UI (RIE)",
+    "command": "dotnet",
+    "args": ["run", "--project", "SemiStep/SemiStep.UI/SemiStep.UI.csproj", "--", "--config-dir", "$ZED_WORKTREE_ROOT/ConfigFiles/RIE", "--log-file", "$ZED_WORKTREE_ROOT/SemiStep/Artifacts/logs/semistep.log", "--logging-level", "verbose"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always",
+    "use_new_terminal": true,
+  },
+  {
     "label": "Test All",
     "command": "dotnet",
     "args": ["test", "SemiStep/SemiStep.Tests/SemiStep.Tests.csproj"],

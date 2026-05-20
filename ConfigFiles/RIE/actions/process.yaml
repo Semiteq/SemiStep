@@ -1,0 +1,171 @@
+# Pump down
+100:
+  ui_name: "Откачка"
+  deploy_duration: longlasting
+  columns:
+    - key: gate_mode
+      group_name: gate_mode
+      property_type_id: enum
+    - key: gate_setpoint
+      default_value: "0"
+      property_type_id: gate_setpoint
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+# Gas stabilization
+200:
+  ui_name: "Стабилизация газа"
+  deploy_duration: longlasting
+  columns:
+    - key: ar
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: o2
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: n2
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: sf6
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: cf4
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: cl2
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: he
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: gate_mode
+      group_name: gate_mode
+      property_type_id: enum
+    - key: gate_setpoint
+      default_value: "0"
+      property_type_id: gate_setpoint
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+# Etch (plasma)
+300:
+  ui_name: "Травление"
+  deploy_duration: longlasting
+  columns:
+    - key: ar
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: o2
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: n2
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: sf6
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: cf4
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: cl2
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: he
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: gate_mode
+      group_name: gate_mode
+      property_type_id: enum
+    - key: gate_setpoint
+      default_value: "0"
+      property_type_id: gate_setpoint
+    - key: icp_power
+      default_value: "0"
+      property_type_id: power_icp
+    - key: icp_match
+      group_name: match_mode
+      property_type_id: enum
+    - key: icp_load
+      default_value: "50"
+      property_type_id: percent
+    - key: icp_tune
+      default_value: "50"
+      property_type_id: percent
+    - key: rie_power
+      default_value: "0"
+      property_type_id: power_rie
+    - key: rie_match
+      group_name: match_mode
+      property_type_id: enum
+    - key: rie_load
+      default_value: "50"
+      property_type_id: percent
+    - key: rie_tune
+      default_value: "50"
+      property_type_id: percent
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+# Purge
+400:
+  ui_name: "Продувка"
+  deploy_duration: longlasting
+  columns:
+    - key: ar
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: o2
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: n2
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: sf6
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: cf4
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: cl2
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: he
+      default_value: "0"
+      property_type_id: flow_sccm
+    - key: gate_mode
+      group_name: gate_mode
+      property_type_id: enum
+    - key: gate_setpoint
+      default_value: "0"
+      property_type_id: gate_setpoint
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+# Vent
+500:
+  ui_name: "Напуск"
+  deploy_duration: longlasting
+  columns:
+    - key: gate_mode
+      group_name: gate_mode
+      property_type_id: enum
+    - key: gate_setpoint
+      default_value: "0"
+      property_type_id: gate_setpoint
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string

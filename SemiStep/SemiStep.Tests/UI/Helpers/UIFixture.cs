@@ -29,6 +29,7 @@ public sealed class UIFixture : IAsyncLifetime
 	public RecipeMetadataRegistry RecipeMetadataRegistry { get; private set; } = null!;
 	public MessagePanelViewModel MessagePanel { get; private set; } = null!;
 	public RecipeCoordinator Coordinator { get; private set; } = null!;
+	public StubS7Service StubS7 { get; private set; } = null!;
 
 	public async ValueTask InitializeAsync()
 	{
@@ -39,6 +40,7 @@ public sealed class UIFixture : IAsyncLifetime
 		S7Service = services.GetRequiredService<StubS7Service>();
 		RecipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 		MessagePanel = new MessagePanelViewModel();
+		StubS7 = services.GetRequiredService<StubS7Service>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
 		var csvService = services.GetRequiredService<CsvService>();

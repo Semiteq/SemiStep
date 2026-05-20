@@ -206,15 +206,15 @@ FormatTimeSpan(TimeSpan t) =>
 - Modify: `SemiStep/SemiStep.UI/UiDi.cs` (если потребуются новые DI-регистрации)
 - Create: `SemiStep/SemiStep.Tests/UI/Plc/PlcMonitorViewModelTimingTests.cs`
 
-- [ ] Подмешать `RecipeMetadataRegistry` и `IScheduler` в конструктор. Текущий `RecipeSnapshot` доступен синхронно через `RecipeCoordinator.Snapshot` (`RecipeCoordinator.cs:90`), уведомления о мутациях — через `RecipeCoordinator.Mutated` event (`RecipeCoordinator.cs:86`). Никаких новых publisher'ов не требуется.
-- [ ] Реализовать монотонный clamp `StepCurrentTime` в пределах одного `ActualLine`.
-- [ ] Реализовать 1s интерполяцию через `Observable.Interval(TimeSpan.FromSeconds(1), _scheduler)`. На каждом тике строить `interpolatedInfo = _lastInfo with { StepCurrentTime = _lastInfo.StepCurrentTime + (UtcNow - _localBaseUtc).TotalSeconds }` и пересчитывать тексты. `_localBaseUtc` сбрасывается на каждое реальное событие `ExecutionState`.
-- [ ] **Интерполяция — no-op при `_lastInfo.RecipeActive == false`.** В idle-состоянии тексты остаются `(00:00:00, TotalDuration)` и не двигаются.
-- [ ] Hold-last-good: при отсутствии новых событий не обнулять `_lastInfo`; при `RecipeActive=false` от ПЛК — переключиться на «idle»-маппинг.
-- [ ] Метод `FormatTimeSpan` (private static).
-- [ ] Свойства `TimeLeftInStepText`, `TimeLeftInRecipeText`.
-- [ ] Тесты — см. §«Testing Strategy». Удаление `StepElapsedTime` отложено в Task 4 (после удаления XAML-биндинга).
-- [ ] `dotnet test --filter "Component=UI&Area=Timing"`.
+- [x] Подмешать `RecipeMetadataRegistry` и `IScheduler` в конструктор. Текущий `RecipeSnapshot` доступен синхронно через `RecipeCoordinator.Snapshot` (`RecipeCoordinator.cs:90`), уведомления о мутациях — через `RecipeCoordinator.Mutated` event (`RecipeCoordinator.cs:86`). Никаких новых publisher'ов не требуется.
+- [x] Реализовать монотонный clamp `StepCurrentTime` в пределах одного `ActualLine`.
+- [x] Реализовать 1s интерполяцию через `Observable.Interval(TimeSpan.FromSeconds(1), _scheduler)`. На каждом тике строить `interpolatedInfo = _lastInfo with { StepCurrentTime = _lastInfo.StepCurrentTime + (UtcNow - _localBaseUtc).TotalSeconds }` и пересчитывать тексты. `_localBaseUtc` сбрасывается на каждое реальное событие `ExecutionState`.
+- [x] **Интерполяция — no-op при `_lastInfo.RecipeActive == false`.** В idle-состоянии тексты остаются `(00:00:00, TotalDuration)` и не двигаются.
+- [x] Hold-last-good: при отсутствии новых событий не обнулять `_lastInfo`; при `RecipeActive=false` от ПЛК — переключиться на «idle»-маппинг.
+- [x] Метод `FormatTimeSpan` (private static).
+- [x] Свойства `TimeLeftInStepText`, `TimeLeftInRecipeText`.
+- [x] Тесты — см. §«Testing Strategy». Удаление `StepElapsedTime` отложено в Task 4 (после удаления XAML-биндинга).
+- [x] `dotnet test --filter "Component=UI&Area=Timing"`.
 
 ### Task 4: Перепрошить статус-бар
 

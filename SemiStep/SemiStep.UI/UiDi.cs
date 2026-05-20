@@ -1,4 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Reactive.Concurrency;
+
+using Microsoft.Extensions.DependencyInjection;
+
+using ReactiveUI;
 
 using SemiStep.Core.Configuration;
 
@@ -17,6 +21,7 @@ public static class UiDi
 	public static IServiceCollection AddUi(this IServiceCollection services)
 	{
 		services.AddSingleton(sp => sp.GetRequiredService<AppConfiguration>().GridStyle);
+		services.AddSingleton<IScheduler>(_ => RxSchedulers.MainThreadScheduler);
 		services.AddSingleton<MessagePanelViewModel>();
 		services.AddSingleton<RecipeCoordinator>();
 		services.AddSingleton<RecipeGridViewModel>();

@@ -366,6 +366,17 @@ public sealed class RecipeCoordinator : IDisposable
 			filePath,
 			_session.Current.StepCount);
 
+		if (_session.IsValid == false)
+		{
+			const string SaveRejectionMessage = "Cannot save recipe with structural defects (see warnings in the message panel).";
+			_logger.LogWarning(
+				"Save rejected: recipe is not valid. StepCount={StepCount}",
+				_session.Current.StepCount);
+			_lastRecipeResult = Result.Fail(SaveRejectionMessage).WithReasons(_session.Snapshot.Reasons);
+			RebuildMessagePanel();
+			return _lastRecipeResult;
+		}
+
 		var result = await _csvService.SaveAsync(_session.Current, filePath);
 
 		if (result.IsFailed)

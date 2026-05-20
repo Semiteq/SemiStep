@@ -6,6 +6,7 @@ using SemiStep.Core.Plc;
 using SemiStep.Core.Recipes.Analysis;
 using SemiStep.Core.Recipes.Formulas;
 using SemiStep.Core.Recipes.Helpers;
+using SemiStep.Core.Shared;
 
 namespace SemiStep.Core.Recipes;
 
@@ -53,7 +54,8 @@ public sealed class RecipeSession
 
 	public bool IsDirty => _isDirty;
 
-	public bool IsValid => _latestSnapshot.IsSuccess;
+	public bool IsValid =>
+		_latestSnapshot.IsSuccess && !_latestSnapshot.Reasons.OfType<Warning>().Any();
 
 	public Result<RecipeSnapshot> Snapshot => _latestSnapshot;
 

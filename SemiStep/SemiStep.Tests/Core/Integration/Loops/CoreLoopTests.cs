@@ -48,6 +48,7 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 		driver.AddFor(2).AddWait(5f);
 
 		driver.Warnings.Should().NotBeEmpty();
+		driver.IsValid.Should().BeFalse();
 	}
 
 	[Fact]
@@ -58,6 +59,7 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 		driver.AddWait(5f).AddEndFor();
 
 		driver.Warnings.Should().NotBeEmpty();
+		driver.IsValid.Should().BeFalse();
 	}
 
 	[Fact]
@@ -119,8 +121,7 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().ContainSingle(e => e.Message.Contains("nesting depth", StringComparison.OrdinalIgnoreCase));
-		driver.IsValid.Should().BeTrue("the mutation was rejected, recipe is unchanged");
-		driver.StepCount.Should().Be(stepCountBeforeRejection);
+		driver.StepCount.Should().Be(stepCountBeforeRejection, "the mutation was rejected, recipe is unchanged");
 	}
 
 	[Fact]

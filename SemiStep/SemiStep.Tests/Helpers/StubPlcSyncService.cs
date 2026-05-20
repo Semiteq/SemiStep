@@ -27,6 +27,9 @@ public sealed class StubPlcSyncService : IPlcSyncService
 	/// <summary>Number of times <see cref="NotifyRecipeChanged"/> was called.</summary>
 	public int NotifyRecipeChangedCallCount { get; private set; }
 
+	/// <summary>Calls recorded by <see cref="NotifyRecipeChanged"/>, in order.</summary>
+	public List<(Recipe Recipe, bool IsValid)> NotifyRecipeChangedCalls { get; } = new();
+
 	/// <summary>Pushes a new PLC state snapshot to subscribers of <see cref="PlcState"/>.</summary>
 	public void PushPlcState(Result<PlcSessionSnapshot> state)
 	{
@@ -36,6 +39,7 @@ public sealed class StubPlcSyncService : IPlcSyncService
 	public void NotifyRecipeChanged(Recipe recipe, bool isValid)
 	{
 		NotifyRecipeChangedCallCount++;
+		NotifyRecipeChangedCalls.Add((recipe, isValid));
 	}
 
 	public void Reset()

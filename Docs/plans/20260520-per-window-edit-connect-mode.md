@@ -119,11 +119,11 @@ Windows are independent: each has its own `MainWindowViewModel` + `RecipeCoordin
 - Modify: `SemiStep/SemiStep.UI/Clipboard/ClipboardViewModel.cs`
 - Create: `SemiStep/SemiStep.Tests/UI/Clipboard/ClipboardViewModelCanExecuteTests.cs`
 
-- [ ] `CutStepCommand`: combine `_coordinator.CanEditRecipe` with existing `canCopyOrCut`.
-- [ ] `PasteStepCommand`: gate on `_coordinator.CanEditRecipe`.
-- [ ] `CopyStepCommand`: unchanged (copy does not mutate).
-- [ ] Tests: `Cut` and `Paste` blocked in `Connect`; `Copy` available in both modes.
-- [ ] Run tests.
+- [x] `CutStepCommand`: combine `_coordinator.CanEditRecipe` with existing `canCopyOrCut`.
+- [x] `PasteStepCommand`: gate on `_coordinator.CanEditRecipe`.
+- [x] `CopyStepCommand`: unchanged (copy does not mutate).
+- [x] Tests: `Cut` and `Paste` blocked in `Connect`; `Copy` available in both modes.
+- [x] Run tests.
 
 ### Task 4: Gate file-open and new-recipe commands
 

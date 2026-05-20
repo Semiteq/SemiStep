@@ -1,4 +1,5 @@
 ﻿using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 using FluentResults;
 
@@ -11,11 +12,19 @@ namespace SemiStep.Tests.Helpers;
 
 public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 {
+	private readonly Subject<PlcExecutionInfo> _executionState = new();
+
 	public bool IsConnected => true;
 
 	public bool IsRecipeActive => false;
 
-	public IObservable<PlcExecutionInfo> ExecutionState => Observable.Empty<PlcExecutionInfo>();
+	public IObservable<PlcExecutionInfo> ExecutionState => _executionState;
+
+	/// <summary>Pushes an execution state snapshot to subscribers of <see cref="ExecutionState"/>.</summary>
+	public void PushExecutionState(PlcExecutionInfo info)
+	{
+		_executionState.OnNext(info);
+	}
 
 	public event Action<PlcConnectionState>? StateChanged;
 

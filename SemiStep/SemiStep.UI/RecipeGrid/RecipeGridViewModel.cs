@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
@@ -59,15 +60,22 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			.ToProperty(this, x => x.SelectedRowIndex)
 			.DisposeWith(_disposables);
 
-		_isReadOnly = coordinator.ExecutionState
-			.Select(info => info.RecipeActive)
+		_isReadOnly = coordinator.CanEditRecipe
+			.Select(canEdit => !canEdit)
 			.ToProperty(this, x => x.IsReadOnly)
 			.DisposeWith(_disposables);
+
+		EditorMustClose = this
+			.WhenAnyValue(x => x.IsReadOnly)
+			.Where(readOnly => readOnly)
+			.Select(_ => Unit.Default);
 
 		coordinator.ExecutionState
 			.Subscribe(_executionHighlightTracker.OnExecutionStateChanged)
 			.DisposeWith(_disposables);
 	}
+
+	public IObservable<Unit> EditorMustClose { get; }
 
 	internal RecipeMetadataRegistry RecipeMetadataRegistry { get; }
 

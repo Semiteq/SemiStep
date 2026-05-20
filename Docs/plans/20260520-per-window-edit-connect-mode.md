@@ -144,18 +144,18 @@ Windows are independent: each has its own `MainWindowViewModel` + `RecipeCoordin
 - Modify: `SemiStep/SemiStep.UI/MainWindow/MainWindow.axaml` (attach the behavior on `RecipeGrid` DataGrid)
 - Create: `SemiStep/SemiStep.Tests/UI/RecipeGrid/RecipeGridViewModelReadOnlyTests.cs`
 
-- [ ] Replace `_isReadOnly` source: drop `coordinator.ExecutionState.Select(info => info.RecipeActive)`; use `_coordinator.CanEditRecipe.Select(c => !c)`.
-- [ ] Keep `coordinator.ExecutionState.Subscribe(_executionHighlightTracker.OnExecutionStateChanged)` (lines 67-69) untouched.
-- [ ] Add `IObservable<Unit> EditorMustClose` derived from `this.WhenAnyValue(x => x.IsReadOnly).Where(r => r).Select(_ => Unit.Default)`.
-- [ ] Create `DataGridEditorCloseBehavior` — an Avalonia `Behavior<DataGrid>` (or attached property) with a `Trigger` `IObservable<Unit>` property; on each emission, dispatch `dataGrid.CommitEdit(DataGridEditingUnit.Cell, true)`. Call `CommitEdit` on the UI thread defensively (e.g. wrap in `Dispatcher.UIThread.Post` if `CheckAccess()` is false) — the source observable is already main-thread (`_plcStateChangedShared` observes on `MainThreadScheduler`), but the behavior should not rely on that invariant.
-- [ ] In `MainWindow.axaml` attach the behavior on the `DataGrid` declared at line 28, bound to `{Binding RecipeGrid.EditorMustClose}`.
-- [ ] Find and update tests that assert old behaviour:
-  - [ ] `Grep` the test project for tests asserting `IsReadOnly` becomes true when execution starts; rewrite them to assert `IsReadOnly` stays `false` while `IsSyncEnabled=false`, and becomes `true` when `IsSyncEnabled=true`.
-  - [ ] Re-check `SemiStep.Tests/UI/RecipeGridViewModelTests.cs:33` — constructor signature unchanged, but assertions about the lock semantics may need to be inverted.
-- [ ] Headless test: `IsSyncEnabled=true` ⇒ `IsReadOnly=true`; cell commit attempt produces no `RecipeSession` mutation.
-- [ ] Headless test: open editor with `IsSyncEnabled=false`, flip to `true`, assert DataGrid `CurrentColumn`/edit row cleared.
-- [ ] Headless test: `ExecutionState.RecipeActive=true` while `IsSyncEnabled=false` — `IsReadOnly` stays `false` (regression check for §2.7).
-- [ ] Run tests.
+- [x] Replace `_isReadOnly` source: drop `coordinator.ExecutionState.Select(info => info.RecipeActive)`; use `_coordinator.CanEditRecipe.Select(c => !c)`.
+- [x] Keep `coordinator.ExecutionState.Subscribe(_executionHighlightTracker.OnExecutionStateChanged)` (lines 67-69) untouched.
+- [x] Add `IObservable<Unit> EditorMustClose` derived from `this.WhenAnyValue(x => x.IsReadOnly).Where(r => r).Select(_ => Unit.Default)`.
+- [x] Create `DataGridEditorCloseBehavior` — implemented as a static attached-property class (registers `TriggerProperty` of type `IObservable<Unit>?` on `DataGrid`; on change, disposes any previous subscription, subscribes to the new observable, and dispatches `CommitEdit(DataGridEditingUnit.Cell, true)` on each emission via `Dispatcher.UIThread.Post` when off-thread).
+- [x] In `MainWindow.axaml` attach the behavior on the `DataGrid` declared at line 28, bound to `{Binding RecipeGrid.EditorMustClose}`.
+- [x] Find and update tests that assert old behaviour:
+  - [x] `Grep` the test project for tests asserting `IsReadOnly` becomes true when execution starts; rewrite them to assert `IsReadOnly` stays `false` while `IsSyncEnabled=false`, and becomes `true` when `IsSyncEnabled=true`. (No such existing tests found — only the new `RecipeGridViewModelReadOnlyTests` exercises this contract.)
+  - [x] Re-check `SemiStep.Tests/UI/RecipeGridViewModelTests.cs:33` — constructor signature unchanged; that file does not assert on `IsReadOnly`, so no inversions needed.
+- [x] Headless test: `IsSyncEnabled=true` ⇒ `IsReadOnly=true`; cell commit attempt produces no `RecipeSession` mutation. (See `RecipeGridViewModelReadOnlyTests.CellCommit_WhenSyncEnabled_DoesNotMutateSession`.)
+- [x] Headless test: open editor with `IsSyncEnabled=false`, flip to `true`, assert DataGrid edit cleared. (See `DataGridEditorCloseBehaviorTests.Trigger_Emission_InvokesCommitEdit_AndClearsEditingRow` — exercises behavior directly with `DataGrid.BeginEdit` then verifies `CommitEdit` succeeds with no in-flight edit afterwards.)
+- [x] Headless test: `ExecutionState.RecipeActive=true` while `IsSyncEnabled=false` — `IsReadOnly` stays `false` (regression check for §2.7). (See `RecipeGridViewModelReadOnlyTests.IsReadOnly_StaysFalse_WhenExecutionActive_AndSyncDisabled`; requires `StubS7Service.ExecutionState` switched from `Observable.Empty` to a `Subject<PlcExecutionInfo>` exposed via new `PushExecutionState` method.)
+- [x] Run tests. (521 pass, 0 fail.)
 
 ### Task 6: Verify acceptance criteria
 

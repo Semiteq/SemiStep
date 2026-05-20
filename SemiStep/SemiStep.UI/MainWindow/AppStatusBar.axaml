@@ -133,23 +133,32 @@
             <Border Grid.Column="5"
                     Width="1"
                     Background="{DynamicResource SeparatorBrush}"
-                    Margin="12,2"
-                    IsVisible="{Binding PlcMonitor.IsRecipeActive}" />
+                    Margin="12,2" />
 
-            <!-- Execution time info (visible only when recipe is active) -->
+            <!-- Execution time info (always visible; VM maps idle state via text content) -->
             <StackPanel Grid.Column="6"
                         Orientation="Horizontal"
                         Spacing="10"
-                        VerticalAlignment="Center"
-                        IsVisible="{Binding PlcMonitor.IsRecipeActive}">
+                        VerticalAlignment="Center">
 
-                <!-- Line time remaining -->
+                <!-- Time left in current step -->
                 <StackPanel Orientation="Horizontal" Spacing="4">
-                    <TextBlock Text="Step:"
+                    <TextBlock Text="Шаг:"
                                FontSize="12"
                                Foreground="{DynamicResource SecondaryForegroundBrush}"
                                VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding PlcMonitor.StepElapsedTime}"
+                    <TextBlock Text="{Binding PlcMonitor.TimeLeftInStepText}"
+                               FontSize="12"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Time left in recipe -->
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="Рецепт:"
+                               FontSize="12"
+                               Foreground="{DynamicResource SecondaryForegroundBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding PlcMonitor.TimeLeftInRecipeText}"
                                FontSize="12"
                                VerticalAlignment="Center" />
                 </StackPanel>

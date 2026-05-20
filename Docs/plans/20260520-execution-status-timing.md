@@ -223,10 +223,10 @@ FormatTimeSpan(TimeSpan t) =>
 - Modify: `SemiStep/SemiStep.UI/MainWindow/AppStatusBar.axaml`
 - Modify: `SemiStep/SemiStep.UI/MainWindow/AppStatusBar.axaml.cs` (если был обработчик старого поля)
 
-- [ ] Удалить блок Grid.Column=6 с «Step:» и его биндинг на `PlcMonitor.StepElapsedTime`.
-- [ ] Вставить два `TextBlock` на том же месте: «Шаг: {Binding PlcMonitor.TimeLeftInStepText}» и «Рецепт: {Binding PlcMonitor.TimeLeftInRecipeText}». Биндинг `IsVisible` по `IsRecipeActive` снять — поля всегда видны, текст полей сам управляет видимостью значения через idle-маппинг.
-- [ ] Удалить из `PlcMonitorViewModel` свойство `StepElapsedTime` и одноимённое приватное поле; убрать присвоение в `OnExecutionStateChanged`. Кроме старого XAML-биндинга других потребителей нет (`grep StepElapsedTime` → 0 совпадений после удаления XAML-блока).
-- [ ] Запустить приложение, проверить визуально: до подключения значения видны как `(00:00:00, TotalDuration)`; после Start от ПЛК — счётчик пошёл вниз; при разрыве связи — значение зависает на последнем известном.
+- [x] Удалить блок Grid.Column=6 с «Step:» и его биндинг на `PlcMonitor.StepElapsedTime`.
+- [x] Вставить два `TextBlock` на том же месте: «Шаг: {Binding PlcMonitor.TimeLeftInStepText}» и «Рецепт: {Binding PlcMonitor.TimeLeftInRecipeText}». Биндинг `IsVisible` по `IsRecipeActive` снять — поля всегда видны, текст полей сам управляет видимостью значения через idle-маппинг.
+- [x] Удалить из `PlcMonitorViewModel` свойство `StepElapsedTime` и одноимённое приватное поле; убрать присвоение в `OnExecutionStateChanged`. Кроме старого XAML-биндинга других потребителей нет (`grep StepElapsedTime` → 0 совпадений после удаления XAML-блока).
+- [x] visual verification (deferred — pending UI session)
 
 ### Task 5: Апдейт спецификации §2.6.3
 

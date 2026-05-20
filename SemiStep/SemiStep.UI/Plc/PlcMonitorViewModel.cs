@@ -30,7 +30,6 @@ public sealed class PlcMonitorViewModel : ReactiveObject, IDisposable
 	private bool _isRecipeActive;
 	private PlcExecutionInfo _lastInfo = PlcExecutionInfo.Empty;
 	private DateTime _localBaseUtc = DateTime.UtcNow;
-	private string _stepElapsedTime = "0.0 s";
 	private string _timeLeftInRecipeText = MissingSnapshotText;
 	private string _timeLeftInStepText = MissingSnapshotText;
 
@@ -67,12 +66,6 @@ public sealed class PlcMonitorViewModel : ReactiveObject, IDisposable
 	{
 		get => _actualLine;
 		private set => this.RaiseAndSetIfChanged(ref _actualLine, value);
-	}
-
-	public string StepElapsedTime
-	{
-		get => _stepElapsedTime;
-		private set => this.RaiseAndSetIfChanged(ref _stepElapsedTime, value);
 	}
 
 	public string TimeLeftInStepText
@@ -132,7 +125,6 @@ public sealed class PlcMonitorViewModel : ReactiveObject, IDisposable
 
 		IsRecipeActive = clamped.RecipeActive;
 		ActualLine = clamped.ActualLine;
-		StepElapsedTime = $"{clamped.StepCurrentTime:0.0} s";
 		ForLoopCount1 = clamped.ForLoopCount1;
 		ForLoopCount2 = clamped.ForLoopCount2;
 		ForLoopCount3 = clamped.ForLoopCount3;

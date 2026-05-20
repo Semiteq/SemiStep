@@ -105,13 +105,13 @@ Windows are independent: each has its own `MainWindowViewModel` + `RecipeCoordin
 - Modify: `SemiStep/SemiStep.UI/RecipeGrid/RecipeCommandsViewModel.cs`
 - Create: `SemiStep/SemiStep.Tests/UI/RecipeGrid/RecipeCommandsViewModelCanExecuteTests.cs`
 
-- [ ] No constructor change — read `_coordinator.CanEditRecipe` inside the constructor.
-- [ ] `AddStepCommand`: `canExecute = _coordinator.CanEditRecipe`.
-- [ ] `DeleteStepCommand`: `_coordinator.CanEditRecipe.CombineLatest(canDelete, (a, b) => a && b)`.
-- [ ] `UndoCommand`: `_coordinator.CanEditRecipe.CombineLatest(_canUndo, (a, b) => a && b)`.
-- [ ] `RedoCommand`: `_coordinator.CanEditRecipe.CombineLatest(_canRedo, (a, b) => a && b)`.
-- [ ] Tests: each command reports `CanExecute=false` in `Connect`; `true` in `Edit` with prerequisites met.
-- [ ] Run tests.
+- [x] No constructor change — read `_coordinator.CanEditRecipe` inside the constructor.
+- [x] `AddStepCommand`: `canExecute = _coordinator.CanEditRecipe`.
+- [x] `DeleteStepCommand`: `_coordinator.CanEditRecipe.CombineLatest(canDelete, (a, b) => a && b)`.
+- [x] `UndoCommand`: `_coordinator.CanEditRecipe.CombineLatest(_canUndo, (a, b) => a && b)`.
+- [x] `RedoCommand`: `_coordinator.CanEditRecipe.CombineLatest(_canRedo, (a, b) => a && b)`.
+- [x] Tests: each command reports `CanExecute=false` in `Connect`; `true` in `Edit` with prerequisites met.
+- [x] Run tests.
 
 ### Task 3: Gate clipboard mutating commands
 

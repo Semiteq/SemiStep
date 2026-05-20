@@ -240,9 +240,9 @@ FormatTimeSpan(TimeSpan t) =>
 
 ### Task 6: Финальная проверка
 
-- [ ] `dotnet build SemiStep/SemiStep.slnx`
-- [ ] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`
-- [ ] Переместить план в `Docs/plans/completed/`.
+- [x] `dotnet build SemiStep/SemiStep.slnx`
+- [x] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`
+- [x] deferred to post-review finalize — Переместить план в `Docs/plans/completed/`.
 
 ### Task 7: Ручная валидация на ПЛК (deferred)
 

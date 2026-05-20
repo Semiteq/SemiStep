@@ -43,10 +43,10 @@
 
 ## Testing Strategy
 
-- **Unit (Component=Core, Area=Timing):**
+- **Unit (Component=Core, Area=Timings):**
   - `TimingCalculator` — пополнение `SingleIterationDurations` для линейного рецепта (пусто), одного цикла, вложенных циклов.
   - `ExecutionTimeEstimator` — `ActualLine` до/внутри/после цикла, разные значения `ForLoopCount`, `ActualLine` за пределами рецепта, `StepCurrentTime > StepDuration` (clamp к нулю).
-- **Unit (Component=UI, Area=Timing):** `PlcMonitorViewModel`:
+- **Unit (Component=UI, Area=Timings):** `PlcMonitorViewModel`:
   - формат `чч:мм:сс` и переключение на `d.чч:мм:сс` при ≥24ч;
   - монотонный clamp на backward-jitter `StepCurrentTime` в пределах одного шага;
   - hold-last-good при потере связи во время исполнения;
@@ -178,7 +178,7 @@ FormatTimeSpan(TimeSpan t) =>
 - [x] Поднять `ExtractStepDuration` до `internal static` (передавать `Step` и `RecipeMetadataRegistry`).
 - [x] Скорректировать `RecipeAnalyzer.Analyze` под новую сигнатуру.
 - [x] Тесты: линейный рецепт → пустой словарь; один цикл из 3 шагов → одна запись; вложенные циклы → внешний цикл агрегирует длительность вложенного с учётом его итераций.
-- [x] `dotnet build` + `dotnet test --filter "Area=Timing"`.
+- [x] `dotnet build` + `dotnet test --filter "Area=Timings"`.
 
 ### Task 2: Чистый `ExecutionTimeEstimator`
 
@@ -196,7 +196,7 @@ FormatTimeSpan(TimeSpan t) =>
   - два **последовательных** loop-блока `[For][End_For][For][End_For]` со счётчиком `ForLoopCount1`, текущий шаг внутри второго: убедиться, что `LoopOffset` берёт `SingleIter` только второго loop (по `loop.Depth - 1` indexing) — первый loop уже не в `EnclosingLoops`;
   - `ActualLine` за пределами рецепта → `Zero`;
   - `StepCurrentTime > StepDuration` → `TimeLeftInStep = Zero` (не отрицательное).
-- [x] `dotnet test --filter "Area=Timing"`.
+- [x] `dotnet test --filter "Area=Timings"`.
 
 ### Task 3: Расширить `PlcMonitorViewModel`
 
@@ -214,7 +214,7 @@ FormatTimeSpan(TimeSpan t) =>
 - [x] Метод `FormatTimeSpan` (private static).
 - [x] Свойства `TimeLeftInStepText`, `TimeLeftInRecipeText`.
 - [x] Тесты — см. §«Testing Strategy». Удаление `StepElapsedTime` отложено в Task 4 (после удаления XAML-биндинга).
-- [x] `dotnet test --filter "Component=UI&Area=Timing"`.
+- [x] `dotnet test --filter "Component=UI&Area=Timings"`.
 
 ### Task 4: Перепрошить статус-бар
 

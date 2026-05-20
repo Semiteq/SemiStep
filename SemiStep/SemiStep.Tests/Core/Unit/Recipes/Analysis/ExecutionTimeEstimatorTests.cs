@@ -106,7 +106,7 @@ public sealed class ExecutionTimeEstimatorTests
 			BuildStep(LongLastingActionId, 20f)));
 		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
 
-		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(0, 0f), registry);
+		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(0, 0f));
 
 		result.Should().Be(snapshot.TotalDuration);
 	}
@@ -120,7 +120,7 @@ public sealed class ExecutionTimeEstimatorTests
 			BuildStep(LongLastingActionId, 20f)));
 		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
 
-		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 20f), registry);
+		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 20f));
 
 		result.Should().Be(TimeSpan.Zero);
 	}
@@ -140,8 +140,8 @@ public sealed class ExecutionTimeEstimatorTests
 		};
 		var snapshot = BuildSnapshot(recipe, loops, registry);
 
-		var atFirstIter = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 0f, count1: 0), registry);
-		var atSecondIter = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 0f, count1: 1), registry);
+		var atFirstIter = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 0f, count1: 0));
+		var atSecondIter = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 0f, count1: 1));
 
 		(atFirstIter - atSecondIter).Should().Be(TimeSpan.FromSeconds(StepSeconds));
 	}
@@ -172,7 +172,7 @@ public sealed class ExecutionTimeEstimatorTests
 
 		// Step 3 (inner body), outer completed=1, inner completed=2
 		var info = Info(3, stepCurrentTime: 0f, count1: 1, count2: 2);
-		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, info, registry);
+		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, info);
 
 		// stepStart[3] = 4 (outer body) + 0 (inner For) = 4 sec (in first iteration accounting)
 		// outer single = 4 + 3*3 = 13 sec; inner single = 3 sec
@@ -209,8 +209,8 @@ public sealed class ExecutionTimeEstimatorTests
 
 		// In second loop body, with one iteration of second loop completed.
 		// First loop is NOT in EnclosingLoops for index 4 — verifies depth-based mapping.
-		var withCount = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(4, 0f, count1: 1), registry);
-		var withoutCount = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(4, 0f, count1: 0), registry);
+		var withCount = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(4, 0f, count1: 1));
+		var withoutCount = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(4, 0f, count1: 0));
 
 		(withoutCount - withCount).Should().Be(TimeSpan.FromSeconds(SecondBodySeconds),
 			"only the second loop's single-iteration duration should be subtracted, never the first loop's");
@@ -224,7 +224,7 @@ public sealed class ExecutionTimeEstimatorTests
 			BuildStep(LongLastingActionId, 10f)));
 		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
 
-		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(99, 0f), registry);
+		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(99, 0f));
 
 		result.Should().Be(TimeSpan.Zero);
 	}

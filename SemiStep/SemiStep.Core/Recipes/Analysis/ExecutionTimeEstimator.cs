@@ -26,11 +26,8 @@ public static class ExecutionTimeEstimator
 
 	public static TimeSpan TimeLeftInRecipe(
 		RecipeSnapshot snapshot,
-		PlcExecutionInfo info,
-		RecipeMetadataRegistry registry)
+		PlcExecutionInfo info)
 	{
-		_ = registry;
-
 		if (info.ActualLine < 0 || info.ActualLine >= snapshot.Recipe.Steps.Count)
 		{
 			return TimeSpan.Zero;
@@ -45,10 +42,6 @@ public static class ExecutionTimeEstimator
 		var elapsed = TimeSpan.FromSeconds(info.StepCurrentTime);
 		var consumed = stepStart + loopOffset + elapsed;
 
-		if (consumed.Ticks < 0)
-		{
-			consumed = TimeSpan.Zero;
-		}
 		if (consumed > snapshot.TotalDuration)
 		{
 			consumed = snapshot.TotalDuration;

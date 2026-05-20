@@ -33,10 +33,6 @@ internal static class TimingCalculator
 			{
 				var bodyStartTime = startTimes[loopInfo.StartIndex];
 				var singleDuration = accumulated - bodyStartTime;
-				if (singleDuration.Ticks < 0)
-				{
-					singleDuration = TimeSpan.Zero;
-				}
 
 				singleIterations[loopInfo.StartIndex] = singleDuration;
 

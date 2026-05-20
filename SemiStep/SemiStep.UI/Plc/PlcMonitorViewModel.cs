@@ -158,9 +158,8 @@ public sealed class PlcMonitorViewModel : ReactiveObject, IDisposable
 		RecalculateTexts(interpolated);
 	}
 
-	private void OnCoordinatorMutated(MutationSignal signal)
+	private void OnCoordinatorMutated(MutationSignal _)
 	{
-		_ = signal;
 		RecalculateTexts(_lastInfo);
 	}
 

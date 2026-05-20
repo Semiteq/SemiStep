@@ -187,8 +187,8 @@ FormatTimeSpan(TimeSpan t) =>
 - Create: `SemiStep/SemiStep.Core/Recipes/Analysis/ExecutionTimeEstimator.cs`
 - Create: `SemiStep/SemiStep.Tests/Core/Recipes/Analysis/ExecutionTimeEstimatorTests.cs`
 
-- [ ] Реализовать `TimeLeftInStep` и `TimeLeftInRecipe` согласно §«Solution Overview ⇒ 2».
-- [ ] Тесты:
+- [x] Реализовать `TimeLeftInStep` и `TimeLeftInRecipe` согласно §«Solution Overview ⇒ 2».
+- [x] Тесты:
   - линейный рецепт, `ActualLine = 0`, `StepCurrentTime = 0` → `TimeLeftInRecipe = TotalDuration`;
   - линейный рецепт, `ActualLine = последний`, `StepCurrentTime = StepDuration` → `0`;
   - один цикл из 3 итераций × 10 сек, `ActualLine = первый шаг тела`, `ForLoopCount1 = 1` → recipe-остаток меньше на 10 сек, чем при `ForLoopCount1 = 0`;
@@ -196,7 +196,7 @@ FormatTimeSpan(TimeSpan t) =>
   - два **последовательных** loop-блока `[For][End_For][For][End_For]` со счётчиком `ForLoopCount1`, текущий шаг внутри второго: убедиться, что `LoopOffset` берёт `SingleIter` только второго loop (по `loop.Depth - 1` indexing) — первый loop уже не в `EnclosingLoops`;
   - `ActualLine` за пределами рецепта → `Zero`;
   - `StepCurrentTime > StepDuration` → `TimeLeftInStep = Zero` (не отрицательное).
-- [ ] `dotnet test --filter "Area=Timing"`.
+- [x] `dotnet test --filter "Area=Timing"`.
 
 ### Task 3: Расширить `PlcMonitorViewModel`
 

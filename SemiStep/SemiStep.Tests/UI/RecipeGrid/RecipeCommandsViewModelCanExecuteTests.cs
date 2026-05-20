@@ -1,4 +1,6 @@
-﻿using Avalonia.Headless.XUnit;
+﻿using System.Windows.Input;
+
+using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
@@ -45,7 +47,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void AddStep_CanExecuteTrue_WhenSyncDisabled()
 	{
-		((System.Windows.Input.ICommand)_commands.AddStepCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_commands.AddStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -53,7 +55,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.SetSyncEnabled(true);
 
-		((System.Windows.Input.ICommand)_commands.AddStepCommand).CanExecute(null).Should().BeFalse();
+		((ICommand)_commands.AddStepCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -62,7 +64,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.SetSyncEnabled(true);
 		_fixture.SetSyncEnabled(false);
 
-		((System.Windows.Input.ICommand)_commands.AddStepCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_commands.AddStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -72,7 +74,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_grid.SelectedRowIndices = new[] { 0 };
 
-		((System.Windows.Input.ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -83,7 +85,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		_grid.SelectedRowIndices = new[] { 0 };
 		_fixture.SetSyncEnabled(true);
 
-		((System.Windows.Input.ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeFalse();
+		((ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -93,7 +95,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_grid.SelectedRowIndices = Array.Empty<int>();
 
-		((System.Windows.Input.ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeFalse();
+		((ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -102,7 +104,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		((System.Windows.Input.ICommand)_commands.UndoCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_commands.UndoCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -112,7 +114,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.SetSyncEnabled(true);
 
-		((System.Windows.Input.ICommand)_commands.UndoCommand).CanExecute(null).Should().BeFalse();
+		((ICommand)_commands.UndoCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -122,7 +124,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.Undo();
 
-		((System.Windows.Input.ICommand)_commands.RedoCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_commands.RedoCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -133,7 +135,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.Coordinator.Undo();
 		_fixture.SetSyncEnabled(true);
 
-		((System.Windows.Input.ICommand)_commands.RedoCommand).CanExecute(null).Should().BeFalse();
+		((ICommand)_commands.RedoCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -145,7 +147,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
 		_fixture.SetSyncEnabled(true);
 
-		var command = (System.Windows.Input.ICommand)_commands.AddStepCommand;
+		var command = (ICommand)_commands.AddStepCommand;
 		if (command.CanExecute(null))
 		{
 			command.Execute(null);
@@ -164,7 +166,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
 		_fixture.SetSyncEnabled(true);
 
-		var command = (System.Windows.Input.ICommand)_commands.DeleteStepCommand;
+		var command = (ICommand)_commands.DeleteStepCommand;
 		if (command.CanExecute(null))
 		{
 			command.Execute(null);

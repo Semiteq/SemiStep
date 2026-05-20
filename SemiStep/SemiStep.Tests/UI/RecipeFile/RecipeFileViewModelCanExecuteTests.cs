@@ -1,4 +1,5 @@
 ﻿using System.Reactive;
+using System.Windows.Input;
 
 using Avalonia.Headless.XUnit;
 
@@ -6,6 +7,7 @@ using FluentAssertions;
 
 using ReactiveUI;
 
+using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.RecipeFile;
@@ -37,7 +39,7 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void LoadRecipe_CanExecuteTrue_WhenSyncDisabled()
 	{
-		((System.Windows.Input.ICommand)_recipeFile.LoadRecipeCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_recipeFile.LoadRecipeCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -45,7 +47,7 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.SetSyncEnabled(true);
 
-		((System.Windows.Input.ICommand)_recipeFile.LoadRecipeCommand).CanExecute(null).Should().BeFalse();
+		((ICommand)_recipeFile.LoadRecipeCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -54,13 +56,13 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.SetSyncEnabled(true);
 		_fixture.SetSyncEnabled(false);
 
-		((System.Windows.Input.ICommand)_recipeFile.LoadRecipeCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_recipeFile.LoadRecipeCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
 	public void NewRecipe_CanExecuteTrue_WhenSyncDisabled()
 	{
-		((System.Windows.Input.ICommand)_recipeFile.NewRecipeCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_recipeFile.NewRecipeCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -68,7 +70,7 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.SetSyncEnabled(true);
 
-		((System.Windows.Input.ICommand)_recipeFile.NewRecipeCommand).CanExecute(null).Should().BeFalse();
+		((ICommand)_recipeFile.NewRecipeCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -77,27 +79,27 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.SetSyncEnabled(true);
 		_fixture.SetSyncEnabled(false);
 
-		((System.Windows.Input.ICommand)_recipeFile.NewRecipeCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_recipeFile.NewRecipeCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
 	public void SaveRecipe_CanExecuteRemainsTrue_InBothModes()
 	{
-		((System.Windows.Input.ICommand)_recipeFile.SaveRecipeCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_recipeFile.SaveRecipeCommand).CanExecute(null).Should().BeTrue();
 
 		_fixture.SetSyncEnabled(true);
 
-		((System.Windows.Input.ICommand)_recipeFile.SaveRecipeCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_recipeFile.SaveRecipeCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
 	public void SaveAsRecipe_CanExecuteRemainsTrue_InBothModes()
 	{
-		((System.Windows.Input.ICommand)_recipeFile.SaveAsRecipeCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_recipeFile.SaveAsRecipeCommand).CanExecute(null).Should().BeTrue();
 
 		_fixture.SetSyncEnabled(true);
 
-		((System.Windows.Input.ICommand)_recipeFile.SaveAsRecipeCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_recipeFile.SaveAsRecipeCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -107,11 +109,11 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 		// (button click respects CanExecute). In Connect mode the gate refuses
 		// invocation, so no mutation occurs.
 		_fixture.Coordinator.NewRecipe();
-		_fixture.Coordinator.AppendStep(SemiStep.Tests.Core.Helpers.RecipeTestDriver.WaitActionId);
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
 		_fixture.SetSyncEnabled(true);
 
-		var command = (System.Windows.Input.ICommand)_recipeFile.NewRecipeCommand;
+		var command = (ICommand)_recipeFile.NewRecipeCommand;
 		if (command.CanExecute(null))
 		{
 			command.Execute(null);
@@ -134,7 +136,7 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 		});
 		_fixture.SetSyncEnabled(true);
 
-		var command = (System.Windows.Input.ICommand)_recipeFile.LoadRecipeCommand;
+		var command = (ICommand)_recipeFile.LoadRecipeCommand;
 		if (command.CanExecute(null))
 		{
 			command.Execute(null);

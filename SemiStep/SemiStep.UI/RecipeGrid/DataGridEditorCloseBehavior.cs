@@ -23,6 +23,11 @@ public static class DataGridEditorCloseBehavior
 			"Subscription",
 			typeof(DataGridEditorCloseBehavior));
 
+	private static readonly AttachedProperty<bool> _detachHandlerAttachedProperty =
+		AvaloniaProperty.RegisterAttached<DataGrid, bool>(
+			"DetachHandlerAttached",
+			typeof(DataGridEditorCloseBehavior));
+
 	static DataGridEditorCloseBehavior()
 	{
 		TriggerProperty.Changed.AddClassHandler<DataGrid>(OnTriggerChanged);
@@ -42,22 +47,30 @@ public static class DataGridEditorCloseBehavior
 	{
 		var previousSubscription = dataGrid.GetValue(_subscriptionProperty);
 		previousSubscription?.Dispose();
+		dataGrid.SetValue(_subscriptionProperty, null);
 
-		if (args.NewValue is IObservable<Unit> trigger)
+		if (args.NewValue is not IObservable<Unit> trigger)
 		{
-			var subscription = trigger.Subscribe(_ => CloseEditor(dataGrid));
-			dataGrid.SetValue(_subscriptionProperty, subscription);
-			dataGrid.DetachedFromVisualTree -= OnDetachedFromVisualTree;
-			dataGrid.DetachedFromVisualTree += OnDetachedFromVisualTree;
+			return;
 		}
-		else
-		{
-			dataGrid.SetValue(_subscriptionProperty, null);
-			dataGrid.DetachedFromVisualTree -= OnDetachedFromVisualTree;
-		}
+
+		var subscription = trigger.Subscribe(_ => CloseEditor(dataGrid));
+		dataGrid.SetValue(_subscriptionProperty, subscription);
+		EnsureDetachHandlerAttached(dataGrid);
 	}
 
-	private static void OnDetachedFromVisualTree(object? sender, Avalonia.VisualTreeAttachmentEventArgs args)
+	private static void EnsureDetachHandlerAttached(DataGrid dataGrid)
+	{
+		if (dataGrid.GetValue(_detachHandlerAttachedProperty))
+		{
+			return;
+		}
+
+		dataGrid.DetachedFromVisualTree += OnDetachedFromVisualTree;
+		dataGrid.SetValue(_detachHandlerAttachedProperty, true);
+	}
+
+	private static void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs args)
 	{
 		if (sender is not DataGrid dataGrid)
 		{
@@ -68,6 +81,7 @@ public static class DataGridEditorCloseBehavior
 		subscription?.Dispose();
 		dataGrid.SetValue(_subscriptionProperty, null);
 		dataGrid.DetachedFromVisualTree -= OnDetachedFromVisualTree;
+		dataGrid.SetValue(_detachHandlerAttachedProperty, false);
 	}
 
 	private static void CloseEditor(DataGrid dataGrid)

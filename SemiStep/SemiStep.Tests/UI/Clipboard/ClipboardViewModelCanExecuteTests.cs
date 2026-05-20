@@ -1,4 +1,6 @@
-﻿using Avalonia.Headless.XUnit;
+﻿using System.Windows.Input;
+
+using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
@@ -59,7 +61,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	{
 		AppendStepAndSelect();
 
-		((System.Windows.Input.ICommand)_clipboard.CopyStepCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_clipboard.CopyStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -68,7 +70,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		AppendStepAndSelect();
 		_fixture.SetSyncEnabled(true);
 
-		((System.Windows.Input.ICommand)_clipboard.CopyStepCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_clipboard.CopyStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -76,7 +78,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	{
 		AppendStepAndSelect();
 
-		((System.Windows.Input.ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -85,7 +87,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		AppendStepAndSelect();
 		_fixture.SetSyncEnabled(true);
 
-		((System.Windows.Input.ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeFalse();
+		((ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -95,7 +97,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_grid.SelectedRowIndices = Array.Empty<int>();
 
-		((System.Windows.Input.ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeFalse();
+		((ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -105,7 +107,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.SetSyncEnabled(true);
 		_fixture.SetSyncEnabled(false);
 
-		((System.Windows.Input.ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -113,7 +115,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	{
 		// Paste's canExecute is driven solely by CanEditRecipe; no clipboard is required
 		// for the CanExecute gate.
-		((System.Windows.Input.ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -121,7 +123,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.SetSyncEnabled(true);
 
-		((System.Windows.Input.ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeFalse();
+		((ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -130,7 +132,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.SetSyncEnabled(true);
 		_fixture.SetSyncEnabled(false);
 
-		((System.Windows.Input.ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeTrue();
+		((ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -142,7 +144,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
 		_fixture.SetSyncEnabled(true);
 
-		var command = (System.Windows.Input.ICommand)_clipboard.CutStepCommand;
+		var command = (ICommand)_clipboard.CutStepCommand;
 		if (command.CanExecute(null))
 		{
 			command.Execute(null);
@@ -159,7 +161,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
 		_fixture.SetSyncEnabled(true);
 
-		var command = (System.Windows.Input.ICommand)_clipboard.PasteStepCommand;
+		var command = (ICommand)_clipboard.PasteStepCommand;
 		if (command.CanExecute(null))
 		{
 			command.Execute(null);

@@ -1,4 +1,5 @@
 ﻿using System.Reactive;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
@@ -48,7 +49,7 @@ public sealed class DataGridEditorCloseBehaviorTests
 		var triggerA = Observable.Create<Unit>(observer =>
 		{
 			subscriptionCount++;
-			return System.Reactive.Disposables.Disposable.Create(() => subscriptionCount--);
+			return Disposable.Create(() => subscriptionCount--);
 		});
 
 		var triggerB = new Subject<Unit>();
@@ -69,7 +70,7 @@ public sealed class DataGridEditorCloseBehaviorTests
 		var trigger = Observable.Create<Unit>(observer =>
 		{
 			subscriptionCount++;
-			return System.Reactive.Disposables.Disposable.Create(() => subscriptionCount--);
+			return Disposable.Create(() => subscriptionCount--);
 		});
 
 		DataGridEditorCloseBehavior.SetTrigger(dataGrid, trigger);

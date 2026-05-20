@@ -36,9 +36,9 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 		var canEdit = _coordinator.CanEditRecipe;
 
 		AddStepCommand = ReactiveCommand.Create(AddStep, canEdit);
-		DeleteStepCommand = ReactiveCommand.Create(DeleteStep, canEdit.CombineLatest(canDelete, (a, b) => a && b));
-		UndoCommand = ReactiveCommand.Create(Undo, canEdit.CombineLatest(_canUndo, (a, b) => a && b));
-		RedoCommand = ReactiveCommand.Create(Redo, canEdit.CombineLatest(_canRedo, (a, b) => a && b));
+		DeleteStepCommand = ReactiveCommand.Create(DeleteStep, canEdit.AndAlso(canDelete));
+		UndoCommand = ReactiveCommand.Create(Undo, canEdit.AndAlso(_canUndo));
+		RedoCommand = ReactiveCommand.Create(Redo, canEdit.AndAlso(_canRedo));
 
 		AddStepCommand.DisposeWith(_disposables);
 		DeleteStepCommand.DisposeWith(_disposables);

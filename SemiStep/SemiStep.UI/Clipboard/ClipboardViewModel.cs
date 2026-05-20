@@ -51,7 +51,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		CopyStepCommand = ReactiveCommand.CreateFromTask(CopyStepsAsync, canCopyOrCut);
 		CutStepCommand = ReactiveCommand.CreateFromTask(
 			CutStepsAsync,
-			canEdit.CombineLatest(canCopyOrCut, (a, b) => a && b));
+			canEdit.AndAlso(canCopyOrCut));
 		PasteStepCommand = ReactiveCommand.CreateFromTask(PasteStepsAsync, canEdit);
 
 		CopyStepCommand.ThrownExceptions

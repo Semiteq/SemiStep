@@ -10,9 +10,10 @@ using SemiStep.Core.Recipes;
 
 namespace SemiStep.Tests.Helpers;
 
-public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
+public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream, IDisposable
 {
 	private readonly Subject<PlcExecutionInfo> _executionState = new();
+	private bool _disposed;
 
 	public bool IsConnected => true;
 
@@ -75,6 +76,18 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 
 	public ValueTask DisposeAsync()
 	{
+		Dispose();
 		return ValueTask.CompletedTask;
+	}
+
+	public void Dispose()
+	{
+		if (_disposed)
+		{
+			return;
+		}
+
+		_disposed = true;
+		_executionState.Dispose();
 	}
 }

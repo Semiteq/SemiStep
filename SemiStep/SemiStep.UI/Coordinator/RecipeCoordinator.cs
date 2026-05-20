@@ -24,6 +24,8 @@ namespace SemiStep.UI.Coordinator;
 public sealed class RecipeCoordinator : IDisposable
 {
 	private readonly AppConfiguration _appConfiguration;
+	private readonly IObservable<bool> _canEditRecipe;
+	private readonly IDisposable _canEditRecipeConnection;
 	private readonly CsvService _csvService;
 	private readonly object _disposeLock = new();
 	// PLC channels: hop to MainThreadScheduler once here at the source, expose via
@@ -39,7 +41,6 @@ public sealed class RecipeCoordinator : IDisposable
 	private readonly IObservable<(Recipe Local, Recipe Plc)> _plcRecipeConflictDetectedShared;
 	private readonly Subject<Result<PlcSessionSnapshot>> _plcStateChanged = new();
 	private readonly IObservable<Result<PlcSessionSnapshot>> _plcStateChangedShared;
-	private readonly IObservable<bool> _canEditRecipe;
 	private readonly RecipeMetadataRegistry _recipeMetadataRegistry;
 	private readonly RecipeSession _session;
 	private bool _disposed;
@@ -47,7 +48,6 @@ public sealed class RecipeCoordinator : IDisposable
 	private Result<PlcSessionSnapshot> _lastPlcState = PlcSessionSnapshot.InitialState;
 	private Result _lastRecipeResult = Result.Ok();
 	private IDisposable? _plcStateSubscription;
-	private readonly IDisposable _canEditRecipeConnection;
 
 	public RecipeCoordinator(
 		RecipeSession session,
@@ -82,7 +82,7 @@ public sealed class RecipeCoordinator : IDisposable
 			.RefCount();
 
 		var canEditConnectable = _plcStateChangedShared
-			.Select(r => r.IsSuccess ? !r.Value.IsSyncEnabled : !IsSyncEnabled)
+			.Select(plcState => plcState.IsSuccess ? !plcState.Value.IsSyncEnabled : !IsSyncEnabled)
 			.StartWith(!IsSyncEnabled)
 			.DistinctUntilChanged()
 			.Replay(1);

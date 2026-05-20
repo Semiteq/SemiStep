@@ -7,7 +7,8 @@ public record struct RecipeSnapshot(
 	IReadOnlyList<LoopInfo> Loops,
 	IReadOnlyDictionary<int, LoopInfo> LoopByStart,
 	IReadOnlyDictionary<int, LoopInfo> LoopByEnd,
-	IReadOnlyDictionary<int, IReadOnlyList<LoopInfo>> EnclosingLoops)
+	IReadOnlyDictionary<int, IReadOnlyList<LoopInfo>> EnclosingLoops,
+	IReadOnlyDictionary<int, TimeSpan> SingleIterationDurations)
 {
 	public static readonly RecipeSnapshot Empty = new(
 		Recipe.Empty,
@@ -16,13 +17,15 @@ public record struct RecipeSnapshot(
 		[],
 		new Dictionary<int, LoopInfo>(),
 		new Dictionary<int, LoopInfo>(),
-		new Dictionary<int, IReadOnlyList<LoopInfo>>());
+		new Dictionary<int, IReadOnlyList<LoopInfo>>(),
+		new Dictionary<int, TimeSpan>());
 
 	public static RecipeSnapshot Create(
 		Recipe recipe,
 		TimeSpan totalDuration,
 		IReadOnlyDictionary<int, TimeSpan> stepStartTimes,
-		IReadOnlyList<LoopInfo> loops)
+		IReadOnlyList<LoopInfo> loops,
+		IReadOnlyDictionary<int, TimeSpan> singleIterationDurations)
 	{
 		var byStart = loops.ToDictionary(l => l.StartIndex, l => l);
 		var byEnd = loops.ToDictionary(l => l.EndIndex, l => l);
@@ -35,7 +38,8 @@ public record struct RecipeSnapshot(
 			loops,
 			byStart,
 			byEnd,
-			enclosing);
+			enclosing,
+			singleIterationDurations);
 	}
 
 	private static Dictionary<int, IReadOnlyList<LoopInfo>> BuildEnclosingMap(IReadOnlyList<LoopInfo> loops)

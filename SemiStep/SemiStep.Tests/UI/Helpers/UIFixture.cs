@@ -1,8 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FluentResults;
+
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
+using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
@@ -56,5 +59,12 @@ public sealed class UIFixture : IAsyncLifetime
 		Coordinator.Dispose();
 		MessagePanel.Dispose();
 		return ValueTask.CompletedTask;
+	}
+
+	public void SetSyncEnabled(bool isSyncEnabled)
+	{
+		PlcSyncService.SetSyncEnabled(isSyncEnabled);
+		PlcSyncService.PushPlcState(Result.Ok(
+			new PlcSessionSnapshot(PlcConnectionState.Disconnected, PlcSyncStatus.Idle, isSyncEnabled)));
 	}
 }

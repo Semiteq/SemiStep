@@ -67,6 +67,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 		EditorMustClose = this
 			.WhenAnyValue(x => x.IsReadOnly)
+			.Skip(1)
 			.Where(readOnly => readOnly)
 			.Select(_ => Unit.Default);
 
@@ -167,6 +168,11 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
+		if (IsReadOnly)
+		{
+			return;
+		}
+
 		var stepIndex = RecipeRows.IndexOf(row);
 		if (stepIndex < 0)
 		{
@@ -183,6 +189,11 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 	private void OnActionChanged(RecipeRowViewModel row, int newActionId)
 	{
+		if (IsReadOnly)
+		{
+			return;
+		}
+
 		var stepIndex = RecipeRows.IndexOf(row);
 		if (stepIndex < 0)
 		{

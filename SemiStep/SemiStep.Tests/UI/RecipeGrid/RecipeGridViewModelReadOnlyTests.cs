@@ -2,8 +2,6 @@
 
 using FluentAssertions;
 
-using FluentResults;
-
 using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Plc.State;
@@ -51,7 +49,7 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void IsReadOnly_True_WhenSyncEnabled()
 	{
-		PushSyncState(true);
+		_fixture.SetSyncEnabled(true);
 
 		_grid.IsReadOnly.Should().BeTrue();
 	}
@@ -59,8 +57,8 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void IsReadOnly_BackToFalse_AfterSyncDisabledAgain()
 	{
-		PushSyncState(true);
-		PushSyncState(false);
+		_fixture.SetSyncEnabled(true);
+		_fixture.SetSyncEnabled(false);
 
 		_grid.IsReadOnly.Should().BeFalse();
 	}
@@ -82,19 +80,24 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void CellCommit_WhenSyncEnabled_DoesNotMutateSession()
+	public void CellValueChanged_WhenReadOnly_DoesNotMutateSession()
 	{
+		// Defense in depth: even if the UI commits a cell edit while the grid is
+		// read-only, the row -> coordinator bridge must short-circuit and not apply
+		// the property update.
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		PushSyncState(true);
+		_fixture.SetSyncEnabled(true);
+		_grid.IsReadOnly.Should().BeTrue();
 
-		// Simulate the UI suppressing cell commits when read-only: no UpdateStepProperty
-		// call. Verify that no mutation has been recorded by comparing dirty state.
+		var row = _grid.RecipeRows[0];
+		var originalRecipe = _fixture.Coordinator.CurrentRecipe;
 		var wasDirtyBefore = _fixture.Coordinator.IsDirty;
 
-		// Confirm the grid reports read-only so the UI layer would block the edit.
-		_grid.IsReadOnly.Should().BeTrue();
+		row.SetPropertyValue("time", "99");
+
 		_fixture.Coordinator.IsDirty.Should().Be(wasDirtyBefore);
+		_fixture.Coordinator.CurrentRecipe.Should().BeSameAs(originalRecipe);
 	}
 
 	[AvaloniaFact]
@@ -103,7 +106,7 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 		var emissionCount = 0;
 		using var subscription = _grid.EditorMustClose.Subscribe(_ => emissionCount++);
 
-		PushSyncState(true);
+		_fixture.SetSyncEnabled(true);
 
 		emissionCount.Should().Be(1);
 	}
@@ -114,15 +117,19 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 		var emissionCount = 0;
 		using var subscription = _grid.EditorMustClose.Subscribe(_ => emissionCount++);
 
-		PushSyncState(false);
+		_fixture.SetSyncEnabled(false);
 
 		emissionCount.Should().Be(0);
 	}
 
-	private void PushSyncState(bool isSyncEnabled)
+	[AvaloniaFact]
+	public void EditorMustClose_LateSubscriber_DoesNotReceiveInitialReadOnlyState()
 	{
-		_fixture.PlcSyncService.SetSyncEnabled(isSyncEnabled);
-		_fixture.PlcSyncService.PushPlcState(Result.Ok(
-			new PlcSessionSnapshot(PlcConnectionState.Disconnected, PlcSyncStatus.Idle, isSyncEnabled)));
+		_fixture.SetSyncEnabled(true);
+
+		var emissionCount = 0;
+		using var subscription = _grid.EditorMustClose.Subscribe(_ => emissionCount++);
+
+		emissionCount.Should().Be(0);
 	}
 }

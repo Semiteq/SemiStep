@@ -47,11 +47,27 @@ public static class DataGridEditorCloseBehavior
 		{
 			var subscription = trigger.Subscribe(_ => CloseEditor(dataGrid));
 			dataGrid.SetValue(_subscriptionProperty, subscription);
+			dataGrid.DetachedFromVisualTree -= OnDetachedFromVisualTree;
+			dataGrid.DetachedFromVisualTree += OnDetachedFromVisualTree;
 		}
 		else
 		{
 			dataGrid.SetValue(_subscriptionProperty, null);
+			dataGrid.DetachedFromVisualTree -= OnDetachedFromVisualTree;
 		}
+	}
+
+	private static void OnDetachedFromVisualTree(object? sender, Avalonia.VisualTreeAttachmentEventArgs args)
+	{
+		if (sender is not DataGrid dataGrid)
+		{
+			return;
+		}
+
+		var subscription = dataGrid.GetValue(_subscriptionProperty);
+		subscription?.Dispose();
+		dataGrid.SetValue(_subscriptionProperty, null);
+		dataGrid.DetachedFromVisualTree -= OnDetachedFromVisualTree;
 	}
 
 	private static void CloseEditor(DataGrid dataGrid)

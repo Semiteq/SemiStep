@@ -47,6 +47,7 @@ public sealed class RecipeCoordinator : IDisposable
 	private Result<PlcSessionSnapshot> _lastPlcState = PlcSessionSnapshot.InitialState;
 	private Result _lastRecipeResult = Result.Ok();
 	private IDisposable? _plcStateSubscription;
+	private readonly IDisposable _canEditRecipeConnection;
 
 	public RecipeCoordinator(
 		RecipeSession session,
@@ -80,12 +81,13 @@ public sealed class RecipeCoordinator : IDisposable
 			.Publish()
 			.RefCount();
 
-		_canEditRecipe = _plcStateChangedShared
-			.Select(_ => !IsSyncEnabled)
+		var canEditConnectable = _plcStateChangedShared
+			.Select(r => r.IsSuccess ? !r.Value.IsSyncEnabled : !IsSyncEnabled)
 			.StartWith(!IsSyncEnabled)
 			.DistinctUntilChanged()
-			.Replay(1)
-			.AutoConnect(0);
+			.Replay(1);
+		_canEditRecipeConnection = canEditConnectable.Connect();
+		_canEditRecipe = canEditConnectable;
 	}
 
 	public IObservable<(Recipe Local, Recipe Plc)> PlcRecipeConflictDetected => _plcRecipeConflictDetectedShared;
@@ -154,6 +156,7 @@ public sealed class RecipeCoordinator : IDisposable
 			_plc.PlcRecipeConflictDetected -= OnPlcRecipeConflictDetected;
 
 			_plcStateSubscription?.Dispose();
+			_canEditRecipeConnection.Dispose();
 
 			_plcRecipeConflictDetected.Dispose();
 			_plcStateChanged.Dispose();

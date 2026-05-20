@@ -1,4 +1,5 @@
 ﻿using System.Reactive;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
 using Avalonia.Controls;
@@ -18,33 +19,24 @@ namespace SemiStep.Tests.UI.RecipeGrid;
 public sealed class DataGridEditorCloseBehaviorTests
 {
 	[AvaloniaFact]
-	public void Trigger_Emission_InvokesCommitEdit_AndClearsEditingRow()
+	public void Trigger_Emission_ReachesBehaviorSubscription()
 	{
-		var dataGrid = new DataGrid
-		{
-			ItemsSource = new[]
-			{
-				new { Value = "a" },
-				new { Value = "b" },
-			},
-			AutoGenerateColumns = true,
-		};
+		// Verify the behavior actually subscribes to the trigger and routes emissions
+		// through its pipeline. (DataGrid.CommitEdit is non-virtual so cannot be spied
+		// on directly; instrument the trigger observable instead.)
+		var dataGrid = new DataGrid();
 
-		var trigger = new Subject<Unit>();
-		DataGridEditorCloseBehavior.SetTrigger(dataGrid, trigger);
+		var emissionsReachingBehavior = 0;
+		var sourceSubject = new Subject<Unit>();
+		var instrumented = sourceSubject
+			.Do(_ => emissionsReachingBehavior++);
 
-		// Begin an edit on the first cell.
-		dataGrid.SelectedIndex = 0;
-		dataGrid.BeginEdit();
+		DataGridEditorCloseBehavior.SetTrigger(dataGrid, instrumented);
 
-		trigger.OnNext(Unit.Default);
+		sourceSubject.OnNext(Unit.Default);
+		sourceSubject.OnNext(Unit.Default);
 
-		// After the behavior commits the cell edit, the grid should no longer report
-		// an in-flight edit. CurrentColumn may be set, but the edited row's edit
-		// indicator is cleared. We assert via CommitEdit being a no-op when called
-		// again (returns true when no edit is active).
-		var commitWithNoEdit = dataGrid.CommitEdit(DataGridEditingUnit.Cell, true);
-		commitWithNoEdit.Should().BeTrue();
+		emissionsReachingBehavior.Should().Be(2);
 	}
 
 	[AvaloniaFact]
@@ -52,15 +44,40 @@ public sealed class DataGridEditorCloseBehaviorTests
 	{
 		var dataGrid = new DataGrid();
 
-		var triggerA = new Subject<Unit>();
+		var subscriptionCount = 0;
+		var triggerA = Observable.Create<Unit>(observer =>
+		{
+			subscriptionCount++;
+			return System.Reactive.Disposables.Disposable.Create(() => subscriptionCount--);
+		});
+
 		var triggerB = new Subject<Unit>();
 
 		DataGridEditorCloseBehavior.SetTrigger(dataGrid, triggerA);
-		DataGridEditorCloseBehavior.SetTrigger(dataGrid, triggerB);
+		subscriptionCount.Should().Be(1);
 
-		// Emitting on the replaced trigger should be a no-op: the behavior does not
-		// throw and the test simply observes that no exception propagates.
-		var act = () => triggerA.OnNext(Unit.Default);
-		act.Should().NotThrow();
+		DataGridEditorCloseBehavior.SetTrigger(dataGrid, triggerB);
+		subscriptionCount.Should().Be(0);
+	}
+
+	[AvaloniaFact]
+	public void Trigger_SetToNull_DisposesPreviousSubscription()
+	{
+		var dataGrid = new DataGrid();
+
+		var subscriptionCount = 0;
+		var trigger = Observable.Create<Unit>(observer =>
+		{
+			subscriptionCount++;
+			return System.Reactive.Disposables.Disposable.Create(() => subscriptionCount--);
+		});
+
+		DataGridEditorCloseBehavior.SetTrigger(dataGrid, trigger);
+		subscriptionCount.Should().Be(1);
+
+		DataGridEditorCloseBehavior.SetTrigger(dataGrid, null);
+
+		subscriptionCount.Should().Be(0);
+		DataGridEditorCloseBehavior.GetTrigger(dataGrid).Should().BeNull();
 	}
 }

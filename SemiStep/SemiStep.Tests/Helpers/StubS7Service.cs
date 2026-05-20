@@ -20,7 +20,6 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 
 	public IObservable<PlcExecutionInfo> ExecutionState => _executionState;
 
-	/// <summary>Pushes an execution state snapshot to subscribers of <see cref="ExecutionState"/>.</summary>
 	public void PushExecutionState(PlcExecutionInfo info)
 	{
 		_executionState.OnNext(info);

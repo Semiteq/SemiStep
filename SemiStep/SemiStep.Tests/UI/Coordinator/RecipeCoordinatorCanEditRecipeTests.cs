@@ -2,9 +2,6 @@
 
 using FluentAssertions;
 
-using FluentResults;
-
-using SemiStep.Core.Plc.State;
 using SemiStep.Tests.UI.Helpers;
 
 using Xunit;
@@ -48,7 +45,7 @@ public sealed class RecipeCoordinatorCanEditRecipeTests : IAsyncLifetime
 		var values = CollectValues(_fixture.Coordinator.CanEditRecipe, out var subscription);
 		try
 		{
-			PushSyncState(true);
+			_fixture.SetSyncEnabled(true);
 
 			values.Should().Equal(true, false);
 		}
@@ -64,27 +61,8 @@ public sealed class RecipeCoordinatorCanEditRecipeTests : IAsyncLifetime
 		var values = CollectValues(_fixture.Coordinator.CanEditRecipe, out var subscription);
 		try
 		{
-			PushSyncState(true);
-			PushSyncState(false);
-
-			values.Should().Equal(true, false, true);
-		}
-		finally
-		{
-			subscription.Dispose();
-		}
-	}
-
-	[AvaloniaFact]
-	public void CanEditRecipe_HandlesFailureRollback_EnableThenDisable()
-	{
-		var values = CollectValues(_fixture.Coordinator.CanEditRecipe, out var subscription);
-		try
-		{
-			// Simulates PlcLifecycleManager.EnableSync setting sync true, then rolling
-			// back to false on connection failure (PlcLifecycleManager.cs:110).
-			PushSyncState(true);
-			PushSyncState(false);
+			_fixture.SetSyncEnabled(true);
+			_fixture.SetSyncEnabled(false);
 
 			values.Should().Equal(true, false, true);
 		}
@@ -97,7 +75,7 @@ public sealed class RecipeCoordinatorCanEditRecipeTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void CanEditRecipe_LateSubscriber_ReceivesCurrentValue()
 	{
-		PushSyncState(true);
+		_fixture.SetSyncEnabled(true);
 
 		var values = CollectValues(_fixture.Coordinator.CanEditRecipe, out var subscription);
 		try
@@ -110,11 +88,21 @@ public sealed class RecipeCoordinatorCanEditRecipeTests : IAsyncLifetime
 		}
 	}
 
-	private void PushSyncState(bool isSyncEnabled)
+	[AvaloniaFact]
+	public void CanEditRecipe_DistinctUntilChanged_SuppressesDuplicateEmissions()
 	{
-		_fixture.PlcSyncService.SetSyncEnabled(isSyncEnabled);
-		_fixture.PlcSyncService.PushPlcState(Result.Ok(
-			new PlcSessionSnapshot(PlcConnectionState.Disconnected, PlcSyncStatus.Idle, isSyncEnabled)));
+		var values = CollectValues(_fixture.Coordinator.CanEditRecipe, out var subscription);
+		try
+		{
+			_fixture.SetSyncEnabled(true);
+			_fixture.SetSyncEnabled(true);
+
+			values.Should().Equal(true, false);
+		}
+		finally
+		{
+			subscription.Dispose();
+		}
 	}
 
 	private static List<bool> CollectValues(IObservable<bool> source, out IDisposable subscription)

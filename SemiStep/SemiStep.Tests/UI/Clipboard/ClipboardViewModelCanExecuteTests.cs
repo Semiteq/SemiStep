@@ -2,11 +2,8 @@
 
 using FluentAssertions;
 
-using FluentResults;
-
 using Microsoft.Extensions.Logging.Abstractions;
 
-using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
@@ -69,7 +66,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	public void Copy_CanExecuteRemainsTrue_WhenSyncEnabled()
 	{
 		AppendStepAndSelect();
-		PushSyncState(true);
+		_fixture.SetSyncEnabled(true);
 
 		((System.Windows.Input.ICommand)_clipboard.CopyStepCommand).CanExecute(null).Should().BeTrue();
 	}
@@ -86,7 +83,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	public void Cut_CanExecuteFalse_WhenSyncEnabled_EvenWithSelection()
 	{
 		AppendStepAndSelect();
-		PushSyncState(true);
+		_fixture.SetSyncEnabled(true);
 
 		((System.Windows.Input.ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeFalse();
 	}
@@ -105,8 +102,8 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	public void Cut_CanExecuteBackToTrue_AfterSyncDisabledAgain()
 	{
 		AppendStepAndSelect();
-		PushSyncState(true);
-		PushSyncState(false);
+		_fixture.SetSyncEnabled(true);
+		_fixture.SetSyncEnabled(false);
 
 		((System.Windows.Input.ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeTrue();
 	}
@@ -114,13 +111,15 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void Paste_CanExecuteTrue_WhenSyncDisabled()
 	{
+		// Paste's canExecute is driven solely by CanEditRecipe; no clipboard is required
+		// for the CanExecute gate.
 		((System.Windows.Input.ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
 	public void Paste_CanExecuteFalse_WhenSyncEnabled()
 	{
-		PushSyncState(true);
+		_fixture.SetSyncEnabled(true);
 
 		((System.Windows.Input.ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeFalse();
 	}
@@ -128,10 +127,46 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void Paste_CanExecuteBackToTrue_AfterSyncDisabledAgain()
 	{
-		PushSyncState(true);
-		PushSyncState(false);
+		_fixture.SetSyncEnabled(true);
+		_fixture.SetSyncEnabled(false);
 
 		((System.Windows.Input.ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void Cut_GatedInvocation_InConnectMode_DoesNotRemoveStep()
+	{
+		// UI buttons honor CanExecute and never call Execute when gated. Simulate that
+		// pattern and assert recipe state is untouched in Connect mode.
+		AppendStepAndSelect();
+		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
+		_fixture.SetSyncEnabled(true);
+
+		var command = (System.Windows.Input.ICommand)_clipboard.CutStepCommand;
+		if (command.CanExecute(null))
+		{
+			command.Execute(null);
+		}
+
+		command.CanExecute(null).Should().BeFalse();
+		_fixture.Coordinator.CurrentRecipe.StepCount.Should().Be(stepCountBefore);
+	}
+
+	[AvaloniaFact]
+	public void Paste_GatedInvocation_InConnectMode_DoesNotInsertSteps()
+	{
+		_fixture.Coordinator.NewRecipe();
+		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
+		_fixture.SetSyncEnabled(true);
+
+		var command = (System.Windows.Input.ICommand)_clipboard.PasteStepCommand;
+		if (command.CanExecute(null))
+		{
+			command.Execute(null);
+		}
+
+		command.CanExecute(null).Should().BeFalse();
+		_fixture.Coordinator.CurrentRecipe.StepCount.Should().Be(stepCountBefore);
 	}
 
 	private void AppendStepAndSelect()
@@ -139,12 +174,5 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_grid.SelectedRowIndices = new[] { 0 };
-	}
-
-	private void PushSyncState(bool isSyncEnabled)
-	{
-		_fixture.PlcSyncService.SetSyncEnabled(isSyncEnabled);
-		_fixture.PlcSyncService.PushPlcState(Result.Ok(
-			new PlcSessionSnapshot(PlcConnectionState.Disconnected, PlcSyncStatus.Idle, isSyncEnabled)));
 	}
 }

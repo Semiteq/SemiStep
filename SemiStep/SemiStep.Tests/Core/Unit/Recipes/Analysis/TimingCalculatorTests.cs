@@ -78,7 +78,7 @@ public sealed class TimingCalculatorTests
 			BuildStep(ImmediateActionId, 10f),
 			BuildStep(LongLastingActionId, 20f)));
 
-		var (stepStartTimes, totalDuration) = TimingCalculator.Calculate(
+		var (stepStartTimes, totalDuration, singleIterations) = TimingCalculator.Calculate(
 			recipe,
 			Array.Empty<LoopInfo>(),
 			registry);
@@ -87,6 +87,7 @@ public sealed class TimingCalculatorTests
 		stepStartTimes[1].Should().Be(TimeSpan.Zero,
 			"the immediate first step contributes nothing to cumulative time");
 		totalDuration.Should().Be(TimeSpan.FromSeconds(20));
+		singleIterations.Should().BeEmpty("a linear recipe has no loops");
 	}
 
 	[Fact]
@@ -106,9 +107,48 @@ public sealed class TimingCalculatorTests
 			new LoopInfo(StartIndex: 0, EndIndex: 2, Depth: 1, Iterations: Iterations)
 		};
 
-		var (_, totalDuration) = TimingCalculator.Calculate(recipe, loops, registry);
+		var (_, totalDuration, singleIterations) = TimingCalculator.Calculate(recipe, loops, registry);
 
 		var expectedDeltaPerIteration = TimeSpan.FromSeconds(LongLastingDurationSeconds);
 		totalDuration.Should().Be(expectedDeltaPerIteration * Iterations);
+		singleIterations.Should().ContainKey(0);
+		singleIterations[0].Should().Be(expectedDeltaPerIteration);
+	}
+
+	[Fact]
+	public void Calculate_NestedLoops_OuterIterationDurationAggregatesInnerLoop()
+	{
+		var registry = BuildRegistry();
+		const float OuterStepSeconds = 4f;
+		const float InnerStepSeconds = 3f;
+		const int InnerIterations = 5;
+		const int OuterIterations = 2;
+
+		// Layout: [For outer] step(4) [For inner] step(3) [End_For inner] [End_For outer]
+		// Use immediate actions for For/End_For boundary steps (zero duration).
+		var recipe = new Recipe(ImmutableList.Create(
+			BuildStep(ImmediateActionId, 0f), // index 0: outer For
+			BuildStep(LongLastingActionId, OuterStepSeconds), // index 1: outer body step
+			BuildStep(ImmediateActionId, 0f), // index 2: inner For
+			BuildStep(LongLastingActionId, InnerStepSeconds), // index 3: inner body step
+			BuildStep(ImmediateActionId, 0f), // index 4: inner End_For
+			BuildStep(ImmediateActionId, 0f))); // index 5: outer End_For
+
+		var loops = new[]
+		{
+			new LoopInfo(StartIndex: 0, EndIndex: 5, Depth: 1, Iterations: OuterIterations),
+			new LoopInfo(StartIndex: 2, EndIndex: 4, Depth: 2, Iterations: InnerIterations)
+		};
+
+		var (_, totalDuration, singleIterations) = TimingCalculator.Calculate(recipe, loops, registry);
+
+		var innerSingle = TimeSpan.FromSeconds(InnerStepSeconds);
+		var innerTotalPerOuterIteration = innerSingle * InnerIterations;
+		var outerSingle = TimeSpan.FromSeconds(OuterStepSeconds) + innerTotalPerOuterIteration;
+
+		singleIterations.Should().HaveCount(2);
+		singleIterations[2].Should().Be(innerSingle);
+		singleIterations[0].Should().Be(outerSingle);
+		totalDuration.Should().Be(outerSingle * OuterIterations);
 	}
 }

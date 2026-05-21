@@ -4,12 +4,16 @@ internal static class TimingCalculator
 {
 	private static readonly PropertyId _durationProperty = new("step_duration");
 
-	public static (IReadOnlyDictionary<int, TimeSpan> StepStartTimes, TimeSpan TotalDuration) Calculate(
+	public static (
+		IReadOnlyDictionary<int, TimeSpan> StepStartTimes,
+		TimeSpan TotalDuration,
+		IReadOnlyDictionary<int, TimeSpan> SingleIterationDurations) Calculate(
 		Recipe recipe,
 		IReadOnlyList<LoopInfo> loops,
 		RecipeMetadataRegistry registry)
 	{
 		var startTimes = new Dictionary<int, TimeSpan>(recipe.Steps.Count);
+		var singleIterations = new Dictionary<int, TimeSpan>();
 		var accumulated = TimeSpan.Zero;
 
 		var loopByEnd = loops.ToDictionary(l => l.EndIndex, l => l);
@@ -29,10 +33,8 @@ internal static class TimingCalculator
 			{
 				var bodyStartTime = startTimes[loopInfo.StartIndex];
 				var singleDuration = accumulated - bodyStartTime;
-				if (singleDuration.Ticks < 0)
-				{
-					singleDuration = TimeSpan.Zero;
-				}
+
+				singleIterations[loopInfo.StartIndex] = singleDuration;
 
 				var extraIterations = loopInfo.Iterations - 1;
 				if (extraIterations > 0)
@@ -42,10 +44,10 @@ internal static class TimingCalculator
 			}
 		}
 
-		return (startTimes, accumulated);
+		return (startTimes, accumulated, singleIterations);
 	}
 
-	private static TimeSpan ExtractStepDuration(Step step, RecipeMetadataRegistry registry)
+	internal static TimeSpan ExtractStepDuration(Step step, RecipeMetadataRegistry registry)
 	{
 		var actionResult = registry.GetAction(step.ActionKey);
 		if (actionResult.IsFailed)

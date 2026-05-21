@@ -24,7 +24,7 @@ public sealed class RecipeAnalyzer(RecipeMetadataRegistry registry)
 
 		var parsedLoops = loopParseResult.Value;
 
-		var (stepStartTimes, totalDuration) = TimingCalculator.Calculate(recipe, parsedLoops, registry);
+		var (stepStartTimes, totalDuration, singleIterationDurations) = TimingCalculator.Calculate(recipe, parsedLoops, registry);
 
 		var maxDepth = parsedLoops.Count > 0
 			? parsedLoops.Max(l => l.Depth)
@@ -39,7 +39,8 @@ public sealed class RecipeAnalyzer(RecipeMetadataRegistry registry)
 			recipe,
 			totalDuration,
 			stepStartTimes,
-			parsedLoops);
+			parsedLoops,
+			singleIterationDurations);
 
 		return Result.Ok(snapshot)
 			.WithReasons(loopParseResult.Reasons);

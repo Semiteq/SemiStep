@@ -1,0 +1,16 @@
+{
+	"hooks": {
+		"PreToolUse": [
+			{
+				"matcher": "Bash",
+				"hooks": [
+					{
+						"type": "command",
+						"if": "Bash(git commit*)",
+						"command": "branch=$(git symbolic-ref --short HEAD 2>/dev/null); if [ \"$branch\" = \"master\" ] || [ \"$branch\" = \"main\" ]; then printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Direct commit to %s is forbidden. Create a feature branch: git switch -c <name> origin/master\"}}' \"$branch\"; fi"
+					}
+				]
+			}
+		]
+	}
+}

@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [ "$branch" = "master" ] || [ "$branch" = "main" ]; then
+	echo ""
+	echo "BLOCKED: direct commit to '$branch' is forbidden."
+	echo "Create a feature branch first:"
+	echo "  git switch -c <feature-name> origin/master"
+	echo ""
+	exit 1
+fi

@@ -102,6 +102,19 @@ No abbreviations in names.
 
 **Inline formulas on actions:** when an action declares a `formula:` block (see `Docs/03-data-model.md` §3.4), cell edits route through `RecipeSession.UpdateStepProperty` → `FormulaEvaluator.Recalculate` and update one coupled cell in the same mutation (single undo unit). CSV import (§3.5) is verbatim — formulas are not re-evaluated on load.
 
+## Git Workflow
+
+- `master` is a mirror of `origin/master`. Never commit directly to it — the local pre-commit hook (`.githooks/pre-commit`) and the Claude Code PreToolUse hook both enforce this; do not bypass with `--no-verify`.
+- Start every new task with a feature branch off the freshest remote tip: `git fetch origin && git switch -c <feature-name> origin/master`.
+- Before any push, run `git log origin/master..HEAD --oneline` and verify every commit belongs to the stated PR scope. If anything unrelated appears, stop and split.
+- One PR = one logical change. If the PR description needs the word "and", split into two PRs.
+- Keep feature branches rebased on `origin/master`. Do not let them drift.
+- After a PR merges: `git switch master && git pull --ff-only`, then delete the local branch.
+
+### Worktree branches
+
+When the user asks to create a worktree branch for a feature, name the branch with the feature name **only** — no `worktree-` prefix, no `wt-` prefix, no suffix. Example: feature `execution-status-timing` → branch `execution-status-timing`, worktree path `.claude/worktrees/execution-status-timing`.
+
 ## Troubleshooting
 
 **Deleting Windows reserved-name files (`nul`, `con`, `aux`, etc.):** Use Git Bash: `rm -f nul`

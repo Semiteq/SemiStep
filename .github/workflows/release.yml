@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-test:
-    name: Build, Test & Release
+  build-and-release:
+    name: Build & Release
     runs-on: windows-latest
     permissions:
       contents: write
@@ -58,9 +58,6 @@ jobs:
 
       - name: build
         run: dotnet build SemiStep/SemiStep.slnx -c Release --no-restore
-
-      - name: test
-        run: dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release --no-build --logger "console;verbosity=normal"
 
       - name: publish
         run: dotnet publish SemiStep/SemiStep.UI/SemiStep.UI.csproj -c Release -p:Version=${{ steps.version.outputs.version }}

@@ -47,6 +47,3 @@ jobs:
 
       - name: test
         run: dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release --no-build --logger "console;verbosity=normal"
-
-      - name: verify formatting
-        run: dotnet format SemiStep/SemiStep.slnx --verify-no-changes

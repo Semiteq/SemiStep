@@ -10,6 +10,7 @@ using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
+using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.RecipeGrid;
@@ -92,6 +93,57 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 		groupColumn.CellTemplate.Should().NotBeNull("the group ComboBox must materialize from CellTemplate");
 		groupColumn.CellEditingTemplate.Should().BeNull(
 			"the Avalonia 12 broken CellEditingTemplate path must not be wired up");
+	}
+
+	[AvaloniaFact]
+	public void BuildColumns_ReadOnlyColumn_HasReadOnlyColumnClass()
+	{
+		var registry = BuildRegistryWithReadOnlyVariants();
+		var columnBuilder = new ColumnBuilder(GridStyleOptions.Default, registry);
+		var grid = new DataGrid();
+
+		columnBuilder.BuildColumns(grid);
+
+		var readOnlyColumn = grid.Columns
+			.First(c => string.Equals(c.Tag as string, "ro_column", StringComparison.Ordinal));
+		var editableColumn = grid.Columns
+			.First(c => string.Equals(c.Tag as string, "edit_column", StringComparison.Ordinal));
+
+		readOnlyColumn.CellStyleClasses.Should().Contain(
+			"read-only-column",
+			"a column with ReadOnly=true must carry the read-only-column class so the disabled style fires");
+		editableColumn.CellStyleClasses.Should().NotContain(
+			"read-only-column",
+			"a column with ReadOnly=false must not carry the read-only-column class");
+	}
+
+	private static RecipeMetadataRegistry BuildRegistryWithReadOnlyVariants()
+	{
+		var stringProperty = TestPropertyTypeDefinitionBuilder.CreateString(
+			"string",
+			TestRecipeMetadataRegistryFactory.DefaultStringMaxLength);
+
+		var columns = new Dictionary<string, GridColumnDefinition>(StringComparer.OrdinalIgnoreCase)
+		{
+			["ro_column"] = new GridColumnDefinition(
+				Key: "ro_column",
+				ColumnType: "property_field",
+				UiName: "Read Only",
+				PropertyTypeId: "string",
+				ReadOnly: true,
+				SaveToCsv: true),
+			["edit_column"] = new GridColumnDefinition(
+				Key: "edit_column",
+				ColumnType: "property_field",
+				UiName: "Editable",
+				PropertyTypeId: "string",
+				ReadOnly: false,
+				SaveToCsv: true),
+		};
+
+		return TestRecipeMetadataRegistryFactory.Build(
+			properties: [stringProperty],
+			columns: columns);
 	}
 
 	[AvaloniaFact]

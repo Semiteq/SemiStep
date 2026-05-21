@@ -26,32 +26,17 @@
     </Style>
 
     <!-- ============================================== -->
-    <!-- Inapplicable cell appearance.                  -->
-    <!-- Per-column `DataGridColumn.CellTheme` (built   -->
-    <!-- in code via InapplicableCellTheme) sets the    -->
-    <!-- custom attached property IsInapplicable on the -->
-    <!-- DataGridCell via a binding against the row VM. -->
-    <!-- The selectors below match IsInapplicable=True  -->
-    <!-- and paint the greyed visual on the cell.       -->
-    <!--                                                -->
-    <!-- The cell keeps IsEnabled=true so mouse clicks  -->
-    <!-- still select the row and arrow-key navigation  -->
-    <!-- continues to work. Input on the cell content   -->
-    <!-- (ComboBox dropdown, TextBox edit) is blocked   -->
-    <!-- separately: ComboBoxCellFactory binds          -->
-    <!-- IsHitTestVisible + Focusable on the inner      -->
-    <!-- ComboBox to the applicable state, and the      -->
-    <!-- OnBeginningEdit handler cancels edit mode on   -->
-    <!-- inapplicable cells.                            -->
-    <!--                                                -->
-    <!-- Background fills the whole cell area without a -->
-    <!-- wrapper because DataGridCell already stretches.-->
-    <!-- TextElement.Foreground is an inherited         -->
-    <!-- attached property — children pick up the       -->
-    <!-- greyed text color automatically.               -->
+    <!-- Disabled cell appearance. Two signals paint    -->
+    <!-- the same greyed visual:                        -->
+    <!--  * per-row `IsInapplicable` attached property  -->
+    <!--    (set via `CellTheme` binding for action-    -->
+    <!--    mismatched cells).                          -->
+    <!--  * per-column `read-only-column` class         -->
+    <!--    (stamped by `ColumnBuilder` for             -->
+    <!--    `GridColumnDefinition.ReadOnly == true`).   -->
     <!-- ============================================== -->
 
-    <Style Selector="DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+    <Style Selector="DataGridCell.read-only-column, DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
         <Setter Property="Background" Value="{DynamicResource CellDisabledBackgroundBrush}" />
         <Setter Property="TextElement.Foreground" Value="{DynamicResource CellDisabledForegroundBrush}" />
         <Setter Property="Opacity" Value="0.5" />
@@ -76,7 +61,7 @@
     <!-- Selected row override for disabled cells.      -->
     <!-- ============================================== -->
 
-    <Style Selector="DataGridRow:selected DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+    <Style Selector="DataGridRow:selected DataGridCell.read-only-column, DataGridRow:selected DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
         <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
         <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
     </Style>

@@ -98,7 +98,7 @@ public sealed class RecipeCoordinatorLoadRecipeTests
 	}
 
 	[AvaloniaFact]
-	public async Task LoadRecipeAsync_Success_WithWarnings_ShowsWarningsInPanel()
+	public async Task LoadRecipeAsync_EmptyRecipe_PanelHasNoWarnings()
 	{
 		var (coordinator, panel) = await BuildCoordinatorAsync(services => services.AddCsv());
 		var tempFilePath = Path.Combine(Path.GetTempPath(), $"{TempFilePrefix}.{Guid.NewGuid():N}.csv");
@@ -108,12 +108,11 @@ public sealed class RecipeCoordinatorLoadRecipeTests
 			// Save the default empty recipe so we have a valid CSV file with no steps.
 			await coordinator.SaveRecipeAsync(tempFilePath);
 
-			// Load it back — an empty recipe triggers a "Recipe has no steps" warning from the analyzer.
 			var result = await coordinator.LoadRecipeAsync(tempFilePath);
 
-			result.IsSuccess.Should().BeTrue("loading a valid CSV should succeed even when it has warnings");
-			panel.Entries.Should().Contain(e => e.IsWarning,
-				"the message panel must show the 'Recipe has no steps' warning after loading an empty recipe");
+			result.IsSuccess.Should().BeTrue("loading a valid empty CSV must succeed");
+			panel.Entries.Should().NotContain(e => e.IsWarning,
+				"an empty recipe is a normal initial state and must not produce warnings");
 		}
 		finally
 		{

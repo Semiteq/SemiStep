@@ -20,7 +20,7 @@ public sealed class CoreSnapshotStateTests(CoreFixture fixture) : IClassFixture<
 		driver.AddWait(5f).AddWait(10f);
 		driver.AddFor(1).AddFor(1).AddFor(1).AddFor(1).AddWait(1f);
 
-		driver.IsValid.Should().BeTrue("unclosed For loops produce warnings, not errors");
+		driver.IsValid.Should().BeFalse("unclosed For loops block validity");
 
 		var stepCountBeforeRejection = fixture.Session.Current.StepCount;
 		var lastValidStepCountBeforeRejection = fixture.Session.LastValidRecipe.StepCount;
@@ -28,7 +28,7 @@ public sealed class CoreSnapshotStateTests(CoreFixture fixture) : IClassFixture<
 		var result = fixture.Session.AppendStep(RecipeTestDriver.EndForLoopActionId);
 
 		result.IsFailed.Should().BeTrue("closing a 4th nested loop exceeds the maximum nesting depth");
-		driver.IsValid.Should().BeTrue("mutation was rejected, state is unchanged");
+		driver.IsValid.Should().BeFalse("mutation was rejected, state still has unclosed For loops");
 		fixture.Session.Current.StepCount.Should().Be(stepCountBeforeRejection, "rejected mutation must not change the recipe");
 		fixture.Session.LastValidRecipe.StepCount.Should().Be(lastValidStepCountBeforeRejection, "last valid recipe must not change when mutation is rejected");
 	}
@@ -40,7 +40,7 @@ public sealed class CoreSnapshotStateTests(CoreFixture fixture) : IClassFixture<
 		var driver = new RecipeTestDriver(fixture.Session);
 
 		driver.AddFor(3).AddWait(1f);
-		driver.IsValid.Should().BeTrue("unclosed For produces a warning, not an error");
+		driver.IsValid.Should().BeFalse("unclosed For blocks validity");
 
 		driver.AddEndFor();
 		driver.IsValid.Should().BeTrue("adding EndFor closes the loop");

@@ -12,14 +12,13 @@ namespace SemiStep.Tests.Core.Integration.Validity;
 public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreFixture>
 {
 	[Fact]
-	public void EmptyRecipe_IsValid_ButHasWarning()
+	public void EmptyRecipe_IsValid_NoWarnings()
 	{
 		fixture.Session.Reset();
 		var driver = new RecipeTestDriver(fixture.Session);
 
 		driver.IsValid.Should().BeTrue();
-		driver.Warnings.Should().NotBeEmpty();
-		driver.Warnings.Should().ContainSingle(w => w.Contains("no steps", StringComparison.OrdinalIgnoreCase));
+		driver.Warnings.Should().BeEmpty();
 	}
 
 	[Fact]
@@ -45,13 +44,13 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 	}
 
 	[Fact]
-	public void UnclosedLoop_ProducesWarning()
+	public void UnclosedLoop_BlocksValidity()
 	{
 		fixture.Session.Reset();
 		var driver = new RecipeTestDriver(fixture.Session);
 		driver.AddFor(3).AddWait(10f);
 
-		driver.IsValid.Should().BeTrue("unclosed loops are warnings, not errors");
+		driver.IsValid.Should().BeFalse("unclosed loops are structural defects that block validity");
 		driver.Warnings.Should().ContainSingle(w => w.Contains("Unclosed For loop", StringComparison.OrdinalIgnoreCase));
 	}
 
@@ -68,8 +67,7 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().ContainSingle(e => e.Message.Contains("nesting depth", StringComparison.OrdinalIgnoreCase));
-		driver.IsValid.Should().BeTrue("the mutation was rejected, recipe is unchanged");
-		driver.StepCount.Should().Be(stepCountBeforeRejection);
+		driver.StepCount.Should().Be(stepCountBeforeRejection, "the mutation was rejected, recipe is unchanged");
 	}
 
 	[Fact]
@@ -88,18 +86,20 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 		var result = fixture.Session.AppendStep(RecipeTestDriver.EndForLoopActionId);
 
 		result.IsFailed.Should().BeTrue("exceeding max loop depth produces an error");
-		driver.IsValid.Should().BeTrue("the mutation was rejected, recipe is unchanged");
-		driver.StepCount.Should().Be(stepCountBeforeRejection);
+		driver.StepCount.Should().Be(stepCountBeforeRejection, "the mutation was rejected, recipe is unchanged");
 	}
 
 	[Fact]
-	public void WarningsDoNotAffectValidity()
+	public void Apply_AcceptsDefectiveSnapshot_KeepsIsValidFalse()
 	{
 		fixture.Session.Reset();
 		var driver = new RecipeTestDriver(fixture.Session);
 
+		var applyResult = fixture.Session.AppendStep(RecipeTestDriver.ForLoopActionId);
+
+		applyResult.IsSuccess.Should().BeTrue("a defective snapshot (unclosed For) is still accepted to let the user keep editing");
+		driver.IsValid.Should().BeFalse("an unclosed For loop is a structural defect");
 		driver.Warnings.Should().NotBeEmpty();
-		driver.IsValid.Should().BeTrue("warnings alone should not invalidate the recipe");
 	}
 
 	[Fact]

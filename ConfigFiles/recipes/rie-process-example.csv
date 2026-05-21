@@ -1,0 +1,9 @@
+﻿# SEP=";"
+# ROWS="5"
+# X_ExportedAtUtc="2026-05-20T11:24:58.1508377Z"
+action;ar;o2;n2;sf6;cf4;cl2;he;gate_mode;gate_setpoint;icp_power;icp_match;icp_load;icp_tune;rie_power;rie_match;rie_load;rie_tune;step_duration;comment
+100;;;;;;;;1;0;;;;;;;;;10;
+200;180;20;0;0;0;0;15;1;12;;;;;;;;;15;
+300;180;20;0;0;0;0;15;1;12;600;1;50;50;30;1;50;50;1200;Основной шаг травления
+400;200;200;0;0;0;0;20;2;100;;;;;;;;;10;
+40;;;;;;;;;;;;;;;;;;;

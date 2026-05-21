@@ -17,7 +17,7 @@
   {
     "label": "Run UI (MBE)",
     "command": "dotnet",
-    "args": ["run", "--project", "SemiStep/SemiStep.UI/SemiStep.UI.csproj", "--", "--config-dir", "$ZED_WORKTREE_ROOT/ConfigFiles/MBE"],
+    "args": ["run", "--project", "SemiStep/SemiStep.UI/SemiStep.UI.csproj", "--", "--config-dir", "$ZED_WORKTREE_ROOT/ConfigFiles/MBE", "--log-file", "$ZED_WORKTREE_ROOT/SemiStep/Artifacts/logs/semistep.log", "--logging-level", "verbose"],
     "cwd": "$ZED_WORKTREE_ROOT",
     "reveal": "always",
     "use_new_terminal": true,
@@ -25,7 +25,15 @@
   {
     "label": "Run UI (MOCVD)",
     "command": "dotnet",
-    "args": ["run", "--project", "SemiStep/SemiStep.UI/SemiStep.UI.csproj", "--", "--config-dir", "$ZED_WORKTREE_ROOT/ConfigFiles/MOCVD"],
+    "args": ["run", "--project", "SemiStep/SemiStep.UI/SemiStep.UI.csproj", "--", "--config-dir", "$ZED_WORKTREE_ROOT/ConfigFiles/MOCVD", "--log-file", "$ZED_WORKTREE_ROOT/SemiStep/Artifacts/logs/semistep.log", "--logging-level", "verbose"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always",
+    "use_new_terminal": true,
+  },
+  {
+    "label": "Run UI (RIE)",
+    "command": "dotnet",
+    "args": ["run", "--project", "SemiStep/SemiStep.UI/SemiStep.UI.csproj", "--", "--config-dir", "$ZED_WORKTREE_ROOT/ConfigFiles/RIE", "--log-file", "$ZED_WORKTREE_ROOT/SemiStep/Artifacts/logs/semistep.log", "--logging-level", "verbose"],
     "cwd": "$ZED_WORKTREE_ROOT",
     "reveal": "always",
     "use_new_terminal": true,

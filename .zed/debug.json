@@ -5,7 +5,14 @@
 		"request": "launch",
 		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/SemiStep.UI.dll",
 		"cwd": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug",
-		"args": ["--config-dir", "${ZED_WORKTREE_ROOT}/ConfigFiles/MBE"],
+		"args": [
+			"--config-dir",
+			"${ZED_WORKTREE_ROOT}/ConfigFiles/MBE",
+			"--log-file",
+			"${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/logs/semistep.log",
+			"--logging-level",
+			"verbose"
+		],
 		"stopAtEntry": false,
 		"build": "Build UI"
 	},
@@ -15,7 +22,31 @@
 		"request": "launch",
 		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/SemiStep.UI.dll",
 		"cwd": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug",
-		"args": ["--config-dir", "${ZED_WORKTREE_ROOT}/ConfigFiles/MOCVD"],
+		"args": [
+			"--config-dir",
+			"${ZED_WORKTREE_ROOT}/ConfigFiles/MOCVD",
+			"--log-file",
+			"${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/logs/semistep.log",
+			"--logging-level",
+			"verbose"
+		],
+		"stopAtEntry": false,
+		"build": "Build UI"
+	},
+	{
+		"label": "Launch SemiStep.UI (RIE)",
+		"adapter": "netcoredbg",
+		"request": "launch",
+		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/SemiStep.UI.dll",
+		"cwd": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug",
+		"args": [
+			"--config-dir",
+			"${ZED_WORKTREE_ROOT}/ConfigFiles/RIE",
+			"--log-file",
+			"${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/logs/semistep.log",
+			"--logging-level",
+			"verbose"
+		],
 		"stopAtEntry": false,
 		"build": "Build UI"
 	}

@@ -1,0 +1,34 @@
+# Wait by time
+10:
+  ui_name: "Пауза по времени"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+# For loop start
+20:
+  ui_name: "For"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string
+
+# For loop end
+30:
+  ui_name: "End_For"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string
+
+# Operator pause
+40:
+  ui_name: "Пауза оператора"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string

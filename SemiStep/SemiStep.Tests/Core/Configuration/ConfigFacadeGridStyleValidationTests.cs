@@ -47,7 +47,7 @@ public sealed class ConfigFacadeGridStyleValidationTests
 		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e => e.Message.Contains("'colors.execution.depth_0'"));
+		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.execution.depth_0'"));
 	}
 
 	[Fact]
@@ -76,16 +76,23 @@ public sealed class ConfigFacadeGridStyleValidationTests
 		var gridStylePath = Path.Combine(tempDir.Path, "ui", "grid_style.yaml");
 		var token = TestContext.Current.CancellationToken;
 		var content = await File.ReadAllTextAsync(gridStylePath, token);
-		var mutated = string.Join(Environment.NewLine,
-			content.Split(["\r\n", "\n"], StringSplitOptions.None)
-				.Where(line => !line.TrimStart().StartsWith("foreground:", StringComparison.Ordinal)));
+		// Strip only the `foreground:` line inside the `disabled:` section — `readonly:` also has its own
+		// foreground key, so a global line-prefix strip would mutate two sections and weaken the assertion.
+		var lines = content.Split(["\r\n", "\n"], StringSplitOptions.None).ToList();
+		var disabledSectionIndex = lines.FindIndex(line => line.TrimStart().StartsWith("disabled:", StringComparison.Ordinal));
+		disabledSectionIndex.Should().BeGreaterThan(-1);
+		var foregroundIndex = lines.FindIndex(
+			disabledSectionIndex + 1,
+			line => line.TrimStart().StartsWith("foreground:", StringComparison.Ordinal));
+		foregroundIndex.Should().BeGreaterThan(-1);
+		lines.RemoveAt(foregroundIndex);
+		var mutated = string.Join(Environment.NewLine, lines);
 		await File.WriteAllTextAsync(gridStylePath, mutated, token);
 
 		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e =>
-			e.Message.Contains("colors.cells.disabled") && e.Message.Contains("foreground"));
+		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.disabled.foreground'"));
 	}
 
 	[Fact]
@@ -126,6 +133,26 @@ public sealed class ConfigFacadeGridStyleValidationTests
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
 			e.Message.Contains("'colors.cells.disabled.depth_2_past'") &&
+			e.Message.Contains("not-a-color"));
+	}
+
+	[Fact]
+	public async Task LoadAndValidateAsync_GridStyleMalformedReadOnlyDepth2PastHex_Fails()
+	{
+		using var tempDir = TestDataCopier.PrepareValidCase();
+		var gridStylePath = Path.Combine(tempDir.Path, "ui", "grid_style.yaml");
+		var token = TestContext.Current.CancellationToken;
+		var content = await File.ReadAllTextAsync(gridStylePath, token);
+		var mutated = content.Replace(
+			"depth_2_past: \"#ACB7C2\"",
+			"depth_2_past: \"not-a-color\"");
+		await File.WriteAllTextAsync(gridStylePath, mutated, token);
+
+		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains("'colors.cells.readonly.depth_2_past'") &&
 			e.Message.Contains("not-a-color"));
 	}
 

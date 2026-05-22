@@ -20,6 +20,16 @@ public sealed record GridStyleOptions(
 	string DisabledCellDepth3PastColor,
 	string DisabledCellSelectedColor,
 	string DisabledCellForegroundColor,
+	string ReadOnlyCellDepth0Color,
+	string ReadOnlyCellDepth1Color,
+	string ReadOnlyCellDepth2Color,
+	string ReadOnlyCellDepth3Color,
+	string ReadOnlyCellDepth0PastColor,
+	string ReadOnlyCellDepth1PastColor,
+	string ReadOnlyCellDepth2PastColor,
+	string ReadOnlyCellDepth3PastColor,
+	string ReadOnlyCellSelectedColor,
+	string ReadOnlyCellForegroundColor,
 	string AlternatingRowBackgroundColor,
 	string NormalRowBackgroundColor,
 	double GridLineThickness,
@@ -45,8 +55,8 @@ public sealed record GridStyleOptions(
 {
 	/// <summary>
 	/// Fallback configuration used for shape/wiring tests only. The `#000000` sentinel values on
-	/// the execution and disabled-cell palettes are intentional placeholders — production runs
-	/// load real colors via <c>GridStyleValidator</c> + <c>GridStyleMapper</c> and never observe
+	/// the readonly, disabled, and execution cell palettes are intentional placeholders — production
+	/// runs load real colors via <c>GridStyleValidator</c> + <c>GridStyleMapper</c> and never observe
 	/// these defaults.
 	/// </summary>
 	public static GridStyleOptions Default { get; } = new(
@@ -69,6 +79,16 @@ public sealed record GridStyleOptions(
 		DisabledCellDepth3PastColor: "#000000",
 		DisabledCellSelectedColor: "#000000",
 		DisabledCellForegroundColor: "#000000",
+		ReadOnlyCellDepth0Color: "#000000",
+		ReadOnlyCellDepth1Color: "#000000",
+		ReadOnlyCellDepth2Color: "#000000",
+		ReadOnlyCellDepth3Color: "#000000",
+		ReadOnlyCellDepth0PastColor: "#000000",
+		ReadOnlyCellDepth1PastColor: "#000000",
+		ReadOnlyCellDepth2PastColor: "#000000",
+		ReadOnlyCellDepth3PastColor: "#000000",
+		ReadOnlyCellSelectedColor: "#000000",
+		ReadOnlyCellForegroundColor: "#000000",
 		AlternatingRowBackgroundColor: "#FAFAFA",
 		NormalRowBackgroundColor: "#FFFFFF",
 		GridLineThickness: 1.0,

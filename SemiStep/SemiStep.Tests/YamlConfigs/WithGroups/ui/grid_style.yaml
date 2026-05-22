@@ -8,6 +8,17 @@ layout:
 
 colors:
   cells:
+    readonly:
+      depth_0: "#D8D8D8"
+      depth_1: "#CCD5E0"
+      depth_2: "#B8C3D1"
+      depth_3: "#94A2B3"
+      depth_0_past: "#C8C8C8"
+      depth_1_past: "#BCC4CE"
+      depth_2_past: "#ACB7C2"
+      depth_3_past: "#8590A0"
+      selected: "#6B95C0"
+      foreground: "#606060"
     disabled:
       depth_0: "#E0E0E0"
       depth_1: "#D5DEEA"
@@ -19,13 +30,13 @@ colors:
       depth_3_past: "#909AAA"
       selected: "#89B4D7"
       foreground: "#808080"
-  execution:
-    depth_0: "#FFFFFF"
-    depth_1: "#E8F3FF"
-    depth_2: "#D0E7FF"
-    depth_3: "#A8D0FF"
-    depth_0_past: "#F0F0F0"
-    depth_1_past: "#DCE5EE"
-    depth_2_past: "#C4D2E0"
-    depth_3_past: "#9CB4CC"
-    current_step_marker: "#FF8800"
+    execution:
+      depth_0: "#FFFFFF"
+      depth_1: "#E8F3FF"
+      depth_2: "#D0E7FF"
+      depth_3: "#A8D0FF"
+      depth_0_past: "#F0F0F0"
+      depth_1_past: "#DCE5EE"
+      depth_2_past: "#C4D2E0"
+      depth_3_past: "#9CB4CC"
+      current_step_marker: "#FF8800"

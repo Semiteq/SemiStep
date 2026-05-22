@@ -16,10 +16,20 @@ namespace SemiStep.Tests.UI.Styles;
 public sealed class CellPaletteInstallerTests
 {
 	[AvaloniaFact]
-	public void Install_PopulatesElevenBrushKeys_WithExpectedColors()
+	public void Install_PopulatesAllCellBrushes_WithExpectedColors()
 	{
 		var gridStyle = GridStyleOptions.Default with
 		{
+			ReadOnlyCellDepth0Color = "#D8D8D8",
+			ReadOnlyCellDepth1Color = "#CCD5E0",
+			ReadOnlyCellDepth2Color = "#B8C3D1",
+			ReadOnlyCellDepth3Color = "#94A2B3",
+			ReadOnlyCellDepth0PastColor = "#C8C8C8",
+			ReadOnlyCellDepth1PastColor = "#BCC4CE",
+			ReadOnlyCellDepth2PastColor = "#ACB7C2",
+			ReadOnlyCellDepth3PastColor = "#8590A0",
+			ReadOnlyCellSelectedColor = "#6B95C0",
+			ReadOnlyCellForegroundColor = "#606060",
 			DisabledCellDepth0Color = "#E0E0E0",
 			DisabledCellDepth1Color = "#D5DEEA",
 			DisabledCellDepth2Color = "#C2CEDB",
@@ -36,6 +46,16 @@ public sealed class CellPaletteInstallerTests
 
 		CellPaletteInstaller.Install(resources, gridStyle);
 
+		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth0BrushKey, "#D8D8D8");
+		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth1BrushKey, "#CCD5E0");
+		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth2BrushKey, "#B8C3D1");
+		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth3BrushKey, "#94A2B3");
+		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth0PastBrushKey, "#C8C8C8");
+		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth1PastBrushKey, "#BCC4CE");
+		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth2PastBrushKey, "#ACB7C2");
+		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth3PastBrushKey, "#8590A0");
+		AssertBrush(resources, CellPaletteInstaller.CellReadOnlySelectedBackgroundBrushKey, "#6B95C0");
+		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyForegroundBrushKey, "#606060");
 		AssertBrush(resources, CellPaletteInstaller.CellDisabledDepth0BrushKey, "#E0E0E0");
 		AssertBrush(resources, CellPaletteInstaller.CellDisabledDepth1BrushKey, "#D5DEEA");
 		AssertBrush(resources, CellPaletteInstaller.CellDisabledDepth2BrushKey, "#C2CEDB");
@@ -48,7 +68,7 @@ public sealed class CellPaletteInstallerTests
 		AssertBrush(resources, CellPaletteInstaller.CellDisabledForegroundBrushKey, "#808080");
 		AssertBrush(resources, CellPaletteInstaller.GridLineBrushKey, "#CCCCCC");
 
-		resources.Count.Should().Be(11);
+		resources.Count.Should().Be(21);
 	}
 
 	private static void AssertBrush(IResourceDictionary resources, string key, string expectedHex)

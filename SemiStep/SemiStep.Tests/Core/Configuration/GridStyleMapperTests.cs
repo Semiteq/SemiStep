@@ -14,11 +14,22 @@ namespace SemiStep.Tests.Core.Configuration;
 public sealed class GridStyleMapperTests
 {
 	[Fact]
-	public void Map_WiresEveryDisabledCellAndExecutionFieldFromDto()
+	public void Map_WiresEveryCellPaletteFieldFromDto()
 	{
 		var dto = BuildCompleteDto();
 
 		var options = GridStyleMapper.Map(dto);
+
+		options.ReadOnlyCellDepth0Color.Should().Be("#11111B");
+		options.ReadOnlyCellDepth1Color.Should().Be("#22222B");
+		options.ReadOnlyCellDepth2Color.Should().Be("#33333B");
+		options.ReadOnlyCellDepth3Color.Should().Be("#44444B");
+		options.ReadOnlyCellDepth0PastColor.Should().Be("#55555B");
+		options.ReadOnlyCellDepth1PastColor.Should().Be("#66666B");
+		options.ReadOnlyCellDepth2PastColor.Should().Be("#77777B");
+		options.ReadOnlyCellDepth3PastColor.Should().Be("#88888B");
+		options.ReadOnlyCellSelectedColor.Should().Be("#99999B");
+		options.ReadOnlyCellForegroundColor.Should().Be("#AAAAAC");
 
 		options.DisabledCellDepth0Color.Should().Be("#11111A");
 		options.DisabledCellDepth1Color.Should().Be("#22222A");
@@ -58,6 +69,19 @@ public sealed class GridStyleMapperTests
 			{
 				Cells = new GridStyleCellColorsDto
 				{
+					ReadOnly = new GridStyleReadOnlyCellColorsDto
+					{
+						Depth0 = "#11111B",
+						Depth1 = "#22222B",
+						Depth2 = "#33333B",
+						Depth3 = "#44444B",
+						Depth0Past = "#55555B",
+						Depth1Past = "#66666B",
+						Depth2Past = "#77777B",
+						Depth3Past = "#88888B",
+						Selected = "#99999B",
+						Foreground = "#AAAAAC"
+					},
 					Disabled = new GridStyleDisabledCellColorsDto
 					{
 						Depth0 = "#11111A",
@@ -70,19 +94,19 @@ public sealed class GridStyleMapperTests
 						Depth3Past = "#88888A",
 						Selected = "#99999A",
 						Foreground = "#AAAAAB"
+					},
+					Execution = new GridStyleExecutionColorsDto
+					{
+						Depth0 = "#111111",
+						Depth1 = "#222222",
+						Depth2 = "#333333",
+						Depth3 = "#444444",
+						Depth0Past = "#555555",
+						Depth1Past = "#666666",
+						Depth2Past = "#777777",
+						Depth3Past = "#888888",
+						CurrentStepMarker = "#999999"
 					}
-				},
-				Execution = new GridStyleExecutionColorsDto
-				{
-					Depth0 = "#111111",
-					Depth1 = "#222222",
-					Depth2 = "#333333",
-					Depth3 = "#444444",
-					Depth0Past = "#555555",
-					Depth1Past = "#666666",
-					Depth2Past = "#777777",
-					Depth3Past = "#888888",
-					CurrentStepMarker = "#999999"
 				}
 			}
 		};

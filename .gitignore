@@ -169,6 +169,9 @@ AutoTest.Net/
 # Installshield output folder
 [Ee]xpress/
 
+# Inno Setup compiled installer output
+Installer/Output/
+
 # DocProject is a documentation generator add-in
 DocProject/buildhelp/
 DocProject/Help/*.HxT

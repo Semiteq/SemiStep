@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <AssemblyName>Semistep</AssemblyName>
     <ApplicationIcon>logo.ico</ApplicationIcon>
   </PropertyGroup>
 

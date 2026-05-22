@@ -1,0 +1,90 @@
+﻿using FluentAssertions;
+
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Configuration.Dto;
+using SemiStep.Core.Configuration.Mapping;
+
+using Xunit;
+
+namespace SemiStep.Tests.Core.Configuration;
+
+[Trait("Component", "Config")]
+[Trait("Category", "Unit")]
+[Trait("Area", "GridStyleMapping")]
+public sealed class GridStyleMapperTests
+{
+	[Fact]
+	public void Map_WiresEveryDisabledCellAndExecutionFieldFromDto()
+	{
+		var dto = BuildCompleteDto();
+
+		var options = GridStyleMapper.Map(dto);
+
+		options.DisabledCellDepth0Color.Should().Be("#11111A");
+		options.DisabledCellDepth1Color.Should().Be("#22222A");
+		options.DisabledCellDepth2Color.Should().Be("#33333A");
+		options.DisabledCellDepth3Color.Should().Be("#44444A");
+		options.DisabledCellDepth0PastColor.Should().Be("#55555A");
+		options.DisabledCellDepth1PastColor.Should().Be("#66666A");
+		options.DisabledCellDepth2PastColor.Should().Be("#77777A");
+		options.DisabledCellDepth3PastColor.Should().Be("#88888A");
+		options.DisabledCellSelectedColor.Should().Be("#99999A");
+		options.DisabledCellForegroundColor.Should().Be("#AAAAAB");
+
+		options.ExecutionDepth0Color.Should().Be("#111111");
+		options.ExecutionDepth1Color.Should().Be("#222222");
+		options.ExecutionDepth2Color.Should().Be("#333333");
+		options.ExecutionDepth3Color.Should().Be("#444444");
+		options.ExecutionDepth0PastColor.Should().Be("#555555");
+		options.ExecutionDepth1PastColor.Should().Be("#666666");
+		options.ExecutionDepth2PastColor.Should().Be("#777777");
+		options.ExecutionDepth3PastColor.Should().Be("#888888");
+		options.ExecutionCurrentStepMarkerColor.Should().Be("#999999");
+	}
+
+	[Fact]
+	public void Map_NullDto_ReturnsDefaults()
+	{
+		var options = GridStyleMapper.Map(null);
+
+		options.Should().Be(GridStyleOptions.Default);
+	}
+
+	private static GridStyleOptionsDto BuildCompleteDto()
+	{
+		return new GridStyleOptionsDto
+		{
+			Colors = new GridStyleColorsDto
+			{
+				Cells = new GridStyleCellColorsDto
+				{
+					Disabled = new GridStyleDisabledCellColorsDto
+					{
+						Depth0 = "#11111A",
+						Depth1 = "#22222A",
+						Depth2 = "#33333A",
+						Depth3 = "#44444A",
+						Depth0Past = "#55555A",
+						Depth1Past = "#66666A",
+						Depth2Past = "#77777A",
+						Depth3Past = "#88888A",
+						Selected = "#99999A",
+						Foreground = "#AAAAAB"
+					}
+				},
+				Execution = new GridStyleExecutionColorsDto
+				{
+					Depth0 = "#111111",
+					Depth1 = "#222222",
+					Depth2 = "#333333",
+					Depth3 = "#444444",
+					Depth0Past = "#555555",
+					Depth1Past = "#666666",
+					Depth2Past = "#777777",
+					Depth3Past = "#888888",
+					CurrentStepMarker = "#999999"
+				}
+			}
+		};
+	}
+}

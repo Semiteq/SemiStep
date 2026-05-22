@@ -13,6 +13,12 @@ internal static class GridStyleMapper
 		}
 
 		var defaults = GridStyleOptions.Default;
+		// Validator-first invariant: GridStyleValidator runs before this mapper and rejects
+		// any DTO where `colors.cells.disabled` or `colors.execution` (or any of their hex
+		// keys) is missing. The local aliases below let us read each field without re-
+		// suppressing the chain on every line.
+		var disabled = dto.Colors!.Cells!.Disabled!;
+		var execution = dto.Colors!.Execution!;
 
 		return new GridStyleOptions(
 			HeaderFontSize: dto.Fonts?.HeaderSize ?? defaults.HeaderFontSize,
@@ -24,12 +30,16 @@ internal static class GridStyleMapper
 			RowHeight: dto.Layout?.RowHeight ?? defaults.RowHeight,
 			SelectionBackgroundColor: dto.Colors?.Selection?.Background ?? defaults.SelectionBackgroundColor,
 			SelectionForegroundColor: dto.Colors?.Selection?.Foreground ?? defaults.SelectionForegroundColor,
-			// Validator-first invariant: GridStyleValidator runs before this mapper and rejects any
-			// DTO whose `colors.cells.disabled.{normal,selected,foreground}` keys are missing or
-			// malformed. The null-forgiving operators below are therefore safe.
-			DisabledCellNormalColor: dto.Colors!.Cells!.Disabled!.Normal!,
-			DisabledCellSelectedBackgroundColor: dto.Colors.Cells.Disabled.Selected!,
-			DisabledCellForegroundColor: dto.Colors.Cells.Disabled.Foreground!,
+			DisabledCellDepth0Color: disabled.Depth0!,
+			DisabledCellDepth1Color: disabled.Depth1!,
+			DisabledCellDepth2Color: disabled.Depth2!,
+			DisabledCellDepth3Color: disabled.Depth3!,
+			DisabledCellDepth0PastColor: disabled.Depth0Past!,
+			DisabledCellDepth1PastColor: disabled.Depth1Past!,
+			DisabledCellDepth2PastColor: disabled.Depth2Past!,
+			DisabledCellDepth3PastColor: disabled.Depth3Past!,
+			DisabledCellSelectedColor: disabled.Selected!,
+			DisabledCellForegroundColor: disabled.Foreground!,
 			AlternatingRowBackgroundColor: dto.Colors?.Rows?.AlternatingBackground ??
 										   defaults.AlternatingRowBackgroundColor,
 			NormalRowBackgroundColor: dto.Colors?.Rows?.NormalBackground ?? defaults.NormalRowBackgroundColor,
@@ -44,18 +54,14 @@ internal static class GridStyleMapper
 			ValidationPanelErrorColor: dto.ValidationPanel?.ErrorColor ?? defaults.ValidationPanelErrorColor,
 			ValidationPanelWarningColor: dto.ValidationPanel?.WarningColor ?? defaults.ValidationPanelWarningColor,
 			ValidationPanelMaxHeight: dto.ValidationPanel?.MaxHeight ?? defaults.ValidationPanelMaxHeight,
-			// Validator-first invariant: GridStyleValidator runs before this mapper and rejects
-			// any DTO where `colors.execution` (or any of the nine hex keys below) is missing.
-			// The null-forgiving operators are therefore safe — by the time the mapper sees the
-			// DTO, every execution-palette field is guaranteed to be a non-null hex string.
-			ExecutionDepth0Color: dto.Colors!.Execution!.Depth0!,
-			ExecutionDepth1Color: dto.Colors.Execution.Depth1!,
-			ExecutionDepth2Color: dto.Colors.Execution.Depth2!,
-			ExecutionDepth3Color: dto.Colors.Execution.Depth3!,
-			ExecutionDepth0PastColor: dto.Colors.Execution.Depth0Past!,
-			ExecutionDepth1PastColor: dto.Colors.Execution.Depth1Past!,
-			ExecutionDepth2PastColor: dto.Colors.Execution.Depth2Past!,
-			ExecutionDepth3PastColor: dto.Colors.Execution.Depth3Past!,
-			ExecutionCurrentStepMarkerColor: dto.Colors.Execution.CurrentStepMarker!);
+			ExecutionDepth0Color: execution.Depth0!,
+			ExecutionDepth1Color: execution.Depth1!,
+			ExecutionDepth2Color: execution.Depth2!,
+			ExecutionDepth3Color: execution.Depth3!,
+			ExecutionDepth0PastColor: execution.Depth0Past!,
+			ExecutionDepth1PastColor: execution.Depth1Past!,
+			ExecutionDepth2PastColor: execution.Depth2Past!,
+			ExecutionDepth3PastColor: execution.Depth3Past!,
+			ExecutionCurrentStepMarkerColor: execution.CurrentStepMarker!);
 	}
 }

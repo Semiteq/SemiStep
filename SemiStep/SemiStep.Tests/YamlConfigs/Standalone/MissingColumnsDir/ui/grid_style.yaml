@@ -5,7 +5,14 @@ fonts:
 colors:
   cells:
     disabled:
-      normal: "#E0E0E0"
+      depth_0: "#E0E0E0"
+      depth_1: "#D5DEEA"
+      depth_2: "#C2CEDB"
+      depth_3: "#9DABBC"
+      depth_0_past: "#D0D0D0"
+      depth_1_past: "#C5CDD8"
+      depth_2_past: "#B5C0CC"
+      depth_3_past: "#909AAA"
       selected: "#89B4D7"
       foreground: "#808080"
   execution:

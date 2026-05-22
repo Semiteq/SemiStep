@@ -5,10 +5,11 @@
     <Color x:Key="AccentColor">#0078D7</Color>
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
 
-    <!-- Cell State: Disabled / Disabled+Selected, and Grid lines are installed at startup
-         by CellPaletteInstaller from GridStyleOptions (colors.cells.disabled.{normal,selected,foreground},
-         colors.grid_line). Brush keys: CellDisabledBackgroundBrush, CellDisabledSelectedBackgroundBrush,
-         CellDisabledForegroundBrush, GridLineBrush. -->
+    <!-- Cell State: Disabled (per-depth x past) / Disabled+Selected / Foreground, and Grid lines
+         are installed at startup by CellPaletteInstaller from GridStyleOptions
+         (colors.cells.disabled.{depth_0..3,depth_0..3_past,selected,foreground}, colors.grid_line).
+         Brush keys: CellDisabledDepth{0..3}Brush, CellDisabledDepth{0..3}PastBrush,
+         CellDisabledSelectedBackgroundBrush, CellDisabledForegroundBrush, GridLineBrush. -->
 
     <!-- Selected text foreground (white-on-accent) -->
     <Color x:Key="TextOnAccentColor">#FFFFFF</Color>

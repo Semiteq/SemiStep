@@ -79,10 +79,24 @@ public sealed class GridStyleColorsValidationTests
 		result.Errors.Should().Contain(e => e.Message.Contains("colors.cells.disabled"));
 	}
 
+	public static TheoryData<string> DisabledKeyNames =>
+		new()
+		{
+			"depth_0", "depth_1", "depth_2", "depth_3",
+			"depth_0_past", "depth_1_past", "depth_2_past", "depth_3_past",
+			"selected", "foreground"
+		};
+
+	public static TheoryData<string> ExecutionKeyNames =>
+		new()
+		{
+			"depth_0", "depth_1", "depth_2", "depth_3",
+			"depth_0_past", "depth_1_past", "depth_2_past", "depth_3_past",
+			"current_step_marker"
+		};
+
 	[Theory]
-	[InlineData("normal")]
-	[InlineData("selected")]
-	[InlineData("foreground")]
+	[MemberData(nameof(DisabledKeyNames))]
 	public void Validate_MissingDisabledKey_FailsWithKeyName(string keyName)
 	{
 		var dto = CreateValidDto();
@@ -91,13 +105,21 @@ public sealed class GridStyleColorsValidationTests
 		var result = GridStyleValidator.Validate(dto);
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e => e.Message.Contains($"colors.cells.disabled.{keyName}"));
+		result.Errors.Should().Contain(e => e.Message.Contains($"'colors.cells.disabled.{keyName}'"));
 	}
 
 	[Theory]
-	[InlineData("normal", "#ZZZZZZ")]
+	[InlineData("depth_0", "FFFFFF")]
+	[InlineData("depth_1", "FFFFFF")]
+	[InlineData("depth_2", "FFFFFF")]
+	[InlineData("depth_3", "FFFFFF")]
+	[InlineData("depth_0_past", "#12345")]
+	[InlineData("depth_1_past", "#12345")]
+	[InlineData("depth_2_past", "#12345")]
+	[InlineData("depth_3_past", "#12345")]
 	[InlineData("selected", "FFFFFF")]
 	[InlineData("foreground", "#12345")]
+	[InlineData("depth_0", "#ZZZZZZ")]
 	public void Validate_MalformedDisabledHex_FailsNamingKey(string keyName, string badHex)
 	{
 		var dto = CreateValidDto();
@@ -107,20 +129,12 @@ public sealed class GridStyleColorsValidationTests
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
-			e.Message.Contains($"colors.cells.disabled.{keyName}") &&
+			e.Message.Contains($"'colors.cells.disabled.{keyName}'") &&
 			e.Message.Contains(badHex));
 	}
 
 	[Theory]
-	[InlineData("depth_0")]
-	[InlineData("depth_1")]
-	[InlineData("depth_2")]
-	[InlineData("depth_3")]
-	[InlineData("depth_0_past")]
-	[InlineData("depth_1_past")]
-	[InlineData("depth_2_past")]
-	[InlineData("depth_3_past")]
-	[InlineData("current_step_marker")]
+	[MemberData(nameof(ExecutionKeyNames))]
 	public void Validate_MissingIndividualKey_FailsWithKeyName(string keyName)
 	{
 		var dto = CreateValidDto();
@@ -129,7 +143,7 @@ public sealed class GridStyleColorsValidationTests
 		var result = GridStyleValidator.Validate(dto);
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e => e.Message.Contains(keyName));
+		result.Errors.Should().Contain(e => e.Message.Contains($"'colors.execution.{keyName}'"));
 	}
 
 	[Theory]
@@ -241,7 +255,14 @@ public sealed class GridStyleColorsValidationTests
 	{
 		return new GridStyleDisabledCellColorsDto
 		{
-			Normal = "#E0E0E0",
+			Depth0 = "#E0E0E0",
+			Depth1 = "#D5DEEA",
+			Depth2 = "#C2CEDB",
+			Depth3 = "#9DABBC",
+			Depth0Past = "#D0D0D0",
+			Depth1Past = "#C5CDD8",
+			Depth2Past = "#B5C0CC",
+			Depth3Past = "#909AAA",
 			Selected = "#89B4D7",
 			Foreground = "#808080"
 		};
@@ -252,8 +273,29 @@ public sealed class GridStyleColorsValidationTests
 		var disabled = dto.Colors!.Cells!.Disabled!;
 		switch (keyName)
 		{
-			case "normal":
-				disabled.Normal = null;
+			case "depth_0":
+				disabled.Depth0 = null;
+				break;
+			case "depth_1":
+				disabled.Depth1 = null;
+				break;
+			case "depth_2":
+				disabled.Depth2 = null;
+				break;
+			case "depth_3":
+				disabled.Depth3 = null;
+				break;
+			case "depth_0_past":
+				disabled.Depth0Past = null;
+				break;
+			case "depth_1_past":
+				disabled.Depth1Past = null;
+				break;
+			case "depth_2_past":
+				disabled.Depth2Past = null;
+				break;
+			case "depth_3_past":
+				disabled.Depth3Past = null;
 				break;
 			case "selected":
 				disabled.Selected = null;
@@ -269,8 +311,29 @@ public sealed class GridStyleColorsValidationTests
 		var disabled = dto.Colors!.Cells!.Disabled!;
 		switch (keyName)
 		{
-			case "normal":
-				disabled.Normal = value;
+			case "depth_0":
+				disabled.Depth0 = value;
+				break;
+			case "depth_1":
+				disabled.Depth1 = value;
+				break;
+			case "depth_2":
+				disabled.Depth2 = value;
+				break;
+			case "depth_3":
+				disabled.Depth3 = value;
+				break;
+			case "depth_0_past":
+				disabled.Depth0Past = value;
+				break;
+			case "depth_1_past":
+				disabled.Depth1Past = value;
+				break;
+			case "depth_2_past":
+				disabled.Depth2Past = value;
+				break;
+			case "depth_3_past":
+				disabled.Depth3Past = value;
 				break;
 			case "selected":
 				disabled.Selected = value;

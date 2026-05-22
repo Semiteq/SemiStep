@@ -61,7 +61,14 @@ internal static class GridStyleValidator
 			var disabled = dto.Colors.Cells.Disabled;
 			var disabledKeys = new (string Name, string? Value)[]
 			{
-				("normal", disabled.Normal),
+				("depth_0", disabled.Depth0),
+				("depth_1", disabled.Depth1),
+				("depth_2", disabled.Depth2),
+				("depth_3", disabled.Depth3),
+				("depth_0_past", disabled.Depth0Past),
+				("depth_1_past", disabled.Depth1Past),
+				("depth_2_past", disabled.Depth2Past),
+				("depth_3_past", disabled.Depth3Past),
 				("selected", disabled.Selected),
 				("foreground", disabled.Foreground)
 			};

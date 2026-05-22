@@ -31,16 +31,23 @@ public sealed class ConfigFacadeGridStyleValidationTests
 		var gridStylePath = Path.Combine(tempDir.Path, "ui", "grid_style.yaml");
 		var token = TestContext.Current.CancellationToken;
 		var content = await File.ReadAllTextAsync(gridStylePath, token);
-		// Remove the depth_0 key line entirely to simulate a missing field.
-		var mutated = string.Join(Environment.NewLine,
-			content.Split(["\r\n", "\n"], StringSplitOptions.None)
-				.Where(line => !line.TrimStart().StartsWith("depth_0:", StringComparison.Ordinal)));
+		// Remove only the depth_0 line under `execution:` — the disabled section also has its own
+		// depth_0 key, and stripping by line-prefix alone would delete both and weaken the assertion.
+		var lines = content.Split(["\r\n", "\n"], StringSplitOptions.None).ToList();
+		var executionSectionIndex = lines.FindIndex(line => line.TrimStart().StartsWith("execution:", StringComparison.Ordinal));
+		executionSectionIndex.Should().BeGreaterThan(-1);
+		var depth0Index = lines.FindIndex(
+			executionSectionIndex + 1,
+			line => line.TrimStart().StartsWith("depth_0:", StringComparison.Ordinal));
+		depth0Index.Should().BeGreaterThan(-1);
+		lines.RemoveAt(depth0Index);
+		var mutated = string.Join(Environment.NewLine, lines);
 		await File.WriteAllTextAsync(gridStylePath, mutated, token);
 
 		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e => e.Message.Contains("depth_0"));
+		result.Errors.Should().Contain(e => e.Message.Contains("'colors.execution.depth_0'"));
 	}
 
 	[Fact]
@@ -89,8 +96,8 @@ public sealed class ConfigFacadeGridStyleValidationTests
 		var token = TestContext.Current.CancellationToken;
 		var content = await File.ReadAllTextAsync(gridStylePath, token);
 		var mutated = content.Replace(
-			"normal: \"#E0E0E0\"",
-			"normal: \"not-a-color\"");
+			"selected: \"#89B4D7\"",
+			"selected: \"not-a-color\"");
 		await File.WriteAllTextAsync(gridStylePath, mutated, token);
 
 		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
@@ -98,7 +105,27 @@ public sealed class ConfigFacadeGridStyleValidationTests
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
 			e.Message.Contains("colors.cells.disabled") &&
-			e.Message.Contains("normal") &&
+			e.Message.Contains("selected") &&
+			e.Message.Contains("not-a-color"));
+	}
+
+	[Fact]
+	public async Task LoadAndValidateAsync_GridStyleMalformedDisabledDepth2PastHex_Fails()
+	{
+		using var tempDir = TestDataCopier.PrepareValidCase();
+		var gridStylePath = Path.Combine(tempDir.Path, "ui", "grid_style.yaml");
+		var token = TestContext.Current.CancellationToken;
+		var content = await File.ReadAllTextAsync(gridStylePath, token);
+		var mutated = content.Replace(
+			"depth_2_past: \"#B5C0CC\"",
+			"depth_2_past: \"not-a-color\"");
+		await File.WriteAllTextAsync(gridStylePath, mutated, token);
+
+		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains("'colors.cells.disabled.depth_2_past'") &&
 			e.Message.Contains("not-a-color"));
 	}
 

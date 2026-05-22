@@ -117,11 +117,10 @@ private async Task HandleConflictAsync(Recipe local, Recipe plc)
 
 **Files:**
 - Create: `SemiStep/SemiStep.UI/Plc/PlcConflictDialogViewModel.cs`
-- Modify: `SemiStep/SemiStep.UI/SemiStep.UI.csproj` (add `<Compile Include>` entry)
 
-- [ ] create `PlcConflictDialogViewModel` per Technical Details (two int props, primary-style ctor)
-- [ ] register file in csproj
-- [ ] build solution
+- [x] create `PlcConflictDialogViewModel` per Technical Details (two int props, primary-style ctor)
+- [x] `SemiStep.UI.csproj` uses SDK-style globs — no manual `<Compile Include>` needed
+- [x] build solution
 
 ### Task 2: Update dialog markup and code-behind
 
@@ -129,28 +128,28 @@ private async Task HandleConflictAsync(Recipe local, Recipe plc)
 - Modify: `SemiStep/SemiStep.UI/Plc/PlcConflictDialog.axaml`
 - Modify: `SemiStep/SemiStep.UI/Plc/PlcConflictDialog.axaml.cs`
 
-- [ ] replace the single `TextBlock` body with header + two count `TextBlock`s + the question line, inside a `StackPanel` in `Grid.Row="0"`
-- [ ] add `xmlns:plc="using:SemiStep.UI.Plc"` and `x:DataType="plc:PlcConflictDialogViewModel"` on the `Window` root for compiled bindings (matches the convention used by `MainWindow.axaml`, `AppStatusBar.axaml`, `MessagePanel.axaml`, `RecipeMenuBar.axaml`)
-- [ ] increase `Height` from 160 to 200 (or whatever fits cleanly)
-- [ ] change `PlcConflictDialog` ctor signature to `internal PlcConflictDialog(PlcConflictDialogViewModel viewModel)`; set `DataContext = viewModel` after `InitializeComponent()`
-- [ ] leave click handlers and `KeepLocal`/`Confirmed` flags untouched
-- [ ] build solution
+- [x] replace the single `TextBlock` body with header + two count `TextBlock`s + the question line, inside a `StackPanel` in `Grid.Row="0"`
+- [x] add `xmlns:plc="clr-namespace:SemiStep.UI.Plc"` and `x:DataType="plc:PlcConflictDialogViewModel"` on the `Window` root for compiled bindings
+- [x] increase `Height` from 160 to 200
+- [x] change `PlcConflictDialog` ctor signature to `internal PlcConflictDialog(PlcConflictDialogViewModel viewModel)`; set `DataContext = viewModel` after `InitializeComponent()`
+- [x] leave click handlers and `KeepLocal`/`Confirmed` flags untouched
+- [x] build solution
 
 ### Task 3: Wire `HandleConflictAsync`
 
 **Files:**
 - Modify: `SemiStep/SemiStep.UI/MainWindow/MainWindowViewModel.cs`
 
-- [ ] in `HandleConflictAsync`, construct `new PlcConflictDialogViewModel(local.StepCount, plc.StepCount)` and pass it to `new PlcConflictDialog(viewModel)`
-- [ ] leave the rest of the method unchanged (exception handling, `dialog.Confirmed`, `ResolveConflict` call)
-- [ ] build solution
+- [x] in `HandleConflictAsync`, construct `new PlcConflictDialogViewModel(local.StepCount, plc.StepCount)` and pass it to `new PlcConflictDialog(viewModel)`
+- [x] leave the rest of the method unchanged (exception handling, `dialog.Confirmed`, `ResolveConflict` call)
+- [x] build solution
 
 ### Task 4: Verify
 
-- [ ] `HandleConflictAsync(Recipe local, Recipe plc)` now reads both parameters; IDE0060 no longer flags it
-- [ ] run full test suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — must be green
-- [ ] `dotnet format SemiStep/SemiStep.slnx` produces no diff in changed files
-- [ ] manually trigger the conflict path (see Post-Completion)
+- [x] `HandleConflictAsync(Recipe local, Recipe plc)` now reads both parameters; IDE0060 no longer flags it
+- [x] run full test suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — must be green (656/656)
+- [x] `dotnet format SemiStep/SemiStep.slnx whitespace` clean
+- [ ] manually trigger the conflict path (see Post-Completion) — **pending user**
 
 ### Task 5: Move plan, prepare PR
 

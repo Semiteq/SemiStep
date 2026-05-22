@@ -9,9 +9,10 @@ internal partial class PlcConflictDialog : Window
 
 	public bool Confirmed { get; private set; }
 
-	internal PlcConflictDialog()
+	internal PlcConflictDialog(PlcConflictDialogViewModel viewModel)
 	{
 		InitializeComponent();
+		DataContext = viewModel;
 	}
 
 	private void OnKeepLocalClick(object? sender, RoutedEventArgs e)

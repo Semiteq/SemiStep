@@ -11,4 +11,6 @@ internal sealed class GridStyleColorsDto
 	[YamlMember(Alias = "rows")] public GridStyleRowColorsDto? Rows { get; set; }
 
 	[YamlMember(Alias = "grid_line")] public string? GridLine { get; set; }
+
+	[YamlMember(Alias = "execution")] public GridStyleExecutionColorsDto? Execution { get; set; }
 }

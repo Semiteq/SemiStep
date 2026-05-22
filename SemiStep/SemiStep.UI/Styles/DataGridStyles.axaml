@@ -73,12 +73,33 @@
     <!-- RecipeRowViewModel.IsCurrentStep / IsPastStep. -->
     <!-- ============================================== -->
 
-    <Style Selector="DataGridRow.current-step DataGridCell">
-        <Setter Property="Background" Value="{DynamicResource CurrentStepBrush}" />
-    </Style>
-
+    <!-- Ordering note: Avalonia applies matching styles in document order, -->
+    <!-- and the LAST matching style wins regardless of selector specificity. -->
+    <!-- Therefore the bare .past-step rule must come BEFORE the more -->
+    <!-- specific .for-depth-N.past-step rules so depth-N past tints win. -->
     <Style Selector="DataGridRow.past-step DataGridCell">
-        <Setter Property="Background" Value="{DynamicResource PastStepBrush}" />
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth0PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-1 DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth1Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-1.past-step DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth1PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-2 DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth2Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-2.past-step DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth2PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-3 DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth3Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-3.past-step DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth3PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.current-step DataGridCell.step-number-column">
+        <Setter Property="Background" Value="{DynamicResource CurrentStepMarkerBrush}" />
     </Style>
 
 </Styles>

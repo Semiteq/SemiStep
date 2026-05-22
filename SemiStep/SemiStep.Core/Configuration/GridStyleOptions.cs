@@ -29,8 +29,22 @@ public sealed record GridStyleOptions(
 	string ValidationPanelForegroundColor,
 	string ValidationPanelErrorColor,
 	string ValidationPanelWarningColor,
-	double ValidationPanelMaxHeight)
+	double ValidationPanelMaxHeight,
+	string ExecutionDepth0Color,
+	string ExecutionDepth1Color,
+	string ExecutionDepth2Color,
+	string ExecutionDepth3Color,
+	string ExecutionDepth0PastColor,
+	string ExecutionDepth1PastColor,
+	string ExecutionDepth2PastColor,
+	string ExecutionDepth3PastColor,
+	string ExecutionCurrentStepMarkerColor)
 {
+	/// <summary>
+	/// Fallback configuration used for shape/wiring tests only. The `#000000` sentinel values on
+	/// the execution palette are intentional placeholders — production runs load real colors via
+	/// <c>GridStyleValidator</c> + <c>GridStyleMapper</c> and never observe these defaults.
+	/// </summary>
 	public static GridStyleOptions Default { get; } = new(
 		HeaderFontSize: 14,
 		CellFontSize: 12,
@@ -60,5 +74,14 @@ public sealed record GridStyleOptions(
 		ValidationPanelForegroundColor: "#000000",
 		ValidationPanelErrorColor: "#D32F2F",
 		ValidationPanelWarningColor: "#F57C00",
-		ValidationPanelMaxHeight: 100);
+		ValidationPanelMaxHeight: 100,
+		ExecutionDepth0Color: "#000000",
+		ExecutionDepth1Color: "#000000",
+		ExecutionDepth2Color: "#000000",
+		ExecutionDepth3Color: "#000000",
+		ExecutionDepth0PastColor: "#000000",
+		ExecutionDepth1PastColor: "#000000",
+		ExecutionDepth2PastColor: "#000000",
+		ExecutionDepth3PastColor: "#000000",
+		ExecutionCurrentStepMarkerColor: "#000000");
 }

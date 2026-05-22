@@ -44,6 +44,19 @@ internal static class GridStyleMapper
 			ValidationPanelForegroundColor: dto.ValidationPanel?.Foreground ?? defaults.ValidationPanelForegroundColor,
 			ValidationPanelErrorColor: dto.ValidationPanel?.ErrorColor ?? defaults.ValidationPanelErrorColor,
 			ValidationPanelWarningColor: dto.ValidationPanel?.WarningColor ?? defaults.ValidationPanelWarningColor,
-			ValidationPanelMaxHeight: dto.ValidationPanel?.MaxHeight ?? defaults.ValidationPanelMaxHeight);
+			ValidationPanelMaxHeight: dto.ValidationPanel?.MaxHeight ?? defaults.ValidationPanelMaxHeight,
+			// Validator-first invariant: GridStyleValidator runs before this mapper and rejects
+			// any DTO where `colors.execution` (or any of the nine hex keys below) is missing.
+			// The null-forgiving operators are therefore safe — by the time the mapper sees the
+			// DTO, every execution-palette field is guaranteed to be a non-null hex string.
+			ExecutionDepth0Color: dto.Colors!.Execution!.Depth0!,
+			ExecutionDepth1Color: dto.Colors.Execution.Depth1!,
+			ExecutionDepth2Color: dto.Colors.Execution.Depth2!,
+			ExecutionDepth3Color: dto.Colors.Execution.Depth3!,
+			ExecutionDepth0PastColor: dto.Colors.Execution.Depth0Past!,
+			ExecutionDepth1PastColor: dto.Colors.Execution.Depth1Past!,
+			ExecutionDepth2PastColor: dto.Colors.Execution.Depth2Past!,
+			ExecutionDepth3PastColor: dto.Colors.Execution.Depth3Past!,
+			ExecutionCurrentStepMarkerColor: dto.Colors.Execution.CurrentStepMarker!);
 	}
 }

@@ -37,12 +37,6 @@
     <SolidColorBrush x:Key="ConnectedBrush" Color="{StaticResource ConnectedColor}" />
     <SolidColorBrush x:Key="DisconnectedBrush" Color="{StaticResource DisconnectedColor}" />
 
-    <!-- Execution state row highlighting -->
-    <Color x:Key="CurrentStepBackgroundColor">#80FFFF00</Color>
-    <Color x:Key="PastStepBackgroundColor">#1A808080</Color>
-    <SolidColorBrush x:Key="CurrentStepBrush" Color="{StaticResource CurrentStepBackgroundColor}" />
-    <SolidColorBrush x:Key="PastStepBrush" Color="{StaticResource PastStepBackgroundColor}" />
-
     <!-- Chrome / Layout -->
     <Color x:Key="StatusBarBackgroundColor">#F0F0F0</Color>
     <Color x:Key="PanelBackgroundColor">#F8F8F8</Color>

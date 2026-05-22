@@ -4,7 +4,6 @@ using System.Reactive.Disposables.Fluent;
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 
@@ -131,18 +130,7 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 
 	private void OnDataGridLoadingRow(object? sender, DataGridRowEventArgs e)
 	{
-		// Avalonia 12 BindClass: the lifecycle is owned by the DataGridRow's value store.
-		// On row recycling (new DataContext bound to the same container) the binding
-		// re-evaluates against the new DataContext automatically. On row detach (UnloadingRow)
-		// the binding tears down with the row, so no manual cleanup or bookkeeping is needed.
-		e.Row.BindClass(
-			RowExecutionClasses.CurrentStepClass,
-			new Binding(nameof(RecipeRowViewModel.IsCurrentStep)),
-			e.Row);
-		e.Row.BindClass(
-			RowExecutionClasses.PastStepClass,
-			new Binding(nameof(RecipeRowViewModel.IsPastStep)),
-			e.Row);
+		RecipeRowExecutionClassBinder.BindAll(e.Row);
 	}
 
 	private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)

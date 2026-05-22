@@ -154,6 +154,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		}
 
 		RefreshStepStartTimes();
+		RefreshRowLoopDepths();
 	}
 
 	public void RequestSelection(int? suggestedIndex)
@@ -392,6 +393,15 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			}
 
 			RecipeRows[i].UpdateStepStartTime(formattedTime);
+		}
+	}
+
+	private void RefreshRowLoopDepths()
+	{
+		var rowLoopDepths = _coordinator.Snapshot.RowLoopDepths;
+		for (var i = 0; i < RecipeRows.Count; i++)
+		{
+			RecipeRows[i].ForDepth = Math.Min(rowLoopDepths[i], 3);
 		}
 	}
 

@@ -6,11 +6,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 using ReactiveUI.Avalonia;
 
+using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.Dialogs;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.RecipeGrid;
+using SemiStep.UI.Styles;
 
 using Serilog;
 
@@ -42,6 +44,13 @@ public class App : Application
 				{
 					throw new InvalidOperationException("ServiceProvider not set. Call Run() before starting the app.");
 				}
+
+				var gridStyle = _serviceProvider.GetRequiredService<GridStyleOptions>();
+				// Both installers must run before MainWindow construction. {DynamicResource}
+				// lookups against Application.Resources resolve lazily at first realize;
+				// missing keys at that point render as default/nothing.
+				ExecutionPaletteInstaller.Install(Resources, gridStyle);
+				CellPaletteInstaller.Install(Resources, gridStyle);
 
 				var mainWindowViewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
 				mainWindowViewModel.Initialize();

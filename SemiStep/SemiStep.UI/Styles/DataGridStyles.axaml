@@ -26,20 +26,26 @@
     </Style>
 
     <!-- ============================================== -->
-    <!-- Disabled cell appearance. Two signals paint    -->
-    <!-- the same greyed visual:                        -->
-    <!--  * per-row `IsInapplicable` attached property  -->
-    <!--    (set via `CellTheme` binding for action-    -->
-    <!--    mismatched cells).                          -->
+    <!-- Read-only and inapplicable cell appearance.    -->
+    <!-- Two DISJOINT signals, each with its own        -->
+    <!-- palette so operators can distinguish them:     -->
     <!--  * per-column `read-only-column` class         -->
     <!--    (stamped by `ColumnBuilder` for             -->
     <!--    `GridColumnDefinition.ReadOnly == true`).   -->
+    <!--  * per-cell `IsInapplicable` attached property -->
+    <!--    (set via `CellTheme` binding for action-   -->
+    <!--    mismatched cells; explicitly false for      -->
+    <!--    read-only columns per CellStateResolver).   -->
     <!-- ============================================== -->
 
-    <Style Selector="DataGridCell.read-only-column, DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledBackgroundBrush}" />
+    <Style Selector="DataGridCell.read-only-column">
+        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth0Brush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource CellReadOnlyForegroundBrush}" />
+    </Style>
+
+    <Style Selector="DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth0Brush}" />
         <Setter Property="TextElement.Foreground" Value="{DynamicResource CellDisabledForegroundBrush}" />
-        <Setter Property="Opacity" Value="0.5" />
     </Style>
 
     <!-- ============================================== -->
@@ -58,27 +64,131 @@
     </Style>
 
     <!-- ============================================== -->
-    <!-- Selected row override for disabled cells.      -->
-    <!-- ============================================== -->
-
-    <Style Selector="DataGridRow:selected DataGridCell.read-only-column, DataGridRow:selected DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
-    </Style>
-
-    <!-- ============================================== -->
     <!-- Execution state: current and past step row.    -->
     <!-- Row-level classes are toggled by MainWindow's  -->
     <!-- LoadingRow / UnloadingRow handlers driven by   -->
     <!-- RecipeRowViewModel.IsCurrentStep / IsPastStep. -->
     <!-- ============================================== -->
 
-    <Style Selector="DataGridRow.current-step DataGridCell">
-        <Setter Property="Background" Value="{DynamicResource CurrentStepBrush}" />
+    <!-- Ordering note: Avalonia applies matching styles in document order, -->
+    <!-- and the LAST matching style wins regardless of selector specificity. -->
+    <!-- Therefore the bare .past-step rule must come BEFORE the more -->
+    <!-- specific .for-depth-N.past-step rules so depth-N past tints win. -->
+    <Style Selector="DataGridRow.past-step DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth0PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-1 DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth1Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-1.past-step DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth1PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-2 DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth2Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-2.past-step DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth2PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-3 DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth3Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-3.past-step DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource ExecRowDepth3PastBrush}" />
     </Style>
 
-    <Style Selector="DataGridRow.past-step DataGridCell">
-        <Setter Property="Background" Value="{DynamicResource PastStepBrush}" />
+    <!-- ============================================== -->
+    <!-- Per-depth background overrides on tinted/past  -->
+    <!-- rows. The read-only and inapplicable signals   -->
+    <!-- are disjoint (CellStateResolver guarantees     -->
+    <!-- IsInapplicable=false for read-only columns),   -->
+    <!-- so the two chains never paint the same cell;   -->
+    <!-- order BETWEEN the chains is irrelevant. Order  -->
+    <!-- WITHIN each chain matters: Avalonia applies    -->
+    <!-- matching styles in document order and the LAST -->
+    <!-- match wins, so the chain mirrors the execution -->
+    <!-- palette: bare `.past-step` first (depth-0      -->
+    <!-- past), then depth-N normal, then               -->
+    <!-- depth-N + `.past-step` so the more specific    -->
+    <!-- past-on-depth variant wins. Foreground is      -->
+    <!-- inherited from the universal rules above.      -->
+    <!-- The current-step marker selector at the bottom -->
+    <!-- of this file MUST remain the final selector so -->
+    <!-- it wins over selection on the current row's    -->
+    <!-- step-number cell.                              -->
+    <!-- ============================================== -->
+
+    <!-- Read-only per-depth chain. -->
+    <Style Selector="DataGridRow.past-step DataGridCell.read-only-column">
+        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth0PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-1 DataGridCell.read-only-column">
+        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth1Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-1.past-step DataGridCell.read-only-column">
+        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth1PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-2 DataGridCell.read-only-column">
+        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth2Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-2.past-step DataGridCell.read-only-column">
+        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth2PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-3 DataGridCell.read-only-column">
+        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth3Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-3.past-step DataGridCell.read-only-column">
+        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth3PastBrush}" />
+    </Style>
+
+    <!-- Inapplicable per-depth chain. -->
+    <Style Selector="DataGridRow.past-step DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth0PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-1 DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth1Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-1.past-step DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth1PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-2 DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth2Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-2.past-step DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth2PastBrush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-3 DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth3Brush}" />
+    </Style>
+    <Style Selector="DataGridRow.for-depth-3.past-step DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth3PastBrush}" />
+    </Style>
+
+    <!-- User selection must remain visible on tinted rows. Placed after the depth -->
+    <!-- selectors so it wins on every cell, but before the current-step marker -->
+    <!-- so the marker still shows on the step-number column when the current -->
+    <!-- step is also user-selected. -->
+    <Style Selector="DataGridRow:selected DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+    </Style>
+
+    <!-- Selected row override for read-only cells. Must come AFTER the generic -->
+    <!-- :selected rule above so last-match-wins gives read-only-selected cells -->
+    <!-- the configurable CellReadOnlySelectedBackgroundBrush instead of AccentBrush. -->
+    <Style Selector="DataGridRow:selected DataGridCell.read-only-column">
+        <Setter Property="Background" Value="{DynamicResource CellReadOnlySelectedBackgroundBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+    </Style>
+
+    <!-- Selected row override for inapplicable cells. Same last-match-wins logic -->
+    <!-- gives the configurable CellDisabledSelectedBackgroundBrush. -->
+    <Style Selector="DataGridRow:selected DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+    </Style>
+
+    <Style Selector="DataGridRow.current-step DataGridCell.step-number-column">
+        <Setter Property="Background" Value="{DynamicResource CurrentStepMarkerBrush}" />
     </Style>
 
 </Styles>

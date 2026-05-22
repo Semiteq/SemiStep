@@ -31,6 +31,12 @@ public static class ConfigFacade
 
 		var (properties, columns, groups, actions, gridStyle, connection) = loadResult.Value;
 
+		var gridStyleResult = GridStyleValidator.Validate(gridStyle);
+		if (gridStyleResult.IsFailed)
+		{
+			return LogAndPropagate(gridStyleResult, loadResult);
+		}
+
 		var xrefResult = CrossReferenceValidator.Validate(properties, columns, groups, actions);
 		if (xrefResult.IsFailed)
 		{

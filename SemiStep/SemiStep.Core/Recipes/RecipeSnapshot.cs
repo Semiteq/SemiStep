@@ -8,7 +8,8 @@ public record struct RecipeSnapshot(
 	IReadOnlyDictionary<int, LoopInfo> LoopByStart,
 	IReadOnlyDictionary<int, LoopInfo> LoopByEnd,
 	IReadOnlyDictionary<int, IReadOnlyList<LoopInfo>> EnclosingLoops,
-	IReadOnlyDictionary<int, TimeSpan> SingleIterationDurations)
+	IReadOnlyDictionary<int, TimeSpan> SingleIterationDurations,
+	IReadOnlyList<int> RowLoopDepths)
 {
 	public static readonly RecipeSnapshot Empty = new(
 		Recipe.Empty,
@@ -18,7 +19,8 @@ public record struct RecipeSnapshot(
 		new Dictionary<int, LoopInfo>(),
 		new Dictionary<int, LoopInfo>(),
 		new Dictionary<int, IReadOnlyList<LoopInfo>>(),
-		new Dictionary<int, TimeSpan>());
+		new Dictionary<int, TimeSpan>(),
+		[]);
 
 	public static RecipeSnapshot Create(
 		Recipe recipe,
@@ -30,6 +32,7 @@ public record struct RecipeSnapshot(
 		var byStart = loops.ToDictionary(l => l.StartIndex, l => l);
 		var byEnd = loops.ToDictionary(l => l.EndIndex, l => l);
 		var enclosing = BuildEnclosingMap(loops);
+		var rowLoopDepths = BuildRowLoopDepths(recipe.StepCount, loops);
 
 		return new RecipeSnapshot(
 			recipe,
@@ -39,7 +42,27 @@ public record struct RecipeSnapshot(
 			byStart,
 			byEnd,
 			enclosing,
-			singleIterationDurations);
+			singleIterationDurations,
+			rowLoopDepths);
+	}
+
+	private static IReadOnlyList<int> BuildRowLoopDepths(int stepCount, IReadOnlyList<LoopInfo> loops)
+	{
+		var depths = new int[stepCount];
+
+		foreach (var loop in loops)
+		{
+			var depth = loop.Depth;
+			for (var i = loop.StartIndex; i <= loop.EndIndex; i++)
+			{
+				if (depths[i] < depth)
+				{
+					depths[i] = depth;
+				}
+			}
+		}
+
+		return depths;
 	}
 
 	private static Dictionary<int, IReadOnlyList<LoopInfo>> BuildEnclosingMap(IReadOnlyList<LoopInfo> loops)

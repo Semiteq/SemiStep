@@ -1,7 +1,6 @@
 ﻿using FluentAssertions;
 
 using SemiStep.Core.Configuration.Loaders;
-using SemiStep.Core.Shared;
 using SemiStep.Tests.Config.Helpers;
 
 using Xunit;
@@ -74,28 +73,4 @@ public sealed class LoaderFailLoudTests
 			e.Message.Contains("grid_style.yaml", StringComparison.OrdinalIgnoreCase));
 	}
 
-	[Fact]
-	public async Task GridStyleLoader_SucceedsWithWarning_OnMissingDirectory()
-	{
-		using var tempDir = TestDataCopier.CreateEmptyTempDirectory();
-
-		var result = await GridStyleLoader.LoadAsync(tempDir.Path);
-
-		result.IsSuccess.Should().BeTrue("grid styles are cosmetic — missing directory is allowed");
-		result.Reasons.OfType<Warning>().Should().Contain(w =>
-			w.Message.Contains("UI directory not found", StringComparison.OrdinalIgnoreCase));
-	}
-
-	[Fact]
-	public async Task GridStyleLoader_SucceedsWithWarning_OnMissingFile()
-	{
-		using var tempDir = TestDataCopier.CreateEmptyTempDirectory();
-		Directory.CreateDirectory(Path.Combine(tempDir.Path, "ui"));
-
-		var result = await GridStyleLoader.LoadAsync(tempDir.Path);
-
-		result.IsSuccess.Should().BeTrue("grid styles are cosmetic — missing file is allowed");
-		result.Reasons.OfType<Warning>().Should().Contain(w =>
-			w.Message.Contains("Grid style file not found", StringComparison.OrdinalIgnoreCase));
-	}
 }

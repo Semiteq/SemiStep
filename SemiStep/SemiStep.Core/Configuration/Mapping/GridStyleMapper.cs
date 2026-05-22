@@ -13,6 +13,13 @@ internal static class GridStyleMapper
 		}
 
 		var defaults = GridStyleOptions.Default;
+		// Validator-first invariant: GridStyleValidator runs before this mapper and rejects
+		// any DTO where `colors.cells.readonly`, `colors.cells.disabled` or
+		// `colors.cells.execution` (or any of their hex keys) is missing. The local aliases
+		// below let us read each field without re-suppressing the chain on every line.
+		var readOnlyCells = dto.Colors!.Cells!.ReadOnly!;
+		var disabledCells = dto.Colors!.Cells!.Disabled!;
+		var executionCells = dto.Colors!.Cells!.Execution!;
 
 		return new GridStyleOptions(
 			HeaderFontSize: dto.Fonts?.HeaderSize ?? defaults.HeaderFontSize,
@@ -24,13 +31,26 @@ internal static class GridStyleMapper
 			RowHeight: dto.Layout?.RowHeight ?? defaults.RowHeight,
 			SelectionBackgroundColor: dto.Colors?.Selection?.Background ?? defaults.SelectionBackgroundColor,
 			SelectionForegroundColor: dto.Colors?.Selection?.Foreground ?? defaults.SelectionForegroundColor,
-			NormalForegroundColor: dto.Colors?.Cells?.NormalForeground ?? defaults.NormalForegroundColor,
-			EnabledCellNormalColor: dto.Colors?.Cells?.Enabled?.Normal ?? defaults.EnabledCellNormalColor,
-			EnabledCellSelectedColor: dto.Colors?.Cells?.Enabled?.Selected ?? defaults.EnabledCellSelectedColor,
-			ReadonlyCellNormalColor: dto.Colors?.Cells?.Readonly?.Normal ?? defaults.ReadonlyCellNormalColor,
-			ReadonlyCellSelectedColor: dto.Colors?.Cells?.Readonly?.Selected ?? defaults.ReadonlyCellSelectedColor,
-			DisabledCellNormalColor: dto.Colors?.Cells?.Disabled?.Normal ?? defaults.DisabledCellNormalColor,
-			DisabledCellSelectedColor: dto.Colors?.Cells?.Disabled?.Selected ?? defaults.DisabledCellSelectedColor,
+			DisabledCellDepth0Color: disabledCells.Depth0!,
+			DisabledCellDepth1Color: disabledCells.Depth1!,
+			DisabledCellDepth2Color: disabledCells.Depth2!,
+			DisabledCellDepth3Color: disabledCells.Depth3!,
+			DisabledCellDepth0PastColor: disabledCells.Depth0Past!,
+			DisabledCellDepth1PastColor: disabledCells.Depth1Past!,
+			DisabledCellDepth2PastColor: disabledCells.Depth2Past!,
+			DisabledCellDepth3PastColor: disabledCells.Depth3Past!,
+			DisabledCellSelectedColor: disabledCells.Selected!,
+			DisabledCellForegroundColor: disabledCells.Foreground!,
+			ReadOnlyCellDepth0Color: readOnlyCells.Depth0!,
+			ReadOnlyCellDepth1Color: readOnlyCells.Depth1!,
+			ReadOnlyCellDepth2Color: readOnlyCells.Depth2!,
+			ReadOnlyCellDepth3Color: readOnlyCells.Depth3!,
+			ReadOnlyCellDepth0PastColor: readOnlyCells.Depth0Past!,
+			ReadOnlyCellDepth1PastColor: readOnlyCells.Depth1Past!,
+			ReadOnlyCellDepth2PastColor: readOnlyCells.Depth2Past!,
+			ReadOnlyCellDepth3PastColor: readOnlyCells.Depth3Past!,
+			ReadOnlyCellSelectedColor: readOnlyCells.Selected!,
+			ReadOnlyCellForegroundColor: readOnlyCells.Foreground!,
 			AlternatingRowBackgroundColor: dto.Colors?.Rows?.AlternatingBackground ??
 										   defaults.AlternatingRowBackgroundColor,
 			NormalRowBackgroundColor: dto.Colors?.Rows?.NormalBackground ?? defaults.NormalRowBackgroundColor,
@@ -44,6 +64,15 @@ internal static class GridStyleMapper
 			ValidationPanelForegroundColor: dto.ValidationPanel?.Foreground ?? defaults.ValidationPanelForegroundColor,
 			ValidationPanelErrorColor: dto.ValidationPanel?.ErrorColor ?? defaults.ValidationPanelErrorColor,
 			ValidationPanelWarningColor: dto.ValidationPanel?.WarningColor ?? defaults.ValidationPanelWarningColor,
-			ValidationPanelMaxHeight: dto.ValidationPanel?.MaxHeight ?? defaults.ValidationPanelMaxHeight);
+			ValidationPanelMaxHeight: dto.ValidationPanel?.MaxHeight ?? defaults.ValidationPanelMaxHeight,
+			ExecutionDepth0Color: executionCells.Depth0!,
+			ExecutionDepth1Color: executionCells.Depth1!,
+			ExecutionDepth2Color: executionCells.Depth2!,
+			ExecutionDepth3Color: executionCells.Depth3!,
+			ExecutionDepth0PastColor: executionCells.Depth0Past!,
+			ExecutionDepth1PastColor: executionCells.Depth1Past!,
+			ExecutionDepth2PastColor: executionCells.Depth2Past!,
+			ExecutionDepth3PastColor: executionCells.Depth3Past!,
+			ExecutionCurrentStepMarkerColor: executionCells.CurrentStepMarker!);
 	}
 }

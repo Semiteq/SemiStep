@@ -11,6 +11,7 @@ public sealed class ColumnBuilder(
 	RecipeMetadataRegistry recipeMetadataRegistry)
 {
 	private const string ReadOnlyColumnClass = "read-only-column";
+	private const string StepNumberColumnClass = "step-number-column";
 
 	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(recipeMetadataRegistry);
 
@@ -31,14 +32,16 @@ public sealed class ColumnBuilder(
 
 	private static void AddNumberingColumn(DataGrid grid)
 	{
-		grid.Columns.Add(new DataGridTextColumn
+		var column = new DataGridTextColumn
 		{
 			Header = "No",
 			Binding = new Binding("StepNumber"),
 			IsReadOnly = true,
 			Width = DataGridLength.Auto,
 			CanUserSort = false
-		});
+		};
+		column.CellStyleClasses.Add(StepNumberColumnClass);
+		grid.Columns.Add(column);
 	}
 
 	private DataGridColumn CreateColumn(GridColumnDefinition columnDef)

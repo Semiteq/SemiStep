@@ -5,23 +5,15 @@
     <Color x:Key="AccentColor">#0078D7</Color>
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
 
-    <!-- Cell State: Disabled -->
-    <Color x:Key="CellDisabledBackgroundColor">#E0E0E0</Color>
-    <Color x:Key="CellDisabledForegroundColor">#808080</Color>
-    <SolidColorBrush x:Key="CellDisabledBackgroundBrush" Color="{StaticResource CellDisabledBackgroundColor}" />
-    <SolidColorBrush x:Key="CellDisabledForegroundBrush" Color="{StaticResource CellDisabledForegroundColor}" />
-
-    <!-- Cell State: Disabled + Selected -->
-    <Color x:Key="CellDisabledSelectedBackgroundColor">#89B4D7</Color>
-    <SolidColorBrush x:Key="CellDisabledSelectedBackgroundBrush"
-                     Color="{StaticResource CellDisabledSelectedBackgroundColor}" />
+    <!-- Cell State: Disabled (per-depth x past) / Disabled+Selected / Foreground, and Grid lines
+         are installed at startup by CellPaletteInstaller from GridStyleOptions
+         (colors.cells.disabled.{depth_0..3,depth_0..3_past,selected,foreground}, colors.grid_line).
+         Brush keys: CellDisabledDepth{0..3}Brush, CellDisabledDepth{0..3}PastBrush,
+         CellDisabledSelectedBackgroundBrush, CellDisabledForegroundBrush, GridLineBrush. -->
 
     <!-- Selected text foreground (white-on-accent) -->
     <Color x:Key="TextOnAccentColor">#FFFFFF</Color>
     <SolidColorBrush x:Key="TextOnAccentBrush" Color="{StaticResource TextOnAccentColor}" />
-
-    <!-- Grid lines -->
-    <SolidColorBrush x:Key="GridLineBrush" Color="{StaticResource CellDisabledBackgroundColor}" />
 
     <!-- Severity indicators -->
     <Color x:Key="ErrorColor">#D32F2F</Color>
@@ -36,12 +28,6 @@
     <Color x:Key="DisconnectedColor">#FF4444</Color>
     <SolidColorBrush x:Key="ConnectedBrush" Color="{StaticResource ConnectedColor}" />
     <SolidColorBrush x:Key="DisconnectedBrush" Color="{StaticResource DisconnectedColor}" />
-
-    <!-- Execution state row highlighting -->
-    <Color x:Key="CurrentStepBackgroundColor">#80FFFF00</Color>
-    <Color x:Key="PastStepBackgroundColor">#1A808080</Color>
-    <SolidColorBrush x:Key="CurrentStepBrush" Color="{StaticResource CurrentStepBackgroundColor}" />
-    <SolidColorBrush x:Key="PastStepBrush" Color="{StaticResource PastStepBackgroundColor}" />
 
     <!-- Chrome / Layout -->
     <Color x:Key="StatusBarBackgroundColor">#F0F0F0</Color>

@@ -51,6 +51,31 @@ public sealed class RecipeRowViewModel(
 		set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
+	public int ForDepth
+	{
+		get;
+		set
+		{
+			if (field == value)
+			{
+				return;
+			}
+
+			this.RaiseAndSetIfChanged(ref field, value);
+			this.RaisePropertyChanged(nameof(IsForDepth1));
+			this.RaisePropertyChanged(nameof(IsForDepth2));
+			this.RaisePropertyChanged(nameof(IsForDepth3));
+		}
+	}
+
+	public bool IsForDepth1 => ForDepth == 1;
+
+	public bool IsForDepth2 => ForDepth == 2;
+
+	// `>= 3` is defense-in-depth: ForDepth is capped at 3 upstream in RefreshRowLoopDepths,
+	// but using `>=` guards against future UI cap drift so deeper nestings still render.
+	public bool IsForDepth3 => ForDepth >= 3;
+
 	public IReadOnlySet<string> InapplicableColumns { get; } = inapplicableColumns;
 
 	public IReadOnlyDictionary<string, string?> ColumnUnits => _columnMetadata.Units;

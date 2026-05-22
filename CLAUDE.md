@@ -102,6 +102,14 @@ No abbreviations in names.
 
 **Inline formulas on actions:** when an action declares a `formula:` block (see `Docs/03-data-model.md` §3.4), cell edits route through `RecipeSession.UpdateStepProperty` → `FormulaEvaluator.Recalculate` and update one coupled cell in the same mutation (single undo unit). CSV import (§3.5) is verbatim — formulas are not re-evaluated on load.
 
+**Cell palettes in `ui/grid_style.yaml`:** the file must contain three sibling palette sections under `colors.cells` — `readonly`, `disabled`, and `execution` — each driving a distinct cell-painting concern. `GridStyleValidator` rejects the config if any section or key is missing or is not a valid hex color, and `GridStyleLoader` fails loudly when the file or directory is absent.
+
+- **`colors.cells.readonly`** (ten hex keys): paints cells in columns marked `ReadOnly=true` (column-level structural read-only — e.g. the step-number column). Eight per-depth × past background keys (`depth_0..3`, `depth_0..3_past`) plus two shared keys (`selected`, `foreground`).
+- **`colors.cells.disabled`** (ten hex keys, same layout): paints cells where `InapplicableCellTheme.IsInapplicable=True` (row-action × column intersection — i.e. this property does not apply to this action). The two signals (read-only column class and inapplicable attached property) are disjoint by design (`CellStateResolver` returns `false` for read-only columns), so the two palettes never compete for the same cell.
+- **`colors.cells.execution`** (nine hex keys): row-tinting palette for loop-depth × past-state plus the `current_step_marker` brush for the current-step indicator on the step-number column. This block was relocated from the top-level `colors.execution` to `colors.cells.execution` so all cell-painting palettes nest under `cells:`.
+
+At startup, `CellPaletteInstaller` publishes all three palettes (plus `colors.grid_line`) as Avalonia resources consumed by `DataGridStyles.axaml`. See `SemiStep/SemiStep.UI/Styles/CellPaletteInstaller.cs` for the authoritative list of brush-resource keys — do not enumerate them here, the list evolves as the palette is extracted further.
+
 ## Troubleshooting
 
 **Deleting Windows reserved-name files (`nul`, `con`, `aux`, etc.):** Use Git Bash: `rm -f nul`

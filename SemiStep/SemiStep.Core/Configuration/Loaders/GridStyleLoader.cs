@@ -1,7 +1,6 @@
 ﻿using FluentResults;
 
 using SemiStep.Core.Configuration.Dto;
-using SemiStep.Core.Shared;
 
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -19,20 +18,16 @@ internal static class GridStyleLoader
 	{
 		var uiDir = Path.Combine(configDirectory, "ui");
 
-		// Grid styles are cosmetic — both a missing ui directory and a missing grid_style.yaml
-		// are legitimate; defaults apply in either case.
 		if (!Directory.Exists(uiDir))
 		{
-			return Result.Ok<GridStyleOptionsDto?>(null)
-				.WithWarning($"UI directory not found, using default grid styles: {uiDir}");
+			return Result.Fail<GridStyleOptionsDto?>($"Grid style config not found: {uiDir}");
 		}
 
 		var filePath = Path.Combine(uiDir, "grid_style.yaml");
 
 		if (!File.Exists(filePath))
 		{
-			return Result.Ok<GridStyleOptionsDto?>(null)
-				.WithWarning($"Grid style file not found, using defaults: {filePath}");
+			return Result.Fail<GridStyleOptionsDto?>($"Grid style config not found: {filePath}");
 		}
 
 		try

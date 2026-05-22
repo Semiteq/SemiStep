@@ -39,20 +39,13 @@ internal sealed class ExecutionHighlightTracker
 			return;
 		}
 
-		var previousLine = _lastActualLine;
 		_lastRecipeActive = true;
 		_lastActualLine = info.ActualLine;
 
-		if (previousLine >= 0 && previousLine < _rows.Count && previousLine != info.ActualLine)
+		for (var i = 0; i < _rows.Count; i++)
 		{
-			_rows[previousLine].IsCurrentStep = false;
-			_rows[previousLine].IsPastStep = previousLine < info.ActualLine;
-		}
-
-		if (info.ActualLine >= 0 && info.ActualLine < _rows.Count)
-		{
-			_rows[info.ActualLine].IsCurrentStep = true;
-			_rows[info.ActualLine].IsPastStep = false;
+			_rows[i].IsCurrentStep = i == info.ActualLine;
+			_rows[i].IsPastStep = i < info.ActualLine;
 		}
 	}
 

@@ -157,7 +157,8 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
-		var dialog = new PlcConflictDialog();
+		var viewModel = new PlcConflictDialogViewModel(local.StepCount, plc.StepCount);
+		var dialog = new PlcConflictDialog(viewModel);
 
 		try
 		{

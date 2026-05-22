@@ -53,11 +53,8 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: restore
-        run: dotnet restore SemiStep/SemiStep.slnx
-
       - name: publish
-        run: dotnet publish SemiStep/SemiStep.UI/SemiStep.UI.csproj -c Release --no-restore -p:Version=${{ steps.version.outputs.version }}
+        run: dotnet publish SemiStep/SemiStep.UI/SemiStep.UI.csproj -c Release -p:Version=${{ steps.version.outputs.version }}
 
       - name: install Inno Setup
         shell: powershell

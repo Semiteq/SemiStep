@@ -1,4 +1,4 @@
-﻿# Grid style with extra unknown fields
+# Grid style with extra unknown fields
 fonts:
   header_size: 12
   cell_size: 11
@@ -9,6 +9,11 @@ layout:
   unknown_layout: "noise"
 
 colors:
+  cells:
+    disabled:
+      normal: "#E0E0E0"
+      selected: "#89B4D7"
+      foreground: "#808080"
   execution:
     depth_0: "#FFFFFF"
     depth_1: "#E8F3FF"

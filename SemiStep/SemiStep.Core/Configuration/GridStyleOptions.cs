@@ -10,13 +10,9 @@ public sealed record GridStyleOptions(
 	double RowHeight,
 	string SelectionBackgroundColor,
 	string SelectionForegroundColor,
-	string NormalForegroundColor,
-	string EnabledCellNormalColor,
-	string EnabledCellSelectedColor,
-	string ReadonlyCellNormalColor,
-	string ReadonlyCellSelectedColor,
 	string DisabledCellNormalColor,
-	string DisabledCellSelectedColor,
+	string DisabledCellSelectedBackgroundColor,
+	string DisabledCellForegroundColor,
 	string AlternatingRowBackgroundColor,
 	string NormalRowBackgroundColor,
 	double GridLineThickness,
@@ -42,8 +38,9 @@ public sealed record GridStyleOptions(
 {
 	/// <summary>
 	/// Fallback configuration used for shape/wiring tests only. The `#000000` sentinel values on
-	/// the execution palette are intentional placeholders — production runs load real colors via
-	/// <c>GridStyleValidator</c> + <c>GridStyleMapper</c> and never observe these defaults.
+	/// the execution and disabled-cell palettes are intentional placeholders — production runs
+	/// load real colors via <c>GridStyleValidator</c> + <c>GridStyleMapper</c> and never observe
+	/// these defaults.
 	/// </summary>
 	public static GridStyleOptions Default { get; } = new(
 		HeaderFontSize: 14,
@@ -55,13 +52,9 @@ public sealed record GridStyleOptions(
 		RowHeight: 28,
 		SelectionBackgroundColor: "#0078D7",
 		SelectionForegroundColor: "#FFFFFF",
-		NormalForegroundColor: "#000000",
-		EnabledCellNormalColor: "#FFFFFF",
-		EnabledCellSelectedColor: "#0078D7",
-		ReadonlyCellNormalColor: "#F5F5F5",
-		ReadonlyCellSelectedColor: "#5A9ED7",
-		DisabledCellNormalColor: "#E0E0E0",
-		DisabledCellSelectedColor: "#89B4D7",
+		DisabledCellNormalColor: "#000000",
+		DisabledCellSelectedBackgroundColor: "#000000",
+		DisabledCellForegroundColor: "#000000",
 		AlternatingRowBackgroundColor: "#FAFAFA",
 		NormalRowBackgroundColor: "#FFFFFF",
 		GridLineThickness: 1.0,

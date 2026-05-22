@@ -22,15 +22,10 @@ colors:
     background: "#0078D7"
     foreground: "#0078D7"
   cells:
-    enabled:
-      normal: "#FFFFFF"
-      selected: "#0078D7"
-    readonly:
-      normal: "#F5F5F5"
-      selected: "#5A9ED7"
     disabled:
       normal: "#E0E0E0"
       selected: "#89B4D7"
+      foreground: "#808080"
   rows:
     alternating_background: "#FAFAFA"
     normal_background: "#FFFFFF"

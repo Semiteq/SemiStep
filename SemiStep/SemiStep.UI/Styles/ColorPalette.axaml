@@ -5,23 +5,14 @@
     <Color x:Key="AccentColor">#0078D7</Color>
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
 
-    <!-- Cell State: Disabled -->
-    <Color x:Key="CellDisabledBackgroundColor">#E0E0E0</Color>
-    <Color x:Key="CellDisabledForegroundColor">#808080</Color>
-    <SolidColorBrush x:Key="CellDisabledBackgroundBrush" Color="{StaticResource CellDisabledBackgroundColor}" />
-    <SolidColorBrush x:Key="CellDisabledForegroundBrush" Color="{StaticResource CellDisabledForegroundColor}" />
-
-    <!-- Cell State: Disabled + Selected -->
-    <Color x:Key="CellDisabledSelectedBackgroundColor">#89B4D7</Color>
-    <SolidColorBrush x:Key="CellDisabledSelectedBackgroundBrush"
-                     Color="{StaticResource CellDisabledSelectedBackgroundColor}" />
+    <!-- Cell State: Disabled / Disabled+Selected, and Grid lines are installed at startup
+         by CellPaletteInstaller from GridStyleOptions (colors.cells.disabled.{normal,selected,foreground},
+         colors.grid_line). Brush keys: CellDisabledBackgroundBrush, CellDisabledSelectedBackgroundBrush,
+         CellDisabledForegroundBrush, GridLineBrush. -->
 
     <!-- Selected text foreground (white-on-accent) -->
     <Color x:Key="TextOnAccentColor">#FFFFFF</Color>
     <SolidColorBrush x:Key="TextOnAccentBrush" Color="{StaticResource TextOnAccentColor}" />
-
-    <!-- Grid lines -->
-    <SolidColorBrush x:Key="GridLineBrush" Color="{StaticResource CellDisabledBackgroundColor}" />
 
     <!-- Severity indicators -->
     <Color x:Key="ErrorColor">#D32F2F</Color>

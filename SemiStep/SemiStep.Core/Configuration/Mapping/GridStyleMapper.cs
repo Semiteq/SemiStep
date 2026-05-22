@@ -24,13 +24,12 @@ internal static class GridStyleMapper
 			RowHeight: dto.Layout?.RowHeight ?? defaults.RowHeight,
 			SelectionBackgroundColor: dto.Colors?.Selection?.Background ?? defaults.SelectionBackgroundColor,
 			SelectionForegroundColor: dto.Colors?.Selection?.Foreground ?? defaults.SelectionForegroundColor,
-			NormalForegroundColor: dto.Colors?.Cells?.NormalForeground ?? defaults.NormalForegroundColor,
-			EnabledCellNormalColor: dto.Colors?.Cells?.Enabled?.Normal ?? defaults.EnabledCellNormalColor,
-			EnabledCellSelectedColor: dto.Colors?.Cells?.Enabled?.Selected ?? defaults.EnabledCellSelectedColor,
-			ReadonlyCellNormalColor: dto.Colors?.Cells?.Readonly?.Normal ?? defaults.ReadonlyCellNormalColor,
-			ReadonlyCellSelectedColor: dto.Colors?.Cells?.Readonly?.Selected ?? defaults.ReadonlyCellSelectedColor,
-			DisabledCellNormalColor: dto.Colors?.Cells?.Disabled?.Normal ?? defaults.DisabledCellNormalColor,
-			DisabledCellSelectedColor: dto.Colors?.Cells?.Disabled?.Selected ?? defaults.DisabledCellSelectedColor,
+			// Validator-first invariant: GridStyleValidator runs before this mapper and rejects any
+			// DTO whose `colors.cells.disabled.{normal,selected,foreground}` keys are missing or
+			// malformed. The null-forgiving operators below are therefore safe.
+			DisabledCellNormalColor: dto.Colors!.Cells!.Disabled!.Normal!,
+			DisabledCellSelectedBackgroundColor: dto.Colors.Cells.Disabled.Selected!,
+			DisabledCellForegroundColor: dto.Colors.Cells.Disabled.Foreground!,
 			AlternatingRowBackgroundColor: dto.Colors?.Rows?.AlternatingBackground ??
 										   defaults.AlternatingRowBackgroundColor,
 			NormalRowBackgroundColor: dto.Colors?.Rows?.NormalBackground ?? defaults.NormalRowBackgroundColor,

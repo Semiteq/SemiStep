@@ -1,5 +1,4 @@
 ﻿using Avalonia.Controls;
-using Avalonia.Media;
 
 using SemiStep.Core.Configuration;
 
@@ -26,19 +25,14 @@ internal static class ExecutionPaletteInstaller
 		// tint. No selector currently consumes them — the brush is reserved for future explicit
 		// styling of non-loop rows. Keeping the resource installed lets us add that selector
 		// without revisiting the configuration model.
-		resources[ExecRowDepth0BrushKey] = CreateBrush(gridStyle.ExecutionDepth0Color);
-		resources[ExecRowDepth1BrushKey] = CreateBrush(gridStyle.ExecutionDepth1Color);
-		resources[ExecRowDepth2BrushKey] = CreateBrush(gridStyle.ExecutionDepth2Color);
-		resources[ExecRowDepth3BrushKey] = CreateBrush(gridStyle.ExecutionDepth3Color);
-		resources[ExecRowDepth0PastBrushKey] = CreateBrush(gridStyle.ExecutionDepth0PastColor);
-		resources[ExecRowDepth1PastBrushKey] = CreateBrush(gridStyle.ExecutionDepth1PastColor);
-		resources[ExecRowDepth2PastBrushKey] = CreateBrush(gridStyle.ExecutionDepth2PastColor);
-		resources[ExecRowDepth3PastBrushKey] = CreateBrush(gridStyle.ExecutionDepth3PastColor);
-		resources[CurrentStepMarkerBrushKey] = CreateBrush(gridStyle.ExecutionCurrentStepMarkerColor);
-	}
-
-	private static SolidColorBrush CreateBrush(string hex)
-	{
-		return new SolidColorBrush(Color.Parse(hex));
+		resources[ExecRowDepth0BrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth0Color);
+		resources[ExecRowDepth1BrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth1Color);
+		resources[ExecRowDepth2BrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth2Color);
+		resources[ExecRowDepth3BrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth3Color);
+		resources[ExecRowDepth0PastBrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth0PastColor);
+		resources[ExecRowDepth1PastBrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth1PastColor);
+		resources[ExecRowDepth2PastBrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth2PastColor);
+		resources[ExecRowDepth3PastBrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth3PastColor);
+		resources[CurrentStepMarkerBrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionCurrentStepMarkerColor);
 	}
 }

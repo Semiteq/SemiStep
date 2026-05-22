@@ -58,15 +58,6 @@
     </Style>
 
     <!-- ============================================== -->
-    <!-- Selected row override for disabled cells.      -->
-    <!-- ============================================== -->
-
-    <Style Selector="DataGridRow:selected DataGridCell.read-only-column, DataGridRow:selected DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
-    </Style>
-
-    <!-- ============================================== -->
     <!-- Execution state: current and past step row.    -->
     <!-- Row-level classes are toggled by MainWindow's  -->
     <!-- LoadingRow / UnloadingRow handlers driven by   -->
@@ -98,6 +89,45 @@
     <Style Selector="DataGridRow.for-depth-3.past-step DataGridCell">
         <Setter Property="Background" Value="{DynamicResource ExecRowDepth3PastBrush}" />
     </Style>
+
+    <!-- Restore disabled grey background on tinted rows. Document-order placement -->
+    <!-- between `DataGridRow.for-depth-3.past-step DataGridCell` (above) and -->
+    <!-- `DataGridRow:selected DataGridCell` (below) is load-bearing: depth/past -->
+    <!-- tint Background loses to disabled grey here, while user selection still -->
+    <!-- wins on top via the `:selected` rule that follows. This rule overrides -->
+    <!-- both Background AND Opacity=1.0: the universal disabled/read-only rule -->
+    <!-- at the top of this file sets Opacity=0.5, which on tinted rows would let -->
+    <!-- the depth tint bleed through the grey; forcing Opacity back to 1.0 here -->
+    <!-- restores opaque grey. Foreground is inherited from the top-of-file rule. -->
+    <Style Selector="DataGridRow.for-depth-1 DataGridCell.read-only-column,
+                     DataGridRow.for-depth-1 DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True],
+                     DataGridRow.for-depth-2 DataGridCell.read-only-column,
+                     DataGridRow.for-depth-2 DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True],
+                     DataGridRow.for-depth-3 DataGridCell.read-only-column,
+                     DataGridRow.for-depth-3 DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True],
+                     DataGridRow.past-step DataGridCell.read-only-column,
+                     DataGridRow.past-step DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledBackgroundBrush}" />
+        <Setter Property="Opacity" Value="1.0" />
+    </Style>
+
+    <!-- User selection must remain visible on tinted rows. Placed after the depth -->
+    <!-- selectors so it wins on every cell, but before the current-step marker -->
+    <!-- so the marker still shows on the step-number column when the current -->
+    <!-- step is also user-selected. -->
+    <Style Selector="DataGridRow:selected DataGridCell">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+    </Style>
+
+    <!-- Selected row override for disabled cells. Must come AFTER the generic -->
+    <!-- :selected rule above so last-match-wins gives disabled-selected cells -->
+    <!-- the configurable CellDisabledSelectedBackgroundBrush instead of AccentBrush. -->
+    <Style Selector="DataGridRow:selected DataGridCell.read-only-column, DataGridRow:selected DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+    </Style>
+
     <Style Selector="DataGridRow.current-step DataGridCell.step-number-column">
         <Setter Property="Background" Value="{DynamicResource CurrentStepMarkerBrush}" />
     </Style>

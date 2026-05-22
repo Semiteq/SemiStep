@@ -4,6 +4,11 @@ fonts:
   cell_size: 11
 
 colors:
+  cells:
+    disabled:
+      normal: "#E0E0E0"
+      selected: "#89B4D7"
+      foreground: "#808080"
   execution:
     depth_0: "#FFFFFF"
     depth_1: "#E8F3FF"

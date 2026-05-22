@@ -10,7 +10,7 @@ namespace SemiStep.Tests.Core.Configuration;
 [Trait("Category", "Unit")]
 [Trait("Component", "Config")]
 [Trait("Area", "GridStyleValidation")]
-public sealed class GridStyleExecutionValidationTests
+public sealed class GridStyleColorsValidationTests
 {
 	[Fact]
 	public void Validate_ValidDto_Succeeds()
@@ -47,13 +47,68 @@ public sealed class GridStyleExecutionValidationTests
 	{
 		var dto = new GridStyleOptionsDto
 		{
-			Colors = new GridStyleColorsDto()
+			Colors = new GridStyleColorsDto
+			{
+				Cells = new GridStyleCellColorsDto
+				{
+					Disabled = CreateValidDisabled()
+				}
+			}
 		};
 
 		var result = GridStyleValidator.Validate(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains("colors.execution"));
+	}
+
+	[Fact]
+	public void Validate_MissingDisabledSection_Fails()
+	{
+		var dto = new GridStyleOptionsDto
+		{
+			Colors = new GridStyleColorsDto
+			{
+				Execution = CreateValidExecution()
+			}
+		};
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e => e.Message.Contains("colors.cells.disabled"));
+	}
+
+	[Theory]
+	[InlineData("normal")]
+	[InlineData("selected")]
+	[InlineData("foreground")]
+	public void Validate_MissingDisabledKey_FailsWithKeyName(string keyName)
+	{
+		var dto = CreateValidDto();
+		ClearDisabledKey(dto, keyName);
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e => e.Message.Contains($"colors.cells.disabled.{keyName}"));
+	}
+
+	[Theory]
+	[InlineData("normal", "#ZZZZZZ")]
+	[InlineData("selected", "FFFFFF")]
+	[InlineData("foreground", "#12345")]
+	public void Validate_MalformedDisabledHex_FailsNamingKey(string keyName, string badHex)
+	{
+		var dto = CreateValidDto();
+		SetDisabledKey(dto, keyName, badHex);
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains($"colors.cells.disabled.{keyName}") &&
+			e.Message.Contains(badHex));
 	}
 
 	[Theory]
@@ -157,20 +212,73 @@ public sealed class GridStyleExecutionValidationTests
 		{
 			Colors = new GridStyleColorsDto
 			{
-				Execution = new GridStyleExecutionColorsDto
+				Execution = CreateValidExecution(),
+				Cells = new GridStyleCellColorsDto
 				{
-					Depth0 = "#FFFFFF",
-					Depth1 = "#E8F3FF",
-					Depth2 = "#D0E7FF",
-					Depth3 = "#A8D0FF",
-					Depth0Past = "#F0F0F0",
-					Depth1Past = "#DCE5EE",
-					Depth2Past = "#C4D2E0",
-					Depth3Past = "#9CB4CC",
-					CurrentStepMarker = "#FF8800"
+					Disabled = CreateValidDisabled()
 				}
 			}
 		};
+	}
+
+	private static GridStyleExecutionColorsDto CreateValidExecution()
+	{
+		return new GridStyleExecutionColorsDto
+		{
+			Depth0 = "#FFFFFF",
+			Depth1 = "#E8F3FF",
+			Depth2 = "#D0E7FF",
+			Depth3 = "#A8D0FF",
+			Depth0Past = "#F0F0F0",
+			Depth1Past = "#DCE5EE",
+			Depth2Past = "#C4D2E0",
+			Depth3Past = "#9CB4CC",
+			CurrentStepMarker = "#FF8800"
+		};
+	}
+
+	private static GridStyleDisabledCellColorsDto CreateValidDisabled()
+	{
+		return new GridStyleDisabledCellColorsDto
+		{
+			Normal = "#E0E0E0",
+			Selected = "#89B4D7",
+			Foreground = "#808080"
+		};
+	}
+
+	private static void ClearDisabledKey(GridStyleOptionsDto dto, string keyName)
+	{
+		var disabled = dto.Colors!.Cells!.Disabled!;
+		switch (keyName)
+		{
+			case "normal":
+				disabled.Normal = null;
+				break;
+			case "selected":
+				disabled.Selected = null;
+				break;
+			case "foreground":
+				disabled.Foreground = null;
+				break;
+		}
+	}
+
+	private static void SetDisabledKey(GridStyleOptionsDto dto, string keyName, string value)
+	{
+		var disabled = dto.Colors!.Cells!.Disabled!;
+		switch (keyName)
+		{
+			case "normal":
+				disabled.Normal = value;
+				break;
+			case "selected":
+				disabled.Selected = value;
+				break;
+			case "foreground":
+				disabled.Foreground = value;
+				break;
+		}
 	}
 
 	private static void ClearKey(GridStyleOptionsDto dto, string keyName)

@@ -46,7 +46,11 @@ public class App : Application
 				}
 
 				var gridStyle = _serviceProvider.GetRequiredService<GridStyleOptions>();
+				// Both installers must run before MainWindow construction. {DynamicResource}
+				// lookups against Application.Resources resolve lazily at first realize;
+				// missing keys at that point render as default/nothing.
 				ExecutionPaletteInstaller.Install(Resources, gridStyle);
+				CellPaletteInstaller.Install(Resources, gridStyle);
 
 				var mainWindowViewModel = _serviceProvider.GetRequiredService<MainWindowViewModel>();
 				mainWindowViewModel.Initialize();

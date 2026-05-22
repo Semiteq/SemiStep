@@ -104,6 +104,8 @@ No abbreviations in names.
 
 **Execution palette in `ui/grid_style.yaml`:** the file must contain a `colors.execution` block with all nine hex keys — `depth_0`, `depth_1`, `depth_2`, `depth_3`, `depth_0_past`, `depth_1_past`, `depth_2_past`, `depth_3_past`, `current_step_marker`. `GridStyleValidator` rejects the config if any key is missing or not a valid hex color, and `GridStyleLoader` fails loudly when the file or directory is absent. At startup, `ExecutionPaletteInstaller` maps these to the resources `ExecRowDepth{0..3}[Past]Brush` and `CurrentStepMarkerBrush`, which the row-tinting selectors and step-number-column marker consume.
 
+**Disabled-cell palette in `ui/grid_style.yaml`:** the file must contain a `colors.cells.disabled` block with three hex keys — `normal`, `selected`, `foreground`. `GridStyleValidator` rejects the config if the section or any key is missing or not a valid hex color. At startup, `CellPaletteInstaller` maps these (plus `colors.grid_line`) to the resources `CellDisabledBackgroundBrush`, `CellDisabledSelectedBackgroundBrush`, `CellDisabledForegroundBrush`, and `GridLineBrush`, which the DataGrid styles consume for read-only / inapplicable cells.
+
 ## Troubleshooting
 
 **Deleting Windows reserved-name files (`nul`, `con`, `aux`, etc.):** Use Git Bash: `rm -f nul`

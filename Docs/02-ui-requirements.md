@@ -134,6 +134,10 @@
 
 После прекращения исполнения (ПЛК сбрасывает бит «рецепт исполняется» или окно переключается в `Edit` / теряет связь) времена в статус-баре переключаются на idle-отображение `(00:00:00, TotalDuration)` согласно §2.6.3.
 
+### 2.6.5. Палитра отключённых (disabled / read-only) ячеек
+
+Ячейки, доступные только для чтения (столбцы с `ReadOnly=true`), и ячейки, неприменимые для типа действия в строке (`InapplicableCellTheme.IsInapplicable=True`), отображаются единой «серой» палитрой. Палитра задаётся в `ui/grid_style.yaml` в секции `colors.cells.disabled` тремя обязательными hex-ключами: `normal` (фон в обычном состоянии), `selected` (фон при выделении строки пользователем), `foreground` (цвет текста). `GridStyleValidator` отклоняет конфигурацию, если секция или любой ключ отсутствует либо не является валидным hex-цветом. На старте приложения `CellPaletteInstaller` публикует эти значения и `colors.grid_line` как ресурсы `CellDisabledBackgroundBrush`, `CellDisabledSelectedBackgroundBrush`, `CellDisabledForegroundBrush` и `GridLineBrush`, которые потребляют стили `DataGridStyles.axaml`.
+
 ---
 
 [Далее: Модель данных →](03-data-model.md)

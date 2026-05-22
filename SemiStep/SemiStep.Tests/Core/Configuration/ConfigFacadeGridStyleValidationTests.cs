@@ -10,7 +10,7 @@ namespace SemiStep.Tests.Core.Configuration;
 [Trait("Category", "Integration")]
 [Trait("Component", "Config")]
 [Trait("Area", "GridStyleValidation")]
-public sealed class ConfigFacadeExecutionPaletteTests
+public sealed class ConfigFacadeGridStyleValidationTests
 {
 	[Fact]
 	public async Task LoadAndValidateAsync_StandardFixture_LoadsSuccessfully()
@@ -60,6 +60,46 @@ public sealed class ConfigFacadeExecutionPaletteTests
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
 			e.Message.Contains("current_step_marker") && e.Message.Contains("not-a-color"));
+	}
+
+	[Fact]
+	public async Task LoadAndValidateAsync_GridStyleMissingDisabledForegroundKey_Fails()
+	{
+		using var tempDir = TestDataCopier.PrepareValidCase();
+		var gridStylePath = Path.Combine(tempDir.Path, "ui", "grid_style.yaml");
+		var token = TestContext.Current.CancellationToken;
+		var content = await File.ReadAllTextAsync(gridStylePath, token);
+		var mutated = string.Join(Environment.NewLine,
+			content.Split(["\r\n", "\n"], StringSplitOptions.None)
+				.Where(line => !line.TrimStart().StartsWith("foreground:", StringComparison.Ordinal)));
+		await File.WriteAllTextAsync(gridStylePath, mutated, token);
+
+		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains("colors.cells.disabled") && e.Message.Contains("foreground"));
+	}
+
+	[Fact]
+	public async Task LoadAndValidateAsync_GridStyleMalformedDisabledHex_Fails()
+	{
+		using var tempDir = TestDataCopier.PrepareValidCase();
+		var gridStylePath = Path.Combine(tempDir.Path, "ui", "grid_style.yaml");
+		var token = TestContext.Current.CancellationToken;
+		var content = await File.ReadAllTextAsync(gridStylePath, token);
+		var mutated = content.Replace(
+			"normal: \"#E0E0E0\"",
+			"normal: \"not-a-color\"");
+		await File.WriteAllTextAsync(gridStylePath, mutated, token);
+
+		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains("colors.cells.disabled") &&
+			e.Message.Contains("normal") &&
+			e.Message.Contains("not-a-color"));
 	}
 
 	[Fact]

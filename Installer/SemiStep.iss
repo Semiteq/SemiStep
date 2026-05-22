@@ -8,14 +8,14 @@
 
 #define AppName      "SemiStep"
 #define AppPublisher "Inc Semiteq"
-#define AppExeName   "UI.exe"
+#define AppExeName   "Semistep.exe"
 #define AppId        "{{8B3F2C1A-4D7E-4F9B-A2C6-1E5D8F3B7A4C}"
 
 ; Paths relative to the location of this .iss file (Installer/)
 #define SrcBinDir    "..\SemiStep\Artifacts\publish\SemiStep.UI\release_win-x64"
 
 #define SrcCfgDir    "..\ConfigFiles"
-#define AppIconFile       "..\SemiStep\UI\logo.ico"
+#define AppIconFile       "..\SemiStep\SemiStep.UI\logo.ico"
 #define LicenseFile       ".\LICENSE.txt"
 #define WizardImageLarge  ".\WizardImageFile.bmp"
 #define WizardImageSmall  ".\WizardSmallImageFile.bmp"
@@ -65,6 +65,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Tasks]
 Name: "preset_mbe";   Description: "MBE";   GroupDescription: "Configuration preset:"; Flags: exclusive
 Name: "preset_mocvd"; Description: "MOCVD"; GroupDescription: "Configuration preset:"; Flags: exclusive
+Name: "preset_rie";   Description: "RIE";   GroupDescription: "Configuration preset:"; Flags: exclusive
 Name: "desktopicon";  Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [InstallDelete]
@@ -86,6 +87,7 @@ Source: "{#SrcBinDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 ; controls only which preset the created shortcuts target.
 Source: "..\ConfigFiles\MBE\*";   DestDir: "C:\DISTR\Config\Semistep\MBE";   Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\ConfigFiles\MOCVD\*"; DestDir: "C:\DISTR\Config\Semistep\MOCVD"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\ConfigFiles\RIE\*";   DestDir: "C:\DISTR\Config\Semistep\RIE";   Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Dirs]
 ; Ensure the logs directory exists before the app first runs
@@ -95,10 +97,13 @@ Name: "C:\DISTR\Logs"
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MBE"""; Tasks: preset_mbe
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MOCVD"""; Tasks: preset_mocvd
+Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\RIE"""; Tasks: preset_rie
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MBE"""; Tasks: desktopicon and preset_mbe
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MOCVD"""; Tasks: desktopicon and preset_mocvd
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\RIE"""; Tasks: desktopicon and preset_rie
 
 [Run]
 Filename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MBE"""; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent; Tasks: preset_mbe
 Filename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MOCVD"""; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent; Tasks: preset_mocvd
+Filename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\RIE"""; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent; Tasks: preset_rie

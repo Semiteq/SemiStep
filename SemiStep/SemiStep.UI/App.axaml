@@ -5,13 +5,13 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="avares://SemiStep.UI/Styles/ColorPalette.axaml" />
+                <ResourceInclude Source="avares://Semistep/Styles/ColorPalette.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
-        <StyleInclude Source="avares://SemiStep.UI/Styles/DataGridStyles.axaml" />
+        <StyleInclude Source="avares://Semistep/Styles/DataGridStyles.axaml" />
     </Application.Styles>
 </Application>

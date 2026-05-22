@@ -2,7 +2,6 @@
 
 using ReactiveUI;
 
-using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
 
 namespace SemiStep.UI.RecipeGrid;

@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 
 using ReactiveUI;
 
-using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 

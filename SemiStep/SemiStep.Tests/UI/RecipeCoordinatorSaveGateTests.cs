@@ -14,7 +14,6 @@ using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
-using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.MessageService;

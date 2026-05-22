@@ -1,5 +1,4 @@
 ﻿using SemiStep.Core.Plc.Configuration;
-using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 
 namespace SemiStep.Core.Configuration;

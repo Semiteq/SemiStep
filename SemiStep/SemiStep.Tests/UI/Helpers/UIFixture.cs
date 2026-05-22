@@ -14,7 +14,6 @@ using SemiStep.Tests.Helpers;
 
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.MessageService;
-using SemiStep.UI.RecipeGrid;
 
 using Xunit;
 

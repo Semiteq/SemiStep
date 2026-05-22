@@ -1,7 +1,4 @@
-﻿using System.Linq;
-using System.Reactive.Subjects;
-
-using FluentResults;
+﻿using System.Reactive.Subjects;
 
 using Microsoft.Extensions.Logging;
 

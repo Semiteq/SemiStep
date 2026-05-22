@@ -216,7 +216,7 @@ public sealed class PlcSyncCoordinatorTests
 	[Fact]
 	public void Dispose_PreventsSubsequentNotifications()
 	{
-		var (coordinator, transport, _) = Build(connected: false);
+		var (coordinator, _, _) = Build(connected: false);
 		coordinator.Dispose();
 
 		coordinator.NotifyRecipeChanged(Recipe.Empty, isValid: false);

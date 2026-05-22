@@ -1,10 +1,8 @@
 ﻿using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
-using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;

@@ -6,8 +6,6 @@ using CsvHelper.Configuration;
 
 using FluentResults;
 
-using SemiStep.Core.Configuration;
-
 namespace SemiStep.Core.Recipes.Clipboard;
 
 public sealed class ClipboardSerializer(RecipeMetadataRegistry recipeMetadataRegistry)

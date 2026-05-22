@@ -1,7 +1,5 @@
 ﻿using FluentResults;
 
-using SemiStep.Core.Shared;
-
 namespace SemiStep.Core.Recipes.Analysis;
 
 public sealed class RecipeAnalyzer(RecipeMetadataRegistry registry)

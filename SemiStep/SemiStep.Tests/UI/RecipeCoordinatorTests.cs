@@ -2,7 +2,6 @@
 
 using FluentAssertions;
 
-using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 

@@ -27,7 +27,6 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 	private const int UnknownActionId = 9999;
 	private const string DurationColumn = RecipeTestDriver.StepDurationColumn;
 	private const string CommentColumn = RecipeTestDriver.CommentColumn;
-	private const string TaskColumn = RecipeTestDriver.TaskColumn;
 
 	#region Session.Apply
 

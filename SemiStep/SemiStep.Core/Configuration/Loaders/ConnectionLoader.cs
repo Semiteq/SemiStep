@@ -1,7 +1,6 @@
 ﻿using FluentResults;
 
 using SemiStep.Core.Configuration.Dto;
-using SemiStep.Core.Shared;
 
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;

@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 
-using SemiStep.Core.Recipes;
 using SemiStep.Tests.Helpers;
 
 using Xunit;

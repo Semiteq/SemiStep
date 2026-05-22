@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Data;
 using Avalonia.Styling;
 
 namespace SemiStep.UI.RecipeGrid;

@@ -6,7 +6,6 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Layout;
 
-using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
 
 namespace SemiStep.UI.RecipeGrid;

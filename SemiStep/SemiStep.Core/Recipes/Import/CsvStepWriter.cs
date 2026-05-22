@@ -1,7 +1,5 @@
 ﻿using CsvHelper;
 
-using SemiStep.Core.Configuration;
-
 namespace SemiStep.Core.Recipes.Import;
 
 internal static class CsvStepWriter

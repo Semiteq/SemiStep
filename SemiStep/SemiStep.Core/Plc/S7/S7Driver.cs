@@ -1,5 +1,4 @@
 ﻿using SemiStep.Core.Plc.Configuration;
-using SemiStep.Core.Plc.State;
 
 using S7NetCpuType = global::S7.Net.CpuType;
 using S7NetDataType = global::S7.Net.DataType;

@@ -1,5 +1,4 @@
-﻿using SemiStep.Core.Configuration;
-using SemiStep.Core.Configuration.Dto;
+﻿using SemiStep.Core.Configuration.Dto;
 
 namespace SemiStep.Core.Configuration.Mapping;
 

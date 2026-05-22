@@ -14,8 +14,6 @@ namespace SemiStep.Tests.Core.Integration.Mutation;
 [Trait("Area", "Mutation")]
 public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreFixture>
 {
-	private const float DefaultWaitDurationSeconds = 10f;
-
 	[Fact]
 	public void AppendStep_CreatesStepWithDefaults()
 	{

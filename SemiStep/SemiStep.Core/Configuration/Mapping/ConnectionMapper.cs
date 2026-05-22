@@ -1,7 +1,6 @@
 ﻿using SemiStep.Core.Configuration.Dto;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.Configuration.Memory;
-using SemiStep.Core.Plc.State;
 
 namespace SemiStep.Core.Configuration.Mapping;
 

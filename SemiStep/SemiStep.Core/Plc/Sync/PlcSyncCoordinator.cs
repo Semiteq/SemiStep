@@ -4,8 +4,6 @@ using FluentResults;
 
 using Microsoft.Extensions.Logging;
 
-using SemiStep.Core.Plc.Configuration;
-using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 

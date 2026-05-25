@@ -12,7 +12,7 @@ string:
   system_type: string
   format_kind: numeric
   units: ""
-  max_length: 255
+  max_length: 64
 
 enum:
   system_type: int

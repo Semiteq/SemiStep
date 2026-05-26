@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
@@ -151,8 +152,26 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 				return;
 		}
 
+		ReconcileSelectionWithRows();
 		RefreshStepStartTimes();
 		RefreshRowLoopDepths();
+	}
+
+	private void ReconcileSelectionWithRows()
+	{
+		var currentSelection = SelectedRowIndices;
+		if (currentSelection.Count == 0)
+		{
+			return;
+		}
+
+		var rowCount = RecipeRows.Count;
+		if (currentSelection.All(index => index < rowCount))
+		{
+			return;
+		}
+
+		SelectedRowIndices = currentSelection.Where(index => index < rowCount).ToList();
 	}
 
 	public void RequestSelection(int? suggestedIndex)

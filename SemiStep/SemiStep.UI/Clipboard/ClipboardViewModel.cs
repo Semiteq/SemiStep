@@ -145,9 +145,10 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
+		var rowCount = _recipeGrid.RecipeRows.Count;
 		var insertIndex = _recipeGrid.SelectedRowIndices.Count > 0
-			? _recipeGrid.SelectedRowIndices.Max() + 1
-			: _recipeGrid.RecipeRows.Count;
+			? Math.Min(_recipeGrid.SelectedRowIndices.Max() + 1, rowCount)
+			: rowCount;
 
 		var insertResult = _coordinator.InsertSteps(insertIndex, recipeResult.Value.Steps);
 		if (insertResult.IsFailed)

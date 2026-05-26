@@ -50,7 +50,22 @@ git log --oneline $(git describe --tags --abbrev=0 2>/dev/null)..HEAD 2>/dev/nul
 Draft a tag message based on the actual commits. Present it to the user as an editable
 proposal — do not ask them to write it from scratch. Wait for them to confirm or edit.
 
-The tag message becomes the GitHub release body verbatim, so it should be human-readable.
+The tag message becomes the GitHub release body, with two quirks to mind:
+
+1. **Do NOT repeat the version or product name as the first line of the tag body.**
+   `release.yml` sets the release `name:` to `SemiStep <version>` via the workflow,
+   so the GitHub release page already shows that as the page heading. If the body
+   also starts with `SemiStep 0.2.0` (or similar), the title is duplicated. Start
+   the body with the first content section (e.g. `Highlights since 0.1.0:` or the
+   first `##` heading).
+
+2. **`release.yml` runs the body through `sed '/^$/d'`, which strips every blank line.**
+   Markdown paragraph and heading breaks WILL collapse — sections like
+   `PLC integration` glue to the bullets below them and to the prose above them.
+   Until the workflow is fixed, draft the tag message so it survives blank-line
+   removal: prefix section labels with `##` (they still render distinctly even
+   adjacent to bullets), or warn the user that they will need to edit the rendered
+   release body manually after the workflow completes.
 
 ---
 
@@ -104,7 +119,7 @@ Do not run this unless the user asks. Commands to build the installer locally:
 
 ```powershell
 dotnet clean SemiStep/SemiStep.slnx -c Release
-dotnet publish SemiStep/UI/SemiStep.UI.csproj -c Release -p:Version=<version>
+dotnet publish SemiStep/SemiStep.UI/SemiStep.UI.csproj -c Release -p:Version=<version>
 & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=<version> Installer\SemiStep.iss
 ```
 
@@ -116,5 +131,7 @@ Output: `Installer/Output/SemiStep-Setup.exe`
 
 - Release workflow triggers on any `v*` tag push (`.github/workflows/release.yml`).
 - Always use annotated tags (`git tag -a`). Never lightweight tags.
-- The annotated tag message is used verbatim as the GitHub release body.
+- The annotated tag message is fed into the GitHub release body, but the workflow
+  pipes it through `sed '/^$/d'` which deletes every blank line. Markdown paragraph
+  and heading breaks WILL collapse. See Step 3 for mitigation.
 - Installer output file must remain `SemiStep-Setup.exe` — the workflow upload glob depends on it.

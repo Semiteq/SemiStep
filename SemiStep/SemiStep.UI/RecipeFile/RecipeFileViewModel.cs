@@ -12,7 +12,6 @@ namespace SemiStep.UI.RecipeFile;
 
 public class RecipeFileViewModel : ReactiveObject, IDisposable
 {
-	private const string FileSource = "File";
 	private readonly RecipeCoordinator _coordinator;
 
 	private readonly CompositeDisposable _disposables = new();
@@ -37,17 +36,17 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 		SaveRecipeCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.AddError($"Save failed: {ex.Message}", FileSource))
+			.Subscribe(ex => _messagePanel.ReportError($"Save failed: {ex.Message}"))
 			.DisposeWith(_disposables);
 
 		SaveAsRecipeCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.AddError($"Save As failed: {ex.Message}", FileSource))
+			.Subscribe(ex => _messagePanel.ReportError($"Save As failed: {ex.Message}"))
 			.DisposeWith(_disposables);
 
 		LoadRecipeCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.AddError($"Load failed: {ex.Message}", FileSource))
+			.Subscribe(ex => _messagePanel.ReportError($"Load failed: {ex.Message}"))
 			.DisposeWith(_disposables);
 	}
 
@@ -104,13 +103,13 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 		if (result.IsFailed)
 		{
-			_messagePanel.AddError($"Failed to save recipe: {result.Errors[0].Message}", FileSource);
+			_messagePanel.ReportError($"Failed to save recipe: {result.Errors[0].Message}");
 
 			return;
 		}
 
 		CurrentFilePath = filePath;
-		_messagePanel.AddInfo($"Saved: {Path.GetFileName(filePath)}", FileSource);
+		_messagePanel.ReportSuccess($"Saved: {Path.GetFileName(filePath)}");
 	}
 
 	private async Task LoadRecipeAsync()
@@ -124,13 +123,13 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		var result = await _coordinator.LoadRecipeAsync(filePath);
 		if (result.IsFailed)
 		{
-			_messagePanel.AddError(result.Errors[0].Message, FileSource);
+			_messagePanel.ReportError(result.Errors[0].Message);
 
 			return;
 		}
 
 		CurrentFilePath = filePath;
-		_messagePanel.AddInfo($"Loaded: {Path.GetFileName(filePath)}", FileSource);
+		_messagePanel.ReportSuccess($"Loaded: {Path.GetFileName(filePath)}");
 	}
 
 	private void NewRecipe()
@@ -139,7 +138,7 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 		if (result.IsFailed)
 		{
-			_messagePanel.AddError(result.Errors[0].Message, FileSource);
+			_messagePanel.ReportError(result.Errors[0].Message);
 
 			return;
 		}

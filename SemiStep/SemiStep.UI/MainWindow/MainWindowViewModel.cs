@@ -54,7 +54,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 		ToggleSyncCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => messagePanel.AddError($"Sync toggle failed: {ex.Message}", "PLC"))
+			.Subscribe(ex => messagePanel.ReportError($"Sync toggle failed: {ex.Message}"))
 			.DisposeWith(_disposables);
 
 		_coordinator.Mutated += OnCoordinatorMutated;
@@ -104,8 +104,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	public bool CanUndo => _coordinator.CanUndo;
 	public bool CanRedo => _coordinator.CanRedo;
 
-	public string StatusText => IsDirty ? "Modified" : "Saved";
-
 	public bool IsSyncEnabled => _coordinator.IsSyncEnabled;
 
 	public string PlcSyncStatusText => MapSyncStatus(_coordinator.SyncStatus);
@@ -142,7 +140,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 			if (result.IsFailed)
 			{
-				MessagePanel.AddError(result.Errors[0].Message, "PLC");
+				MessagePanel.ReportError(result.Errors[0].Message);
 			}
 		}
 
@@ -166,7 +164,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		catch (Exception ex)
 		{
 			_logger.LogWarning("Unexpected error while showing PLC conflict dialog: {Message}", ex.Message);
-			MessagePanel.AddError("Failed to show PLC conflict dialog", "PLC");
+			MessagePanel.ReportError("Failed to show PLC conflict dialog");
 
 			return;
 		}
@@ -180,7 +178,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 		if (result.IsFailed)
 		{
-			MessagePanel.AddError(result.Errors[0].Message, "PLC");
+			MessagePanel.ReportError(result.Errors[0].Message);
 		}
 	}
 
@@ -196,7 +194,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		this.RaisePropertyChanged(nameof(IsDirty));
 		this.RaisePropertyChanged(nameof(CanUndo));
 		this.RaisePropertyChanged(nameof(CanRedo));
-		this.RaisePropertyChanged(nameof(StatusText));
 		RaiseConnectionStateProperties();
 	}
 

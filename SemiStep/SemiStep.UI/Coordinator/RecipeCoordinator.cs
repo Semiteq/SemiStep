@@ -44,8 +44,6 @@ public sealed class RecipeCoordinator : IDisposable
 	private readonly RecipeSession _session;
 	private bool _disposed;
 	private bool _initialized;
-	private Result<PlcSessionSnapshot> _lastPlcState = PlcSessionSnapshot.InitialState;
-	private Result _lastRecipeResult = Result.Ok();
 	private IDisposable? _plcStateSubscription;
 
 	public RecipeCoordinator(
@@ -209,8 +207,6 @@ public sealed class RecipeCoordinator : IDisposable
 			result = await Dispatcher.UIThread.InvokeAsync(() => _plc.ApplyRecipeFromPlc(readResult.Value));
 		}
 
-		_lastRecipeResult = result;
-
 		if (result.IsFailed)
 		{
 			RebuildMessagePanel();
@@ -239,7 +235,6 @@ public sealed class RecipeCoordinator : IDisposable
 
 		if (!keepLocal && result.IsSuccess)
 		{
-			_lastRecipeResult = result;
 			DispatchMutation(new MutationSignal.RecipeReplaced());
 		}
 
@@ -335,8 +330,6 @@ public sealed class RecipeCoordinator : IDisposable
 			});
 		}
 
-		_lastRecipeResult = result;
-
 		if (result.IsFailed)
 		{
 			RebuildMessagePanel();
@@ -371,9 +364,9 @@ public sealed class RecipeCoordinator : IDisposable
 			_logger.LogWarning(
 				"Save rejected: recipe is not valid. StepCount={StepCount}",
 				_session.Current.StepCount);
-			_lastRecipeResult = Result.Fail(SaveRejectionMessage).WithReasons(_session.Snapshot.Reasons);
+			var rejection = Result.Fail(SaveRejectionMessage).WithReasons(_session.Snapshot.Reasons);
 			RebuildMessagePanel();
-			return _lastRecipeResult;
+			return rejection;
 		}
 
 		var result = await _csvService.SaveAsync(_session.Current, filePath);
@@ -393,8 +386,6 @@ public sealed class RecipeCoordinator : IDisposable
 			DispatchMutation(new MutationSignal.StateRefreshed());
 		}
 
-		_lastRecipeResult = result;
-
 		RebuildMessagePanel();
 
 		return result;
@@ -410,12 +401,14 @@ public sealed class RecipeCoordinator : IDisposable
 			var applyResult = _plc.ApplyRecipeFromPlc(recipe);
 			if (applyResult.IsFailed)
 			{
-				_lastRecipeResult = applyResult;
 				RebuildMessagePanel();
+				_logger.LogWarning(
+					"Reconnect reconciliation failed to apply PLC recipe: {Errors}",
+					string.Join("; ", applyResult.Errors.Select(e => e.Message)));
+				_messagePanel.ReportError($"PLC reconnect: {applyResult.Errors[0].Message}");
 				return applyResult;
 			}
 
-			_lastRecipeResult = applyResult;
 			_logger.LogInformation(
 				"Reconnect reconciliation applied PLC recipe: {StepCount} steps",
 				_session.Current.StepCount);
@@ -429,7 +422,6 @@ public sealed class RecipeCoordinator : IDisposable
 
 	private Result<int?> Track(Result<MutationOutcome> result, MutationSignal signal)
 	{
-		_lastRecipeResult = result.ToResult();
 		RebuildMessagePanel();
 
 		if (result.IsFailed)
@@ -444,7 +436,6 @@ public sealed class RecipeCoordinator : IDisposable
 
 	private Result TrackVoid(Result result, MutationSignal signal)
 	{
-		_lastRecipeResult = result;
 		RebuildMessagePanel();
 
 		if (result.IsFailed)
@@ -480,6 +471,7 @@ public sealed class RecipeCoordinator : IDisposable
 	{
 		try
 		{
+			_messagePanel.ClearOperation();
 			Mutated?.Invoke(signal);
 		}
 		catch (Exception ex)
@@ -499,9 +491,7 @@ public sealed class RecipeCoordinator : IDisposable
 
 			LogPlcStateChange(result);
 
-			_lastPlcState = result;
 			_plcStateChanged.OnNext(result);
-			RebuildMessagePanel();
 		}
 	}
 
@@ -538,7 +528,13 @@ public sealed class RecipeCoordinator : IDisposable
 
 	private void RebuildMessagePanel()
 	{
-		var combinedReasons = _lastRecipeResult.Reasons.Concat(_lastPlcState.Reasons);
-		_messagePanel.RefreshReasons(combinedReasons);
+		// The panel reflects the CURRENT recipe's structural validity, never an operation
+		// outcome. A failed analysis (e.g. a loaded recipe with loop nesting beyond the limit)
+		// is an operation failure surfaced transiently by the initiating VM, so its IError
+		// reasons must not leak into the panel even though the failed snapshot is the current one.
+		IEnumerable<IReason> reasons = _session.Snapshot.IsSuccess
+			? _session.Snapshot.Reasons
+			: Array.Empty<IReason>();
+		_messagePanel.RefreshReasons(reasons);
 	}
 }

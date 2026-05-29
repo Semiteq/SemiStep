@@ -22,7 +22,6 @@ namespace SemiStep.UI.Clipboard;
 
 public class ClipboardViewModel : ReactiveObject, IDisposable
 {
-	private const string ClipboardSource = "Clipboard";
 	private readonly ClipboardSerializer _clipboardSerializer;
 	private readonly RecipeCoordinator _coordinator;
 
@@ -56,17 +55,17 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 
 		CopyStepCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.AddError($"Copy failed: {ex.Message}", ClipboardSource))
+			.Subscribe(ex => _messagePanel.ReportError($"Copy failed: {ex.Message}"))
 			.DisposeWith(_disposables);
 
 		CutStepCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.AddError($"Cut failed: {ex.Message}", ClipboardSource))
+			.Subscribe(ex => _messagePanel.ReportError($"Cut failed: {ex.Message}"))
 			.DisposeWith(_disposables);
 
 		PasteStepCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.AddError($"Paste failed: {ex.Message}", ClipboardSource))
+			.Subscribe(ex => _messagePanel.ReportError($"Paste failed: {ex.Message}"))
 			.DisposeWith(_disposables);
 	}
 
@@ -113,7 +112,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		var result = _coordinator.RemoveSteps(_recipeGrid.SelectedRowIndices);
 		if (result.IsFailed)
 		{
-			_messagePanel.AddError(result.Errors[0].Message, ClipboardSource);
+			_messagePanel.ReportError(result.Errors[0].Message);
 			return;
 		}
 
@@ -140,7 +139,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 				Environment.NewLine,
 				recipeResult.Errors.Select(e => e.Message));
 
-			_messagePanel.AddError($"Paste failed: {errorMessages}", ClipboardSource);
+			_messagePanel.ReportError($"Paste failed: {errorMessages}");
 
 			return;
 		}
@@ -153,7 +152,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		var insertResult = _coordinator.InsertSteps(insertIndex, recipeResult.Value.Steps);
 		if (insertResult.IsFailed)
 		{
-			_messagePanel.AddError(insertResult.Errors[0].Message, ClipboardSource);
+			_messagePanel.ReportError(insertResult.Errors[0].Message);
 			return;
 		}
 

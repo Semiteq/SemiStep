@@ -25,15 +25,17 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 	private readonly ObservableAsPropertyHelper<string> _statusErrorSummary;
 	private readonly ObservableAsPropertyHelper<string> _warningCountText;
 
+	private readonly List<MessageEntry> _validationEntries = [];
+
 	private int _errorCount;
 	private bool _hasEntries;
 	private bool _isVisible = true;
+	private MessageEntry? _operationEntry;
 	private int _warningCount;
 
 	public MessagePanelViewModel()
 	{
 		Entries = [];
-		ClearCommand = ReactiveCommand.Create(ClearNonStructural);
 		ToggleCommand = ReactiveCommand.Create(() => { IsVisible = !IsVisible; });
 
 		_hasErrors = this.WhenAnyValue(x => x.ErrorCount)
@@ -84,8 +86,6 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 
 	public ObservableCollection<MessageEntry> Entries { get; }
 
-	public ReactiveCommand<Unit, Unit> ClearCommand { get; }
-
 	public ReactiveCommand<Unit, Unit> ToggleCommand { get; }
 
 	public int ErrorCount
@@ -130,80 +130,79 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 	{
 		_disposables.Dispose();
 		ToggleCommand.Dispose();
-		ClearCommand.Dispose();
 		GC.SuppressFinalize(this);
 	}
 
-	public void AddError(string message, string source)
-	{
-		PostOnUiThread(() =>
-		{
-			Entries.Add(new MessageEntry(MessageSeverity.Error, message, source, DateTime.Now));
-			RecountAndNotify();
-		});
-	}
-
-	public void AddWarning(string message, string source)
-	{
-		PostOnUiThread(() =>
-		{
-			Entries.Add(new MessageEntry(MessageSeverity.Warning, message, source, DateTime.Now));
-			RecountAndNotify();
-		});
-	}
-
-	public void AddInfo(string message, string source)
-	{
-		PostOnUiThread(() =>
-		{
-			Entries.Add(new MessageEntry(MessageSeverity.Info, message, source, DateTime.Now));
-			RecountAndNotify();
-		});
-	}
-
-	// Only IError and Warning subtypes are rendered; other IReason subtypes (plain Success) are intentionally ignored.
 	public void RefreshReasons(IEnumerable<IReason> reasons)
 	{
 		ArgumentNullException.ThrowIfNull(reasons);
 		var reasonList = reasons.ToList();
 		PostOnUiThread(() =>
 		{
-			RemoveByPredicate(entry => entry.IsStructural);
+			_validationEntries.Clear();
 
 			foreach (var error in reasonList.OfType<IError>())
 			{
-				Entries.Add(new MessageEntry(MessageSeverity.Error, error.Message, MessageEntry.StructuralSource,
-					DateTime.Now));
+				_validationEntries.Add(new MessageEntry(MessageSeverity.Error, error.Message));
 			}
 
 			foreach (var warning in reasonList.OfType<Warning>())
 			{
-				Entries.Add(new MessageEntry(MessageSeverity.Warning, warning.Message, MessageEntry.StructuralSource,
-					DateTime.Now));
+				_validationEntries.Add(new MessageEntry(MessageSeverity.Warning, warning.Message));
 			}
 
-			RecountAndNotify();
+			Rebuild();
 		});
 	}
 
-	public void Clear()
+	public void ReportSuccess(string message)
+	{
+		ReportOperation(MessageSeverity.Info, message);
+	}
+
+	public void ReportWarning(string message)
+	{
+		ReportOperation(MessageSeverity.Warning, message);
+	}
+
+	public void ReportError(string message)
+	{
+		ReportOperation(MessageSeverity.Error, message);
+	}
+
+	public void ClearOperation()
 	{
 		PostOnUiThread(() =>
 		{
-			Entries.Clear();
-			ErrorCount = 0;
-			WarningCount = 0;
-			HasEntries = false;
+			_operationEntry = null;
+			Rebuild();
 		});
 	}
 
-	private void ClearNonStructural()
+	private void ReportOperation(MessageSeverity severity, string message)
 	{
 		PostOnUiThread(() =>
 		{
-			RemoveByPredicate(entry => !entry.IsStructural);
-			RecountAndNotify();
+			_operationEntry = new MessageEntry(severity, message);
+			Rebuild();
 		});
+	}
+
+	private void Rebuild()
+	{
+		Entries.Clear();
+
+		if (_operationEntry is not null)
+		{
+			Entries.Add(_operationEntry);
+		}
+
+		foreach (var entry in _validationEntries)
+		{
+			Entries.Add(entry);
+		}
+
+		RecountAndNotify();
 	}
 
 	private void PostOnUiThread(Action action)
@@ -218,21 +217,11 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 		}
 	}
 
-	private void RemoveByPredicate(Func<MessageEntry, bool> predicate)
-	{
-		for (var i = Entries.Count - 1; i >= 0; i--)
-		{
-			if (predicate(Entries[i]))
-			{
-				Entries.RemoveAt(i);
-			}
-		}
-	}
-
 	private void RecountAndNotify()
 	{
-		ErrorCount = Entries.Count(e => e.IsError);
-		WarningCount = Entries.Count(e => e.IsWarning);
-		HasEntries = Entries.Count > 0;
+		ErrorCount = _validationEntries.Count(e => e.IsError);
+		WarningCount = _validationEntries.Count(e => e.IsWarning);
+		HasEntries = _validationEntries.Count > 0
+			|| _operationEntry is { Severity: MessageSeverity.Error or MessageSeverity.Warning };
 	}
 }

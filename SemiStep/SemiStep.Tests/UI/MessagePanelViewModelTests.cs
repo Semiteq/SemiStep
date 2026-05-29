@@ -30,41 +30,15 @@ public sealed class MessagePanelViewModelTests
 		panel.StatusErrorSummary.Should().Be(string.Empty);
 	}
 
-	[AvaloniaFact]
-	public void AddError_IncrementsCount_AddsErrorEntry_SetsHasErrorsAndHasEntries()
-	{
-		var panel = new MessagePanelViewModel();
-
-		panel.AddError("msg", "src");
-
-		panel.ErrorCount.Should().Be(1);
-		panel.HasErrors.Should().BeTrue();
-		panel.HasEntries.Should().BeTrue();
-		panel.Entries.Should().ContainSingle(e => e.IsError);
-	}
-
-	[AvaloniaFact]
-	public void AddInfo_DoesNotIncrementErrorOrWarningCount()
-	{
-		var panel = new MessagePanelViewModel();
-
-		panel.AddInfo("msg", "src");
-
-		panel.ErrorCount.Should().Be(0);
-		panel.WarningCount.Should().Be(0);
-	}
-
 	[AvaloniaTheory]
 	[InlineData(1, "1 Error")]
 	[InlineData(2, "2 Errors")]
 	public void ErrorCountText_UsesSingularOrPlural(int errorCount, string expected)
 	{
 		var panel = new MessagePanelViewModel();
+		var reasons = Enumerable.Range(0, errorCount).Select(IReason (i) => new Error($"msg{i}")).ToList();
 
-		for (var i = 0; i < errorCount; i++)
-		{
-			panel.AddError($"msg{i}", "src");
-		}
+		panel.RefreshReasons(reasons);
 
 		panel.ErrorCountText.Should().Be(expected);
 	}
@@ -76,33 +50,13 @@ public sealed class MessagePanelViewModelTests
 	public void StatusErrorSummary_CombinesErrorsAndWarnings(int errorCount, int warningCount, string expected)
 	{
 		var panel = new MessagePanelViewModel();
+		var reasons = new List<IReason>();
+		reasons.AddRange(Enumerable.Range(0, errorCount).Select(IReason (i) => new Error($"e{i}")));
+		reasons.AddRange(Enumerable.Range(0, warningCount).Select(IReason (i) => new Warning($"w{i}")));
 
-		for (var i = 0; i < errorCount; i++)
-		{
-			panel.AddError($"e{i}", "src");
-		}
-		if (warningCount > 0)
-		{
-			var warnings = Enumerable.Range(0, warningCount).Select(IReason (i) => new Warning($"w{i}")).ToList();
-			panel.RefreshReasons(warnings);
-		}
+		panel.RefreshReasons(reasons);
 
 		panel.StatusErrorSummary.Should().Be(expected);
-	}
-
-	[AvaloniaFact]
-	public void Clear_ResetsCountsEntriesAndFlags()
-	{
-		var panel = new MessagePanelViewModel();
-
-		panel.AddError("e", "src");
-		panel.RefreshReasons([new Warning("w")]);
-		panel.Clear();
-
-		panel.ErrorCount.Should().Be(0);
-		panel.WarningCount.Should().Be(0);
-		panel.HasErrors.Should().BeFalse();
-		panel.Entries.Should().BeEmpty();
 	}
 
 	[AvaloniaFact]
@@ -111,7 +65,7 @@ public sealed class MessagePanelViewModelTests
 		var panel = new MessagePanelViewModel();
 		panel.IsVisible = false;
 
-		panel.AddError("e", "src");
+		panel.RefreshReasons([new Error("e")]);
 		panel.IsVisible = true;
 
 		panel.ShowPanel.Should().BeTrue();
@@ -122,7 +76,7 @@ public sealed class MessagePanelViewModelTests
 	{
 		var panel = new MessagePanelViewModel();
 
-		panel.AddError("e", "src");
+		panel.RefreshReasons([new Error("e")]);
 		panel.IsVisible = false;
 
 		panel.ShowPanel.Should().BeFalse();
@@ -131,18 +85,18 @@ public sealed class MessagePanelViewModelTests
 	[AvaloniaTheory]
 	[InlineData(true)]
 	[InlineData(false)]
-	public void RefreshReasons_AddsStructuralEntries_PreservingSeverity(bool isError)
+	public void RefreshReasons_AddsEntries_PreservingSeverity(bool isError)
 	{
 		var panel = new MessagePanelViewModel();
 		List<IReason> reasons = isError ? [new Error("some error")] : [new Warning("some warning")];
 
 		panel.RefreshReasons(reasons);
 
-		panel.Entries.Should().ContainSingle(e => e.IsStructural && (isError ? e.IsError : e.IsWarning));
+		panel.Entries.Should().ContainSingle(e => isError ? e.IsError : e.IsWarning);
 	}
 
 	[AvaloniaFact]
-	public void RefreshReasons_RemovesOldStructuralEntries_BeforeAddingNew()
+	public void RefreshReasons_RemovesOldEntries_BeforeAddingNew()
 	{
 		var panel = new MessagePanelViewModel();
 
@@ -153,35 +107,125 @@ public sealed class MessagePanelViewModelTests
 	}
 
 	[AvaloniaFact]
-	public void RefreshReasons_PreservesNonStructuralEntries()
+	public void RefreshReasons_ReplacesPreviousEntries()
 	{
 		var panel = new MessagePanelViewModel();
 
-		panel.AddError("non-structural", "custom source");
-		panel.RefreshReasons([]);
+		panel.RefreshReasons([new Error("first")]);
+		panel.RefreshReasons([new Warning("second")]);
 
-		panel.Entries.Should().ContainSingle(e => !e.IsStructural);
+		panel.Entries.Should().ContainSingle(e => e.IsWarning);
+		panel.ErrorCount.Should().Be(0);
+		panel.WarningCount.Should().Be(1);
 	}
 
 	[AvaloniaFact]
-	public void ClearCommand_RemovesNonStructuralEntries()
+	public void RefreshReasons_PreservesOperationEntry()
 	{
 		var panel = new MessagePanelViewModel();
 
-		panel.AddError("e", "src");
-		panel.ClearCommand.Execute().Subscribe();
+		panel.ReportError("operation failed");
+		panel.RefreshReasons([new Error("validation error")]);
 
-		panel.Entries.Should().BeEmpty();
+		panel.Entries.Should().HaveCount(2);
+		panel.Entries[0].Message.Should().Be("operation failed");
+		panel.Entries.Should().Contain(e => e.Message == "validation error");
 	}
 
 	[AvaloniaFact]
-	public void ClearCommand_PreservesStructuralEntries()
+	public void ReportOperation_ShowsAsRow_LatestOnly()
 	{
 		var panel = new MessagePanelViewModel();
 
-		panel.RefreshReasons([new Error("structural error")]);
-		panel.ClearCommand.Execute().Subscribe();
+		panel.ReportError("first operation");
+		panel.ReportWarning("second operation");
 
-		panel.Entries.Should().ContainSingle(e => e.IsStructural);
+		panel.Entries.Should().ContainSingle();
+		panel.Entries[0].Message.Should().Be("second operation");
+		panel.Entries[0].IsWarning.Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void ReportSuccess_MapsToInfoSeverity()
+	{
+		var panel = new MessagePanelViewModel();
+
+		panel.ReportSuccess("saved");
+
+		panel.Entries.Should().ContainSingle();
+		panel.Entries[0].Severity.Should().Be(MessageSeverity.Info);
+	}
+
+	[AvaloniaTheory]
+	[InlineData(MessageSeverity.Warning)]
+	[InlineData(MessageSeverity.Error)]
+	public void ReportOperation_MapsSeverity(MessageSeverity severity)
+	{
+		var panel = new MessagePanelViewModel();
+
+		if (severity == MessageSeverity.Warning)
+		{
+			panel.ReportWarning("careful");
+		}
+		else
+		{
+			panel.ReportError("failed");
+		}
+
+		panel.Entries.Should().ContainSingle();
+		panel.Entries[0].Severity.Should().Be(severity);
+	}
+
+	[AvaloniaFact]
+	public void Counts_IgnoreOperationEntry()
+	{
+		var panel = new MessagePanelViewModel();
+
+		panel.ReportError("operation error");
+
+		panel.ErrorCount.Should().Be(0);
+		panel.WarningCount.Should().Be(0);
+	}
+
+	[AvaloniaFact]
+	public void ClearOperation_RemovesOnlyOperationRow()
+	{
+		var panel = new MessagePanelViewModel();
+
+		panel.RefreshReasons([new Error("validation error")]);
+		panel.ReportError("operation error");
+		panel.ClearOperation();
+
+		panel.Entries.Should().ContainSingle();
+		panel.Entries[0].Message.Should().Be("validation error");
+	}
+
+	[AvaloniaFact]
+	public void ReportSuccess_DoesNotSetHasEntries()
+	{
+		var panel = new MessagePanelViewModel();
+
+		panel.ReportSuccess("saved");
+
+		panel.HasEntries.Should().BeFalse();
+	}
+
+	[AvaloniaTheory]
+	[InlineData(MessageSeverity.Error)]
+	[InlineData(MessageSeverity.Warning)]
+	public void OperationErrorOrWarning_SetsHasEntries(MessageSeverity severity)
+	{
+		var panel = new MessagePanelViewModel();
+
+		if (severity == MessageSeverity.Error)
+		{
+			panel.ReportError("op");
+		}
+		else
+		{
+			panel.ReportWarning("op");
+		}
+
+		panel.HasEntries.Should().BeTrue();
 	}
 }

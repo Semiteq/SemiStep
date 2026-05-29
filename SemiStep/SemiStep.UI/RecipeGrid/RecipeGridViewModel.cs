@@ -201,7 +201,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 		if (result.IsFailed)
 		{
-			_messagePanel.AddError($"Step {stepIndex + 1}: {result.Errors[0].Message}", "RecipeGrid");
+			_messagePanel.ReportError($"Step {stepIndex + 1}: {result.Errors[0].Message}");
 		}
 	}
 
@@ -222,8 +222,8 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 		if (result.IsFailed)
 		{
-			_messagePanel.AddError(
-				$"Step {stepIndex + 1}: Failed to change action - {result.Errors[0].Message}", "RecipeGrid");
+			_messagePanel.ReportError(
+				$"Step {stepIndex + 1}: Failed to change action - {result.Errors[0].Message}");
 			return;
 		}
 
@@ -442,7 +442,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 				step.ActionKey,
 				stepNumber,
 				string.Join("; ", actionResult.Errors.Select(e => e.Message)));
-			_messagePanel.AddError($"Step {stepNumber}: unknown action (key={step.ActionKey})", "RecipeGrid");
+			_messagePanel.ReportError($"Step {stepNumber}: unknown action (key={step.ActionKey})");
 			return null;
 		}
 

@@ -78,9 +78,9 @@ public sealed class RecipeCoordinator : IDisposable
 			.Publish()
 			.RefCount();
 
-		var canEditConnectable = _plcStateChangedShared
-			.Select(plcState => plcState.IsSuccess ? !plcState.Value.IsSyncEnabled : !IsSyncEnabled)
-			.StartWith(!IsSyncEnabled)
+		var canEditConnectable = _executionState
+			.Select(info => !info.RecipeActive)
+			.StartWith(!IsRecipeActive)
 			.DistinctUntilChanged()
 			.Replay(1);
 		_canEditRecipeConnection = canEditConnectable.Connect();

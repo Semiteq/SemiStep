@@ -82,10 +82,10 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void Cut_CanExecuteFalse_WhenSyncEnabled_EvenWithSelection()
+	public void Cut_CanExecuteFalse_WhenRecipeExecuting_EvenWithSelection()
 	{
 		AppendStepAndSelect();
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		((ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeFalse();
 	}
@@ -101,11 +101,11 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void Cut_CanExecuteBackToTrue_AfterSyncDisabledAgain()
+	public void Cut_CanExecuteBackToTrue_AfterExecutionStops()
 	{
 		AppendStepAndSelect();
-		_fixture.SetSyncEnabled(true);
-		_fixture.SetSyncEnabled(false);
+		_fixture.SetRecipeActive(true);
+		_fixture.SetRecipeActive(false);
 
 		((ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeTrue();
 	}
@@ -119,30 +119,38 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void Paste_CanExecuteFalse_WhenSyncEnabled()
+	public void Paste_CanExecuteFalse_WhenRecipeExecuting()
 	{
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		((ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
-	public void Paste_CanExecuteBackToTrue_AfterSyncDisabledAgain()
+	public void Paste_CanExecuteTrue_WhenSyncEnabledButNotExecuting()
 	{
 		_fixture.SetSyncEnabled(true);
-		_fixture.SetSyncEnabled(false);
 
 		((ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
-	public void Cut_GatedInvocation_InConnectMode_DoesNotRemoveStep()
+	public void Paste_CanExecuteBackToTrue_AfterExecutionStops()
+	{
+		_fixture.SetRecipeActive(true);
+		_fixture.SetRecipeActive(false);
+
+		((ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void Cut_GatedInvocation_WhileExecuting_DoesNotRemoveStep()
 	{
 		// UI buttons honor CanExecute and never call Execute when gated. Simulate that
-		// pattern and assert recipe state is untouched in Connect mode.
+		// pattern and assert recipe state is untouched while executing.
 		AppendStepAndSelect();
 		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		var command = (ICommand)_clipboard.CutStepCommand;
 		if (command.CanExecute(null))
@@ -155,11 +163,11 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void Paste_GatedInvocation_InConnectMode_DoesNotInsertSteps()
+	public void Paste_GatedInvocation_WhileExecuting_DoesNotInsertSteps()
 	{
 		_fixture.Coordinator.NewRecipe();
 		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		var command = (ICommand)_clipboard.PasteStepCommand;
 		if (command.CanExecute(null))

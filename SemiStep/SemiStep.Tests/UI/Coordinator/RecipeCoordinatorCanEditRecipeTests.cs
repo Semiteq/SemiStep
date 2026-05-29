@@ -26,7 +26,7 @@ public sealed class RecipeCoordinatorCanEditRecipeTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void CanEditRecipe_EmitsTrueOnSubscribe_WhenSyncDisabled()
+	public void CanEditRecipe_EmitsTrueOnSubscribe_WhenNoExecution()
 	{
 		var values = CollectValues(_fixture.Coordinator.CanEditRecipe, out var subscription);
 		try
@@ -40,12 +40,12 @@ public sealed class RecipeCoordinatorCanEditRecipeTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void CanEditRecipe_FlipsToFalse_WhenSyncEnabled()
+	public void CanEditRecipe_FlipsToFalse_WhenRecipeBecomesActive()
 	{
 		var values = CollectValues(_fixture.Coordinator.CanEditRecipe, out var subscription);
 		try
 		{
-			_fixture.SetSyncEnabled(true);
+			_fixture.SetRecipeActive(true);
 
 			values.Should().Equal(true, false);
 		}
@@ -56,13 +56,13 @@ public sealed class RecipeCoordinatorCanEditRecipeTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void CanEditRecipe_FlipsBackToTrue_WhenSyncDisabledAfterEnabled()
+	public void CanEditRecipe_FlipsBackToTrue_WhenRecipeStops()
 	{
 		var values = CollectValues(_fixture.Coordinator.CanEditRecipe, out var subscription);
 		try
 		{
-			_fixture.SetSyncEnabled(true);
-			_fixture.SetSyncEnabled(false);
+			_fixture.SetRecipeActive(true);
+			_fixture.SetRecipeActive(false);
 
 			values.Should().Equal(true, false, true);
 		}
@@ -75,7 +75,7 @@ public sealed class RecipeCoordinatorCanEditRecipeTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void CanEditRecipe_LateSubscriber_ReceivesCurrentValue()
 	{
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		var values = CollectValues(_fixture.Coordinator.CanEditRecipe, out var subscription);
 		try
@@ -89,13 +89,13 @@ public sealed class RecipeCoordinatorCanEditRecipeTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void CanEditRecipe_DistinctUntilChanged_SuppressesDuplicateEmissions()
+	public void CanEditRecipe_DistinctUntilChanged_SuppressesDuplicateActiveEmissions()
 	{
 		var values = CollectValues(_fixture.Coordinator.CanEditRecipe, out var subscription);
 		try
 		{
-			_fixture.SetSyncEnabled(true);
-			_fixture.SetSyncEnabled(true);
+			_fixture.SetRecipeActive(true);
+			_fixture.SetRecipeActive(true);
 
 			values.Should().Equal(true, false);
 		}

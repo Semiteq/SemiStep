@@ -43,18 +43,26 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void LoadRecipe_CanExecuteFalse_WhenSyncEnabled()
+	public void LoadRecipe_CanExecuteFalse_WhenRecipeExecuting()
 	{
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		((ICommand)_recipeFile.LoadRecipeCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
-	public void LoadRecipe_CanExecuteBackToTrue_AfterSyncDisabledAgain()
+	public void LoadRecipe_CanExecuteTrue_WhenSyncEnabledButNotExecuting()
 	{
 		_fixture.SetSyncEnabled(true);
-		_fixture.SetSyncEnabled(false);
+
+		((ICommand)_recipeFile.LoadRecipeCommand).CanExecute(null).Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void LoadRecipe_CanExecuteBackToTrue_AfterExecutionStops()
+	{
+		_fixture.SetRecipeActive(true);
+		_fixture.SetRecipeActive(false);
 
 		((ICommand)_recipeFile.LoadRecipeCommand).CanExecute(null).Should().BeTrue();
 	}
@@ -66,18 +74,18 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void NewRecipe_CanExecuteFalse_WhenSyncEnabled()
+	public void NewRecipe_CanExecuteFalse_WhenRecipeExecuting()
 	{
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		((ICommand)_recipeFile.NewRecipeCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
-	public void NewRecipe_CanExecuteBackToTrue_AfterSyncDisabledAgain()
+	public void NewRecipe_CanExecuteBackToTrue_AfterExecutionStops()
 	{
-		_fixture.SetSyncEnabled(true);
-		_fixture.SetSyncEnabled(false);
+		_fixture.SetRecipeActive(true);
+		_fixture.SetRecipeActive(false);
 
 		((ICommand)_recipeFile.NewRecipeCommand).CanExecute(null).Should().BeTrue();
 	}
@@ -103,15 +111,15 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void NewRecipe_GatedInvocation_InConnectMode_DoesNotMutateRecipe()
+	public void NewRecipe_GatedInvocation_WhileExecuting_DoesNotMutateRecipe()
 	{
 		// End-to-end: simulate the binding-time invocation pattern used by the UI
-		// (button click respects CanExecute). In Connect mode the gate refuses
+		// (button click respects CanExecute). While executing the gate refuses
 		// invocation, so no mutation occurs.
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		var command = (ICommand)_recipeFile.NewRecipeCommand;
 		if (command.CanExecute(null))
@@ -124,17 +132,17 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void LoadRecipe_GatedInvocation_InConnectMode_DoesNotOpenDialog()
+	public void LoadRecipe_GatedInvocation_WhileExecuting_DoesNotOpenDialog()
 	{
 		// End-to-end: the dialog handler must not be invoked because CanExecute is
-		// false in Connect mode (UI buttons honor CanExecute and never call Execute).
+		// false while executing (UI buttons honor CanExecute and never call Execute).
 		var interactionInvoked = false;
 		_recipeFile.OpenFileInteraction.RegisterHandler((IInteractionContext<Unit, string?> ctx) =>
 		{
 			interactionInvoked = true;
 			ctx.SetOutput(null);
 		});
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		var command = (ICommand)_recipeFile.LoadRecipeCommand;
 		if (command.CanExecute(null))

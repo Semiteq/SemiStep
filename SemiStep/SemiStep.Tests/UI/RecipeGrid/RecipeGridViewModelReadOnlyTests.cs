@@ -4,7 +4,6 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
-using SemiStep.Core.Plc.State;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
@@ -41,40 +40,34 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void IsReadOnly_False_Initially_WhenSyncDisabled()
+	public void IsReadOnly_False_Initially_WhenNoExecution()
 	{
 		_grid.IsReadOnly.Should().BeFalse();
 	}
 
 	[AvaloniaFact]
-	public void IsReadOnly_True_WhenSyncEnabled()
+	public void IsReadOnly_True_WhenExecutionActive()
 	{
-		_fixture.SetSyncEnabled(true);
+		// §2.7: execution being active locks editing.
+		_fixture.SetRecipeActive(true);
 
 		_grid.IsReadOnly.Should().BeTrue();
 	}
 
 	[AvaloniaFact]
-	public void IsReadOnly_BackToFalse_AfterSyncDisabledAgain()
+	public void IsReadOnly_BackToFalse_AfterExecutionStops()
 	{
-		_fixture.SetSyncEnabled(true);
-		_fixture.SetSyncEnabled(false);
+		_fixture.SetRecipeActive(true);
+		_fixture.SetRecipeActive(false);
 
 		_grid.IsReadOnly.Should().BeFalse();
 	}
 
 	[AvaloniaFact]
-	public void IsReadOnly_StaysFalse_WhenExecutionActive_AndSyncDisabled()
+	public void IsReadOnly_StaysFalse_WhenSyncEnabled_ButNotExecuting()
 	{
-		// §2.7 regression: execution being active does not lock editing on its own.
-		_fixture.S7Service.PushExecutionState(
-			new PlcExecutionInfo(
-				RecipeActive: true,
-				ActualLine: 1,
-				StepCurrentTime: 0f,
-				ForLoopCount1: 0,
-				ForLoopCount2: 0,
-				ForLoopCount3: 0));
+		// Connected-but-idle is editable: sync enabled without execution does not lock editing.
+		_fixture.SetSyncEnabled(true);
 
 		_grid.IsReadOnly.Should().BeFalse();
 	}
@@ -87,7 +80,7 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 		// the property update.
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 		_grid.IsReadOnly.Should().BeTrue();
 
 		var row = _grid.RecipeRows[0];
@@ -101,23 +94,23 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void EditorMustClose_Emits_WhenSyncFlipsToEnabled()
+	public void EditorMustClose_Emits_WhenRecipeBecomesActive()
 	{
 		var emissionCount = 0;
 		using var subscription = _grid.EditorMustClose.Subscribe(_ => emissionCount++);
 
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		emissionCount.Should().Be(1);
 	}
 
 	[AvaloniaFact]
-	public void EditorMustClose_DoesNotEmit_WhenSyncStaysDisabled()
+	public void EditorMustClose_DoesNotEmit_WhenNoExecution()
 	{
 		var emissionCount = 0;
 		using var subscription = _grid.EditorMustClose.Subscribe(_ => emissionCount++);
 
-		_fixture.SetSyncEnabled(false);
+		_fixture.SetRecipeActive(false);
 
 		emissionCount.Should().Be(0);
 	}
@@ -125,7 +118,7 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void EditorMustClose_LateSubscriber_DoesNotReceiveInitialReadOnlyState()
 	{
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		var emissionCount = 0;
 		using var subscription = _grid.EditorMustClose.Subscribe(_ => emissionCount++);

@@ -69,4 +69,9 @@ public sealed class UIFixture : IAsyncLifetime
 		PlcSyncService.PushPlcState(Result.Ok(
 			new PlcSessionSnapshot(PlcConnectionState.Disconnected, PlcSyncStatus.Idle, isSyncEnabled)));
 	}
+
+	public void SetRecipeActive(bool active)
+	{
+		S7Service.PushExecutionState(PlcExecutionInfo.Empty with { RecipeActive = active });
+	}
 }

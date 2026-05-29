@@ -51,18 +51,26 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void AddStep_CanExecuteFalse_WhenSyncEnabled()
+	public void AddStep_CanExecuteFalse_WhenRecipeExecuting()
 	{
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		((ICommand)_commands.AddStepCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
-	public void AddStep_CanExecuteBackToTrue_AfterSyncDisabledAgain()
+	public void AddStep_CanExecuteTrue_WhenSyncEnabledButNotExecuting()
 	{
 		_fixture.SetSyncEnabled(true);
-		_fixture.SetSyncEnabled(false);
+
+		((ICommand)_commands.AddStepCommand).CanExecute(null).Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void AddStep_CanExecuteBackToTrue_AfterExecutionStops()
+	{
+		_fixture.SetRecipeActive(true);
+		_fixture.SetRecipeActive(false);
 
 		((ICommand)_commands.AddStepCommand).CanExecute(null).Should().BeTrue();
 	}
@@ -78,12 +86,12 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void DeleteStep_CanExecuteFalse_WhenSyncEnabled_EvenWithSelection()
+	public void DeleteStep_CanExecuteFalse_WhenRecipeExecuting_EvenWithSelection()
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_grid.SelectedRowIndices = new[] { 0 };
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		((ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeFalse();
 	}
@@ -108,11 +116,11 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void Undo_CanExecuteFalse_WhenSyncEnabled_EvenWithUndoAvailable()
+	public void Undo_CanExecuteFalse_WhenRecipeExecuting_EvenWithUndoAvailable()
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		((ICommand)_commands.UndoCommand).CanExecute(null).Should().BeFalse();
 	}
@@ -128,24 +136,24 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void Redo_CanExecuteFalse_WhenSyncEnabled_EvenWithRedoAvailable()
+	public void Redo_CanExecuteFalse_WhenRecipeExecuting_EvenWithRedoAvailable()
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.Undo();
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		((ICommand)_commands.RedoCommand).CanExecute(null).Should().BeFalse();
 	}
 
 	[AvaloniaFact]
-	public void AddStep_GatedInvocation_InConnectMode_DoesNotInsertStep()
+	public void AddStep_GatedInvocation_WhileExecuting_DoesNotInsertStep()
 	{
 		// UI buttons honor CanExecute and never call Execute when gated. Simulate that
 		// pattern and assert no mutation reaches the session.
 		_fixture.Coordinator.NewRecipe();
 		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		var command = (ICommand)_commands.AddStepCommand;
 		if (command.CanExecute(null))
@@ -158,13 +166,13 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void DeleteStep_GatedInvocation_InConnectMode_DoesNotRemoveStep()
+	public void DeleteStep_GatedInvocation_WhileExecuting_DoesNotRemoveStep()
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_grid.SelectedRowIndices = new[] { 0 };
 		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
-		_fixture.SetSyncEnabled(true);
+		_fixture.SetRecipeActive(true);
 
 		var command = (ICommand)_commands.DeleteStepCommand;
 		if (command.CanExecute(null))

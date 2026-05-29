@@ -26,6 +26,7 @@ public sealed class UIFixture : IAsyncLifetime
 	public StubPlcSyncService PlcSyncService { get; private set; } = null!;
 	public StubS7Service S7Service { get; private set; } = null!;
 	public RecipeMetadataRegistry RecipeMetadataRegistry { get; private set; } = null!;
+	public AppConfiguration AppConfiguration { get; private set; } = null!;
 	public MessagePanelViewModel MessagePanel { get; private set; } = null!;
 	public RecipeCoordinator Coordinator { get; private set; } = null!;
 	public StubS7Service StubS7 { get; private set; } = null!;
@@ -38,17 +39,17 @@ public sealed class UIFixture : IAsyncLifetime
 		PlcSyncService = (StubPlcSyncService)services.GetRequiredService<IPlcSyncService>();
 		S7Service = services.GetRequiredService<StubS7Service>();
 		RecipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
+		AppConfiguration = services.GetRequiredService<AppConfiguration>();
 		MessagePanel = new MessagePanelViewModel();
 		StubS7 = services.GetRequiredService<StubS7Service>();
 		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
-		var appConfiguration = services.GetRequiredService<AppConfiguration>();
 		var csvService = services.GetRequiredService<CsvService>();
 		Coordinator = new RecipeCoordinator(
 			Session,
 			Plc,
 			csvService,
 			importedRecipeValidator,
-			appConfiguration,
+			AppConfiguration,
 			RecipeMetadataRegistry,
 			MessagePanel,
 			NullLogger<RecipeCoordinator>.Instance);

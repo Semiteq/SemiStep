@@ -31,27 +31,12 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <!-- Status Text (Modified/Saved) -->
-            <TextBlock Grid.Column="0"
-                       Name="StatusText"
-                       Text="{Binding StatusText}"
-                       VerticalAlignment="Center"
-                       FontSize="12" />
-
-            <!-- Separator -->
-            <Border Grid.Column="1"
-                    Width="1"
-                    Background="{DynamicResource SeparatorBrush}"
-                    Margin="12,2" />
-
             <!-- Error/Warning counts - clickable to toggle log panel -->
-            <Button Grid.Column="2"
+            <Button Grid.Column="0"
                     Command="{Binding MessagePanel.ToggleCommand}"
                     IsVisible="{Binding MessagePanel.HasStatusErrors}"
                     Background="Transparent"
@@ -89,14 +74,14 @@
             </Button>
 
             <!-- Separator (only if errors visible) -->
-            <Border Grid.Column="3"
+            <Border Grid.Column="1"
                     Width="1"
                     Background="{DynamicResource SeparatorBrush}"
                     Margin="12,2"
                     IsVisible="{Binding MessagePanel.HasStatusErrors}" />
 
             <!-- Sync controls -->
-            <StackPanel Grid.Column="4"
+            <StackPanel Grid.Column="2"
                         Orientation="Horizontal"
                         Spacing="6"
                         VerticalAlignment="Center">
@@ -130,13 +115,13 @@
             </StackPanel>
 
             <!-- Separator before execution info -->
-            <Border Grid.Column="5"
+            <Border Grid.Column="3"
                     Width="1"
                     Background="{DynamicResource SeparatorBrush}"
                     Margin="12,2" />
 
             <!-- Execution time info (always visible; VM maps idle state via text content) -->
-            <StackPanel Grid.Column="6"
+            <StackPanel Grid.Column="4"
                         Orientation="Horizontal"
                         Spacing="10"
                         VerticalAlignment="Center">
@@ -166,14 +151,14 @@
             </StackPanel>
 
             <!-- Separator before FOR loop counters -->
-            <Border Grid.Column="7"
+            <Border Grid.Column="5"
                     Width="1"
                     Background="{DynamicResource SeparatorBrush}"
                     Margin="12,2"
                     IsVisible="{Binding PlcMonitor.IsRecipeActive}" />
 
             <!-- FOR loop counters (visible only when recipe is active) -->
-            <StackPanel Grid.Column="8"
+            <StackPanel Grid.Column="6"
                         Orientation="Horizontal"
                         Spacing="8"
                         VerticalAlignment="Center"
@@ -199,10 +184,10 @@
             </StackPanel>
 
             <!-- Spacer -->
-            <Panel Grid.Column="9" />
+            <Panel Grid.Column="7" />
 
             <!-- Connection Status -->
-            <StackPanel Grid.Column="10"
+            <StackPanel Grid.Column="8"
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
                 <Ellipse Width="8"

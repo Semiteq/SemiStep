@@ -18,6 +18,12 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 
 	public bool IsRecipeActive => false;
 
+	/// <summary>
+	/// When true, <see cref="ConnectAsync"/> throws so that callers such as
+	/// <c>PlcLifecycleManager.EnableSync</c> return a failed result.
+	/// </summary>
+	public bool ConnectShouldFail { get; set; }
+
 	public IObservable<PlcExecutionInfo> ExecutionState => _executionState;
 
 	public void PushExecutionState(PlcExecutionInfo info)
@@ -45,6 +51,11 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 
 	public Task ConnectAsync(PlcConnectionSettings settings)
 	{
+		if (ConnectShouldFail)
+		{
+			throw new InvalidOperationException("Stub PLC connection failure");
+		}
+
 		return Task.CompletedTask;
 	}
 

@@ -30,10 +30,10 @@ public sealed class PlcTransactionExecutorTests
 		return new(DbNumber: dbNumber, CapacityOffset: 0, CurrentSizeOffset: 4, DataStartOffset: 8);
 	}
 
-	private static PlcConfiguration BuildTestConfiguration()
+	private static PlcConfiguration BuildTestConfiguration(ManagingDbLayout? managingDb = null)
 	{
 		var layout = new PlcProtocolLayout(
-			ManagingDb: ManagingDbLayout.Default,
+			ManagingDb: managingDb ?? ManagingDbLayout.Default,
 			IntDb: BuildTestDataDbLayout(3),
 			FloatDb: BuildTestDataDbLayout(4),
 			StringDb: BuildTestDataDbLayout(5),
@@ -58,11 +58,12 @@ public sealed class PlcTransactionExecutorTests
 		return new RecipeMetadataRegistry(config);
 	}
 
-	private static (PlcTransactionExecutor executor, FakeS7Transport transport) BuildExecutor()
+	private static (PlcTransactionExecutor executor, FakeS7Transport transport) BuildExecutor(
+		ManagingDbLayout? managingDb = null)
 	{
 		var transport = new FakeS7Transport();
 		var converter = new RecipeConverter(BuildMinimalRecipeMetadataRegistry());
-		var configuration = BuildTestConfiguration();
+		var configuration = BuildTestConfiguration(managingDb);
 		var arrayCodec = TestArrayCodecFactory.Create(configuration);
 		var executor = new PlcTransactionExecutor(
 			transport, converter, arrayCodec, configuration, NullLogger<PlcTransactionExecutor>.Instance);
@@ -105,7 +106,9 @@ public sealed class PlcTransactionExecutorTests
 
 		var firstWrite = transport.WriteLog[0];
 		firstWrite.DbNumber.Should().Be(layout.ManagingDb.DbNumber);
-		firstWrite.Data[layout.ManagingDb.CommittedOffset].Should().Be(0x00,
+		firstWrite.StartByte.Should().Be(layout.ManagingDb.CommittedOffset,
+			"the managing write must start at CommittedOffset so the firmware-owned version DWORD is preserved");
+		firstWrite.Data[0].Should().Be(0x00,
 			"committed=false must be written first");
 	}
 
@@ -118,13 +121,13 @@ public sealed class PlcTransactionExecutorTests
 
 		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
-		var secondWrite = transport.WriteLog[1];
-		secondWrite.DbNumber.Should().Be(layout.IntDb.DbNumber,
-			"int array must be written after committed=false");
+		IndexOfFirstWriteToDb(transport, layout.IntDb.DbNumber).Should().BeGreaterThan(
+			IndexOfFirstWriteToDb(transport, layout.ManagingDb.DbNumber),
+			"int array must be written after the initial committed=false managing write");
 	}
 
 	[Fact]
-	public async Task WriteRecipeWithRetryAsync_EmptyRecipe_WritesFloatArrayThird()
+	public async Task WriteRecipeWithRetryAsync_EmptyRecipe_WritesFloatArrayAfterInt()
 	{
 		var (executor, transport) = BuildExecutor();
 		ConfigureEmptyArrayReadResponses(transport);
@@ -132,13 +135,13 @@ public sealed class PlcTransactionExecutorTests
 
 		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
-		var thirdWrite = transport.WriteLog[2];
-		thirdWrite.DbNumber.Should().Be(layout.FloatDb.DbNumber,
+		IndexOfFirstWriteToDb(transport, layout.FloatDb.DbNumber).Should().BeGreaterThan(
+			IndexOfFirstWriteToDb(transport, layout.IntDb.DbNumber),
 			"float array must be written after int array");
 	}
 
 	[Fact]
-	public async Task WriteRecipeWithRetryAsync_EmptyRecipe_WritesStringArrayFourth()
+	public async Task WriteRecipeWithRetryAsync_EmptyRecipe_WritesStringArrayAfterFloat()
 	{
 		var (executor, transport) = BuildExecutor();
 		ConfigureEmptyArrayReadResponses(transport);
@@ -146,9 +149,14 @@ public sealed class PlcTransactionExecutorTests
 
 		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
-		var fourthWrite = transport.WriteLog[3];
-		fourthWrite.DbNumber.Should().Be(layout.StringDb.DbNumber,
+		IndexOfFirstWriteToDb(transport, layout.StringDb.DbNumber).Should().BeGreaterThan(
+			IndexOfFirstWriteToDb(transport, layout.FloatDb.DbNumber),
 			"string array must be written after float array");
+	}
+
+	private static int IndexOfFirstWriteToDb(FakeS7Transport transport, int dbNumber)
+	{
+		return transport.WriteLog.FindIndex(w => w.DbNumber == dbNumber);
 	}
 
 	[Fact]
@@ -160,13 +168,14 @@ public sealed class PlcTransactionExecutorTests
 
 		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
-		// Last managing-area write is committed=true
-		var lastManagingWrite = transport.WriteLog
-			.Where(w => w.DbNumber == layout.ManagingDb.DbNumber)
+		// Final committed-flag write must be committed=true
+		var lastCommittedWrite = transport.WriteLog
+			.Where(w => w.DbNumber == layout.ManagingDb.DbNumber
+				&& w.StartByte == layout.ManagingDb.CommittedOffset)
 			.Last();
 
-		lastManagingWrite.Data[layout.ManagingDb.CommittedOffset].Should().Be(0x01,
-			"committed=true must be the last write to the managing area");
+		lastCommittedWrite.Data[0].Should().Be(0x01,
+			"committed=true must be the last committed-flag write to the managing area");
 	}
 
 	[Fact]
@@ -192,19 +201,20 @@ public sealed class PlcTransactionExecutorTests
 
 		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
-		var managingWrites = transport.WriteLog
-			.Where(w => w.DbNumber == layout.ManagingDb.DbNumber)
+		var committedWrites = transport.WriteLog
+			.Where(w => w.DbNumber == layout.ManagingDb.DbNumber
+				&& w.StartByte == layout.ManagingDb.CommittedOffset)
 			.ToList();
 
-		managingWrites.Should().HaveCount(3,
-			"managing area should be written: committed=false, committed=false+lines, committed=true");
+		committedWrites.Should().HaveCount(3,
+			"the committed flag should be written three times: committed=false, committed=false+lines, committed=true");
 
-		managingWrites[0].Data[layout.ManagingDb.CommittedOffset].Should().Be(0x00,
-			"first managing write: committed=false");
-		managingWrites[1].Data[layout.ManagingDb.CommittedOffset].Should().Be(0x00,
-			"second managing write: committed=false with recipe_lines set");
-		managingWrites[2].Data[layout.ManagingDb.CommittedOffset].Should().Be(0x01,
-			"third managing write: committed=true");
+		committedWrites[0].Data[0].Should().Be(0x00,
+			"first committed write: committed=false");
+		committedWrites[1].Data[0].Should().Be(0x00,
+			"second committed write: committed=false with recipe_lines set");
+		committedWrites[2].Data[0].Should().Be(0x01,
+			"third committed write: committed=true");
 	}
 
 	[Fact]
@@ -275,5 +285,83 @@ public sealed class PlcTransactionExecutorTests
 		result.IsFailed.Should().BeTrue("writing to a disconnected PLC must return a failed result");
 		result.HasError<NotConnectedError>().Should().BeTrue(
 			"the failure reason must be a NotConnectedError");
+	}
+
+	[Fact]
+	public async Task ReadProtocolVersionAsync_ReturnsBigEndianValueAtVersionOffset()
+	{
+		var (executor, transport) = BuildExecutor();
+		var layout = BuildTestConfiguration().Layout;
+
+		var versionBytes = new byte[sizeof(int)];
+		BinaryPrimitives.WriteInt32BigEndian(versionBytes, 7);
+		transport.SetReadResponse(
+			layout.ManagingDb.DbNumber, layout.ManagingDb.VersionOffset, sizeof(int), versionBytes);
+
+		var result = await executor.ReadProtocolVersionAsync(TestContext.Current.CancellationToken);
+
+		result.IsSuccess.Should().BeTrue();
+		result.Value.Should().Be(7, "the version is decoded big-endian from the managing DB VersionOffset");
+	}
+
+	[Fact]
+	public async Task ReadProtocolVersionAsync_NotConnected_ReturnsNotConnectedError()
+	{
+		var (executor, transport) = BuildExecutor();
+		transport.SetConnected(false);
+
+		var result = await executor.ReadProtocolVersionAsync(TestContext.Current.CancellationToken);
+
+		result.IsFailed.Should().BeTrue();
+		result.HasError<NotConnectedError>().Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task WriteRecipeWithRetryAsync_NeverWritesManagingAreaVersionBytes()
+	{
+		var (executor, transport) = BuildExecutor();
+		ConfigureEmptyArrayReadResponses(transport);
+		var layout = BuildTestConfiguration().Layout;
+
+		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
+
+		AssertNoManagingWriteTouchesVersionField(transport, layout.ManagingDb);
+	}
+
+	[Fact]
+	public async Task WriteRecipeWithRetryAsync_ReorderedLayout_NeverWritesVersionField()
+	{
+		// Version is NOT at offset 0 here; the writable fields straddle it. A contiguous-slab write
+		// from CommittedOffset would clobber the version field, so this proves each field is written
+		// at its own offset regardless of layout ordering.
+		var reorderedLayout = new ManagingDbLayout(
+			DbNumber: 2,
+			VersionOffset: 5,
+			CommittedOffset: 0,
+			RecipeLinesOffset: 1,
+			TotalSize: 9);
+		var (executor, transport) = BuildExecutor(reorderedLayout);
+		ConfigureEmptyArrayReadResponses(transport);
+
+		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
+
+		AssertNoManagingWriteTouchesVersionField(transport, reorderedLayout);
+	}
+
+	private static void AssertNoManagingWriteTouchesVersionField(
+		FakeS7Transport transport, ManagingDbLayout managingDb)
+	{
+		var managingWrites = transport.WriteLog
+			.Where(w => w.DbNumber == managingDb.DbNumber)
+			.ToList();
+
+		managingWrites.Should().NotBeEmpty();
+
+		var versionStart = managingDb.VersionOffset;
+		var versionEnd = managingDb.VersionOffset + sizeof(int);
+
+		managingWrites.Should().OnlyContain(
+			w => w.StartByte + w.Data.Length <= versionStart || w.StartByte >= versionEnd,
+			"no managing write may overlap the firmware-owned version field, regardless of field ordering");
 	}
 }

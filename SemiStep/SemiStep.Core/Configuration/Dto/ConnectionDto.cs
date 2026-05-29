@@ -37,6 +37,9 @@ internal sealed class ConnectionDto
 	[YamlMember(Alias = "managing_db_number")]
 	public int? ManagingDbNumber { get; set; }
 
+	[YamlMember(Alias = "version_offset")]
+	public int? ManagingDbVersionOffset { get; set; }
+
 	[YamlMember(Alias = "committed_offset")]
 	public int? CommittedOffset { get; set; }
 

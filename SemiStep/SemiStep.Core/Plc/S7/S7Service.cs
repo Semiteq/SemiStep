@@ -135,6 +135,16 @@ internal sealed class S7Service(
 		return result;
 	}
 
+	public async Task<Result<int>> ReadProtocolVersionAsync()
+	{
+		var result = await transactionExecutor.ReadProtocolVersionAsync();
+		if (result.IsFailed)
+		{
+			_logger.LogWarning("Failed to read protocol version from PLC: {Reason}", result.Errors.FirstOrDefault()?.Message ?? "(no message)");
+		}
+		return result;
+	}
+
 	internal void OnConnectionLost()
 	{
 		lock (_stateLock)

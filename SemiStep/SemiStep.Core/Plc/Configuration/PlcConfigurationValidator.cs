@@ -26,29 +26,28 @@ internal static class PlcConfigurationValidator
 	{
 		const string LayoutName = nameof(ManagingDbLayout);
 
-		ValidateNonNegativeOffset(layout.CommittedOffset, LayoutName, nameof(layout.CommittedOffset), validationResults);
-		ValidateNonNegativeOffset(layout.RecipeLinesOffset, LayoutName, nameof(layout.RecipeLinesOffset), validationResults);
-		ValidateNonNegativeOffset(layout.TotalSize, LayoutName, nameof(layout.TotalSize), validationResults);
-
-		if (layout.TotalSize < layout.RecipeLinesOffset + sizeof(int))
+		var fields = new (string Name, int Offset, int Size)[]
 		{
-			validationResults.Add(Result.Fail(
-				$"{LayoutName}.{nameof(layout.TotalSize)} ({layout.TotalSize}) must be at least " +
-				$"{nameof(layout.RecipeLinesOffset)} ({layout.RecipeLinesOffset}) + {sizeof(int)} bytes"));
-		}
-
-		if (layout.TotalSize <= layout.CommittedOffset)
-		{
-			validationResults.Add(Result.Fail(
-				$"{LayoutName}.{nameof(layout.TotalSize)} ({layout.TotalSize}) must be greater than " +
-				$"{nameof(layout.CommittedOffset)} ({layout.CommittedOffset})"));
-		}
-
-		ValidateNoOverlap(
-			LayoutName,
+			(nameof(layout.VersionOffset), layout.VersionOffset, sizeof(int)),
 			(nameof(layout.CommittedOffset), layout.CommittedOffset, sizeof(byte)),
 			(nameof(layout.RecipeLinesOffset), layout.RecipeLinesOffset, sizeof(int)),
-			validationResults);
+		};
+
+		foreach (var field in fields)
+		{
+			ValidateNonNegativeOffset(field.Offset, LayoutName, field.Name, validationResults);
+			ValidateOffsetFits(layout.TotalSize, field.Offset, field.Size, LayoutName, field.Name, validationResults);
+		}
+
+		ValidateNonNegativeOffset(layout.TotalSize, LayoutName, nameof(layout.TotalSize), validationResults);
+
+		for (var firstIndex = 0; firstIndex < fields.Length; firstIndex++)
+		{
+			for (var secondIndex = firstIndex + 1; secondIndex < fields.Length; secondIndex++)
+			{
+				ValidateNoOverlap(LayoutName, fields[firstIndex], fields[secondIndex], validationResults);
+			}
+		}
 	}
 
 	private static void ValidateDataDb(DataDbLayout layout, string layoutName, List<Result> validationResults)

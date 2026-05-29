@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SemiStep.Core.Configuration.Facade;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard;
@@ -222,6 +223,87 @@ public sealed class PlcLifecycleManagerReconnectTests
 		session.Current.StepCount.Should().Be(0,
 			"the lifecycle manager must delegate session mutation to the registered callback; "
 			+ "direct mutation would silently desynchronize the grid VM from the session");
+	}
+
+	[Fact]
+	public async Task EnableSync_WhenProtocolVersionMatches_Succeeds()
+	{
+		var (plc, _, s7Service, syncService) = await BuildAsync();
+		s7Service.ProtocolVersionToReturn = Result.Ok(1);
+
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
+
+		enableResult.IsSuccess.Should().BeTrue(
+			"a matching protocol version must let the handshake proceed");
+		syncService.IsSyncEnabled.Should().BeTrue();
+		s7Service.DisconnectCallCount.Should().Be(0,
+			"a successful handshake must not disconnect");
+	}
+
+	[Fact]
+	public async Task EnableSync_WhenProtocolVersionMismatches_FailsAndDisconnectsAndLeavesSyncDisabled()
+	{
+		var (plc, _, s7Service, syncService) = await BuildAsync();
+		s7Service.ProtocolVersionToReturn = Result.Ok(2);
+
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
+
+		enableResult.IsFailed.Should().BeTrue("a version mismatch must fail EnableSync");
+		enableResult.HasError<ProtocolVersionMismatchError>().Should().BeTrue(
+			"the failure reason must be a typed ProtocolVersionMismatchError");
+		syncService.IsSyncEnabled.Should().BeFalse(
+			"the sync flag must be cleared before disconnect on a mismatch");
+		s7Service.DisconnectCallCount.Should().Be(1,
+			"a mismatch must disconnect from the PLC");
+		s7Service.ReadManagingAreaCallCount.Should().Be(0,
+			"no managing-area read or recipe apply may occur on a version mismatch");
+	}
+
+	[Fact]
+	public async Task EnableSync_WhenVersionReadFails_FailsAndDisconnects()
+	{
+		var (plc, _, s7Service, syncService) = await BuildAsync();
+		s7Service.ProtocolVersionToReturn = Result.Fail<int>("version read failed");
+
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
+
+		enableResult.IsFailed.Should().BeTrue("a failed version read must fail EnableSync");
+		enableResult.HasError<ProtocolVersionMismatchError>().Should().BeFalse(
+			"a read failure must propagate the read error, not be reported as a version mismatch");
+		syncService.IsSyncEnabled.Should().BeFalse();
+		s7Service.DisconnectCallCount.Should().Be(1);
+		s7Service.ReadManagingAreaCallCount.Should().Be(0,
+			"no managing-area read or recipe apply may occur when the version read fails");
+	}
+
+	[Fact]
+	public async Task EnableSync_WhenConnectedFiresDuringConnect_AndVersionMismatches_DoesNotReadOrApply()
+	{
+		var (plc, _, s7Service, _) = await BuildAsync();
+
+		// Mirror the real S7Service: Connected is published synchronously inside ConnectAsync,
+		// triggering reconnect reconciliation before the EnableSync version handshake finishes.
+		s7Service.RaiseConnectedDuringConnect = true;
+		s7Service.ProtocolVersionToReturn = Result.Ok(2);
+		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
+		s7Service.RecipeToReturn = BuildSingleStepRecipe();
+
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
+
+		enableResult.IsFailed.Should().BeTrue("a version mismatch must fail EnableSync");
+		enableResult.HasError<ProtocolVersionMismatchError>().Should().BeTrue();
+
+		// Wait until both the EnableSync handshake and the fire-and-forget reconciliation triggered
+		// during connect have disconnected on the version mismatch. Both abort via the same
+		// FailProtocolVersionHandshakeAsync path that disconnects before reading the managing area,
+		// so two disconnects deterministically signal that reconciliation has fully aborted.
+		await TestHelpers.WaitUntilAsync(
+			() => s7Service.DisconnectCallCount == 2,
+			cancellationToken: TestContext.Current.CancellationToken);
+
+		s7Service.ReadManagingAreaCallCount.Should().Be(0,
+			"reconnect reconciliation triggered by Connected-during-connect must gate on the version "
+			+ "check and never read the managing area or apply a recipe on a version mismatch");
 	}
 
 	[Fact]

@@ -24,6 +24,15 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 	/// </summary>
 	public bool ConnectShouldFail { get; set; }
 
+	/// <summary>
+	/// When true, <see cref="ConnectAsync"/> raises <see cref="StateChanged"/> with
+	/// <see cref="PlcConnectionState.Connected"/> synchronously before returning, mirroring the real
+	/// <c>S7Service</c> which publishes <c>Connected</c> inside <c>ConnectAsync</c>. This exercises the
+	/// ordering where reconnect reconciliation is triggered during the connect call, before the
+	/// <c>EnableSync</c> version handshake completes.
+	/// </summary>
+	public bool RaiseConnectedDuringConnect { get; set; }
+
 	public IObservable<PlcExecutionInfo> ExecutionState => _executionState;
 
 	public void PushExecutionState(PlcExecutionInfo info)
@@ -43,6 +52,12 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 	/// </summary>
 	public Recipe? RecipeToReturn { get; set; }
 
+	/// <summary>
+	/// The result returned by <see cref="ReadProtocolVersionAsync"/>. Defaults to the matching
+	/// protocol version so the <c>EnableSync</c> handshake succeeds; a mismatch test can override it.
+	/// </summary>
+	public Result<int> ProtocolVersionToReturn { get; set; } = Result.Ok(1);
+
 	/// <summary>Raises <see cref="StateChanged"/> with the given state.</summary>
 	public void RaiseStateChanged(PlcConnectionState state)
 	{
@@ -56,16 +71,30 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 			throw new InvalidOperationException("Stub PLC connection failure");
 		}
 
+		if (RaiseConnectedDuringConnect)
+		{
+			StateChanged?.Invoke(PlcConnectionState.Connected);
+		}
+
 		return Task.CompletedTask;
 	}
+
+	/// <summary>Number of times <see cref="DisconnectAsync"/> was called.</summary>
+	public int DisconnectCallCount { get; private set; }
 
 	public Task DisconnectAsync()
 	{
+		DisconnectCallCount++;
 		return Task.CompletedTask;
 	}
 
+	/// <summary>Number of times <see cref="ReadManagingAreaAsync"/> was called.</summary>
+	public int ReadManagingAreaCallCount { get; private set; }
+
 	public Task<Result<PlcManagingAreaState>> ReadManagingAreaAsync()
 	{
+		ReadManagingAreaCallCount++;
+
 		if (ManagingAreaToReturn is not null)
 		{
 			return Task.FromResult(Result.Ok(ManagingAreaToReturn));
@@ -82,6 +111,11 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 		}
 
 		return Task.FromResult(Result.Fail<Recipe>("Not connected"));
+	}
+
+	public Task<Result<int>> ReadProtocolVersionAsync()
+	{
+		return Task.FromResult(ProtocolVersionToReturn);
 	}
 
 	public ValueTask DisposeAsync()

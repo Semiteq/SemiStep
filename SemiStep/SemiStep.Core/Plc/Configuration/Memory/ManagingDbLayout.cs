@@ -2,13 +2,15 @@
 
 public sealed record ManagingDbLayout(
 	int DbNumber,
+	int VersionOffset,
 	int CommittedOffset,
 	int RecipeLinesOffset,
 	int TotalSize)
 {
 	public static ManagingDbLayout Default => new(
 		DbNumber: 2,
-		CommittedOffset: 0,
-		RecipeLinesOffset: 2,
-		TotalSize: 6);
+		VersionOffset: 0,
+		CommittedOffset: 4,
+		RecipeLinesOffset: 6,
+		TotalSize: 10);
 }

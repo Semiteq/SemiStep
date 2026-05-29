@@ -23,7 +23,7 @@ public sealed class ManagingAreaCodecTests
 	}
 
 	[Fact]
-	public void EncodePcData_CommittedTrue_WritesByteOneAtOffset0()
+	public void EncodePcData_CommittedTrue_WritesByteOneAtCommittedOffset()
 	{
 		var codec = BuildCodec();
 		var data = new ManagingAreaPcData(Committed: true, RecipeLines: 0);
@@ -34,7 +34,7 @@ public sealed class ManagingAreaCodecTests
 	}
 
 	[Fact]
-	public void EncodePcData_CommittedFalse_WritesZeroAtOffset0()
+	public void EncodePcData_CommittedFalse_WritesZeroAtCommittedOffset()
 	{
 		var codec = BuildCodec();
 		var data = new ManagingAreaPcData(Committed: false, RecipeLines: 0);
@@ -45,7 +45,7 @@ public sealed class ManagingAreaCodecTests
 	}
 
 	[Fact]
-	public void EncodePcData_Returns6ByteArray()
+	public void EncodePcData_ReturnsTotalSizeByteArray()
 	{
 		var codec = BuildCodec();
 		var data = new ManagingAreaPcData(Committed: true, RecipeLines: 42);
@@ -56,7 +56,7 @@ public sealed class ManagingAreaCodecTests
 	}
 
 	[Fact]
-	public void EncodePcData_RecipeLines_WrittenBigEndianAtOffset2()
+	public void EncodePcData_RecipeLines_WrittenBigEndianAtRecipeLinesOffset()
 	{
 		var codec = BuildCodec();
 		const int RecipeLines = 0x01020304;
@@ -109,7 +109,7 @@ public sealed class ManagingAreaCodecTests
 	}
 
 	[Fact]
-	public void Decode_RecipeLines_ParsedBigEndianFromOffset2()
+	public void Decode_RecipeLines_ParsedBigEndianFromRecipeLinesOffset()
 	{
 		var codec = BuildCodec();
 		var bytes = new byte[DefaultLayout.TotalSize];
@@ -184,6 +184,7 @@ public sealed class ManagingAreaCodecTests
 		// to ConfigFacade via PlcConfigurationValidator. The codec accepts any layout.
 		var malformedLayout = new ManagingDbLayout(
 			DbNumber: 0,
+			VersionOffset: 0,
 			CommittedOffset: 0,
 			RecipeLinesOffset: 0,
 			TotalSize: 0);

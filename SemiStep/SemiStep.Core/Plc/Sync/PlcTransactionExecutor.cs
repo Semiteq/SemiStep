@@ -1,4 +1,6 @@
-﻿using FluentResults;
+﻿using System.Buffers.Binary;
+
+using FluentResults;
 
 using Microsoft.Extensions.Logging;
 
@@ -162,6 +164,34 @@ internal sealed class PlcTransactionExecutor
 			ct);
 	}
 
+	public async Task<Result<int>> ReadProtocolVersionAsync(CancellationToken ct = default)
+	{
+		if (!_transport.IsConnected)
+		{
+			return Result.Fail(new NotConnectedError("Not connected to PLC"));
+		}
+
+		try
+		{
+			var bytes = await _transport.ReadBytesAsync(
+				_layout.ManagingDb.DbNumber,
+				_layout.ManagingDb.VersionOffset,
+				sizeof(int),
+				ct);
+			if (bytes.Length < sizeof(int))
+			{
+				return Result.Fail(
+					$"Protocol version read returned {bytes.Length} bytes, expected {sizeof(int)}");
+			}
+
+			return Result.Ok(BinaryPrimitives.ReadInt32BigEndian(bytes));
+		}
+		catch (Exception ex) when (ex is not OperationCanceledException)
+		{
+			return Result.Fail(ex.Message);
+		}
+	}
+
 	public async Task<Result<Recipe>> ReadRecipeFromPlcAsync(CancellationToken ct = default)
 	{
 		var managingAreaResult = await ReadManagingAreaAsync(ct);
@@ -254,7 +284,16 @@ internal sealed class PlcTransactionExecutor
 		try
 		{
 			var bytes = _managingCodec.EncodePcData(data);
-			await _transport.WriteBytesAsync(_layout.ManagingDb.DbNumber, 0, bytes, ct);
+			var managingDb = _layout.ManagingDb;
+
+			// Write the two PC-owned fields at their own offsets only. The firmware-owned version
+			// field is never on the wire, regardless of how the offsets are ordered in the layout.
+			var committedSlice = bytes[managingDb.CommittedOffset..(managingDb.CommittedOffset + sizeof(byte))];
+			await _transport.WriteBytesAsync(managingDb.DbNumber, managingDb.CommittedOffset, committedSlice, ct);
+
+			var recipeLinesSlice = bytes[managingDb.RecipeLinesOffset..(managingDb.RecipeLinesOffset + sizeof(int))];
+			await _transport.WriteBytesAsync(managingDb.DbNumber, managingDb.RecipeLinesOffset, recipeLinesSlice, ct);
+
 			return Result.Ok();
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)

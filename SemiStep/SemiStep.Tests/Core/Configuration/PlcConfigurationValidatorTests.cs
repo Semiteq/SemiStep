@@ -37,12 +37,14 @@ public sealed class PlcConfigurationValidatorTests
 	}
 
 	[Fact]
-	public void Validate_ManagingDbTotalSizeNotGreaterThanCommitted_Fails()
+	public void Validate_ManagingDbTotalSizeTooSmallForCommitted_Fails()
 	{
+		// Version[0..4), RecipeLines[4..8): both fit; Committed[8..9) does not fit TotalSize=8.
 		var brokenManaging = new ManagingDbLayout(
 			DbNumber: 2,
+			VersionOffset: 0,
 			CommittedOffset: 8,
-			RecipeLinesOffset: 0,
+			RecipeLinesOffset: 4,
 			TotalSize: 8);
 		var config = WithManaging(brokenManaging);
 
@@ -52,7 +54,7 @@ public sealed class PlcConfigurationValidatorTests
 		result.Errors.Should().Contain(error =>
 			error.Message.Contains("ManagingDbLayout") &&
 			error.Message.Contains("CommittedOffset") &&
-			error.Message.Contains("greater"));
+			error.Message.Contains("must be at least"));
 	}
 
 	[Fact]
@@ -145,8 +147,9 @@ public sealed class PlcConfigurationValidatorTests
 	{
 		var brokenManaging = new ManagingDbLayout(
 			DbNumber: 2,
+			VersionOffset: 0,
 			CommittedOffset: -1,
-			RecipeLinesOffset: 2,
+			RecipeLinesOffset: 4,
 			TotalSize: 4);
 		var brokenInt = DataDbLayout.DefaultInt with { DataStartOffset = 4 };
 		var brokenExecution = ExecutionDbLayout.Default with { TotalSize = 6 };
@@ -206,12 +209,13 @@ public sealed class PlcConfigurationValidatorTests
 	[Fact]
 	public void Validate_ManagingDbCommittedOffsetOverlapsRecipeLines_Fails()
 	{
-		// Both at offset 0: Committed[0..1) overlaps RecipeLines[0..4).
+		// Version[0..4) is clean; Committed[4..5) overlaps RecipeLines[4..8).
 		var brokenManaging = new ManagingDbLayout(
 			DbNumber: 2,
-			CommittedOffset: 0,
-			RecipeLinesOffset: 0,
-			TotalSize: 6);
+			VersionOffset: 0,
+			CommittedOffset: 4,
+			RecipeLinesOffset: 4,
+			TotalSize: 8);
 		var config = WithManaging(brokenManaging);
 
 		var result = PlcConfigurationValidator.Validate(config);
@@ -263,6 +267,49 @@ public sealed class PlcConfigurationValidatorTests
 			error.Message.Contains("ForLoopCount1Offset") &&
 			error.Message.Contains("ForLoopCount2Offset") &&
 			error.Message.Contains("overlaps"));
+	}
+
+	[Fact]
+	public void Validate_ManagingDbVersionOverlapsCommitted_Fails()
+	{
+		// Version[0..4) overlaps Committed[2..3); RecipeLines[6..10) is clean.
+		var brokenManaging = new ManagingDbLayout(
+			DbNumber: 2,
+			VersionOffset: 0,
+			CommittedOffset: 2,
+			RecipeLinesOffset: 6,
+			TotalSize: 10);
+		var config = WithManaging(brokenManaging);
+
+		var result = PlcConfigurationValidator.Validate(config);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ManagingDbLayout") &&
+			error.Message.Contains("VersionOffset") &&
+			error.Message.Contains("CommittedOffset") &&
+			error.Message.Contains("overlaps"));
+	}
+
+	[Fact]
+	public void Validate_ManagingDbTotalSizeTooSmallForVersion_Fails()
+	{
+		// Version needs 4 bytes at offset 0 but TotalSize is only 2.
+		var brokenManaging = new ManagingDbLayout(
+			DbNumber: 2,
+			VersionOffset: 0,
+			CommittedOffset: 0,
+			RecipeLinesOffset: 0,
+			TotalSize: 2);
+		var config = WithManaging(brokenManaging);
+
+		var result = PlcConfigurationValidator.Validate(config);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(error =>
+			error.Message.Contains("ManagingDbLayout") &&
+			error.Message.Contains("VersionOffset") &&
+			error.Message.Contains("must be at least"));
 	}
 
 	private static PlcConfiguration WithManaging(ManagingDbLayout managing)

@@ -15,9 +15,10 @@ keep_alive_interval_ms: 5000
 
 # -- Managing DB --
 managing_db_number: 2
-committed_offset: 0
-recipe_lines_offset: 2
-managing_db_total_size: 6
+version_offset: 0
+committed_offset: 4
+recipe_lines_offset: 6
+managing_db_total_size: 10
 
 # -- Int DB --
 int_db_number: 3

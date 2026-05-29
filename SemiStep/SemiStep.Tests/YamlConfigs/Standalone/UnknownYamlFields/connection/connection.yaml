@@ -13,9 +13,10 @@ commit_timeout_ms: 5000
 keep_alive_interval_ms: 5000
 
 managing_db_number: 2
-committed_offset: 0
-recipe_lines_offset: 2
-managing_db_total_size: 6
+version_offset: 0
+committed_offset: 4
+recipe_lines_offset: 6
+managing_db_total_size: 10
 
 int_db_number: 3
 int_db_total_capacity_offset: 0

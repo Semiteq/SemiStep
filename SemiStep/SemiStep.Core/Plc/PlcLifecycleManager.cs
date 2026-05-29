@@ -3,6 +3,7 @@
 using Microsoft.Extensions.Logging;
 
 using SemiStep.Core.Plc.Configuration;
+using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
@@ -112,7 +113,37 @@ public sealed class PlcLifecycleManager : IDisposable
 			return Result.Fail(ex.Message);
 		}
 
+		var versionResult = await ValidateProtocolVersionAsync();
+		if (versionResult.IsFailed)
+		{
+			await FailProtocolVersionHandshakeAsync();
+			return versionResult;
+		}
+
 		return Result.Ok();
+	}
+
+	private async Task<Result> ValidateProtocolVersionAsync()
+	{
+		var versionResult = await _reader.ReadProtocolVersionAsync();
+		if (versionResult.IsFailed)
+		{
+			return versionResult.ToResult();
+		}
+
+		if (versionResult.Value != ProtocolConstants.ProtocolVersion)
+		{
+			return Result.Fail(
+				new ProtocolVersionMismatchError(ProtocolConstants.ProtocolVersion, versionResult.Value));
+		}
+
+		return Result.Ok();
+	}
+
+	private async Task FailProtocolVersionHandshakeAsync()
+	{
+		_syncService.SetSyncEnabled(false);
+		await _connection.DisconnectAsync();
 	}
 
 	public async Task DisableSync()
@@ -219,6 +250,21 @@ public sealed class PlcLifecycleManager : IDisposable
 
 	private async Task PerformReconnectReconciliationAsync(CancellationToken cancellationToken)
 	{
+		if (cancellationToken.IsCancellationRequested)
+		{
+			return;
+		}
+
+		var versionResult = await ValidateProtocolVersionAsync();
+		if (versionResult.IsFailed)
+		{
+			_logger.LogWarning(
+				"Aborting reconnect reconciliation: protocol version validation failed: {Errors}",
+				string.Join("; ", versionResult.Errors.Select(e => e.Message)));
+			await FailProtocolVersionHandshakeAsync();
+			return;
+		}
+
 		if (cancellationToken.IsCancellationRequested)
 		{
 			return;

@@ -13,11 +13,12 @@ writing_timeout_ms: 5000
 commit_timeout_ms: 5000
 keep_alive_interval_ms: 5000
 
-# -- Managing DB (BROKEN: TotalSize=4 cannot fit RecipeLines starting at offset 4 [needs offset+4=8]) --
+# -- Managing DB (BROKEN: TotalSize=6 cannot fit RecipeLines starting at offset 5 [needs offset+4=9]) --
 managing_db_number: 2
-committed_offset: 0
-recipe_lines_offset: 4
-managing_db_total_size: 4
+version_offset: 0
+committed_offset: 4
+recipe_lines_offset: 5
+managing_db_total_size: 6
 
 # -- Int DB --
 int_db_number: 3

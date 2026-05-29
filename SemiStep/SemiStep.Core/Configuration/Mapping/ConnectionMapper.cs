@@ -70,6 +70,7 @@ internal static class ConnectionMapper
 
 		return new ManagingDbLayout(
 			DbNumber: dto.ManagingDbNumber ?? defaults.DbNumber,
+			VersionOffset: dto.ManagingDbVersionOffset ?? defaults.VersionOffset,
 			CommittedOffset: dto.CommittedOffset ?? defaults.CommittedOffset,
 			RecipeLinesOffset: dto.RecipeLinesOffset ?? defaults.RecipeLinesOffset,
 			TotalSize: dto.ManagingDbTotalSize ?? defaults.TotalSize);

@@ -54,6 +54,40 @@ public sealed class RecipeStructuralEqualityTests
 	}
 
 	[Fact]
+	public void StepEquals_IdenticalFloatAndStringContent_AreEqual()
+	{
+		var first = BuildStep(
+			1,
+			("rampRate", PropertyValue.FromFloat(1.5f)),
+			("label", PropertyValue.FromString("anneal")));
+		var second = BuildStep(
+			1,
+			("rampRate", PropertyValue.FromFloat(1.5f)),
+			("label", PropertyValue.FromString("anneal")));
+
+		first.Should().NotBeSameAs(second);
+		first.Equals(second).Should().BeTrue();
+	}
+
+	[Fact]
+	public void StepEquals_DifferentFloatValue_AreNotEqual()
+	{
+		var first = BuildStep(1, ("rampRate", PropertyValue.FromFloat(1.5f)));
+		var second = BuildStep(1, ("rampRate", PropertyValue.FromFloat(1.6f)));
+
+		first.Equals(second).Should().BeFalse();
+	}
+
+	[Fact]
+	public void StepEquals_DifferentStringValue_AreNotEqual()
+	{
+		var first = BuildStep(1, ("label", PropertyValue.FromString("anneal")));
+		var second = BuildStep(1, ("label", PropertyValue.FromString("cooldown")));
+
+		first.Equals(second).Should().BeFalse();
+	}
+
+	[Fact]
 	public void StepEquals_DifferentPropertyKeySet_AreNotEqual()
 	{
 		var first = BuildStep(1, ("temperature", PropertyValue.FromInt(200)));
@@ -169,6 +203,22 @@ public sealed class RecipeStructuralEqualityTests
 		plc.Should().NotBeSameAs(local);
 		plc.Steps.Should().NotBeSameAs(local.Steps);
 		plc.Steps[0].Should().NotBeSameAs(local.Steps[0]);
+		plc.Steps[0].Properties.Should().NotBeSameAs(local.Steps[0].Properties);
+		local.Equals(plc).Should().BeTrue();
+	}
+
+	[Fact]
+	public void RecipeEquals_FloatAndStringStepWithFreshInstances_AreEqual()
+	{
+		var local = new Recipe([
+			BuildStep(
+				1,
+				("rampRate", PropertyValue.FromFloat(1.5f)),
+				("label", PropertyValue.FromString("anneal")))
+		]);
+		var plc = DeepCopy(local);
+
+		plc.Should().NotBeSameAs(local);
 		plc.Steps[0].Properties.Should().NotBeSameAs(local.Steps[0].Properties);
 		local.Equals(plc).Should().BeTrue();
 	}

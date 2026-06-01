@@ -103,7 +103,7 @@
 - [x] Run `dotnet format SemiStep/SemiStep.slnx` (pre-commit hook enforces formatting). (no changes, exit 0)
 
 ### Task 5: [Final] Archive the plan
-- [ ] Move this plan to `docs/plans/completed/` via `git mv` (verbatim, no content edits).
+- [x] Move this plan to `docs/plans/completed/` via `git mv` (verbatim, no content edits).
 
 ## Post-Completion
 *Items requiring manual intervention or external systems - informational only.*

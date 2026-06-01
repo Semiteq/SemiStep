@@ -65,11 +65,11 @@
 - Modify: `SemiStep/SemiStep.Core/Recipes/Step.cs`
 - Create: `SemiStep/SemiStep.Tests/Core/Unit/Recipes/RecipeStructuralEqualityTests.cs`
 
-- [ ] Add `public bool Equals(Step? other)` to `Step`: compare `ActionKey`, then `Properties` by content (count + per-key `PropertyValue` equality), order-independent.
-- [ ] Add `public override int GetHashCode()` consistent with the new equality: `ActionKey` XOR-combined with per-pair hashes (order-independent).
-- [ ] Keep the record positional definition, `WithProperty`, `with`/`Deconstruct` intact; only `Equals(T?)`/`GetHashCode` are user-provided.
-- [ ] Write unit tests: identical content in distinct `ImmutableDictionary` instances are equal; different `ActionKey` not equal; different property value not equal; different property key-set / different count not equal; same content built in different insertion order is equal; equal steps produce equal `GetHashCode`; `Equals(null)` is `false` and `Equals(self)` is `true` (null/reflexivity contract).
-- [ ] Run tests: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Area=RecipeEquality"` — must pass before Task 2.
+- [x] Add `public bool Equals(Step? other)` to `Step`: compare `ActionKey`, then `Properties` by content (count + per-key `PropertyValue` equality), order-independent.
+- [x] Add `public override int GetHashCode()` consistent with the new equality: `ActionKey` XOR-combined with per-pair hashes (order-independent).
+- [x] Keep the record positional definition, `WithProperty`, `with`/`Deconstruct` intact; only `Equals(T?)`/`GetHashCode` are user-provided.
+- [x] Write unit tests: identical content in distinct `ImmutableDictionary` instances are equal; different `ActionKey` not equal; different property value not equal; different property key-set / different count not equal; same content built in different insertion order is equal; equal steps produce equal `GetHashCode`; `Equals(null)` is `false` and `Equals(self)` is `true` (null/reflexivity contract).
+- [x] Run tests: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Area=RecipeEquality"` — must pass before Task 2.
 
 ### Task 2: Content-based equality for `Recipe`
 

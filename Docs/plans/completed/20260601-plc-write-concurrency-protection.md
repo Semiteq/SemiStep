@@ -297,7 +297,7 @@ cancellation, and exception-path release) without needing a test seam under `S7.
 
 #### Task 5: Document the in-process transport race as a finding
 
-- [ ] Post a comment on issue #48 (via `gh issue comment 48`) describing failure mode 2
+- [x] Post a comment on issue #48 (via `gh issue comment 48`) describing failure mode 2
       (monitor read, keep-alive `ManagingDb` read, and reader paths interleaving with the
       sync write on one `S7.Net.Plc` socket), noting it is distinct from the cross-process
       race and is addressed in PR2. (User-approved external action.)
@@ -311,46 +311,54 @@ cancellation, and exception-path release) without needing a test seam under `S7.
 - Modify: `SemiStep/SemiStep.Core/Plc/S7/S7Driver.cs`
 - Create: `SemiStep/SemiStep.Tests/S7/TransportSerializerTests.cs`
 
-- [ ] Inspect the `S7.Net` package sources to confirm whether `Plc` already serializes
+- [x] Inspect the `S7.Net` package sources to confirm whether `Plc` already serializes
       concurrent read/write on one connection; record the finding in this plan.
-- [ ] If not serialized: implement `TransportSerializer` (a `SemaphoreSlim(1,1)` with
+      Finding (S7.Net 0.20.0, decompiled): individual PDU round-trips ARE already serialized
+      via an internal `TaskQueue`, but multi-PDU `ReadBytesAsync`/`WriteBytesAsync` enqueue
+      each PDU separately, so a read can slip a PDU between a recipe write's PDUs. The gate
+      therefore provides multi-PDU atomicity (defense-in-depth), not a missing socket lock.
+- [x] If not serialized: implement `TransportSerializer` (a `SemaphoreSlim(1,1)` with
       `RunAsync(Func<Task>, ct)` / `RunAsync<T>(Func<Task<T>>, ct)`; `WaitAsync(ct)` outside
       the try, `Release()` in `finally`).
-- [ ] In `S7Driver`, route every `ReadBytesAsync` and `WriteBytesAsync` round-trip through
+- [x] In `S7Driver`, route every `ReadBytesAsync` and `WriteBytesAsync` round-trip through
       the `TransportSerializer` (this covers both the `IS7Transport` and `IS7Driver`
       consumers, since both resolve to the one `S7Driver` instance). Keep the existing
       `ct.ThrowIfCancellationRequested()` semantics; decide whether the pre-check sits
       before or after the gate wait and document it.
-- [ ] Dispose the `SemaphoreSlim` with the driver; ensure the cancellation path never leaks
+- [x] Dispose the `SemaphoreSlim` with the driver; ensure the cancellation path never leaks
       or over-releases a slot.
-- [ ] Write tests for `TransportSerializer`: concurrent ops never overlap (max concurrency
+- [x] Write tests for `TransportSerializer`: concurrent ops never overlap (max concurrency
       == 1 via a probe delegate); a wait canceled before entry does not `Release`; a throwing
       op still releases the gate.
-- [ ] Run tests — must pass before next task.
+- [x] Run tests — must pass before next task.
 
 #### Task 7: PR2 close-out
 
-- [ ] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green.
-- [ ] `dotnet format SemiStep/SemiStep.slnx`.
-- [ ] Confirm PR2 scope contains only transport-serialization changes.
+- [x] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green.
+- [x] `dotnet format SemiStep/SemiStep.slnx`.
+- [x] Confirm PR2 scope contains only transport-serialization changes.
 
 ### Task 8: Verify acceptance criteria
 
-- [ ] Second instance enabling sync against the same PLC is refused with an owner-info
+- [x] Second instance enabling sync against the same PLC is refused with an owner-info
       message and remains a local editor (covered by ownership tests).
-- [ ] Lease released on disable / failed handshake / dispose (no orphaned lock between
+- [x] Lease released on disable / failed handshake / dispose (no orphaned lock between
       runs of the same process); double-release and double-dispose are safe.
-- [ ] Cross-user case (inaccessible lock file) degrades to a clean refusal, not a crash.
-- [ ] All transport round-trips (monitor read, keep-alive read, reader paths, sync write)
+- [x] Cross-user case (inaccessible lock file) degrades to a clean refusal, not a crash.
+- [x] All transport round-trips (monitor read, keep-alive read, reader paths, sync write)
       are serialized within one process (covered by `TransportSerializer` tests).
-- [ ] Full test suite green; `dotnet format` clean.
+- [x] Full test suite green; `dotnet format` clean.
 
 ### Task 9: Documentation and close-out
 
-- [ ] Update `Docs/*` user guide if the "PLC busy in another instance" behavior is
-      user-visible and warrants a note.
-- [ ] Update `CLAUDE.md` only if a genuinely new, reusable pattern emerged.
-- [ ] Move this plan to `Docs/plans/completed/`.
+- [x] Update `Docs/*` user guide if the "PLC busy in another instance" behavior is
+      user-visible and warrants a note. Evaluated — no separate guide prose added: the
+      behavior is surfaced directly to the operator by the in-app refusal message
+      ("PLC sync is owned by another instance ..."), which is self-explanatory.
+- [x] Update `CLAUDE.md` only if a genuinely new, reusable pattern emerged. No change —
+      `CLAUDE.md` is an entry document (project rule: no specifics there); no new convention
+      warranted an edit.
+- [x] Move this plan to `Docs/plans/completed/`. Done in this commit via `git mv`.
 
 ## Post-Completion
 

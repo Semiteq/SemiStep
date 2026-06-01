@@ -96,11 +96,11 @@
 - [x] Run tests: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Area=Reconnect"` — must pass before Task 4.
 
 ### Task 4: Verify acceptance criteria
-- [ ] Verify reconnect no longer raises a conflict when PLC and PC recipes have identical content, and still raises one when they genuinely differ (existing `StateChanged_Connected_WhenRecipesDiffer_FiresConflictDetected` still passes).
-- [ ] Confirm the existing `.Should().Be(plcRecipe)` assertions (`PlcLifecycleManagerReconnectTests.cs:107` and `:190`) still hold under the new structural equality (same instance is trivially structurally equal) — intentional, not incidental.
-- [ ] Verify no other consumer relied on reference equality (re-confirm grep: no `Recipe`/`Step` as hash-set/dictionary keys; single `Recipe.Equals` call site).
-- [ ] Run full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`.
-- [ ] Run `dotnet format SemiStep/SemiStep.slnx` (pre-commit hook enforces formatting).
+- [x] Verify reconnect no longer raises a conflict when PLC and PC recipes have identical content, and still raises one when they genuinely differ (existing `StateChanged_Connected_WhenRecipesDiffer_FiresConflictDetected` still passes). (confirmed: `Area=Reconnect` 12/12 pass, both tests green)
+- [x] Confirm the existing `.Should().Be(plcRecipe)` assertions (now at `PlcLifecycleManagerReconnectTests.cs:107` and `:235`, shifted by Task 3) still hold under the new structural equality (same instance is trivially structurally equal) — intentional, not incidental.
+- [x] Verify no other consumer relied on reference equality (re-confirm grep: no `Recipe`/`Step` as hash-set/dictionary keys; single `Recipe.Equals` call site). (confirmed: only direct consumer is `PlcLifecycleManager.cs:320`; no `==`/`!=` on Recipe/Step instances)
+- [x] Run full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`. (707 passed, 0 failed, 0 skipped)
+- [x] Run `dotnet format SemiStep/SemiStep.slnx` (pre-commit hook enforces formatting). (no changes, exit 0)
 
 ### Task 5: [Final] Archive the plan
 - [ ] Move this plan to `docs/plans/completed/` via `git mv` (verbatim, no content edits).

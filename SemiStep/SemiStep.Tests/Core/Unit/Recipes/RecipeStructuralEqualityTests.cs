@@ -249,6 +249,25 @@ public sealed class RecipeStructuralEqualityTests
 		recipe.Equals(recipe).Should().BeTrue();
 	}
 
+	[Fact]
+	public void PropertyValueEquals_SameNumberDifferentType_AreNotEqual()
+	{
+		var integerValue = PropertyValue.FromInt(1);
+		var floatValue = PropertyValue.FromFloat(1f);
+
+		integerValue.Equals(floatValue).Should().BeFalse();
+		floatValue.Equals(integerValue).Should().BeFalse();
+	}
+
+	[Fact]
+	public void StepEquals_SameKeyNumberDifferentValueType_AreNotEqual()
+	{
+		var first = BuildStep(1, ("setpoint", PropertyValue.FromInt(1)));
+		var second = BuildStep(1, ("setpoint", PropertyValue.FromFloat(1f)));
+
+		first.Equals(second).Should().BeFalse();
+	}
+
 	private static Recipe DeepCopy(Recipe recipe)
 	{
 		var copiedSteps = recipe.Steps

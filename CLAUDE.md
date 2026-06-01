@@ -98,3 +98,7 @@ No abbreviations in names.
 ## Troubleshooting
 
 **Deleting Windows reserved-name files (`nul`, `con`, `aux`, etc.):** Use Git Bash: `rm -f nul`
+
+---
+
+This is project overview file, do not add specifics here. See the human readable docs in Docs\*. Keep the language of files as is.

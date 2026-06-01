@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
+using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
 
@@ -20,10 +21,12 @@ public sealed class PlcLifecycleManager : IDisposable
 	private readonly object _pendingLock = new();
 	private readonly IS7Reader _reader;
 	private readonly RecipeSession _session;
+	private readonly IPlcSyncOwnership _syncOwnership;
 	private readonly IPlcSyncService _syncService;
 	private Action<PlcConnectionState>? _connectionStateHandler;
 	private bool _disposed;
 	private bool _initialized;
+	private ISyncOwnershipLease? _ownershipLease;
 	private Recipe? _pendingPlcRecipe;
 	private Func<Recipe, Task<Result>>? _reconnectApplyCallback;
 
@@ -33,6 +36,7 @@ public sealed class PlcLifecycleManager : IDisposable
 		IS7Reader reader,
 		IS7ExecutionStream executionStream,
 		IPlcSyncService syncService,
+		IPlcSyncOwnership syncOwnership,
 		ImportedRecipeValidator importedRecipeValidator,
 		ILogger<PlcLifecycleManager> logger)
 	{
@@ -41,6 +45,7 @@ public sealed class PlcLifecycleManager : IDisposable
 		_reader = reader;
 		_executionStream = executionStream;
 		_syncService = syncService;
+		_syncOwnership = syncOwnership;
 		_importedRecipeValidator = importedRecipeValidator;
 		_logger = logger;
 	}
@@ -92,6 +97,7 @@ public sealed class PlcLifecycleManager : IDisposable
 		}
 
 		_lifetimeCts.Dispose();
+		ReleaseOwnershipLease();
 	}
 
 	public async Task<Result> EnableSync(PlcConfiguration config)
@@ -101,26 +107,38 @@ public sealed class PlcLifecycleManager : IDisposable
 			return Result.Ok();
 		}
 
+		var ownershipResult = _syncOwnership.TryAcquire(config.Connection);
+		if (ownershipResult.IsFailed)
+		{
+			_logger.LogWarning(
+				"PLC sync ownership refused: {Errors}",
+				string.Join("; ", ownershipResult.Errors.Select(e => e.Message)));
+			return ownershipResult.ToResult();
+		}
+
+		_ownershipLease = ownershipResult.Value;
+
 		try
 		{
 			_syncService.SetSyncEnabled(true);
 			await _connection.ConnectAsync(config.Connection);
+
+			var versionResult = await ValidateProtocolVersionAsync();
+			if (versionResult.IsFailed)
+			{
+				await FailProtocolVersionHandshakeAsync();
+				return versionResult;
+			}
+
+			return Result.Ok();
 		}
 		catch (Exception ex)
 		{
 			_syncService.SetSyncEnabled(false);
-			_logger.LogWarning("PLC connection failed: {Message}", ex.Message);
+			ReleaseOwnershipLease();
+			_logger.LogWarning("Enabling PLC sync failed: {Message}", ex.Message);
 			return Result.Fail(ex.Message);
 		}
-
-		var versionResult = await ValidateProtocolVersionAsync();
-		if (versionResult.IsFailed)
-		{
-			await FailProtocolVersionHandshakeAsync();
-			return versionResult;
-		}
-
-		return Result.Ok();
 	}
 
 	private async Task<Result> ValidateProtocolVersionAsync()
@@ -143,6 +161,7 @@ public sealed class PlcLifecycleManager : IDisposable
 	private async Task FailProtocolVersionHandshakeAsync()
 	{
 		_syncService.SetSyncEnabled(false);
+		ReleaseOwnershipLease();
 		await _connection.DisconnectAsync();
 	}
 
@@ -150,6 +169,7 @@ public sealed class PlcLifecycleManager : IDisposable
 	{
 		_syncService.SetSyncEnabled(false);
 		_syncService.Reset();
+		ReleaseOwnershipLease();
 
 		try
 		{
@@ -159,6 +179,18 @@ public sealed class PlcLifecycleManager : IDisposable
 		{
 			_logger.LogWarning("Error while disconnecting from PLC: {Message}", ex.Message);
 		}
+	}
+
+	private void ReleaseOwnershipLease()
+	{
+		var lease = _ownershipLease;
+		if (lease is null)
+		{
+			return;
+		}
+
+		_ownershipLease = null;
+		lease.Dispose();
 	}
 
 	public async Task<Result<Recipe>> ReadRecipeFromPlcAsync()

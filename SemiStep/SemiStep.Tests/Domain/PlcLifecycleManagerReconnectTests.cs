@@ -11,6 +11,7 @@ using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
+using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Import;
@@ -49,6 +50,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 			.AddSingleton<IS7Reader>(s7Service)
 			.AddSingleton<IS7ExecutionStream>(s7Service)
 			.AddSingleton<IPlcSyncService>(syncService)
+			.AddSingleton<IPlcSyncOwnership, StubPlcSyncOwnership>()
 			.BuildServiceProvider();
 
 		var session = services.GetRequiredService<RecipeSession>();

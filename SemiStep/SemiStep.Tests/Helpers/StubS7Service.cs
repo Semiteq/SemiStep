@@ -58,14 +58,27 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 	/// </summary>
 	public Result<int> ProtocolVersionToReturn { get; set; } = Result.Ok(1);
 
+	/// <summary>
+	/// When true, <see cref="ReadProtocolVersionAsync"/> throws a <see cref="TaskCanceledException"/>,
+	/// mirroring an S7.Net socket/read timeout that surfaces as an <see cref="OperationCanceledException"/>
+	/// derivative. This exercises the <c>EnableSync</c> rollback path for a handshake that throws rather
+	/// than returning a failed result.
+	/// </summary>
+	public bool ProtocolVersionReadShouldThrowCanceled { get; set; }
+
 	/// <summary>Raises <see cref="StateChanged"/> with the given state.</summary>
 	public void RaiseStateChanged(PlcConnectionState state)
 	{
 		StateChanged?.Invoke(state);
 	}
 
+	/// <summary>Number of times <see cref="ConnectAsync"/> was called.</summary>
+	public int ConnectCallCount { get; private set; }
+
 	public Task ConnectAsync(PlcConnectionSettings settings)
 	{
+		ConnectCallCount++;
+
 		if (ConnectShouldFail)
 		{
 			throw new InvalidOperationException("Stub PLC connection failure");
@@ -115,6 +128,11 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 
 	public Task<Result<int>> ReadProtocolVersionAsync()
 	{
+		if (ProtocolVersionReadShouldThrowCanceled)
+		{
+			throw new TaskCanceledException("Stub protocol version read timed out");
+		}
+
 		return Task.FromResult(ProtocolVersionToReturn);
 	}
 

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Configuration.Facade;
 using SemiStep.Core.Plc;
+using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Helpers;
@@ -79,6 +80,7 @@ public sealed class RecipeCoordinatorSaveGateTests
 			.AddSingleton<IS7Reader>(sp => sp.GetRequiredService<StubS7Service>())
 			.AddSingleton<IS7ExecutionStream>(sp => sp.GetRequiredService<StubS7Service>())
 			.AddSingleton<IPlcSyncService, StubPlcSyncService>()
+			.AddSingleton<IPlcSyncOwnership, StubPlcSyncOwnership>()
 			.BuildServiceProvider();
 
 		var session = services.GetRequiredService<RecipeSession>();

@@ -5,6 +5,7 @@ using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.S7.Serialization;
 using SemiStep.Core.Plc.Sync;
+using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 
 namespace SemiStep.Core.Plc.S7;
@@ -13,6 +14,7 @@ public static class S7Di
 {
 	public static IServiceCollection AddS7(this IServiceCollection services)
 	{
+		services.AddSingleton<IPlcSyncOwnership, FileSyncOwnership>();
 		services.AddSingleton<S7Driver>();
 		services.AddSingleton<IS7Transport>(sp => sp.GetRequiredService<S7Driver>());
 		services.AddSingleton<RecipeConverter>();

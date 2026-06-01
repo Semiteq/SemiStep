@@ -8,6 +8,7 @@ namespace SemiStep.Core.Plc.S7;
 
 internal sealed class S7Driver : IS7Driver
 {
+	private readonly TransportSerializer _serializer = new();
 	private S7NetPlc? _plc;
 
 	public bool IsConnected => _plc?.IsConnected ?? false;
@@ -18,6 +19,8 @@ internal sealed class S7Driver : IS7Driver
 		{
 			await DisconnectAsync();
 		}
+
+		_serializer.Dispose();
 	}
 
 	public async Task ConnectAsync(PlcConnectionSettings settings)
@@ -40,17 +43,17 @@ internal sealed class S7Driver : IS7Driver
 		return Task.CompletedTask;
 	}
 
-	public async Task<byte[]> ReadBytesAsync(int dbNumber, int startByte, int count, CancellationToken ct = default)
+	public Task<byte[]> ReadBytesAsync(int dbNumber, int startByte, int count, CancellationToken ct = default)
 	{
-		ct.ThrowIfCancellationRequested();
-
-		return await _plc!.ReadBytesAsync(S7NetDataType.DataBlock, dbNumber, startByte, count, ct);
+		return _serializer.RunAsync(
+			() => _plc!.ReadBytesAsync(S7NetDataType.DataBlock, dbNumber, startByte, count, ct),
+			ct);
 	}
 
-	public async Task WriteBytesAsync(int dbNumber, int startByte, byte[] data, CancellationToken ct = default)
+	public Task WriteBytesAsync(int dbNumber, int startByte, byte[] data, CancellationToken ct = default)
 	{
-		ct.ThrowIfCancellationRequested();
-
-		await _plc!.WriteBytesAsync(S7NetDataType.DataBlock, dbNumber, startByte, data, ct);
+		return _serializer.RunAsync(
+			() => _plc!.WriteBytesAsync(S7NetDataType.DataBlock, dbNumber, startByte, data, ct),
+			ct);
 	}
 }

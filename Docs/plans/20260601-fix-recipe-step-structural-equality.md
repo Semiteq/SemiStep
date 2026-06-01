@@ -77,11 +77,11 @@
 - Modify: `SemiStep/SemiStep.Core/Recipes/Recipe.cs`
 - Modify: `SemiStep/SemiStep.Tests/Core/Unit/Recipes/RecipeStructuralEqualityTests.cs`
 
-- [ ] Add `public bool Equals(Recipe? other)` to `Recipe`: `other is not null && Steps.SequenceEqual(other.Steps)` (order-sensitive), relying on `Step`'s content equality.
-- [ ] Add `public override int GetHashCode()` folding step hashes in order via `HashCode`.
-- [ ] Keep `Empty`, `StepCount`, and all mutation helpers (`AppendStep`, `InsertStep`, etc.) intact.
-- [ ] Write unit tests: two recipes with identical steps in distinct list instances are equal; `Recipe.Empty` equals `new Recipe([])`; recipes differing in step order are not equal; differing step count not equal; a recipe with one content-equal step but a fresh inner `Step`/`Properties` instance is equal (the reconnect scenario at the unit level); equal recipes produce equal `GetHashCode`; `Equals(null)` is `false` and `Equals(self)` is `true`.
-- [ ] Run tests: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Area=RecipeEquality"` — must pass before Task 3.
+- [x] Add `public bool Equals(Recipe? other)` to `Recipe`: `other is not null && Steps.SequenceEqual(other.Steps)` (order-sensitive), relying on `Step`'s content equality.
+- [x] Add `public override int GetHashCode()` folding step hashes in order via `HashCode`.
+- [x] Keep `Empty`, `StepCount`, and all mutation helpers (`AppendStep`, `InsertStep`, etc.) intact.
+- [x] Write unit tests: two recipes with identical steps in distinct list instances are equal; `Recipe.Empty` equals `new Recipe([])`; recipes differing in step order are not equal; differing step count not equal; a recipe with one content-equal step but a fresh inner `Step`/`Properties` instance is equal (the reconnect scenario at the unit level); equal recipes produce equal `GetHashCode`; `Equals(null)` is `false` and `Equals(self)` is `true`.
+- [x] Run tests: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Area=RecipeEquality"` — must pass before Task 3.
 
 ### Task 3: Reconnect identical-content -> no conflict regression test
 

@@ -88,12 +88,12 @@
 **Files:**
 - Modify: `SemiStep/SemiStep.Tests/Domain/PlcLifecycleManagerReconnectTests.cs`
 
-- [ ] Add `StateChanged_Connected_WhenRecipesIdentical_DoesNotFireConflict_AndPushesLocal`: append a step to `session` (non-empty local), then build the PLC stub recipe as a **fresh-instance deep copy of `session.Current`** — reconstruct each step as `new Step(step.ActionKey, ImmutableDictionary.CreateRange(step.Properties))` wrapped via `ImmutableList.Create(...)`. Set `ManagingAreaToReturn` committed=true.
+- [x] Add `StateChanged_Connected_WhenRecipesIdentical_DoesNotFireConflict_AndPushesLocal`: append a step to `session` (non-empty local), then build the PLC stub recipe as a **fresh-instance deep copy of `session.Current`** — reconstruct each step as `new Step(step.ActionKey, ImmutableDictionary.CreateRange(step.Properties))` wrapped via `ImmutableList.Create(...)`. Set `ManagingAreaToReturn` committed=true.
   - **Do NOT reuse `BuildSingleStepRecipe()` (`PlcLifecycleManagerReconnectTests.cs:62-69`)**: it builds a step with `ImmutableDictionary.Empty`, but `session.AppendStep(WaitActionId)` routes through `StepInitializer.Create` and populates one default `PropertyValue` per action property. Empty vs. populated properties would differ, the conflict branch would fire, `NotifyRecipeChangedCallCount` would never increment, and the test would fail by timeout even with the fix in place. The PLC recipe must deep-copy the session's populated step.
-- [ ] Subscribe a flag to `PlcRecipeConflictDetected`; capture `syncService.NotifyRecipeChangedCallCount` before raising `Connected`.
-- [ ] Raise `StateChanged(Connected)`; `WaitUntilAsync(NotifyRecipeChangedCallCount > before)` as the deterministic completion signal (the equal branch falls through to `NotifyLocalRecipe`).
-- [ ] Assert the conflict flag is `false` (identical content must not raise `PlcRecipeConflictDetected`). Confirms the test is red pre-fix (conflict branch taken, counter never increments -> timeout) and green post-fix.
-- [ ] Run tests: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Area=Reconnect"` — must pass before Task 4.
+- [x] Subscribe a flag to `PlcRecipeConflictDetected`; capture `syncService.NotifyRecipeChangedCallCount` before raising `Connected`.
+- [x] Raise `StateChanged(Connected)`; `WaitUntilAsync(NotifyRecipeChangedCallCount > before)` as the deterministic completion signal (the equal branch falls through to `NotifyLocalRecipe`).
+- [x] Assert the conflict flag is `false` (identical content must not raise `PlcRecipeConflictDetected`). Confirms the test is red pre-fix (conflict branch taken, counter never increments -> timeout) and green post-fix.
+- [x] Run tests: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Area=Reconnect"` — must pass before Task 4.
 
 ### Task 4: Verify acceptance criteria
 - [ ] Verify reconnect no longer raises a conflict when PLC and PC recipes have identical content, and still raises one when they genuinely differ (existing `StateChanged_Connected_WhenRecipesDiffer_FiresConflictDetected` still passes).

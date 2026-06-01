@@ -44,4 +44,30 @@ public sealed record Recipe(ImmutableList<Step> Steps)
 	{
 		return this with { Steps = Steps.SetItem(index, step) };
 	}
+
+	public bool Equals(Recipe? other)
+	{
+		if (other is null)
+		{
+			return false;
+		}
+
+		if (ReferenceEquals(this, other))
+		{
+			return true;
+		}
+
+		return Steps.SequenceEqual(other.Steps);
+	}
+
+	public override int GetHashCode()
+	{
+		var hash = new HashCode();
+		foreach (var step in Steps)
+		{
+			hash.Add(step);
+		}
+
+		return hash.ToHashCode();
+	}
 }

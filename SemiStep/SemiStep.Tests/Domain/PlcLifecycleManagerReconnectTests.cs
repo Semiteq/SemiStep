@@ -108,6 +108,51 @@ public sealed class PlcLifecycleManagerReconnectTests
 	}
 
 	[Fact]
+	public async Task StateChanged_Connected_WhenRecipesIdentical_DoesNotFireConflict_AndPushesLocal()
+	{
+		var (plc, session, s7Service, syncService) = await BuildAsync();
+
+		// Populate local recipe so it is non-empty; AppendStep populates default properties
+		// per the action definition, so the local step is not empty.
+		var appendResult = session.AppendStep(WaitActionId);
+		appendResult.IsSuccess.Should().BeTrue();
+
+		// Configure stub: committed=true, PLC recipe is a fresh-instance deep copy of the local one.
+		// Reusing BuildSingleStepRecipe() would yield empty Properties, which differ from the
+		// session's populated step and would wrongly trip the conflict branch.
+		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
+		s7Service.RecipeToReturn = DeepCopy(session.Current);
+
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
+		enableResult.IsSuccess.Should().BeTrue();
+
+		var conflictFired = false;
+		plc.PlcRecipeConflictDetected += (_, _) => conflictFired = true;
+
+		var countBeforeStateChange = syncService.NotifyRecipeChangedCallCount;
+
+		// Simulate an auto-reconnect: StateChanged fires Connected while sync is active.
+		s7Service.RaiseStateChanged(PlcConnectionState.Connected);
+
+		// (a) Observable state: identical content takes the equal branch, which falls through
+		// to NotifyLocalRecipe and increments the counter.
+		await TestHelpers.WaitUntilAsync(
+			() => syncService.NotifyRecipeChangedCallCount > countBeforeStateChange,
+			cancellationToken: TestContext.Current.CancellationToken);
+
+		conflictFired.Should().BeFalse(
+			"identical PLC and PC recipe content must not raise PlcRecipeConflictDetected");
+	}
+
+	private static Recipe DeepCopy(Recipe recipe)
+	{
+		var copiedSteps = recipe.Steps
+			.Select(step => new Step(step.ActionKey, ImmutableDictionary.CreateRange(step.Properties)));
+
+		return new Recipe(ImmutableList.CreateRange(copiedSteps));
+	}
+
+	[Fact]
 	public async Task StateChanged_Connected_WhenNotCommitted_PushesLocalRecipe()
 	{
 		var (plc, _, s7Service, syncService) = await BuildAsync();

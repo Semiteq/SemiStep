@@ -107,7 +107,7 @@ _Окна разных установок (MBE, MOCVD, RIE) используют
 
 ### 2.2. Общий вид окон
 
-![Окно установки MOCVD](./img/mocvd_examples.png)
+![Окно установки MOCVD](./img/mocvd_example.png)
 _Окно установки MOCVD._
 
 В каждом окне:

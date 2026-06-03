@@ -243,6 +243,29 @@ public sealed class PlcSyncCoordinatorTests
 	}
 
 	[Fact]
+	public void ReEnableAfterConnectionLostThenCleanDisable_DoesNotEmitConnectionLostFailure()
+	{
+		var (coordinator, _, _) = Build(connected: false);
+		Result<PlcSessionSnapshot>? latest = null;
+		using var subscription = coordinator.PlcState.Subscribe(snapshot => latest = snapshot);
+
+		// Drive the coordinator into the stale state that produced the field bug: a genuine
+		// connection loss leaves Status = Disconnected. The user then toggles Sync off (clean
+		// disable) and back on. ResetForDisable must clear the stale status to Idle so the
+		// re-enable does not republish the connection-lost failure.
+		coordinator.SetSyncEnabled(true);
+		coordinator.HandleConnectionLost();
+		coordinator.SetSyncEnabled(false);
+		coordinator.ResetForDisable();
+		coordinator.SetSyncEnabled(true);
+
+		latest.Should().NotBeNull();
+		latest!.IsFailed.Should().BeFalse(
+			"after a genuine loss is cleared by a clean disable, re-enabling sync must not "
+			+ "republish the stale connection-lost failure");
+	}
+
+	[Fact]
 	public void HandleConnectionLost_WhileSyncEnabled_EmitsConnectionLostFailure()
 	{
 		var (coordinator, _, _) = Build(connected: false);

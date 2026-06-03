@@ -27,7 +27,7 @@ Problem solved: removes the spurious failure (PR 1) and the duplicated/overloade
 - **Testing approach**: Regular (code change, then regression/updated tests within the same task).
 - Complete each task fully before the next; build + `dotnet format` + tests must pass before advancing.
 - Each task includes new/updated tests. Success and failure scenarios both covered.
-- Keep PR 1 minimal — do NOT touch the enum, the predicate, the `Result` wrapper, or the UI. PR 2 owns the structural change.
+- Keep PR 1 minimal — do NOT touch the enum, the predicate, or the UI. PR 2 owns the structural change. (See "Implementation note (PR 1 deviation)" below regarding the `Result` wrapper.)
 
 ## Testing Strategy
 
@@ -47,7 +47,11 @@ Problem solved: removes the spurious failure (PR 1) and the duplicated/overloade
 ## Technical Details
 
 - `_connectionLost` is owned entirely by the coordinator (no reach into `PlcSyncExecutor` state, preserving the SRP boundary). It is mutated under the existing `_lock` and read inside `PublishSnapshot` alongside `status`/`isSyncEnabled` for a consistent snapshot point.
-- The `Result<PlcSessionSnapshot>` wrapper and the failure-as-value channel are intentionally retained (P3 deferred). PR 2 only changes what TRIGGERS the failure, not how it is transported.
+- The `Result<PlcSessionSnapshot>` wrapper is intentionally retained (P3 deferred). PR 2 only changes what TRIGGERS the failure, not how it is transported. The failure-as-*value* channel (`.WithValue(snapshot)` on the failed branches) was removed in PR 1 — see the implementation note below.
+
+## Implementation note (PR 1 deviation)
+
+- PR 1 removed `.WithValue(snapshot)` from both failed-`Result` branches in `PublishSnapshot` (the `Failed` and the connection-lost branches). FluentResults throws `InvalidOperationException: Result is in status failed. Value is not set` when a value is later read off a failed result, and constructing/consuming a failed result that carries a value is the same fault surface. Removing `.WithValue` from the failed branches both keeps PR 1 internally consistent and fixed the genuine-loss `Value is not set` exception. The `Result<PlcSessionSnapshot>` wrapper type itself is unchanged; only the no-longer-needed value payload on the failed branches was dropped. The full move off the `Result` wrapper / to a discrete fault channel remains the deferred P3 item.
 - Genuine-loss path is unchanged end to end: `S7Service` detects loss → `StateChanged(Disconnected)` → `OnConnectionStateChanged` → `HandleConnectionLost` sets `_connectionLost` → `PublishSnapshot` emits the failure. `CheckCanSyncAsync` hitting `!IsConnected` implies a drop already signalled by that path (sync is only enabled after a successful `ConnectAsync`), so dropping its status write is safe.
 
 ## What Goes Where

@@ -193,6 +193,8 @@ public sealed class PlcLifecycleManagerReconnectTests
 
 		syncService.WasHandleConnectionLostCalled.Should().BeTrue(
 			"IPlcSyncService.HandleConnectionLost() must be called when the PLC disconnects while sync is enabled");
+		syncService.WasResetForDisableCalled.Should().BeFalse(
+			"a connection drop is a loss alarm, not a clean teardown, so it must not take the disable path");
 	}
 
 	[Fact]

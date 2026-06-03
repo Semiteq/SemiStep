@@ -404,3 +404,5 @@ FodyWeavers.xsd
 .nuke/
 
 *.local.json
+
+.claude/worktrees/

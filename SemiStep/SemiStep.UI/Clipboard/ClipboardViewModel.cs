@@ -112,7 +112,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		var result = _coordinator.RemoveSteps(_recipeGrid.SelectedRowIndices);
 		if (result.IsFailed)
 		{
-			_messagePanel.ReportError(result.Errors[0].Message);
+			_messagePanel.ReportFailure(result);
 			return;
 		}
 
@@ -152,7 +152,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		var insertResult = _coordinator.InsertSteps(insertIndex, recipeResult.Value.Steps);
 		if (insertResult.IsFailed)
 		{
-			_messagePanel.ReportError(insertResult.Errors[0].Message);
+			_messagePanel.ReportFailure(insertResult);
 			return;
 		}
 

@@ -67,31 +67,31 @@ Benefit: errors become consistently visible, event and state are separated, the 
 - Create: `SemiStep/SemiStep.UI/MessageService/ResultReportingExtensions.cs`
 - Create: `SemiStep/SemiStep.Tests/UI/ResultReportingExtensionsTests.cs`
 
-- [ ] Add `FormatErrors(this IResultBase result)` => `string.Join("; ", result.Errors.Select(e => e.Message))`.
-- [ ] Add `ReportFailure(this MessagePanelViewModel panel, IResultBase result, string? context = null)` => `panel.ReportError(context is null ? result.FormatErrors() : $"{context}: {result.FormatErrors()}")`.
-- [ ] Write tests: `FormatErrors` single error, multi error (join order); `ReportFailure` with and without context (assert the panel entry contains ALL error messages).
-- [ ] `dotnet build SemiStep/SemiStep.slnx -clp:ErrorsOnly` — 0 errors.
-- [ ] Run the new tests — must pass.
+- [x] Add `FormatErrors(this IResultBase result)` => `string.Join("; ", result.Errors.Select(e => e.Message))`.
+- [x] Add `ReportFailure(this MessagePanelViewModel panel, IResultBase result, string? context = null)` => `panel.ReportError(context is null ? result.FormatErrors() : $"{context}: {result.FormatErrors()}")`.
+- [x] Write tests: `FormatErrors` single error, multi error (join order); `ReportFailure` with and without context (assert the panel entry contains ALL error messages).
+- [x] `dotnet build SemiStep/SemiStep.slnx -clp:ErrorsOnly` — 0 errors.
+- [x] Run the new tests — must pass.
 
 ### Task 2 (PR A): Route all panel + logging sites through the seam
 
 **Files:**
 - Modify: `SemiStep/SemiStep.UI/RecipeFile/RecipeFileViewModel.cs`, `SemiStep/SemiStep.UI/Coordinator/RecipeCoordinator.cs`, `SemiStep/SemiStep.UI/Clipboard/ClipboardViewModel.cs`, `SemiStep/SemiStep.UI/MainWindow/MainWindowViewModel.cs`, `SemiStep/SemiStep.UI/RecipeGrid/RecipeGridViewModel.cs`, `SemiStep/SemiStep.UI/App.axaml.cs`, `SemiStep/SemiStep.UI/Program.cs`
 
-- [ ] Replace the ~8 `ReportError(result.Errors[0].Message)` sites with `ReportFailure(result, context)`, preserving existing prefixes via `context` ("Failed to save recipe", "Step {n}", "PLC reconnect", etc.). Exception-based `ReportError($"... {ex.Message}")` sites are NOT Result-based — leave them.
-- [ ] **Per-site decision for embedded-literal messages.** The `context: message` template only fits two-part `prefix: message` strings. Sites where the literal sits mid-string — notably `RecipeGridViewModel.cs:226` (`"Step {n}: Failed to change action - {message}"`) — cannot be reproduced by `context`. For each such site, either (a) accept the reworded message (`"Step {n}: Failed to change action: {all-errors}"`) and pin the new text with a test, or (b) keep manual composition via `ReportError($"... {result.FormatErrors()}")`. Decide explicitly per site; do not assume all fit the `context` mold. This is the one place message text may change beyond the all-errors fix.
-- [ ] Replace the UI-side logging `string.Join("; ", ...Errors.Select(e => e.Message))` sites with `result.FormatErrors()`.
-- [ ] `dotnet build SemiStep/SemiStep.slnx -clp:ErrorsOnly` — 0 errors.
-- [ ] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green (behavior change: failed operations now surface ALL error messages; update any test asserting a single-message panel entry).
+- [x] Replace the ~8 `ReportError(result.Errors[0].Message)` sites with `ReportFailure(result, context)`, preserving existing prefixes via `context` ("Failed to save recipe", "Step {n}", "PLC reconnect", etc.). Exception-based `ReportError($"... {ex.Message}")` sites are NOT Result-based — leave them.
+- [x] **Per-site decision for embedded-literal messages.** `RecipeGridViewModel.cs:226` kept its verbatim wording via option (b): `ReportError($"Step {n}: Failed to change action - {result.FormatErrors()}")`.
+- [x] Replace the UI-side logging `string.Join("; ", ...Errors.Select(e => e.Message))` sites with `result.FormatErrors()`.
+- [x] `dotnet build SemiStep/SemiStep.slnx -clp:ErrorsOnly` — 0 errors.
+- [x] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green (behavior change: failed operations now surface ALL error messages; update any test asserting a single-message panel entry).
 
 ### Task 3 (PR A): Document the contract; format, commit, push, PR
 
 **Files:**
 - Create: `Docs/error-reporting.md`
 
-- [ ] Write a short `Docs/error-reporting.md`: the two channels (transient operation entry vs persistent validation reasons), Core owns error text, UI routes via `ReportFailure`, events -> operation channel, state -> reasons/status bar. Match the language of surrounding `Docs/` files.
-- [ ] `dotnet format SemiStep/SemiStep.slnx`.
-- [ ] Commit on `error-report-seam` (`refactor: unify Result-to-MessagePanel reporting; surface all operation errors`); verify `git log origin/master..HEAD --oneline` is only this change; push; `gh pr create --base master`.
+- [x] Write a short `Docs/error-reporting.md`: the two channels (transient operation entry vs persistent validation reasons), Core owns error text, UI routes via `ReportFailure`, events -> operation channel, state -> reasons/status bar. Match the language of surrounding `Docs/` files.
+- [x] `dotnet format SemiStep/SemiStep.slnx`.
+- [x] Commit on `error-report-seam` (`refactor: unify Result-to-MessagePanel reporting; surface all operation errors`); verify `git log origin/master..HEAD --oneline` is only this change; push; `gh pr create --base master`.
 
 ### Task 4 (PR B): Branch off PR A (stacked)
 

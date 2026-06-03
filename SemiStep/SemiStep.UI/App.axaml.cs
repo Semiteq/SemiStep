@@ -11,6 +11,7 @@ using SemiStep.Core.Recipes;
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.Dialogs;
 using SemiStep.UI.MainWindow;
+using SemiStep.UI.MessageService;
 using SemiStep.UI.RecipeGrid;
 using SemiStep.UI.Styles;
 
@@ -104,7 +105,7 @@ public class App : Application
 		if (resetResult.IsFailed)
 		{
 			Log.Warning("Session reset reported failures at startup: {Errors}",
-				string.Join("; ", resetResult.Errors.Select(e => e.Message)));
+				resetResult.FormatErrors());
 		}
 
 		var coordinator = provider.GetRequiredService<RecipeCoordinator>();

@@ -280,4 +280,23 @@ public sealed class PlcSyncCoordinatorTests
 		latest!.IsFailed.Should().BeTrue(
 			"a runtime connection loss while sync is enabled must surface as a failed snapshot");
 	}
+
+	[Fact]
+	public void ReEnableAfterConnectionLost_ClearsLostFlag_DoesNotEmitFailure()
+	{
+		var (coordinator, _, _) = Build(connected: false);
+		coordinator.SetSyncEnabled(true);
+
+		Result<PlcSessionSnapshot>? latest = null;
+		using var subscription = coordinator.PlcState.Subscribe(snapshot => latest = snapshot);
+
+		coordinator.HandleConnectionLost();
+		latest!.IsFailed.Should().BeTrue("a connection loss while enabled must surface as a failure first");
+
+		coordinator.SetSyncEnabled(true);
+
+		latest.Should().NotBeNull();
+		latest!.IsFailed.Should().BeFalse(
+			"re-enabling sync must clear the connection-lost flag so no stale failure lingers");
+	}
 }

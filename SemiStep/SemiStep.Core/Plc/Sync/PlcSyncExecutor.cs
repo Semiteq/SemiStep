@@ -205,7 +205,6 @@ internal sealed class PlcSyncExecutor(
 		if (!connection.IsConnected)
 		{
 			_logger.LogDebug("Skipping sync: not connected to PLC");
-			setStatus(PlcSyncStatus.Disconnected);
 
 			return Result.Fail("Not connected");
 		}

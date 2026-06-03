@@ -44,8 +44,8 @@ public sealed class RecipeCoordinator : IDisposable
 	private readonly RecipeSession _session;
 	private bool _disposed;
 	private bool _initialized;
-	private IDisposable? _plcStateSubscription;
 	private IDisposable? _plcFaultsSubscription;
+	private IDisposable? _plcStateSubscription;
 
 	public RecipeCoordinator(
 		RecipeSession session,

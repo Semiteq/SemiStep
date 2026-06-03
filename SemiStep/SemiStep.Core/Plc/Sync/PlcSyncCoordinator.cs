@@ -185,25 +185,14 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 
 	private void PublishSnapshot(PlcConnectionState connectionState)
 	{
-		PlcSyncStatus status;
-		bool isSyncEnabled;
-		bool disposed;
-
 		lock (_lock)
 		{
-			disposed = _disposed;
-			status = _status;
-			isSyncEnabled = _isSyncEnabled;
-		}
+			if (_disposed)
+			{
+				return;
+			}
 
-		if (disposed)
-		{
-			return;
-		}
-
-		var snapshot = new PlcSessionSnapshot(connectionState, status, isSyncEnabled);
-		if (!_disposed)
-		{
+			var snapshot = new PlcSessionSnapshot(connectionState, _status, _isSyncEnabled);
 			_subject.OnNext(snapshot);
 		}
 	}

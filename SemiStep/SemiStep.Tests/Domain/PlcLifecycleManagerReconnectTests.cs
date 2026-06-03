@@ -181,7 +181,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	}
 
 	[Fact]
-	public async Task StateChanged_Disconnected_WhenSyncEnabled_CallsReset()
+	public async Task StateChanged_Disconnected_WhenSyncEnabled_CallsHandleConnectionLost()
 	{
 		var (plc, _, s7Service, syncService) = await BuildAsync();
 
@@ -191,12 +191,12 @@ public sealed class PlcLifecycleManagerReconnectTests
 		// Simulate a connection drop while sync is active.
 		s7Service.RaiseStateChanged(PlcConnectionState.Disconnected);
 
-		syncService.WasResetCalled.Should().BeTrue(
-			"IPlcSyncService.Reset() must be called when the PLC disconnects while sync is enabled");
+		syncService.WasHandleConnectionLostCalled.Should().BeTrue(
+			"IPlcSyncService.HandleConnectionLost() must be called when the PLC disconnects while sync is enabled");
 	}
 
 	[Fact]
-	public async Task DisableSync_CallsResetOnSyncService()
+	public async Task DisableSync_CallsResetForDisableOnSyncService()
 	{
 		var (plc, _, _, syncService) = await BuildAsync();
 
@@ -205,8 +205,10 @@ public sealed class PlcLifecycleManagerReconnectTests
 
 		await plc.DisableSync();
 
-		syncService.WasResetCalled.Should().BeTrue(
-			"IPlcSyncService.Reset() must be called when sync is manually disabled");
+		syncService.WasHandleConnectionLostCalled.Should().BeFalse(
+			"manual disable is a clean teardown, not a connection-loss alarm");
+		syncService.WasResetForDisableCalled.Should().BeTrue(
+			"IPlcSyncService.ResetForDisable() must be called when sync is manually disabled");
 	}
 
 	[Fact]

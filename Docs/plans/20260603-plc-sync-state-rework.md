@@ -64,29 +64,29 @@ Problem solved: removes the spurious failure (PR 1) and the duplicated/overloade
 - Modify: `SemiStep/SemiStep.Core/Plc/Sync/PlcSyncCoordinator.cs`
 - Modify: `SemiStep/SemiStep.Core/Plc/PlcLifecycleManager.cs`
 
-- [ ] In `IPlcSyncService`, replace `void Reset();` with `void ResetForDisable();` and `void HandleConnectionLost();`.
-- [ ] In `PlcSyncCoordinator`, implement `ResetForDisable()` (`_executor.Reset()` + `Status = PlcSyncStatus.Idle`) and `HandleConnectionLost()` (`_executor.Reset()` + `Status = PlcSyncStatus.Disconnected`); remove old `Reset()`.
-- [ ] In `PlcLifecycleManager.DisableSync`, call `ResetForDisable()` (was `Reset()`).
-- [ ] In `PlcLifecycleManager.OnConnectionStateChanged` loss branch, call `HandleConnectionLost()` (was `Reset()`).
-- [ ] Update any other `Reset()` callers/stubs (`SemiStep.Tests/Helpers/StubPlcSyncService.cs`).
-- [ ] `dotnet build SemiStep/SemiStep.slnx` — must compile.
+- [x] In `IPlcSyncService`, replace `void Reset();` with `void ResetForDisable();` and `void HandleConnectionLost();`.
+- [x] In `PlcSyncCoordinator`, implement `ResetForDisable()` (`_executor.Reset()` + `Status = PlcSyncStatus.Idle`) and `HandleConnectionLost()` (`_executor.Reset()` + `Status = PlcSyncStatus.Disconnected`); remove old `Reset()`.
+- [x] In `PlcLifecycleManager.DisableSync`, call `ResetForDisable()` (was `Reset()`).
+- [x] In `PlcLifecycleManager.OnConnectionStateChanged` loss branch, call `HandleConnectionLost()` (was `Reset()`).
+- [x] Update any other `Reset()` callers/stubs (`SemiStep.Tests/Helpers/StubPlcSyncService.cs`).
+- [x] `dotnet build SemiStep/SemiStep.slnx` — must compile.
 
 ### Task 2 (PR 1): Regression test for enable→disable→enable
 
 **Files:**
 - Modify: `SemiStep/SemiStep.Tests/S7/PlcSyncCoordinatorTests.cs`
 
-- [ ] Add a test: after `SetSyncEnabled(true)` → `ResetForDisable()` + `SetSyncEnabled(false)` → `SetSyncEnabled(true)`, the latest `PlcState` emission is NOT failed (the spurious-failure regression).
-- [ ] Add/confirm a test: `HandleConnectionLost()` while enabled DOES produce a failed snapshot (`PLC connection lost`) — genuine loss preserved.
-- [ ] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "FullyQualifiedName~PlcSyncCoordinator"` — must pass.
-- [ ] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green.
+- [x] Add a test: after `SetSyncEnabled(true)` → `ResetForDisable()` + `SetSyncEnabled(false)` → `SetSyncEnabled(true)`, the latest `PlcState` emission is NOT failed (the spurious-failure regression).
+- [x] Add/confirm a test: `HandleConnectionLost()` while enabled DOES produce a failed snapshot (`PLC connection lost`) — genuine loss preserved.
+- [x] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "FullyQualifiedName~PlcSyncCoordinator"` — must pass.
+- [x] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green.
 
 ### Task 3 (PR 1): Format, commit, push, open PR
 
-- [ ] `dotnet format SemiStep/SemiStep.slnx`.
-- [ ] `git add` changed files; commit on branch `plc-sync-reenable-fix` (message: `fix: stop spurious 'PLC connection lost' on sync re-enable`).
-- [ ] Verify `git log origin/master..HEAD --oneline` contains only this change.
-- [ ] `git push -u origin plc-sync-reenable-fix`; `gh pr create --base master` with a focused description.
+- [x] `dotnet format SemiStep/SemiStep.slnx`.
+- [x] `git add` changed files; commit on branch `plc-sync-reenable-fix` (message: `fix: stop spurious 'PLC connection lost' on sync re-enable`).
+- [x] Verify `git log origin/master..HEAD --oneline` contains only this change.
+- [x] `git push -u origin plc-sync-reenable-fix`; `gh pr create --base master` with a focused description.
 
 ### Task 4 (PR 2): Branch off PR 1 (stacked)
 

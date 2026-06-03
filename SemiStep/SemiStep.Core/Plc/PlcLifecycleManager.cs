@@ -168,7 +168,7 @@ public sealed class PlcLifecycleManager : IDisposable
 	public async Task DisableSync()
 	{
 		_syncService.SetSyncEnabled(false);
-		_syncService.Reset();
+		_syncService.ResetForDisable();
 		ReleaseOwnershipLease();
 
 		try
@@ -264,7 +264,7 @@ public sealed class PlcLifecycleManager : IDisposable
 
 		if (state == PlcConnectionState.Disconnected && _syncService.IsSyncEnabled)
 		{
-			_syncService.Reset();
+			_syncService.HandleConnectionLost();
 		}
 		else if (state == PlcConnectionState.Connected && _syncService.IsSyncEnabled)
 		{

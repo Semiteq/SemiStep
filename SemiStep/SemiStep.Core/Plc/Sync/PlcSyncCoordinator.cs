@@ -148,7 +148,13 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 		_subject.Dispose();
 	}
 
-	public void Reset()
+	public void ResetForDisable()
+	{
+		_executor.Reset();
+		Status = PlcSyncStatus.Idle;
+	}
+
+	public void HandleConnectionLost()
 	{
 		_executor.Reset();
 		Status = PlcSyncStatus.Disconnected;
@@ -183,17 +189,13 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 
 		if (status == PlcSyncStatus.Failed)
 		{
-			TryPublish(
-				Result.Fail<PlcSessionSnapshot>(new Error(errorMessage ?? "Sync failed"))
-					.WithValue(snapshot));
+			TryPublish(Result.Fail<PlcSessionSnapshot>(new Error(errorMessage ?? "Sync failed")));
 			return;
 		}
 
 		if (status == PlcSyncStatus.Disconnected && isSyncEnabled)
 		{
-			TryPublish(
-				Result.Fail<PlcSessionSnapshot>(new Error("PLC connection lost"))
-					.WithValue(snapshot));
+			TryPublish(Result.Fail<PlcSessionSnapshot>(new Error("PLC connection lost")));
 			return;
 		}
 

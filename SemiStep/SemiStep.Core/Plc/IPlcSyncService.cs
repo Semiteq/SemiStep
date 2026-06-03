@@ -9,7 +9,9 @@ public interface IPlcSyncService
 {
 	void NotifyRecipeChanged(Recipe recipe, bool isValid);
 
-	void Reset();
+	void ResetForDisable();
+
+	void HandleConnectionLost();
 
 	void SetSyncEnabled(bool value);
 

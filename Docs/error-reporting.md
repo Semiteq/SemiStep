@@ -23,10 +23,10 @@ How a failed operation reaches the user. Read this before adding a new error-sur
 
 ## The reporting seam
 
-All `Result`-to-panel routing goes through `ResultReportingExtensions`
+`Result`-to-panel routing goes through `ResultReportingExtensions`
 (`SemiStep.UI/MessageService/`):
 
-- `string FormatErrors(this IResultBase)` — joins every error message with `"; "`. The single idiom
+- `string FormatErrors(this IResultBase)` — joins every error message with `"; "`. The default idiom
   for rendering a failed result, used by both panel sites and log statements.
 - `void ReportFailure(this MessagePanelViewModel, IResultBase, string? context = null)` — surfaces
   `FormatErrors()` on the transient operation channel, optionally prefixed with `"{context}: "`.
@@ -42,3 +42,6 @@ read `Errors[0]` directly.
   `RefreshReasons`, and from there to the status-bar counts.
 - **Exception handlers** (`ReportError($"... {ex.Message}")` on `ThrownExceptions`) are not
   `Result`-based and stay as-is.
+- **One deliberate exception** to the `"; "` idiom: the clipboard *paste* failure lists each error on
+  its own line (`Environment.NewLine`), because a rejected paste can carry many per-step errors that
+  read better stacked. It still surfaces every error (never just `Errors[0]`).

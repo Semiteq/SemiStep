@@ -17,6 +17,7 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 	private readonly PlcSyncExecutor _executor;
 
 	private PlcConnectionState _connectionState = PlcConnectionState.Disconnected;
+	private bool _connectionLost;
 	private volatile bool _disposed;
 	private bool _isSyncEnabled;
 	private DateTimeOffset? _lastSyncTime;
@@ -117,6 +118,10 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 		lock (_lock)
 		{
 			_isSyncEnabled = value;
+			if (value)
+			{
+				_connectionLost = false;
+			}
 			connectionStateSnapshot = _connectionState;
 		}
 		PublishSnapshot(connectionStateSnapshot);
@@ -127,6 +132,10 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 		lock (_lock)
 		{
 			_connectionState = state;
+			if (state == PlcConnectionState.Connected)
+			{
+				_connectionLost = false;
+			}
 		}
 		PublishSnapshot(state);
 	}
@@ -151,13 +160,23 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 	public void ResetForDisable()
 	{
 		_executor.Reset();
+		lock (_lock)
+		{
+			_connectionLost = false;
+		}
 		Status = PlcSyncStatus.Idle;
 	}
 
 	public void HandleConnectionLost()
 	{
 		_executor.Reset();
-		Status = PlcSyncStatus.Disconnected;
+		PlcConnectionState connectionStateSnapshot;
+		lock (_lock)
+		{
+			_connectionLost = true;
+			connectionStateSnapshot = _connectionState;
+		}
+		PublishSnapshot(connectionStateSnapshot);
 	}
 
 	public async Task WaitForPendingSyncAsync(CancellationToken ct = default)
@@ -169,6 +188,7 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 	{
 		PlcSyncStatus status;
 		bool isSyncEnabled;
+		bool connectionLost;
 		string? errorMessage;
 		bool disposed;
 
@@ -177,6 +197,7 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 			disposed = _disposed;
 			status = _status;
 			isSyncEnabled = _isSyncEnabled;
+			connectionLost = _connectionLost;
 			errorMessage = _executor.PendingErrorMessage;
 		}
 
@@ -193,7 +214,7 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 			return;
 		}
 
-		if (status == PlcSyncStatus.Disconnected && isSyncEnabled)
+		if (connectionLost && isSyncEnabled)
 		{
 			TryPublish(Result.Fail<PlcSessionSnapshot>(new Error("PLC connection lost")));
 			return;

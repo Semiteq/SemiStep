@@ -94,7 +94,7 @@ Problem solved: removes the spurious failure (PR 1) and the duplicated/overloade
 
 ### Task 4 (PR 2): Branch off PR 1 (stacked)
 
-- [ ] From the worktree on `plc-sync-reenable-fix`, `git switch -c plc-sync-status-refactor`.
+- [x] From the worktree on `plc-sync-reenable-fix`, `git switch -c plc-sync-status-refactor`.
 
 ### Task 5 (PR 2): Make connection-loss an explicit signal; remove PlcSyncStatus.Disconnected
 
@@ -104,21 +104,21 @@ Problem solved: removes the spurious failure (PR 1) and the duplicated/overloade
 - Modify: `SemiStep/SemiStep.Core/Plc/Sync/PlcSyncCoordinator.cs`
 - Modify: `SemiStep/SemiStep.Core/Plc/Sync/PlcSyncExecutor.cs`
 
-- [ ] Add `_connectionLost` (bool) to `PlcSyncCoordinator`, mutated under `_lock`. Set `true` in `HandleConnectionLost()`; set `false` in `SetSyncEnabled(true)`, `ResetForDisable()`, and `UpdateConnectionState(PlcConnectionState.Connected)`.
-- [ ] Change `HandleConnectionLost()` to set `_connectionLost = true` instead of `Status = Disconnected`.
-- [ ] Rewrite the loss branch in `PublishSnapshot`: emit `Fail("PLC connection lost")` when `_connectionLost && isSyncEnabled` (read under lock with the other fields); keep the `Failed` branch unchanged.
-- [ ] Remove `Disconnected` from `PlcSyncStatus`; set `PlcSessionSnapshot.InitialState` `SyncStatus` to `Idle`.
-- [ ] In `PlcSyncExecutor.CheckCanSyncAsync`, keep the `!connection.IsConnected` early abort (`return Result.Fail`) but remove the `setStatus(PlcSyncStatus.Disconnected)` write.
-- [ ] `dotnet build SemiStep/SemiStep.slnx` — resolve all references to the removed enum value.
+- [x] Add `_connectionLost` (bool) to `PlcSyncCoordinator`, mutated under `_lock`. Set `true` in `HandleConnectionLost()`; set `false` in `SetSyncEnabled(true)`, `ResetForDisable()`, and `UpdateConnectionState(PlcConnectionState.Connected)`.
+- [x] Change `HandleConnectionLost()` to set `_connectionLost = true` instead of `Status = Disconnected`.
+- [x] Rewrite the loss branch in `PublishSnapshot`: emit `Fail("PLC connection lost")` when `_connectionLost && isSyncEnabled` (read under lock with the other fields); keep the `Failed` branch unchanged.
+- [x] Remove `Disconnected` from `PlcSyncStatus`; set `PlcSessionSnapshot.InitialState` `SyncStatus` to `Idle`.
+- [x] In `PlcSyncExecutor.CheckCanSyncAsync`, keep the `!connection.IsConnected` early abort (`return Result.Fail`) but remove the `setStatus(PlcSyncStatus.Disconnected)` write.
+- [x] `dotnet build SemiStep/SemiStep.slnx` — resolve all references to the removed enum value.
 
 ### Task 6 (PR 2): Re-point UI status label to ConnectionState
 
 **Files:**
 - Modify: `SemiStep/SemiStep.UI/MainWindow/MainWindowViewModel.cs`
 
-- [ ] Remove the `PlcSyncStatus.Disconnected` case from `MapSyncStatus`; confirm `ConnectionStatus` (line ~99) still renders the connection label independently.
-- [ ] Verify no other UI/XAML binding depends on a `Disconnected` sync-status string.
-- [ ] `dotnet build SemiStep/SemiStep.UI/SemiStep.UI.csproj`.
+- [x] Remove the `PlcSyncStatus.Disconnected` case from `MapSyncStatus`; confirm `ConnectionStatus` (line ~99) still renders the connection label independently.
+- [x] Verify no other UI/XAML binding depends on a `Disconnected` sync-status string.
+- [x] `dotnet build SemiStep/SemiStep.UI/SemiStep.UI.csproj`.
 
 ### Task 7 (PR 2): Update and extend tests
 
@@ -126,27 +126,27 @@ Problem solved: removes the spurious failure (PR 1) and the duplicated/overloade
 - Modify: `SemiStep/SemiStep.Tests/S7/PlcSyncCoordinatorTests.cs`
 - Modify: affected tests under `SemiStep/SemiStep.Tests` referencing `PlcSyncStatus.Disconnected`
 
-- [ ] Update any test asserting `PlcSyncStatus.Disconnected` to the new model (connectivity via `ConnectionState`; loss via the failed snapshot).
-- [ ] Re-run the PR 1 regression test against the new representation; adjust if it referenced the enum value.
-- [ ] Add a test that `HandleConnectionLost` then `SetSyncEnabled(true)` clears `_connectionLost` (no lingering failure on re-enable).
-- [ ] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green.
+- [x] Update any test asserting `PlcSyncStatus.Disconnected` to the new model (connectivity via `ConnectionState`; loss via the failed snapshot). (No test referenced the enum value directly; the UIFixture already used `PlcSyncStatus.Idle`.)
+- [x] Re-run the PR 1 regression test against the new representation; adjust if it referenced the enum value. (No enum-value reference; both PR 1 regression tests pass unchanged.)
+- [x] Add a test that `HandleConnectionLost` then `SetSyncEnabled(true)` clears `_connectionLost` (no lingering failure on re-enable).
+- [x] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green.
 
 ### Task 8 (PR 2): Format, commit, push, open stacked PR
 
-- [ ] `dotnet format SemiStep/SemiStep.slnx`.
-- [ ] Commit on `plc-sync-status-refactor` (message: `refactor: make ConnectionState the single source of truth for PLC connectivity`).
-- [ ] `git push -u origin plc-sync-status-refactor`; `gh pr create --base plc-sync-reenable-fix` (stacked) with a description noting it depends on PR 1.
+- [x] `dotnet format SemiStep/SemiStep.slnx`.
+- [x] Commit on `plc-sync-status-refactor` (message: `refactor: make ConnectionState the single source of truth for PLC connectivity`).
+- [x] `git push -u origin plc-sync-status-refactor`; `gh pr create --base plc-sync-reenable-fix` (stacked) with a description noting it depends on PR 1.
 
 ### Task 9: Verify acceptance criteria
 
-- [ ] Re-read Overview: spurious failure gone (PR 1), `PlcSyncStatus.Disconnected` removed and loss explicit (PR 2).
-- [ ] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green on the PR 2 branch.
-- [ ] Confirm out-of-scope items (P3/P4/P5) and preserved subsystems (S7Service FSM, file-lock ownership, TransportSerializer, threading model) were not modified: `git diff origin/master...HEAD --stat`.
+- [x] Re-read Overview: spurious failure gone (PR 1), `PlcSyncStatus.Disconnected` removed and loss explicit (PR 2).
+- [x] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green on the PR 2 branch.
+- [x] Confirm out-of-scope items (P3/P4/P5) and preserved subsystems (S7Service FSM, file-lock ownership, TransportSerializer, threading model) were not modified: `git diff origin/master...HEAD --stat`.
 
 ### Task 10: [Final] Plan housekeeping
 
-- [ ] Mark all checkboxes; note any deviations.
-- [ ] Move this plan to `Docs/plans/completed/` (commit on the PR 2 branch).
+- [x] Mark all checkboxes; note any deviations.
+- [x] Move this plan to `Docs/plans/completed/` (commit on the PR 2 branch).
 
 ## Post-Completion
 

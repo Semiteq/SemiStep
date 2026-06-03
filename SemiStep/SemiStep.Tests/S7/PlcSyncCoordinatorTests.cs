@@ -280,4 +280,58 @@ public sealed class PlcSyncCoordinatorTests
 		latest!.IsFailed.Should().BeTrue(
 			"a runtime connection loss while sync is enabled must surface as a failed snapshot");
 	}
+
+	[Fact]
+	public void ReEnableAfterConnectionLost_ClearsLostFlag_DoesNotEmitFailure()
+	{
+		var (coordinator, _, _) = Build(connected: false);
+		coordinator.SetSyncEnabled(true);
+
+		Result<PlcSessionSnapshot>? latest = null;
+		using var subscription = coordinator.PlcState.Subscribe(snapshot => latest = snapshot);
+
+		coordinator.HandleConnectionLost();
+		latest!.IsFailed.Should().BeTrue("a connection loss while enabled must surface as a failure first");
+
+		coordinator.SetSyncEnabled(true);
+
+		latest.Should().NotBeNull();
+		latest!.IsFailed.Should().BeFalse(
+			"re-enabling sync must clear the connection-lost flag so no stale failure lingers");
+	}
+
+	[Fact]
+	public void ConnectedAfterConnectionLost_ClearsLostFlag_DoesNotEmitFailure()
+	{
+		var (coordinator, _, _) = Build(connected: false);
+		coordinator.SetSyncEnabled(true);
+
+		Result<PlcSessionSnapshot>? latest = null;
+		using var subscription = coordinator.PlcState.Subscribe(snapshot => latest = snapshot);
+
+		coordinator.HandleConnectionLost();
+		latest!.IsFailed.Should().BeTrue("a connection loss while enabled must surface as a failure first");
+
+		coordinator.UpdateConnectionState(PlcConnectionState.Connected);
+
+		latest.Should().NotBeNull();
+		latest!.IsFailed.Should().BeFalse(
+			"the auto-reconnect recovery path must clear the connection-lost flag without the user toggling sync");
+	}
+
+	[Fact]
+	public async Task NotifyRecipeChanged_IsValidTrue_Disconnected_DebounceAbortLeavesStatusUnchanged()
+	{
+		var (coordinator, transport, _) = Build(connected: false);
+
+		coordinator.NotifyRecipeChanged(Recipe.Empty, isValid: true);
+
+		// The debounce elapses, but CheckCanSyncAsync aborts the sync because the PLC is not connected.
+		await coordinator.WaitForPendingSyncAsync(TestContext.Current.CancellationToken);
+
+		coordinator.Status.Should().Be(PlcSyncStatus.Idle,
+			"a debounce that fires while disconnected must abort cleanly without transitioning to Failed");
+		transport.WriteLog.Should().BeEmpty(
+			"no write may reach the PLC while disconnected");
+	}
 }

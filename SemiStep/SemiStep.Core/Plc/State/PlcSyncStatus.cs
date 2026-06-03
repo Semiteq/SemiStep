@@ -6,6 +6,5 @@ public enum PlcSyncStatus
 	Syncing,
 	Synced,
 	OutOfSync,
-	Failed,
-	Disconnected
+	Failed
 }

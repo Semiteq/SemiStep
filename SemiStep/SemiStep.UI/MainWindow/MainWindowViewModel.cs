@@ -215,7 +215,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			PlcSyncStatus.Synced => "Synced",
 			PlcSyncStatus.OutOfSync => "Out of sync",
 			PlcSyncStatus.Failed => "Failed",
-			PlcSyncStatus.Disconnected => "Disconnected",
 			_ => status.ToString()
 		};
 	}

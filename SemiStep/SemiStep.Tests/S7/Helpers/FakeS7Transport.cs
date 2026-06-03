@@ -12,6 +12,9 @@ internal sealed class FakeS7Transport : IS7Transport
 	private readonly Dictionary<int, Func<int, int, byte[]>> _dbReadFactories = new();
 	private bool _connected = true;
 
+	/// <summary>When set, every write throws this exception, simulating a transport-level write failure.</summary>
+	public Exception? WriteException { get; set; }
+
 	/// <summary>Ordered log of every write call received.</summary>
 	public List<(int DbNumber, int StartByte, byte[] Data)> WriteLog { get; } = new();
 
@@ -65,6 +68,12 @@ internal sealed class FakeS7Transport : IS7Transport
 	public Task WriteBytesAsync(int dbNumber, int startByte, byte[] data, CancellationToken ct = default)
 	{
 		ct.ThrowIfCancellationRequested();
+
+		if (WriteException is not null)
+		{
+			throw WriteException;
+		}
+
 		WriteLog.Add((dbNumber, startByte, (byte[])data.Clone()));
 		return Task.CompletedTask;
 	}

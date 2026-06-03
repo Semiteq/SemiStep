@@ -58,7 +58,9 @@ public sealed class PlcLifecycleManager : IDisposable
 	public PlcSyncStatus SyncStatus => _syncService.Status;
 	public DateTimeOffset? LastSyncTime => _syncService.LastSyncTime;
 
-	public IObservable<Result<PlcSessionSnapshot>> PlcState => _syncService.PlcState;
+	public IObservable<PlcSessionSnapshot> PlcState => _syncService.PlcState;
+
+	public IObservable<IError> Faults => _syncService.Faults;
 
 	public event Action<Recipe, Recipe>? PlcRecipeConflictDetected;
 

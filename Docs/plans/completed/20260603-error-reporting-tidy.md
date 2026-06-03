@@ -95,56 +95,56 @@ Benefit: errors become consistently visible, event and state are separated, the 
 
 ### Task 4 (PR B): Branch off PR A (stacked)
 
-- [ ] From the worktree on `error-report-seam`, `git switch -c plc-fault-channel`.
+- [x] From the worktree on `error-report-seam`, `git switch -c plc-fault-channel`.
 
 ### Task 5 (PR B): Bare PlcState + Faults channel in Core
 
 **Files:**
 - Modify: `SemiStep/SemiStep.Core/Plc/IPlcSyncService.cs`, `SemiStep/SemiStep.Core/Plc/Sync/PlcSyncCoordinator.cs`, `SemiStep/SemiStep.Core/Plc/Sync/PlcSyncExecutor.cs`, `SemiStep/SemiStep.Core/Plc/State/PlcSessionSnapshot.cs`, `SemiStep/SemiStep.Core/Plc/PlcLifecycleManager.cs`
 
-- [ ] `IPlcSyncService`: change `PlcState` to `IObservable<PlcSessionSnapshot>`; add `IObservable<IError> Faults`.
-- [ ] `PlcSessionSnapshot.InitialState`: bare `PlcSessionSnapshot` (drop the `Result.Ok` wrapper).
-- [ ] `PlcSyncCoordinator`: `BehaviorSubject<PlcSessionSnapshot>` + `Subject<IError> _faults` (expose as `Faults`); `PublishSnapshot` always publishes the snapshot (remove both `Fail` branches); `HandleConnectionLost` emits `_faults.OnNext(new Error("PLC connection lost"))`; remove `_connectionLost` and its clear-sites (see deviation note); dispose `_faults` in `Dispose`.
-- [ ] `PlcSyncExecutor`: add `Action<IError> reportFault` ctor callback; emit `reportFault(new Error(message))` at the four `setStatus(Failed)` sites enumerated in Technical Details; keep the `!IsConnected` early-return SILENT (no fault — avoids duplicating the connection-lost message); remove `_pendingErrorMessage`/`PendingErrorMessage` (now unused).
-- [ ] `PlcLifecycleManager`: change the `PlcState` pass-through property type to `IObservable<PlcSessionSnapshot>`; add `public IObservable<IError> Faults => _syncService.Faults;`.
-- [ ] `dotnet build SemiStep/SemiStep.slnx -clp:ErrorsOnly` — resolve all references to the removed `Result` wrapper / fields.
+- [x] `IPlcSyncService`: change `PlcState` to `IObservable<PlcSessionSnapshot>`; add `IObservable<IError> Faults`.
+- [x] `PlcSessionSnapshot.InitialState`: bare `PlcSessionSnapshot` (drop the `Result.Ok` wrapper).
+- [x] `PlcSyncCoordinator`: `BehaviorSubject<PlcSessionSnapshot>` + `Subject<IError> _faults` (expose as `Faults`); `PublishSnapshot` always publishes the snapshot (remove both `Fail` branches); `HandleConnectionLost` emits `_faults.OnNext(new Error("PLC connection lost"))`; remove `_connectionLost` and its clear-sites (see deviation note); dispose `_faults` in `Dispose`.
+- [x] `PlcSyncExecutor`: add `Action<IError> reportFault` ctor callback; emit `reportFault(new Error(message))` at the four `setStatus(Failed)` sites enumerated in Technical Details; keep the `!IsConnected` early-return SILENT (no fault — avoids duplicating the connection-lost message); remove `_pendingErrorMessage`/`PendingErrorMessage` (now unused).
+- [x] `PlcLifecycleManager`: change the `PlcState` pass-through property type to `IObservable<PlcSessionSnapshot>`; add `public IObservable<IError> Faults => _syncService.Faults;`.
+- [x] `dotnet build SemiStep/SemiStep.slnx -clp:ErrorsOnly` — resolve all references to the removed `Result` wrapper / fields.
 
 ### Task 6 (PR B): Bridge faults to the MessagePanel in the UI
 
 **Files:**
 - Modify: `SemiStep/SemiStep.UI/Coordinator/RecipeCoordinator.cs`, `SemiStep/SemiStep.UI/MainWindow/MainWindowViewModel.cs`
 
-- [ ] `RecipeCoordinator`: subscribe `_plc.Faults`, `ObserveOn(MainThreadScheduler)`, route each `IError` to the MessagePanel via the PR A seam (`ReportFailure`/`ReportError(error.Message)`); dispose the subscription with the others. Single-consumer channel → a plain `ObserveOn` subscription, NOT `Publish().RefCount()`.
-- [ ] Change `PlcState`/`PlcStateChanged` and `OnPlcStateChanged`/`LogPlcStateChange` to carry bare `PlcSessionSnapshot` (drop `Result`/`IsFailed` handling). `MainWindowViewModel` already discards the payload — adjust the type only.
-- [ ] `dotnet build SemiStep/SemiStep.slnx -clp:ErrorsOnly` — 0 errors.
+- [x] `RecipeCoordinator`: subscribe `_plc.Faults`, `ObserveOn(MainThreadScheduler)`, route each `IError` to the MessagePanel via the PR A seam (`ReportFailure`/`ReportError(error.Message)`); dispose the subscription with the others. Single-consumer channel → a plain `ObserveOn` subscription, NOT `Publish().RefCount()`.
+- [x] Change `PlcState`/`PlcStateChanged` and `OnPlcStateChanged`/`LogPlcStateChange` to carry bare `PlcSessionSnapshot` (drop `Result`/`IsFailed` handling). `MainWindowViewModel` already discards the payload — adjust the type only.
+- [x] `dotnet build SemiStep/SemiStep.slnx -clp:ErrorsOnly` — 0 errors.
 
 ### Task 7 (PR B): Update stub + tests
 
 **Files:**
 - Modify: `SemiStep/SemiStep.Tests/Helpers/StubPlcSyncService.cs`, `SemiStep/SemiStep.Tests/UI/Helpers/UIFixture.cs`, `SemiStep/SemiStep.Tests/UI/RecipeCoordinatorTests.cs`, `SemiStep/SemiStep.Tests/S7/PlcSyncCoordinatorTests.cs`, any other test asserting `IsFailed` on `PlcState`
 
-- [ ] `StubPlcSyncService`: `PlcState` -> bare snapshot subject; add a `Faults` subject + push helpers. Update `PushPlcState(Result.Ok(...))` signature to bare snapshot and fix its callers — incl. `UIFixture.cs` (`PushPlcState(Result.Ok(...))`) and `RecipeCoordinatorTests.cs` (`PushPlcState(Result.Fail(...))`).
-- [ ] **Replace the now-contradicting UI test** `RecipeCoordinatorTests.PlcStateChange_Failure_DoesNotAddEntriesToMessagePanel` (it asserted a `Result.Fail` on `PlcState` adds NO panel entry — the opposite of the new contract). Replace with a positive test: a `Faults` emission routes to the MessagePanel operation channel (entry appears with the fault message).
-- [ ] **Rewrite, don't re-point, the `_connectionLost`-clearing regression tests** in `PlcSyncCoordinatorTests` (the re-enable-clears-flag / reconnect-clears-flag tests). With one-shot faults there is nothing lingering to clear; replace with: connection-loss emits exactly ONE fault on `Faults`, and a subsequent reconnect/re-enable emits NO further fault.
-- [ ] Re-point remaining assertions that checked `IsFailed`/`Errors` on `PlcState` to assert on `Faults`; `PlcState` now always carries a snapshot.
-- [ ] Add: sync-write failure emits a fault carrying the message; the `!IsConnected` debounce-abort emits NO fault (no duplicate of the connection-lost fault).
-- [ ] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green.
+- [x] `StubPlcSyncService`: `PlcState` -> bare snapshot subject; add a `Faults` subject + push helpers. Update `PushPlcState(Result.Ok(...))` signature to bare snapshot and fix its callers — incl. `UIFixture.cs` (`PushPlcState(Result.Ok(...))`) and `RecipeCoordinatorTests.cs` (`PushPlcState(Result.Fail(...))`).
+- [x] **Replace the now-contradicting UI test** `RecipeCoordinatorTests.PlcStateChange_Failure_DoesNotAddEntriesToMessagePanel` (it asserted a `Result.Fail` on `PlcState` adds NO panel entry — the opposite of the new contract). Replace with a positive test: a `Faults` emission routes to the MessagePanel operation channel (entry appears with the fault message).
+- [x] **Rewrite, don't re-point, the `_connectionLost`-clearing regression tests** in `PlcSyncCoordinatorTests` (the re-enable-clears-flag / reconnect-clears-flag tests). With one-shot faults there is nothing lingering to clear; replace with: connection-loss emits exactly ONE fault on `Faults`, and a subsequent reconnect/re-enable emits NO further fault.
+- [x] Re-point remaining assertions that checked `IsFailed`/`Errors` on `PlcState` to assert on `Faults`; `PlcState` now always carries a snapshot.
+- [x] Add: sync-write failure emits a fault carrying the message; the `!IsConnected` debounce-abort emits NO fault (no duplicate of the connection-lost fault).
+- [x] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green.
 
 ### Task 8 (PR B): Format, commit, push, stacked PR
 
-- [ ] `dotnet format SemiStep/SemiStep.slnx`.
-- [ ] Commit on `plc-fault-channel` (`refactor: deliver PLC faults via a discrete channel; bare PlcState snapshot stream`); push; `gh pr create --base error-report-seam` (stacked; note dependency on PR A).
+- [x] `dotnet format SemiStep/SemiStep.slnx`.
+- [x] Commit on `plc-fault-channel` (`refactor: deliver PLC faults via a discrete channel; bare PlcState snapshot stream`); push; `gh pr create --base error-report-seam` (stacked; note dependency on PR A).
 
 ### Task 9: Verify acceptance criteria
 
-- [ ] PR A: failed operations surface all error messages. Grep acceptance: `Errors[0]` and `string.Join("; "` across `SemiStep/SemiStep.UI` return only intentionally-excluded sites (exception-based handlers), nothing Result-based.
-- [ ] PR B: `PlcState` is bare; `Faults` channel delivers connection-loss/sync-failure once; `_connectionLost`/`_pendingErrorMessage` removed; preserved subsystems untouched (`git diff origin/master...HEAD --stat`).
-- [ ] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green on the PR B branch.
+- [x] PR A: failed operations surface all error messages. Grep acceptance: `Errors[0]` and `string.Join("; "` across `SemiStep/SemiStep.UI` return only intentionally-excluded sites (exception-based handlers), nothing Result-based.
+- [x] PR B: `PlcState` is bare; `Faults` channel delivers connection-loss/sync-failure once; `_connectionLost`/`_pendingErrorMessage` removed; preserved subsystems untouched (`git diff origin/master...HEAD --stat`).
+- [x] `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — full suite green on the PR B branch.
 
 ### Task 10: [Final] Plan housekeeping
 
-- [ ] Mark all checkboxes; note deviations.
-- [ ] Move this plan to `Docs/plans/completed/` (commit on the PR B branch).
+- [x] Mark all checkboxes; note deviations.
+- [x] Move this plan to `Docs/plans/completed/` (commit on the PR B branch).
 
 ## Post-Completion
 

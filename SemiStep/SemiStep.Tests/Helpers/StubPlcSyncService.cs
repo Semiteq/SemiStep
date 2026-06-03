@@ -10,8 +10,9 @@ namespace SemiStep.Tests.Helpers;
 
 public sealed class StubPlcSyncService : IPlcSyncService
 {
-	private readonly BehaviorSubject<Result<PlcSessionSnapshot>> _plcStateSubject = new(
+	private readonly BehaviorSubject<PlcSessionSnapshot> _plcStateSubject = new(
 		PlcSessionSnapshot.InitialState);
+	private readonly Subject<IError> _faultsSubject = new();
 
 	public bool IsSyncEnabled { get; private set; }
 
@@ -19,7 +20,9 @@ public sealed class StubPlcSyncService : IPlcSyncService
 
 	public DateTimeOffset? LastSyncTime => null;
 
-	public IObservable<Result<PlcSessionSnapshot>> PlcState => _plcStateSubject;
+	public IObservable<PlcSessionSnapshot> PlcState => _plcStateSubject;
+
+	public IObservable<IError> Faults => _faultsSubject;
 
 	/// <summary>True if <see cref="ResetForDisable"/> was called at least once.</summary>
 	public bool WasResetForDisableCalled { get; private set; }
@@ -34,9 +37,15 @@ public sealed class StubPlcSyncService : IPlcSyncService
 	public List<(Recipe Recipe, bool IsValid)> NotifyRecipeChangedCalls { get; } = new();
 
 	/// <summary>Pushes a new PLC state snapshot to subscribers of <see cref="PlcState"/>.</summary>
-	public void PushPlcState(Result<PlcSessionSnapshot> state)
+	public void PushPlcState(PlcSessionSnapshot state)
 	{
 		_plcStateSubject.OnNext(state);
+	}
+
+	/// <summary>Pushes a fault to subscribers of <see cref="Faults"/>.</summary>
+	public void PushFault(IError fault)
+	{
+		_faultsSubject.OnNext(fault);
 	}
 
 	public void NotifyRecipeChanged(Recipe recipe, bool isValid)

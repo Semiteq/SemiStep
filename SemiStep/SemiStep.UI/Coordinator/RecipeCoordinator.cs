@@ -38,13 +38,14 @@ public sealed class RecipeCoordinator : IDisposable
 	private readonly PlcLifecycleManager _plc;
 	private readonly Subject<(Recipe Local, Recipe Plc)> _plcRecipeConflictDetected = new();
 	private readonly IObservable<(Recipe Local, Recipe Plc)> _plcRecipeConflictDetectedShared;
-	private readonly Subject<Result<PlcSessionSnapshot>> _plcStateChanged = new();
-	private readonly IObservable<Result<PlcSessionSnapshot>> _plcStateChangedShared;
+	private readonly Subject<PlcSessionSnapshot> _plcStateChanged = new();
+	private readonly IObservable<PlcSessionSnapshot> _plcStateChangedShared;
 	private readonly RecipeMetadataRegistry _recipeMetadataRegistry;
 	private readonly RecipeSession _session;
 	private bool _disposed;
 	private bool _initialized;
 	private IDisposable? _plcStateSubscription;
+	private IDisposable? _plcFaultsSubscription;
 
 	public RecipeCoordinator(
 		RecipeSession session,
@@ -88,7 +89,7 @@ public sealed class RecipeCoordinator : IDisposable
 	}
 
 	public IObservable<(Recipe Local, Recipe Plc)> PlcRecipeConflictDetected => _plcRecipeConflictDetectedShared;
-	public IObservable<Result<PlcSessionSnapshot>> PlcStateChanged => _plcStateChangedShared;
+	public IObservable<PlcSessionSnapshot> PlcStateChanged => _plcStateChangedShared;
 	public IObservable<bool> CanEditRecipe => _canEditRecipe;
 
 	public event Action<MutationSignal>? Mutated;
@@ -127,6 +128,10 @@ public sealed class RecipeCoordinator : IDisposable
 			_plcStateSubscription = _plc.PlcState
 				.ObserveOn(RxSchedulers.MainThreadScheduler)
 				.Subscribe(OnPlcStateChanged);
+
+			_plcFaultsSubscription = _plc.Faults
+				.ObserveOn(RxSchedulers.MainThreadScheduler)
+				.Subscribe(OnPlcFault);
 		}
 		catch
 		{
@@ -153,6 +158,7 @@ public sealed class RecipeCoordinator : IDisposable
 			_plc.PlcRecipeConflictDetected -= OnPlcRecipeConflictDetected;
 
 			_plcStateSubscription?.Dispose();
+			_plcFaultsSubscription?.Dispose();
 			_canEditRecipeConnection.Dispose();
 
 			_plcRecipeConflictDetected.Dispose();
@@ -480,7 +486,7 @@ public sealed class RecipeCoordinator : IDisposable
 		}
 	}
 
-	private void OnPlcStateChanged(Result<PlcSessionSnapshot> result)
+	private void OnPlcStateChanged(PlcSessionSnapshot snapshot)
 	{
 		lock (_disposeLock)
 		{
@@ -489,23 +495,28 @@ public sealed class RecipeCoordinator : IDisposable
 				return;
 			}
 
-			LogPlcStateChange(result);
+			LogPlcStateChange(snapshot);
 
-			_plcStateChanged.OnNext(result);
+			_plcStateChanged.OnNext(snapshot);
 		}
 	}
 
-	private void LogPlcStateChange(Result<PlcSessionSnapshot> result)
+	private void OnPlcFault(IError error)
 	{
-		if (result.IsFailed)
+		lock (_disposeLock)
 		{
-			_logger.LogWarning(
-				"PLC state change: failure {Errors}",
-				result.FormatErrors());
-			return;
-		}
+			if (_disposed)
+			{
+				return;
+			}
 
-		var snapshot = result.Value;
+			_logger.LogWarning("PLC fault: {Message}", error.Message);
+			_messagePanel.ReportError(error.Message);
+		}
+	}
+
+	private void LogPlcStateChange(PlcSessionSnapshot snapshot)
+	{
 		_logger.LogInformation(
 			"PLC state change: Connection={ConnectionState}, SyncStatus={SyncStatus}, SyncEnabled={IsSyncEnabled}",
 			snapshot.ConnectionState,

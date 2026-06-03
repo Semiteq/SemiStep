@@ -368,16 +368,19 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void PlcStateChange_Failure_DoesNotAddEntriesToMessagePanel()
+	public void PlcFault_RoutesToMessagePanelOperationChannel()
 	{
 		_fixture.Session.Reset();
-		var entryCountBeforePlcChange = _fixture.MessagePanel.Entries.Count;
+		_fixture.MessagePanel.Entries.Should().BeEmpty("a fresh empty recipe has no structural defects");
 
-		_fixture.PlcSyncService.PushPlcState(
-			Result.Fail<PlcSessionSnapshot>("PLC connection lost"));
+		_fixture.PlcSyncService.PushFault(new Error("PLC connection lost"));
 
-		_fixture.MessagePanel.Entries.Count.Should().Be(entryCountBeforePlcChange);
-		_fixture.MessagePanel.Entries.Should().NotContain(e => e.Message == "PLC connection lost");
+		_fixture.MessagePanel.Entries.Should().ContainSingle(
+			"a PLC fault must surface as a transient operation message in the panel");
+		_fixture.MessagePanel.Entries[0].Message.Should().Be("PLC connection lost");
+		_fixture.MessagePanel.Entries[0].Severity.Should().Be(MessageSeverity.Error);
+		_fixture.MessagePanel.ErrorCount.Should().Be(0,
+			"a PLC fault is an operation outcome, not a structural defect, so it must not inflate the validation count");
 	}
 
 	[AvaloniaFact]

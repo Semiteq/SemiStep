@@ -1,6 +1,4 @@
-﻿using FluentResults;
-
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
@@ -66,8 +64,8 @@ public sealed class UIFixture : IAsyncLifetime
 	public void SetSyncEnabled(bool isSyncEnabled)
 	{
 		PlcSyncService.SetSyncEnabled(isSyncEnabled);
-		PlcSyncService.PushPlcState(Result.Ok(
-			new PlcSessionSnapshot(PlcConnectionState.Disconnected, PlcSyncStatus.Idle, isSyncEnabled)));
+		PlcSyncService.PushPlcState(
+			new PlcSessionSnapshot(PlcConnectionState.Disconnected, PlcSyncStatus.Idle, isSyncEnabled));
 	}
 
 	public void SetRecipeActive(bool active)

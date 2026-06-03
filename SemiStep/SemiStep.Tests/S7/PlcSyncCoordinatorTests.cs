@@ -98,20 +98,20 @@ public sealed class PlcSyncCoordinatorTests
 	public void NotifyRecipeChanged_IsValidFalse_EmitsOutOfSyncSnapshot()
 	{
 		var (coordinator, _, _) = Build();
-		Result<PlcSessionSnapshot>? received = null;
+		PlcSessionSnapshot? received = null;
 		using var sub = coordinator.PlcState.Skip(1).Take(1).Subscribe(s => received = s);
 
 		coordinator.NotifyRecipeChanged(Recipe.Empty, isValid: false);
 
 		received.Should().NotBeNull();
-		received!.Value.SyncStatus.Should().Be(PlcSyncStatus.OutOfSync);
+		received!.SyncStatus.Should().Be(PlcSyncStatus.OutOfSync);
 	}
 
 	[Fact]
 	public void NotifyRecipeChanged_IsValidFalse_StatusChangedMultipleTimes_OnlyEmitsWhenValueChanges()
 	{
 		var (coordinator, _, _) = Build();
-		var snapshots = new List<Result<PlcSessionSnapshot>>();
+		var snapshots = new List<PlcSessionSnapshot>();
 
 		// Skip the initial state emitted on subscription.
 		using var sub = coordinator.PlcState.Skip(1).Subscribe(snapshots.Add);
@@ -226,103 +226,84 @@ public sealed class PlcSyncCoordinatorTests
 	}
 
 	[Fact]
-	public void ReEnableAfterCleanDisable_DoesNotEmitConnectionLostFailure()
-	{
-		var (coordinator, _, _) = Build(connected: false);
-		Result<PlcSessionSnapshot>? latest = null;
-		using var subscription = coordinator.PlcState.Subscribe(snapshot => latest = snapshot);
-
-		coordinator.SetSyncEnabled(true);
-		coordinator.SetSyncEnabled(false);
-		coordinator.ResetForDisable();
-		coordinator.SetSyncEnabled(true);
-
-		latest.Should().NotBeNull();
-		latest!.IsFailed.Should().BeFalse(
-			"re-enabling sync after a clean disable must not emit a spurious connection-lost failure");
-	}
-
-	[Fact]
-	public void ReEnableAfterConnectionLostThenCleanDisable_DoesNotEmitConnectionLostFailure()
-	{
-		var (coordinator, _, _) = Build(connected: false);
-		Result<PlcSessionSnapshot>? latest = null;
-		using var subscription = coordinator.PlcState.Subscribe(snapshot => latest = snapshot);
-
-		// Drive the coordinator into the stale state that produced the field bug: a genuine
-		// connection loss leaves Status = Disconnected. The user then toggles Sync off (clean
-		// disable) and back on. ResetForDisable must clear the stale status to Idle so the
-		// re-enable does not republish the connection-lost failure.
-		coordinator.SetSyncEnabled(true);
-		coordinator.HandleConnectionLost();
-		coordinator.SetSyncEnabled(false);
-		coordinator.ResetForDisable();
-		coordinator.SetSyncEnabled(true);
-
-		latest.Should().NotBeNull();
-		latest!.IsFailed.Should().BeFalse(
-			"after a genuine loss is cleared by a clean disable, re-enabling sync must not "
-			+ "republish the stale connection-lost failure");
-	}
-
-	[Fact]
-	public void HandleConnectionLost_WhileSyncEnabled_EmitsConnectionLostFailure()
+	public void HandleConnectionLost_EmitsExactlyOneFault()
 	{
 		var (coordinator, _, _) = Build(connected: false);
 		coordinator.SetSyncEnabled(true);
 
-		Result<PlcSessionSnapshot>? latest = null;
-		using var subscription = coordinator.PlcState.Subscribe(snapshot => latest = snapshot);
+		var faults = new List<IError>();
+		using var subscription = coordinator.Faults.Subscribe(faults.Add);
 
 		coordinator.HandleConnectionLost();
 
-		latest.Should().NotBeNull();
-		latest!.IsFailed.Should().BeTrue(
-			"a runtime connection loss while sync is enabled must surface as a failed snapshot");
+		faults.Should().ContainSingle(
+			"a runtime connection loss must emit exactly one fault on the Faults channel");
+		faults[0].Message.Should().Be("PLC connection lost");
 	}
 
 	[Fact]
-	public void ReEnableAfterConnectionLost_ClearsLostFlag_DoesNotEmitFailure()
+	public void HandleConnectionLost_DoesNotEmitFailureOnStateStream()
 	{
 		var (coordinator, _, _) = Build(connected: false);
 		coordinator.SetSyncEnabled(true);
 
-		Result<PlcSessionSnapshot>? latest = null;
-		using var subscription = coordinator.PlcState.Subscribe(snapshot => latest = snapshot);
+		var snapshotsAfterSubscription = new List<PlcSessionSnapshot>();
+		using var subscription = coordinator.PlcState
+			.Skip(1)
+			.Subscribe(snapshotsAfterSubscription.Add);
 
 		coordinator.HandleConnectionLost();
-		latest!.IsFailed.Should().BeTrue("a connection loss while enabled must surface as a failure first");
 
-		coordinator.SetSyncEnabled(true);
-
-		latest.Should().NotBeNull();
-		latest!.IsFailed.Should().BeFalse(
-			"re-enabling sync must clear the connection-lost flag so no stale failure lingers");
+		snapshotsAfterSubscription.Should().BeEmpty(
+			"connection loss must not push a new snapshot on PlcState; the fault travels on the Faults channel");
 	}
 
 	[Fact]
-	public void ConnectedAfterConnectionLost_ClearsLostFlag_DoesNotEmitFailure()
+	public void ReconnectAfterConnectionLost_EmitsNoFurtherFault()
 	{
 		var (coordinator, _, _) = Build(connected: false);
 		coordinator.SetSyncEnabled(true);
 
-		Result<PlcSessionSnapshot>? latest = null;
-		using var subscription = coordinator.PlcState.Subscribe(snapshot => latest = snapshot);
+		var faults = new List<IError>();
+		using var subscription = coordinator.Faults.Subscribe(faults.Add);
 
 		coordinator.HandleConnectionLost();
-		latest!.IsFailed.Should().BeTrue("a connection loss while enabled must surface as a failure first");
+		faults.Should().ContainSingle("the connection loss emits one fault");
 
+		// One-shot faults do not linger: reconnecting must not re-emit the connection-lost fault.
 		coordinator.UpdateConnectionState(PlcConnectionState.Connected);
 
-		latest.Should().NotBeNull();
-		latest!.IsFailed.Should().BeFalse(
-			"the auto-reconnect recovery path must clear the connection-lost flag without the user toggling sync");
+		faults.Should().ContainSingle(
+			"a reconnect must not re-emit the one-shot connection-lost fault");
+	}
+
+	[Fact]
+	public void ReEnableAfterConnectionLostThenCleanDisable_EmitsNoFurtherFault()
+	{
+		var (coordinator, _, _) = Build(connected: false);
+
+		var faults = new List<IError>();
+		using var subscription = coordinator.Faults.Subscribe(faults.Add);
+
+		coordinator.SetSyncEnabled(true);
+		coordinator.HandleConnectionLost();
+		faults.Should().ContainSingle("the connection loss emits one fault");
+
+		// A clean disable followed by a re-enable must not republish the (one-shot) fault.
+		coordinator.SetSyncEnabled(false);
+		coordinator.ResetForDisable();
+		coordinator.SetSyncEnabled(true);
+
+		faults.Should().ContainSingle(
+			"re-enabling sync after a clean disable must not republish the connection-lost fault");
 	}
 
 	[Fact]
 	public async Task NotifyRecipeChanged_IsValidTrue_Disconnected_DebounceAbortLeavesStatusUnchanged()
 	{
 		var (coordinator, transport, _) = Build(connected: false);
+		var faults = new List<IError>();
+		using var subscription = coordinator.Faults.Subscribe(faults.Add);
 
 		coordinator.NotifyRecipeChanged(Recipe.Empty, isValid: true);
 
@@ -333,5 +314,37 @@ public sealed class PlcSyncCoordinatorTests
 			"a debounce that fires while disconnected must abort cleanly without transitioning to Failed");
 		transport.WriteLog.Should().BeEmpty(
 			"no write may reach the PLC while disconnected");
+		faults.Should().BeEmpty(
+			"the !IsConnected debounce-abort must stay silent; HandleConnectionLost already owns the connection-lost fault");
+	}
+
+	[Fact]
+	public async Task SyncWriteFailure_EmitsFaultCarryingMessage()
+	{
+		var (coordinator, transport, _) = Build(connected: true);
+		const string FailureMessage = "transport write blew up";
+		transport.WriteException = new InvalidOperationException(FailureMessage);
+
+		var layout = BuildTestConfiguration().Layout;
+		transport.SetReadResponseForDb(layout.IntDb.DbNumber, (_, count) => new byte[count]);
+		transport.SetReadResponseForDb(layout.FloatDb.DbNumber, (_, count) => new byte[count]);
+		transport.SetReadResponseForDb(layout.StringDb.DbNumber, (_, count) => new byte[count]);
+
+		var faults = new List<IError>();
+		using var subscription = coordinator.Faults.Subscribe(faults.Add);
+
+		coordinator.NotifyRecipeChanged(Recipe.Empty, isValid: true);
+		await coordinator.WaitForPendingSyncAsync(TestContext.Current.CancellationToken);
+
+		await TestHelpers.WaitUntilAsync(
+			() => faults.Count > 0,
+			timeout: TimeSpan.FromMilliseconds(2500),
+			pollInterval: TimeSpan.FromMilliseconds(20),
+			cancellationToken: TestContext.Current.CancellationToken);
+
+		faults.Should().ContainSingle("a sync-write failure must emit exactly one fault");
+		faults[0].Message.Should().Be(FailureMessage,
+			"the fault must carry the write-failure message so the user sees the cause");
+		coordinator.Status.Should().Be(PlcSyncStatus.Failed);
 	}
 }

@@ -12,12 +12,12 @@ namespace SemiStep.Core.Plc.Sync;
 internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 {
 	private readonly Lock _lock = new();
-	private readonly BehaviorSubject<Result<PlcSessionSnapshot>> _subject = new(
+	private readonly BehaviorSubject<PlcSessionSnapshot> _subject = new(
 		PlcSessionSnapshot.InitialState);
+	private readonly Subject<IError> _faults = new();
 	private readonly PlcSyncExecutor _executor;
 
 	private PlcConnectionState _connectionState = PlcConnectionState.Disconnected;
-	private bool _connectionLost;
 	private volatile bool _disposed;
 	private bool _isSyncEnabled;
 	private DateTimeOffset? _lastSyncTime;
@@ -34,6 +34,7 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 			_lock,
 			status => Status = status,
 			time => LastSyncTime = time,
+			EmitFault,
 			loggerFactory.CreateLogger<PlcSyncExecutor>());
 	}
 
@@ -93,7 +94,9 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 		}
 	}
 
-	public IObservable<Result<PlcSessionSnapshot>> PlcState => _subject;
+	public IObservable<PlcSessionSnapshot> PlcState => _subject;
+
+	public IObservable<IError> Faults => _faults;
 
 	public void NotifyRecipeChanged(Recipe recipe, bool isValid)
 	{
@@ -118,10 +121,6 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 		lock (_lock)
 		{
 			_isSyncEnabled = value;
-			if (value)
-			{
-				_connectionLost = false;
-			}
 			connectionStateSnapshot = _connectionState;
 		}
 		PublishSnapshot(connectionStateSnapshot);
@@ -132,10 +131,6 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 		lock (_lock)
 		{
 			_connectionState = state;
-			if (state == PlcConnectionState.Connected)
-			{
-				_connectionLost = false;
-			}
 		}
 		PublishSnapshot(state);
 	}
@@ -155,28 +150,20 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 		_executor.Dispose();
 		_subject.OnCompleted();
 		_subject.Dispose();
+		_faults.OnCompleted();
+		_faults.Dispose();
 	}
 
 	public void ResetForDisable()
 	{
 		_executor.Reset();
-		lock (_lock)
-		{
-			_connectionLost = false;
-		}
 		Status = PlcSyncStatus.Idle;
 	}
 
 	public void HandleConnectionLost()
 	{
 		_executor.Reset();
-		PlcConnectionState connectionStateSnapshot;
-		lock (_lock)
-		{
-			_connectionLost = true;
-			connectionStateSnapshot = _connectionState;
-		}
-		PublishSnapshot(connectionStateSnapshot);
+		EmitFault(new Error("PLC connection lost"));
 	}
 
 	public async Task WaitForPendingSyncAsync(CancellationToken ct = default)
@@ -184,50 +171,29 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 		await _executor.WaitForPendingSyncAsync(ct);
 	}
 
-	private void PublishSnapshot(PlcConnectionState connectionState)
+	private void EmitFault(IError fault)
 	{
-		PlcSyncStatus status;
-		bool isSyncEnabled;
-		bool connectionLost;
-		string? errorMessage;
-		bool disposed;
-
 		lock (_lock)
 		{
-			disposed = _disposed;
-			status = _status;
-			isSyncEnabled = _isSyncEnabled;
-			connectionLost = _connectionLost;
-			errorMessage = _executor.PendingErrorMessage;
+			if (_disposed)
+			{
+				return;
+			}
+			_faults.OnNext(fault);
 		}
-
-		if (disposed)
-		{
-			return;
-		}
-
-		var snapshot = new PlcSessionSnapshot(connectionState, status, isSyncEnabled);
-
-		if (status == PlcSyncStatus.Failed)
-		{
-			TryPublish(Result.Fail<PlcSessionSnapshot>(new Error(errorMessage ?? "Sync failed")));
-			return;
-		}
-
-		if (connectionLost && isSyncEnabled)
-		{
-			TryPublish(Result.Fail<PlcSessionSnapshot>(new Error("PLC connection lost")));
-			return;
-		}
-
-		TryPublish(Result.Ok(snapshot));
 	}
 
-	private void TryPublish(Result<PlcSessionSnapshot> result)
+	private void PublishSnapshot(PlcConnectionState connectionState)
 	{
-		if (!_disposed)
+		lock (_lock)
 		{
-			_subject.OnNext(result);
+			if (_disposed)
+			{
+				return;
+			}
+
+			var snapshot = new PlcSessionSnapshot(connectionState, _status, _isSyncEnabled);
+			_subject.OnNext(snapshot);
 		}
 	}
 }

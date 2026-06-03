@@ -17,6 +17,7 @@ internal sealed class PlcSyncExecutor(
 	Lock stateLock,
 	Action<PlcSyncStatus> setStatus,
 	Action<DateTimeOffset> setLastSyncTime,
+	Action<IError> reportFault,
 	ILogger<PlcSyncExecutor> logger)
 {
 	internal const int DebounceDelayMilliseconds = 1000;
@@ -25,19 +26,7 @@ internal sealed class PlcSyncExecutor(
 	private Task? _syncTask;
 	private CancellationTokenSource? _debounceCts;
 	private Recipe? _pendingSnapshot;
-	private string? _pendingErrorMessage;
 	private volatile bool _disposed;
-
-	public string? PendingErrorMessage
-	{
-		get
-		{
-			lock (stateLock)
-			{
-				return _pendingErrorMessage;
-			}
-		}
-	}
 
 	public void OnRecipeChanged(Recipe recipe)
 	{
@@ -77,7 +66,6 @@ internal sealed class PlcSyncExecutor(
 			_debounceCts?.Dispose();
 			_debounceCts = null;
 			_pendingSnapshot = null;
-			_pendingErrorMessage = null;
 		}
 	}
 
@@ -163,11 +151,8 @@ internal sealed class PlcSyncExecutor(
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Unhandled exception in sync task");
-				lock (stateLock)
-				{
-					_pendingErrorMessage = ex.Message;
-				}
 				setStatus(PlcSyncStatus.Failed);
+				reportFault(new Error(ex.Message));
 			}
 		}, ct);
 	}
@@ -213,13 +198,11 @@ internal sealed class PlcSyncExecutor(
 		if (activeResult.IsFailed)
 		{
 			var isDisconnected = activeResult.Errors.OfType<NotConnectedError>().Any();
-			lock (stateLock)
-			{
-				_pendingErrorMessage = isDisconnected
-					? "Not connected to PLC"
-					: activeResult.Errors[0].Message;
-			}
+			var faultMessage = isDisconnected
+				? "Not connected to PLC"
+				: activeResult.Errors[0].Message;
 			setStatus(PlcSyncStatus.Failed);
+			reportFault(new Error(faultMessage));
 
 			if (isDisconnected)
 			{
@@ -231,11 +214,8 @@ internal sealed class PlcSyncExecutor(
 
 		if (activeResult.Value)
 		{
-			lock (stateLock)
-			{
-				_pendingErrorMessage = "Recipe is being executed on PLC";
-			}
 			setStatus(PlcSyncStatus.Failed);
+			reportFault(new Error("Recipe is being executed on PLC"));
 			_logger.LogWarning("Sync blocked: recipe is being executed on PLC");
 
 			return Result.Fail("Recipe active");
@@ -246,20 +226,13 @@ internal sealed class PlcSyncExecutor(
 
 	private async Task WriteSyncAsync(Recipe recipe, CancellationToken ct)
 	{
-		lock (stateLock)
-		{
-			_pendingErrorMessage = null;
-		}
 		setStatus(PlcSyncStatus.Syncing);
 
 		var writeResult = await transactionExecutor.WriteRecipeWithRetryAsync(recipe, ct);
 		if (writeResult.IsFailed)
 		{
-			lock (stateLock)
-			{
-				_pendingErrorMessage = writeResult.Errors[0].Message;
-			}
 			setStatus(PlcSyncStatus.Failed);
+			reportFault(new Error(writeResult.Errors[0].Message));
 			if (!writeResult.Errors.OfType<NotConnectedError>().Any())
 			{
 				_logger.LogError("Sync failed: {Message}", writeResult.Errors[0].Message);
@@ -269,10 +242,6 @@ internal sealed class PlcSyncExecutor(
 		}
 
 		setLastSyncTime(DateTimeOffset.UtcNow);
-		lock (stateLock)
-		{
-			_pendingErrorMessage = null;
-		}
 		setStatus(PlcSyncStatus.Synced);
 
 		bool hasPending;

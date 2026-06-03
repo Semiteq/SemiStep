@@ -174,7 +174,7 @@ public sealed class RecipeCoordinator : IDisposable
 		{
 			_logger.LogWarning(
 				"PLC sync enable failed: {Errors}",
-				string.Join("; ", result.Errors.Select(e => e.Message)));
+				result.FormatErrors());
 		}
 		else
 		{
@@ -212,7 +212,7 @@ public sealed class RecipeCoordinator : IDisposable
 			RebuildMessagePanel();
 			_logger.LogWarning(
 				"Failed to load recipe from PLC: {Errors}",
-				string.Join("; ", result.Errors.Select(e => e.Message)));
+				result.FormatErrors());
 			return result;
 		}
 
@@ -336,7 +336,7 @@ public sealed class RecipeCoordinator : IDisposable
 			_logger.LogWarning(
 				"Failed to load recipe from {FilePath}: {Errors}",
 				filePath,
-				string.Join("; ", result.Errors.Select(e => e.Message)));
+				result.FormatErrors());
 			return result;
 		}
 
@@ -375,7 +375,7 @@ public sealed class RecipeCoordinator : IDisposable
 		{
 			_logger.LogError("Failed to save recipe to {FilePath}: {Errors}",
 				filePath,
-				string.Join("; ", result.Errors.Select(e => e.Message)));
+				result.FormatErrors());
 		}
 		else
 		{
@@ -404,8 +404,8 @@ public sealed class RecipeCoordinator : IDisposable
 				RebuildMessagePanel();
 				_logger.LogWarning(
 					"Reconnect reconciliation failed to apply PLC recipe: {Errors}",
-					string.Join("; ", applyResult.Errors.Select(e => e.Message)));
-				_messagePanel.ReportError($"PLC reconnect: {applyResult.Errors[0].Message}");
+					applyResult.FormatErrors());
+				_messagePanel.ReportFailure(applyResult, "PLC reconnect");
 				return applyResult;
 			}
 
@@ -501,7 +501,7 @@ public sealed class RecipeCoordinator : IDisposable
 		{
 			_logger.LogWarning(
 				"PLC state change: failure {Errors}",
-				string.Join("; ", result.Errors.Select(e => e.Message)));
+				result.FormatErrors());
 			return;
 		}
 

@@ -201,7 +201,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 		if (result.IsFailed)
 		{
-			_messagePanel.ReportError($"Step {stepIndex + 1}: {result.Errors[0].Message}");
+			_messagePanel.ReportFailure(result, $"Step {stepIndex + 1}");
 		}
 	}
 
@@ -223,7 +223,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		if (result.IsFailed)
 		{
 			_messagePanel.ReportError(
-				$"Step {stepIndex + 1}: Failed to change action - {result.Errors[0].Message}");
+				$"Step {stepIndex + 1}: Failed to change action - {result.FormatErrors()}");
 			return;
 		}
 
@@ -441,7 +441,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 				"Unknown action key {ActionKey} in step {StepNumber}: {Errors}",
 				step.ActionKey,
 				stepNumber,
-				string.Join("; ", actionResult.Errors.Select(e => e.Message)));
+				actionResult.FormatErrors());
 			_messagePanel.ReportError($"Step {stepNumber}: unknown action (key={step.ActionKey})");
 			return null;
 		}

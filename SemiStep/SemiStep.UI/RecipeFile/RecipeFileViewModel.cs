@@ -103,7 +103,7 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 		if (result.IsFailed)
 		{
-			_messagePanel.ReportError($"Failed to save recipe: {result.Errors[0].Message}");
+			_messagePanel.ReportFailure(result, "Failed to save recipe");
 
 			return;
 		}
@@ -123,7 +123,7 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		var result = await _coordinator.LoadRecipeAsync(filePath);
 		if (result.IsFailed)
 		{
-			_messagePanel.ReportError(result.Errors[0].Message);
+			_messagePanel.ReportFailure(result);
 
 			return;
 		}
@@ -138,7 +138,7 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 		if (result.IsFailed)
 		{
-			_messagePanel.ReportError(result.Errors[0].Message);
+			_messagePanel.ReportFailure(result);
 
 			return;
 		}

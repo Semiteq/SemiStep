@@ -140,7 +140,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 			if (result.IsFailed)
 			{
-				MessagePanel.ReportError(result.Errors[0].Message);
+				MessagePanel.ReportFailure(result);
 			}
 		}
 
@@ -178,7 +178,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 		if (result.IsFailed)
 		{
-			MessagePanel.ReportError(result.Errors[0].Message);
+			MessagePanel.ReportFailure(result);
 		}
 	}
 

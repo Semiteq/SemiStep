@@ -34,7 +34,7 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 			_lock,
 			status => Status = status,
 			time => LastSyncTime = time,
-			fault => _faults.OnNext(fault),
+			EmitFault,
 			loggerFactory.CreateLogger<PlcSyncExecutor>());
 	}
 
@@ -163,12 +163,24 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 	public void HandleConnectionLost()
 	{
 		_executor.Reset();
-		_faults.OnNext(new Error("PLC connection lost"));
+		EmitFault(new Error("PLC connection lost"));
 	}
 
 	public async Task WaitForPendingSyncAsync(CancellationToken ct = default)
 	{
 		await _executor.WaitForPendingSyncAsync(ct);
+	}
+
+	private void EmitFault(IError fault)
+	{
+		lock (_lock)
+		{
+			if (_disposed)
+			{
+				return;
+			}
+			_faults.OnNext(fault);
+		}
 	}
 
 	private void PublishSnapshot(PlcConnectionState connectionState)

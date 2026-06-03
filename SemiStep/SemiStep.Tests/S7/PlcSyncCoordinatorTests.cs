@@ -247,13 +247,15 @@ public sealed class PlcSyncCoordinatorTests
 		var (coordinator, _, _) = Build(connected: false);
 		coordinator.SetSyncEnabled(true);
 
-		PlcSessionSnapshot? latest = null;
-		using var subscription = coordinator.PlcState.Subscribe(snapshot => latest = snapshot);
+		var snapshotsAfterSubscription = new List<PlcSessionSnapshot>();
+		using var subscription = coordinator.PlcState
+			.Skip(1)
+			.Subscribe(snapshotsAfterSubscription.Add);
 
 		coordinator.HandleConnectionLost();
 
-		latest.Should().NotBeNull(
-			"PlcState now always carries a bare snapshot; faults travel on the Faults channel");
+		snapshotsAfterSubscription.Should().BeEmpty(
+			"connection loss must not push a new snapshot on PlcState; the fault travels on the Faults channel");
 	}
 
 	[Fact]

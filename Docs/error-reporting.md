@@ -40,6 +40,10 @@ read `Errors[0]` directly.
   operation channel via `ReportFailure` (or `ReportError` when the message is composed mid-string).
 - **Persistent structural state** (the current recipe's validity) goes to the validation channel via
   `RefreshReasons`, and from there to the status-bar counts.
+- **PLC connection-loss / sync failures** arrive as a typed `IError` on `IPlcSyncService.Faults`, a
+  discrete one-shot channel. `RecipeCoordinator` bridges each fault to the operation channel via
+  `ReportError(error.Message)` — the message text is owned in Core. The persistent "disconnected"
+  label stays in the status bar.
 - **Exception handlers** (`ReportError($"... {ex.Message}")` on `ThrownExceptions`) are not
   `Result`-based and stay as-is.
 - **One deliberate exception** to the `"; "` idiom: the clipboard *paste* failure lists each error on

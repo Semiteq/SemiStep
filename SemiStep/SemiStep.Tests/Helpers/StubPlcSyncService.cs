@@ -21,8 +21,11 @@ public sealed class StubPlcSyncService : IPlcSyncService
 
 	public IObservable<Result<PlcSessionSnapshot>> PlcState => _plcStateSubject;
 
-	/// <summary>True if <see cref="Reset"/> was called at least once.</summary>
-	public bool WasResetCalled { get; private set; }
+	/// <summary>True if <see cref="ResetForDisable"/> was called at least once.</summary>
+	public bool WasResetForDisableCalled { get; private set; }
+
+	/// <summary>True if <see cref="HandleConnectionLost"/> was called at least once.</summary>
+	public bool WasHandleConnectionLostCalled { get; private set; }
 
 	/// <summary>Number of times <see cref="NotifyRecipeChanged"/> was called.</summary>
 	public int NotifyRecipeChangedCallCount { get; private set; }
@@ -42,9 +45,14 @@ public sealed class StubPlcSyncService : IPlcSyncService
 		NotifyRecipeChangedCalls.Add((recipe, isValid));
 	}
 
-	public void Reset()
+	public void ResetForDisable()
 	{
-		WasResetCalled = true;
+		WasResetForDisableCalled = true;
+	}
+
+	public void HandleConnectionLost()
+	{
+		WasHandleConnectionLostCalled = true;
 	}
 
 	public void SetSyncEnabled(bool value)

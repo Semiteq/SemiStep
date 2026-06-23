@@ -9,8 +9,7 @@
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
-        ShowInTaskbar="False"
-        WindowDecorations="BorderOnly">
+        ShowInTaskbar="False">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>

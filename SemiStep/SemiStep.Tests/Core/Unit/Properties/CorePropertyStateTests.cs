@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿using System.Collections.Immutable;
+
+using FluentAssertions;
 
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
@@ -51,7 +53,10 @@ public sealed class CorePropertyStateTests
 			ReadOnly: readOnly,
 			SaveToCsv: true);
 
-		var result = CellStateResolver.IsInapplicable(column, _waitAction);
+		var step = new Step(_waitAction.Id, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
+		var activeColumnKeys = ActiveColumnSetResolver.Resolve(_waitAction, step);
+
+		var result = CellStateResolver.IsInapplicable(column, activeColumnKeys);
 
 		result.Should().Be(expectedInapplicable);
 	}

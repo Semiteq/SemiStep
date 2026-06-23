@@ -85,29 +85,45 @@
     - key: icp_match
       group_name: match_mode
       property_type_id: enum
-    - key: icp_load
-      default_value: "50"
-      property_type_id: percent
-    - key: icp_tune
-      default_value: "50"
-      property_type_id: percent
+      targets: { 2: 3002 }
     - key: rie_power
       default_value: "0"
       property_type_id: power_rie
     - key: rie_match
       group_name: match_mode
       property_type_id: enum
+      targets: { 2: 3003 }
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+# ICP capacitor (manual match) — subaction of Травление (icp_match = Ручной)
+3002:
+  ui_name: "ICP ручной"
+  role: subaction
+  deploy_duration: longlasting
+  columns:
+    - key: icp_load
+      default_value: "50"
+      property_type_id: percent
+    - key: icp_tune
+      default_value: "50"
+      property_type_id: percent
+
+# RIE capacitor (manual match) — subaction of Травление (rie_match = Ручной)
+3003:
+  ui_name: "RIE ручной"
+  role: subaction
+  deploy_duration: longlasting
+  columns:
     - key: rie_load
       default_value: "50"
       property_type_id: percent
     - key: rie_tune
       default_value: "50"
       property_type_id: percent
-    - key: step_duration
-      default_value: "10"
-      property_type_id: time
-    - key: comment
-      property_type_id: string
 
 # Purge
 400:

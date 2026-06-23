@@ -42,16 +42,17 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		_session.AppendStep(actionId);
 		var step = _session.Current.Steps[0];
 		var action = _recipeMetadataRegistry.GetAction(step.ActionKey).Value;
-		var inapplicableColumns = BuildInapplicableColumns(action);
+		var inapplicableColumns = BuildInapplicableColumns(action, step);
 		return new RecipeRowViewModel(1, step, action, _recipeMetadataRegistry, inapplicableColumns);
 	}
 
-	private IReadOnlySet<string> BuildInapplicableColumns(ActionDefinition action)
+	private IReadOnlySet<string> BuildInapplicableColumns(ActionDefinition action, Step step)
 	{
+		var activeColumnKeys = ActiveColumnSetResolver.Resolve(action, step);
 		var inapplicable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		foreach (var column in _recipeMetadataRegistry.GetAllColumns())
 		{
-			if (CellStateResolver.IsInapplicable(column, action))
+			if (CellStateResolver.IsInapplicable(column, activeColumnKeys))
 			{
 				inapplicable.Add(column.Key);
 			}
@@ -272,6 +273,26 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var row = CreateRow(RecipeTestDriver.PauseActionId);
 
 		row.IsApplicable("action").Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void RecomputeInapplicableColumns_ReassignsNewInstance_AndRaisesPropertyChanged()
+	{
+		var row = CreateRow(RecipeTestDriver.WaitActionId);
+		var before = row.InapplicableColumns;
+		var raised = false;
+		row.PropertyChanged += (_, args) =>
+		{
+			if (args.PropertyName == nameof(RecipeRowViewModel.InapplicableColumns))
+			{
+				raised = true;
+			}
+		};
+
+		row.RecomputeInapplicableColumns();
+
+		raised.Should().BeTrue();
+		row.InapplicableColumns.Should().NotBeSameAs(before);
 	}
 
 	[AvaloniaFact]

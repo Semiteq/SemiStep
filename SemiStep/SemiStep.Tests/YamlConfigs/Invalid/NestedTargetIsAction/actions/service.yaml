@@ -1,0 +1,23 @@
+# Invalid: a column 'targets' entry points at action id 10, which is role 'action', not 'subaction'
+
+10:
+  ui_name: "Wait"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+300:
+  ui_name: "Branching"
+  role: action
+  deploy_duration: immediate
+  columns:
+    - key: branch_sel
+      group_name: match_mode
+      property_type_id: enum
+      targets: { 1: 10 }
+    - key: comment
+      property_type_id: string

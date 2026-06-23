@@ -4,4 +4,6 @@ public sealed record ActionPropertyDefinition(
 	string Key,
 	string? GroupName,
 	string PropertyTypeId,
-	string? DefaultValue);
+	string? DefaultValue,
+	IReadOnlyDictionary<int, int>? Targets = null,
+	IReadOnlyList<ActivationCondition>? Activation = null);

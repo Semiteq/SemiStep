@@ -1,0 +1,10 @@
+# Duplicate declaration of subaction id 3001
+
+3001:
+  ui_name: "Manual branch duplicate"
+  role: subaction
+  deploy_duration: immediate
+  columns:
+    - key: sub_value
+      default_value: "75"
+      property_type_id: float

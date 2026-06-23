@@ -29,6 +29,12 @@ internal static class ActionMapper
 			return Result.Fail($"DeployDuration is required for action Id={dto.Id}");
 		}
 
+		var roleResult = MapRole(dto.Role, dto.Id);
+		if (roleResult.IsFailed)
+		{
+			return roleResult.ToResult<ActionDefinition>();
+		}
+
 		var columns = new List<ActionPropertyDefinition>();
 		if (dto.Columns is not null)
 		{
@@ -61,18 +67,8 @@ internal static class ActionMapper
 			uiName: dto.UiName,
 			deployDuration: deployDurationResult.Value,
 			properties: columns,
-			formula: formulaResult.Value));
-	}
-
-	private static Result<DeployDuration> MapDeployDuration(string? value, int actionId)
-	{
-		return value switch
-		{
-			"immediate" => Result.Ok(DeployDuration.Immediate),
-			"longlasting" => Result.Ok(DeployDuration.LongLasting),
-			_ => Result.Fail<DeployDuration>(
-				$"Unsupported DeployDuration '{value}' for action Id={actionId}")
-		};
+			formula: formulaResult.Value,
+			role: roleResult.Value));
 	}
 
 	public static Result<IReadOnlyList<ActionDefinition>> TryMapMany(
@@ -103,6 +99,29 @@ internal static class ActionMapper
 		return Result.Ok<IReadOnlyList<ActionDefinition>>(results);
 	}
 
+	private static Result<ActionRole> MapRole(string? value, int actionId)
+	{
+		return value switch
+		{
+			null => Result.Ok(ActionRole.Action),
+			"action" => Result.Ok(ActionRole.Action),
+			"subaction" => Result.Ok(ActionRole.Subaction),
+			_ => Result.Fail<ActionRole>(
+				$"Unsupported role '{value}' for action Id={actionId} (expected 'action' or 'subaction')")
+		};
+	}
+
+	private static Result<DeployDuration> MapDeployDuration(string? value, int actionId)
+	{
+		return value switch
+		{
+			"immediate" => Result.Ok(DeployDuration.Immediate),
+			"longlasting" => Result.Ok(DeployDuration.LongLasting),
+			_ => Result.Fail<DeployDuration>(
+				$"Unsupported DeployDuration '{value}' for action Id={actionId}")
+		};
+	}
+
 	private static Result<ActionPropertyDefinition> TryMapColumn(ActionColumnDto dto)
 	{
 		if (string.IsNullOrWhiteSpace(dto.Key))
@@ -120,7 +139,8 @@ internal static class ActionMapper
 			Key: dto.Key,
 			GroupName: dto.GroupName,
 			PropertyTypeId: dto.PropertyTypeId,
-			DefaultValue: dto.DefaultValue));
+			DefaultValue: dto.DefaultValue,
+			Targets: dto.Targets));
 	}
 
 	private static Result<FormulaDefinition?> MapFormula(

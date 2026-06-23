@@ -1,24 +1,67 @@
 ﻿using System.Collections.Immutable;
 using System.Globalization;
 
+using SemiStep.Core.Recipes.Helpers;
+
 namespace SemiStep.Core.Recipes;
 
-internal static class StepInitializer
+public static class StepInitializer
 {
 	internal static Step Create(
 		ActionDefinition action,
 		RecipeMetadataRegistry recipeMetadataRegistry)
 	{
-		var propertyValues = action.Properties
-			.ToImmutableDictionary(
-				col => new PropertyId(col.Key),
-				col => ResolveDefaultValue(col, recipeMetadataRegistry));
+		// Seed to a fixpoint. Always-active columns (no activation conditions — this includes
+		// every top-level selector) are seeded first so the active set can be computed; each
+		// newly-seeded selector can in turn activate deeper columns, so we recompute the active
+		// set and seed again until it stops growing. For a flat (non-nested) action every column
+		// is always-active, so this converges in a single pass and behaves exactly as before.
+		// Inactive columns (e.g. capacitor columns under an Авто selector) are deliberately left
+		// out so serialization writes their PLC slot as 0/empty instead of a stale default.
+		var properties = ImmutableDictionary<PropertyId, PropertyValue>.Empty;
 
-		return new Step(action.Id, propertyValues);
+		var alwaysActive = action.Properties
+			.Where(column => column.Activation is null || column.Activation.Count == 0);
+		foreach (var column in alwaysActive)
+		{
+			properties = properties.SetItem(
+				new PropertyId(column.Key),
+				ResolveDefaultValue(column, recipeMetadataRegistry));
+		}
+
+		// Active set grows monotonically (seeding a selector can only add columns), so it reaches
+		// a fixpoint in at most one iteration per tree level. Cap iterations by column count as a
+		// hard termination guard.
+		for (var iteration = 0; iteration <= action.Properties.Count; iteration++)
+		{
+			var partialStep = new Step(action.Id, properties);
+			var activeColumnKeys = ActiveColumnSetResolver.Resolve(action, partialStep);
+
+			var seededThisPass = false;
+			foreach (var column in action.Properties)
+			{
+				if (properties.ContainsKey(new PropertyId(column.Key)) || !activeColumnKeys.Contains(column.Key))
+				{
+					continue;
+				}
+
+				properties = properties.SetItem(
+					new PropertyId(column.Key),
+					ResolveDefaultValue(column, recipeMetadataRegistry));
+				seededThisPass = true;
+			}
+
+			if (!seededThisPass)
+			{
+				break;
+			}
+		}
+
+		return new Step(action.Id, properties);
 	}
 
 	// Config registries are pre-validated at startup; .Value access is safe here.
-	private static PropertyValue ResolveDefaultValue(
+	internal static PropertyValue ResolveDefaultValue(
 		ActionPropertyDefinition property,
 		RecipeMetadataRegistry recipeMetadataRegistry)
 	{

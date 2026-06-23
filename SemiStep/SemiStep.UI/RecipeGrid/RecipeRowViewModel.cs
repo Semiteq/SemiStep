@@ -3,6 +3,7 @@
 using ReactiveUI;
 
 using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Helpers;
 
 namespace SemiStep.UI.RecipeGrid;
 
@@ -75,7 +76,11 @@ public sealed class RecipeRowViewModel(
 	// but using `>=` guards against future UI cap drift so deeper nestings still render.
 	public bool IsForDepth3 => ForDepth >= 3;
 
-	public IReadOnlySet<string> InapplicableColumns { get; } = inapplicableColumns;
+	public IReadOnlySet<string> InapplicableColumns
+	{
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	} = inapplicableColumns;
 
 	public IReadOnlyDictionary<string, string?> ColumnUnits => _columnMetadata.Units;
 
@@ -91,11 +96,13 @@ public sealed class RecipeRowViewModel(
 
 	public event Action<string, string?>? PropertyValueChanged;
 	public event Action<int>? ActionChanged;
+	public event Action<SelectorEdit>? SelectorValueChanged;
 
 	public void Dispose()
 	{
 		PropertyValueChanged = null;
 		ActionChanged = null;
+		SelectorValueChanged = null;
 	}
 
 	public void UpdateStep(Step newStep)
@@ -164,7 +171,115 @@ public sealed class RecipeRowViewModel(
 			return;
 		}
 
+		if (TryBuildSelectorEdit(columnKey, value, out var selectorEdit))
+		{
+			SelectorValueChanged?.Invoke(selectorEdit);
+			return;
+		}
+
 		PropertyValueChanged?.Invoke(columnKey, value);
+	}
+
+	/// <summary>
+	/// Recomputes <see cref="InapplicableColumns"/> from the row's current step and assigns a NEW
+	/// set instance. The OneWay cell binding only re-fires on a PropertyChanged that also carries a
+	/// reference change, so the value is always replaced rather than mutated in place.
+	/// </summary>
+	public void RecomputeInapplicableColumns()
+	{
+		InapplicableColumns = BuildInapplicableColumns(action, _step, recipeMetadataRegistry);
+	}
+
+	/// <summary>
+	/// Detects a selector-column edit and computes the columns the new selection deactivates (drop)
+	/// and activates (seed with their default values). A column is a selector when some union column
+	/// carries an <see cref="ActivationCondition"/> keyed on it (the resolver strips per-column
+	/// <c>Targets</c> from the resolved action and records the dependency as activation conditions
+	/// instead). Returns false for ordinary edits, non-selector columns, or values that do not parse
+	/// to a selector id.
+	/// </summary>
+	private bool TryBuildSelectorEdit(string columnKey, string? value, out SelectorEdit selectorEdit)
+	{
+		selectorEdit = default!;
+
+		if (!IsSelectorColumn(columnKey))
+		{
+			return false;
+		}
+
+		if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var selectorId))
+		{
+			return false;
+		}
+
+		var oldActive = ActiveColumnSetResolver.Resolve(action, _step);
+		var candidateStep = _step.WithProperty(columnKey, PropertyValue.FromInt(selectorId));
+		var newActive = ActiveColumnSetResolver.Resolve(action, candidateStep);
+
+		var columnsToDrop = new List<string>();
+		var columnsToSeed = new List<string>();
+
+		foreach (var property in action.Properties)
+		{
+			var key = property.Key;
+			var wasActive = oldActive.Contains(key);
+			var nowActive = newActive.Contains(key);
+
+			if (wasActive && !nowActive)
+			{
+				columnsToDrop.Add(key);
+			}
+			else if (!wasActive && nowActive)
+			{
+				columnsToSeed.Add(key);
+			}
+		}
+
+		selectorEdit = new SelectorEdit(
+			columnKey,
+			selectorId.ToString(CultureInfo.InvariantCulture),
+			columnsToDrop,
+			columnsToSeed);
+		return true;
+	}
+
+	private bool IsSelectorColumn(string columnKey)
+	{
+		foreach (var property in action.Properties)
+		{
+			if (property.Activation is null)
+			{
+				continue;
+			}
+
+			foreach (var condition in property.Activation)
+			{
+				if (string.Equals(condition.SelectorKey, columnKey, StringComparison.OrdinalIgnoreCase))
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	public static IReadOnlySet<string> BuildInapplicableColumns(
+		ActionDefinition action,
+		Step step,
+		RecipeMetadataRegistry recipeMetadataRegistry)
+	{
+		var activeColumnKeys = ActiveColumnSetResolver.Resolve(action, step);
+		var inapplicable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		foreach (var column in recipeMetadataRegistry.GetAllColumns())
+		{
+			if (CellStateResolver.IsInapplicable(column, activeColumnKeys))
+			{
+				inapplicable.Add(column.Key);
+			}
+		}
+
+		return inapplicable;
 	}
 
 	private static PropertyTypeDefinition? ResolvePropertyType(

@@ -11,13 +11,15 @@ public sealed class ActionDefinition
 		string uiName,
 		DeployDuration deployDuration,
 		IReadOnlyList<ActionPropertyDefinition> properties,
-		FormulaDefinition? formula = null)
+		FormulaDefinition? formula = null,
+		ActionRole role = ActionRole.Action)
 	{
 		Id = id;
 		UiName = uiName;
 		DeployDuration = deployDuration;
 		Properties = properties;
 		Formula = formula;
+		Role = role;
 	}
 
 	public int Id { get; }
@@ -25,6 +27,8 @@ public sealed class ActionDefinition
 	public string UiName { get; }
 
 	public DeployDuration DeployDuration { get; }
+
+	public ActionRole Role { get; }
 
 	public IReadOnlyList<ActionPropertyDefinition> Properties { get; }
 

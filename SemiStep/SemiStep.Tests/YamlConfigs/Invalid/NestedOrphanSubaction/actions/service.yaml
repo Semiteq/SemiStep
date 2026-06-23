@@ -1,0 +1,20 @@
+# Invalid: subaction id 3001 is declared but never referenced by any column 'targets'
+
+10:
+  ui_name: "Wait"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+3001:
+  ui_name: "Orphan branch"
+  role: subaction
+  deploy_duration: immediate
+  columns:
+    - key: sub_value
+      default_value: "50"
+      property_type_id: float

@@ -27,15 +27,17 @@ public sealed class RecipeMetadataRegistry
 
 	public RecipeMetadataRegistry(AppConfiguration config)
 	{
-		_actionsById = new Dictionary<int, ActionDefinition>(config.Actions);
+		var resolvedActions = ResolvePrimaryActions(config.Actions.Values.ToList());
 
+		_actionsById = new Dictionary<int, ActionDefinition>();
 		_actionsByName = new Dictionary<string, ActionDefinition>(StringComparer.OrdinalIgnoreCase);
-		foreach (var action in config.Actions.Values)
+		foreach (var action in resolvedActions)
 		{
+			_actionsById[action.Id] = action;
 			_actionsByName[action.UiName] = action;
 		}
 
-		_allActions = config.Actions.Values.ToList();
+		_allActions = resolvedActions;
 
 		_properties = new Dictionary<string, PropertyTypeDefinition>(StringComparer.OrdinalIgnoreCase);
 		foreach (var (key, property) in config.Properties)
@@ -60,6 +62,28 @@ public sealed class RecipeMetadataRegistry
 		_stringMaxLength = ResolveStringMaxLength(_properties.Values);
 
 		EnsureColumnPropertyReferencesResolve(_columns.Values, _properties);
+	}
+
+	/// <summary>
+	/// Runs the reference-graph resolver over the raw mapped actions so the registry holds only
+	/// resolved primary actions. Subactions (<see cref="ActionRole.Subaction"/>) are consumed by
+	/// the resolver and never enter the runtime action collections; each surviving primary carries
+	/// the union of its own and its subactions' columns (deterministic order) as its
+	/// <see cref="ActionDefinition.Properties"/>. Resolver failures (cycles, dangling targets,
+	/// conflicting column types) fail fast at construction.
+	/// </summary>
+	private static IReadOnlyList<ActionDefinition> ResolvePrimaryActions(
+		IReadOnlyCollection<ActionDefinition> rawActions)
+	{
+		var resolveResult = ActionTreeResolver.Resolve(rawActions);
+		if (resolveResult.IsFailed)
+		{
+			throw new InvalidOperationException(
+				"RecipeMetadataRegistry: failed to resolve the action reference graph: "
+				+ string.Join("; ", resolveResult.Errors.Select(error => error.Message)));
+		}
+
+		return resolveResult.Value;
 	}
 
 	private static void EnsureColumnPropertyReferencesResolve(

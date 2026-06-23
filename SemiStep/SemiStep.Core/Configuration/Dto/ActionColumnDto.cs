@@ -6,4 +6,5 @@ internal sealed class ActionColumnDto
 	public string? GroupName { get; set; }
 	public string? PropertyTypeId { get; set; }
 	public string? DefaultValue { get; set; }
+	public Dictionary<int, int>? Targets { get; set; }
 }

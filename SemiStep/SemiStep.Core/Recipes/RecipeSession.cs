@@ -409,41 +409,13 @@ public sealed class RecipeSession
 
 		var action = actionResult.Value;
 
-		var actionPropertyResult = action.FindProperty(columnKey);
-		if (actionPropertyResult.IsFailed)
+		var valueResult = ParseAndValidateColumnValue(action, columnKey, value);
+		if (valueResult.IsFailed)
 		{
-			return actionPropertyResult.ToResult();
+			return valueResult.ToResult();
 		}
 
-		var actionProperty = actionPropertyResult.Value;
-
-		var propertyDefinitionResult = _recipeMetadataRegistry.GetProperty(actionProperty.PropertyTypeId);
-		if (propertyDefinitionResult.IsFailed)
-		{
-			return propertyDefinitionResult.ToResult();
-		}
-
-		var parseResult = PropertyParser.Parse(value, propertyDefinitionResult.Value);
-		if (parseResult.IsFailed)
-		{
-			return parseResult.ToResult();
-		}
-
-		var parsedValue = parseResult.Value;
-
-		var typeCheck = PropertyValidator.Validate(propertyDefinitionResult.Value, parsedValue.Value);
-		if (typeCheck.IsFailed)
-		{
-			return typeCheck;
-		}
-
-		var groupCheck = PropertyValidator.ValidateGroupValue(actionProperty, parsedValue, _recipeMetadataRegistry);
-		if (groupCheck.IsFailed)
-		{
-			return groupCheck;
-		}
-
-		var updatedStep = step.WithProperty(columnKey, parsedValue);
+		var updatedStep = step.WithProperty(columnKey, valueResult.Value);
 
 		var recalcResult = TryApplyFormulaRecalc(updatedStep, action, columnKey, stepIndex);
 		if (recalcResult.IsFailed)
@@ -458,6 +430,131 @@ public sealed class RecipeSession
 		return Apply(newRecipe);
 	}
 
+	/// <summary>
+	/// Applies a selector-column edit as a single undo unit: sets the selector value, drops the
+	/// values of columns that the new selection deactivates, and seeds default values for columns
+	/// the new selection activates. The whole composition change is committed through a single
+	/// <see cref="Apply"/> call, so one <see cref="Undo"/> restores both the prior selector value
+	/// and the prior dropped values together.
+	/// </summary>
+	public Result UpdateStepForSelectorChange(
+		int stepIndex,
+		string selectorKey,
+		string value,
+		IReadOnlyCollection<string> columnsToDrop,
+		IReadOnlyCollection<string> columnsToSeed)
+	{
+		_logger.LogInformation(
+			"Mutation entry: UpdateStepForSelectorChange StepIndex={StepIndex}, SelectorKey={SelectorKey}, "
+			+ "DropCount={DropCount}, SeedCount={SeedCount}, StepCount={StepCount}",
+			stepIndex,
+			selectorKey,
+			columnsToDrop.Count,
+			columnsToSeed.Count,
+			Current.StepCount);
+
+		var indexCheck = ValidateStepIndex(Current, stepIndex);
+		if (indexCheck.IsFailed)
+		{
+			return indexCheck;
+		}
+
+		var current = Current;
+		var step = current.Steps[stepIndex];
+
+		var actionResult = _recipeMetadataRegistry.GetAction(step.ActionKey);
+		if (actionResult.IsFailed)
+		{
+			return actionResult.ToResult();
+		}
+
+		var action = actionResult.Value;
+
+		var selectorResult = ParseAndValidateColumnValue(action, selectorKey, value);
+		if (selectorResult.IsFailed)
+		{
+			return selectorResult.ToResult();
+		}
+
+		var properties = step.Properties.SetItem(new PropertyId(selectorKey), selectorResult.Value);
+
+		foreach (var dropKey in columnsToDrop)
+		{
+			properties = properties.Remove(new PropertyId(dropKey));
+		}
+
+		// Seed defaults through the same resolver StepInitializer uses, so a newly-activated column
+		// with no default_value (numeric, enum/group) gets its proper default instead of an empty
+		// string that would fail validation.
+		foreach (var seedKey in columnsToSeed)
+		{
+			var seedPropertyResult = action.FindProperty(seedKey);
+			if (seedPropertyResult.IsFailed)
+			{
+				return seedPropertyResult.ToResult();
+			}
+
+			var seedValue = StepInitializer.ResolveDefaultValue(seedPropertyResult.Value, _recipeMetadataRegistry);
+			properties = properties.SetItem(new PropertyId(seedKey), seedValue);
+		}
+
+		var updatedStep = step with { Properties = properties };
+
+		var recalcResult = TryApplyFormulaRecalc(updatedStep, action, selectorKey, stepIndex);
+		if (recalcResult.IsFailed)
+		{
+			return recalcResult.ToResult();
+		}
+
+		updatedStep = recalcResult.Value;
+
+		var newRecipe = current.ReplaceStep(stepIndex, updatedStep);
+
+		return Apply(newRecipe);
+	}
+
+	private Result<PropertyValue> ParseAndValidateColumnValue(
+		ActionDefinition action,
+		string columnKey,
+		string value)
+	{
+		var actionPropertyResult = action.FindProperty(columnKey);
+		if (actionPropertyResult.IsFailed)
+		{
+			return actionPropertyResult.ToResult<PropertyValue>();
+		}
+
+		var actionProperty = actionPropertyResult.Value;
+
+		var propertyDefinitionResult = _recipeMetadataRegistry.GetProperty(actionProperty.PropertyTypeId);
+		if (propertyDefinitionResult.IsFailed)
+		{
+			return propertyDefinitionResult.ToResult<PropertyValue>();
+		}
+
+		var parseResult = PropertyParser.Parse(value, propertyDefinitionResult.Value);
+		if (parseResult.IsFailed)
+		{
+			return parseResult;
+		}
+
+		var parsedValue = parseResult.Value;
+
+		var typeCheck = PropertyValidator.Validate(propertyDefinitionResult.Value, parsedValue.Value);
+		if (typeCheck.IsFailed)
+		{
+			return typeCheck.ToResult<PropertyValue>();
+		}
+
+		var groupCheck = PropertyValidator.ValidateGroupValue(actionProperty, parsedValue, _recipeMetadataRegistry);
+		if (groupCheck.IsFailed)
+		{
+			return groupCheck.ToResult<PropertyValue>();
+		}
+
+		return Result.Ok(parsedValue);
+	}
+
 	private Result<Step> TryApplyFormulaRecalc(Step step, ActionDefinition action, string columnKey, int stepIndex)
 	{
 		if (action.Formula is null
@@ -466,7 +563,8 @@ public sealed class RecipeSession
 			return Result.Ok(step);
 		}
 
-		var recalcResult = _formulaEvaluator.Recalculate(step, action, columnKey);
+		var activeColumns = ActiveColumnSetResolver.Resolve(action, step);
+		var recalcResult = _formulaEvaluator.Recalculate(step, action, columnKey, activeColumns);
 		if (recalcResult.IsFailed)
 		{
 			_logger.LogInformation(

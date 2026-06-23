@@ -1,0 +1,32 @@
+# Invalid: subaction id 3001 is declared twice across action files (duplicate id)
+
+10:
+  ui_name: "Wait"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+300:
+  ui_name: "Branching"
+  role: action
+  deploy_duration: immediate
+  columns:
+    - key: branch_sel
+      group_name: match_mode
+      property_type_id: enum
+      targets: { 1: 3001 }
+    - key: comment
+      property_type_id: string
+
+3001:
+  ui_name: "Manual branch"
+  role: subaction
+  deploy_duration: immediate
+  columns:
+    - key: sub_value
+      default_value: "50"
+      property_type_id: float

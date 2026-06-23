@@ -24,9 +24,11 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 	private const int ForLoopActionId = RecipeTestDriver.ForLoopActionId;
 	private const int PauseActionId = RecipeTestDriver.PauseActionId;
 	private const int EndForLoopActionId = RecipeTestDriver.EndForLoopActionId;
+	private const int ValveActionId = RecipeTestDriver.WithGroupActionId;
 	private const int UnknownActionId = 9999;
 	private const string DurationColumn = RecipeTestDriver.StepDurationColumn;
 	private const string CommentColumn = RecipeTestDriver.CommentColumn;
+	private const string TargetColumn = RecipeTestDriver.TargetColumn;
 
 	#region Session.Apply
 
@@ -452,6 +454,120 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 		var result = harness.Session.UpdateStepProperty(0, DurationColumn, "not-a-number");
 
 		result.IsFailed.Should().BeTrue();
+	}
+
+	#endregion
+
+	#region Session.UpdateStepForSelectorChange
+
+	[Fact]
+	[Trait("Area", "NestedActions")]
+	public async Task UpdateStepForSelectorChange_DropsSeedsAndSetsSelector_InOneApply()
+	{
+		var harness = await BuildHarnessAsync();
+		harness.Session.AppendStep(ValveActionId).IsSuccess.Should().BeTrue();
+		harness.Session.UpdateStepProperty(0, CommentColumn, "keep-me").IsSuccess.Should().BeTrue();
+
+		var result = harness.Session.UpdateStepForSelectorChange(
+			0,
+			TargetColumn,
+			"2",
+			columnsToDrop: new[] { CommentColumn },
+			columnsToSeed: new[] { DurationColumn });
+
+		result.IsSuccess.Should().BeTrue();
+
+		var step = harness.Session.Current.Steps[0];
+		step.Properties[new PropertyId(TargetColumn)].AsInt().Should().Be(2, "selector value is applied");
+		step.Properties.ContainsKey(new PropertyId(CommentColumn))
+			.Should().BeFalse("dropped column is removed");
+		step.Properties[new PropertyId(DurationColumn)].AsFloat().Should().Be(10f, "seeded column gets its resolved default");
+	}
+
+	[Fact]
+	[Trait("Area", "NestedActions")]
+	public async Task UpdateStepForSelectorChange_ProducesExactlyOneUndoSnapshot()
+	{
+		var harness = await BuildHarnessAsync();
+		harness.Session.AppendStep(ValveActionId).IsSuccess.Should().BeTrue();
+
+		var undoCountBefore = harness.Session.UndoCount;
+
+		harness.Session.UpdateStepForSelectorChange(
+			0,
+			TargetColumn,
+			"2",
+			columnsToDrop: new[] { CommentColumn },
+			columnsToSeed: new[] { DurationColumn })
+			.IsSuccess.Should().BeTrue();
+
+		harness.Session.UndoCount.Should().Be(
+			undoCountBefore + 1,
+			"a batched selector change is a single undo unit regardless of how many columns it drops or seeds");
+	}
+
+	[Fact]
+	[Trait("Area", "NestedActions")]
+	public async Task UpdateStepForSelectorChange_SingleUndo_RestoresSelectorAndDroppedValues()
+	{
+		var harness = await BuildHarnessAsync();
+		harness.Session.AppendStep(ValveActionId).IsSuccess.Should().BeTrue();
+		harness.Session.UpdateStepProperty(0, TargetColumn, "1").IsSuccess.Should().BeTrue();
+		harness.Session.UpdateStepProperty(0, CommentColumn, "manual-branch").IsSuccess.Should().BeTrue();
+
+		harness.Session.UpdateStepForSelectorChange(
+			0,
+			TargetColumn,
+			"2",
+			columnsToDrop: new[] { CommentColumn },
+			columnsToSeed: new[] { DurationColumn })
+			.IsSuccess.Should().BeTrue();
+
+		harness.Session.Undo().IsSuccess.Should().BeTrue();
+
+		var step = harness.Session.Current.Steps[0];
+		step.Properties[new PropertyId(TargetColumn)].AsInt()
+			.Should().Be(1, "one Undo restores the prior selector value");
+		step.Properties[new PropertyId(CommentColumn)].AsString()
+			.Should().Be("manual-branch", "the same Undo restores the dropped value in one step");
+	}
+
+	[Fact]
+	[Trait("Area", "NestedActions")]
+	public async Task UpdateStepForSelectorChange_InvalidSelectorValue_FailsAndDoesNotMutate()
+	{
+		var harness = await BuildHarnessAsync();
+		harness.Session.AppendStep(ValveActionId).IsSuccess.Should().BeTrue();
+
+		var result = harness.Session.UpdateStepForSelectorChange(
+			0,
+			TargetColumn,
+			"not-a-number",
+			columnsToDrop: Array.Empty<string>(),
+			columnsToSeed: Array.Empty<string>());
+
+		result.IsFailed.Should().BeTrue();
+		harness.Session.Current.Steps[0].Properties.ContainsKey(new PropertyId(CommentColumn))
+			.Should().BeTrue("a rejected batched edit must not mutate the step");
+	}
+
+	[Fact]
+	[Trait("Area", "NestedActions")]
+	public async Task UpdateStepProperty_StillSingleUndoUnit_Unchanged()
+	{
+		var harness = await BuildHarnessAsync();
+		harness.Session.AppendStep(ValveActionId).IsSuccess.Should().BeTrue();
+		harness.Session.UpdateStepProperty(0, CommentColumn, "first").IsSuccess.Should().BeTrue();
+
+		var undoCountBefore = harness.Session.UndoCount;
+
+		harness.Session.UpdateStepProperty(0, CommentColumn, "second").IsSuccess.Should().BeTrue();
+
+		harness.Session.UndoCount.Should().Be(undoCountBefore + 1, "an ordinary single-property edit is one undo unit");
+
+		harness.Session.Undo().IsSuccess.Should().BeTrue();
+		harness.Session.Current.Steps[0].Properties[new PropertyId(CommentColumn)].AsString()
+			.Should().Be("first", "one Undo reverts a single-property edit");
 	}
 
 	#endregion

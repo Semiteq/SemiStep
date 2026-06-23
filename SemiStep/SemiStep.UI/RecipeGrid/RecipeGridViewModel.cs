@@ -13,7 +13,6 @@ using Microsoft.Extensions.Logging;
 using ReactiveUI;
 
 using SemiStep.Core.Recipes;
-using SemiStep.Core.Recipes.Helpers;
 
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.MessageService;
@@ -203,6 +202,35 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		{
 			_messagePanel.ReportFailure(result, $"Step {stepIndex + 1}");
 		}
+	}
+
+	private void OnSelectorValueChanged(RecipeRowViewModel row, SelectorEdit selectorEdit)
+	{
+		if (IsReadOnly)
+		{
+			return;
+		}
+
+		var stepIndex = RecipeRows.IndexOf(row);
+		if (stepIndex < 0)
+		{
+			return;
+		}
+
+		var result = _coordinator.UpdateStepForSelectorChange(
+			stepIndex,
+			selectorEdit.SelectorKey,
+			selectorEdit.Value,
+			selectorEdit.ColumnsToDrop,
+			selectorEdit.ColumnsToSeed);
+
+		if (result.IsFailed)
+		{
+			_messagePanel.ReportFailure(result, $"Step {stepIndex + 1}");
+			return;
+		}
+
+		row.RecomputeInapplicableColumns();
 	}
 
 	private void OnActionChanged(RecipeRowViewModel row, int newActionId)
@@ -454,14 +482,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		ActionDefinition action,
 		int stepNumber)
 	{
-		var inapplicableColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-		foreach (var column in RecipeMetadataRegistry.GetAllColumns())
-		{
-			if (CellStateResolver.IsInapplicable(column, action))
-			{
-				inapplicableColumns.Add(column.Key);
-			}
-		}
+		var inapplicableColumns = RecipeRowViewModel.BuildInapplicableColumns(action, step, RecipeMetadataRegistry);
 
 		var row = new RecipeRowViewModel(
 			stepNumber,
@@ -472,6 +493,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 		row.PropertyValueChanged += (columnKey, value) => OnCellValueChanged(row, columnKey, value);
 		row.ActionChanged += actionId => OnActionChanged(row, actionId);
+		row.SelectorValueChanged += selectorEdit => OnSelectorValueChanged(row, selectorEdit);
 
 		return row;
 	}

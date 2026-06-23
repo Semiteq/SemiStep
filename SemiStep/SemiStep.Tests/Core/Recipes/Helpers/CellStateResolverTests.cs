@@ -16,9 +16,9 @@ public sealed class CellStateResolverTests
 	public void IsInapplicable_ReturnsFalse_WhenColumnIsReadOnly()
 	{
 		var column = BuildColumn(key: "duration", readOnly: true);
-		var action = BuildAction(propertyKeys: []);
+		IReadOnlySet<string> activeColumnKeys = new HashSet<string>();
 
-		var result = CellStateResolver.IsInapplicable(column, action);
+		var result = CellStateResolver.IsInapplicable(column, activeColumnKeys);
 
 		result.Should().BeFalse();
 	}
@@ -27,31 +27,31 @@ public sealed class CellStateResolverTests
 	public void IsInapplicable_ReturnsFalse_WhenColumnIsActionColumn()
 	{
 		var column = BuildColumn(key: StepValueParser.ActionColumnKey, readOnly: false);
-		var action = BuildAction(propertyKeys: []);
+		IReadOnlySet<string> activeColumnKeys = new HashSet<string>();
 
-		var result = CellStateResolver.IsInapplicable(column, action);
+		var result = CellStateResolver.IsInapplicable(column, activeColumnKeys);
 
 		result.Should().BeFalse();
 	}
 
 	[Fact]
-	public void IsInapplicable_ReturnsTrue_WhenActionMissesProperty()
+	public void IsInapplicable_ReturnsTrue_WhenColumnIsNotActive()
 	{
 		var column = BuildColumn(key: "temperature", readOnly: false);
-		var action = BuildAction(propertyKeys: ["duration"]);
+		IReadOnlySet<string> activeColumnKeys = new HashSet<string> { "duration" };
 
-		var result = CellStateResolver.IsInapplicable(column, action);
+		var result = CellStateResolver.IsInapplicable(column, activeColumnKeys);
 
 		result.Should().BeTrue();
 	}
 
 	[Fact]
-	public void IsInapplicable_ReturnsFalse_WhenActionHasProperty()
+	public void IsInapplicable_ReturnsFalse_WhenColumnIsActive()
 	{
 		var column = BuildColumn(key: "temperature", readOnly: false);
-		var action = BuildAction(propertyKeys: ["temperature"]);
+		IReadOnlySet<string> activeColumnKeys = new HashSet<string> { "temperature" };
 
-		var result = CellStateResolver.IsInapplicable(column, action);
+		var result = CellStateResolver.IsInapplicable(column, activeColumnKeys);
 
 		result.Should().BeFalse();
 	}
@@ -65,22 +65,5 @@ public sealed class CellStateResolverTests
 			PropertyTypeId: "string",
 			ReadOnly: readOnly,
 			SaveToCsv: true);
-	}
-
-	private static ActionDefinition BuildAction(string[] propertyKeys)
-	{
-		var properties = propertyKeys
-			.Select(key => new ActionPropertyDefinition(
-				Key: key,
-				GroupName: null,
-				PropertyTypeId: "string",
-				DefaultValue: null))
-			.ToArray();
-
-		return new ActionDefinition(
-			id: 1,
-			uiName: "TestAction",
-			deployDuration: DeployDuration.Immediate,
-			properties: properties);
 	}
 }

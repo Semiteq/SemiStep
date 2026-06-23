@@ -1,0 +1,65 @@
+# Minimal column definitions plus a selector and a subaction column for nested-action tests
+
+action:
+  column_type: action_combo_box
+  ui:
+    ui_name: "Action"
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+
+step_duration:
+  column_type: property_field
+  ui:
+    ui_name: "Duration"
+  business_logic:
+    property_type_id: time
+    read_only: false
+    save_to_csv: true
+
+task:
+  column_type: property_field
+  ui:
+    ui_name: "Task"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+comment:
+  column_type: text_field
+  ui:
+    ui_name: "Comment"
+  business_logic:
+    property_type_id: string
+    save_to_csv: true
+    read_only: false
+
+branch_sel:
+  column_type: property_field
+  ui:
+    ui_name: "Branch"
+  business_logic:
+    property_type_id: enum
+    group_name: match_mode
+    read_only: false
+    save_to_csv: true
+
+sub_value:
+  column_type: property_field
+  ui:
+    ui_name: "SubValue"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+sub_nodefault:
+  column_type: property_field
+  ui:
+    ui_name: "SubNoDefault"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true

@@ -25,7 +25,8 @@ public sealed class FormulaEvaluator
 	public Result<Step> Recalculate(
 		Step step,
 		ActionDefinition action,
-		string changedColumnKey)
+		string changedColumnKey,
+		IReadOnlySet<string> activeColumns)
 	{
 		if (action.Formula is null)
 		{
@@ -45,7 +46,13 @@ public sealed class FormulaEvaluator
 				$"No compiled expression registered for target '{target}' in action '{action.UiName}'.");
 		}
 
-		var variableValues = BuildVariableMap(step, formula, action);
+		var variableValues = BuildVariableMap(step, formula, action, activeColumns);
+
+		// Null map = a recalc variable is inactive for this composition; skip recalc, leave step as-is.
+		if (variableValues is null)
+		{
+			return Result.Ok(step);
+		}
 
 		var evaluationResult = EvaluateExpression(compiled, variableValues, target, action.Id);
 		if (evaluationResult.IsFailed)
@@ -165,14 +172,26 @@ public sealed class FormulaEvaluator
 		return Result.Ok();
 	}
 
-	private static Dictionary<string, object> BuildVariableMap(
+	/// <summary>
+	/// Builds the variable map for the formula. Returns <c>null</c> when any recalc-order variable
+	/// is currently inactive (its column is not in the row's active set), signalling the caller to
+	/// skip the recalc. A variable that is active but absent from the step, or present with a
+	/// non-numeric value, is a genuine error and throws.
+	/// </summary>
+	private static Dictionary<string, object>? BuildVariableMap(
 		Step step,
 		FormulaDefinition formula,
-		ActionDefinition action)
+		ActionDefinition action,
+		IReadOnlySet<string> activeColumns)
 	{
 		var map = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 		foreach (var variableKey in formula.RecalcOrder)
 		{
+			if (!activeColumns.Contains(variableKey))
+			{
+				return null;
+			}
+
 			if (!step.Properties.TryGetValue(new PropertyId(variableKey), out var propertyValue))
 			{
 				throw new InvalidOperationException(

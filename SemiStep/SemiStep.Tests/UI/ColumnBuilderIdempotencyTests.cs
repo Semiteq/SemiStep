@@ -193,16 +193,17 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 	{
 		var action = _fixture.RecipeMetadataRegistry.GetAction(actionId).Value;
 		var step = new Step(actionId, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
-		var inapplicableColumns = BuildInapplicableColumns(action);
+		var inapplicableColumns = BuildInapplicableColumns(action, step);
 		return new RecipeRowViewModel(1, step, action, _fixture.RecipeMetadataRegistry, inapplicableColumns);
 	}
 
-	private IReadOnlySet<string> BuildInapplicableColumns(ActionDefinition action)
+	private IReadOnlySet<string> BuildInapplicableColumns(ActionDefinition action, Step step)
 	{
+		var activeColumnKeys = ActiveColumnSetResolver.Resolve(action, step);
 		var inapplicable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		foreach (var column in _fixture.RecipeMetadataRegistry.GetAllColumns())
 		{
-			if (CellStateResolver.IsInapplicable(column, action))
+			if (CellStateResolver.IsInapplicable(column, activeColumnKeys))
 			{
 				inapplicable.Add(column.Key);
 			}

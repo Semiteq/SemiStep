@@ -11,6 +11,7 @@ using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Formulas;
 using SemiStep.Core.Recipes.Formulas.Errors;
+using SemiStep.Core.Recipes.Helpers;
 
 using Xunit;
 
@@ -40,7 +41,7 @@ public sealed class FormulaEvaluatorTests
 			speed: 10f,
 			stepDuration: 600f);
 
-		var result = evaluator.Recalculate(step, action, TaskColumnKey);
+		var result = evaluator.Recalculate(step, action, TaskColumnKey, ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsSuccess.Should().BeTrue();
 		var updated = result.Value;
@@ -56,7 +57,7 @@ public sealed class FormulaEvaluatorTests
 
 		var step = BuildRampStep(task: 700f, initialValue: 500f, speed: 20f, stepDuration: 600f);
 
-		var result = evaluator.Recalculate(step, action, Speed);
+		var result = evaluator.Recalculate(step, action, Speed, ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsSuccess.Should().BeTrue();
 		// recalc_order = [step_duration, speed, task, initial_value]
@@ -75,7 +76,7 @@ public sealed class FormulaEvaluatorTests
 		// speed=0 with changed=task -> target=step_duration -> (task-initial)/0 *60 = infinity
 		var step = BuildRampStep(task: 800f, initialValue: 500f, speed: 0f, stepDuration: 600f);
 
-		var result = evaluator.Recalculate(step, action, TaskColumnKey);
+		var result = evaluator.Recalculate(step, action, TaskColumnKey, ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsFailed.Should().BeTrue();
 		var error = result.Errors.OfType<FormulaComputationFailedError>().FirstOrDefault();
@@ -92,7 +93,7 @@ public sealed class FormulaEvaluatorTests
 
 		var step = BuildRampStep(task: 700f, initialValue: 500f, speed: 10f, stepDuration: 600f);
 
-		var result = evaluator.Recalculate(step, action, "TASK");
+		var result = evaluator.Recalculate(step, action, "TASK", ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsSuccess.Should().BeTrue();
 		result.Value.Properties[new PropertyId(StepDuration)].AsFloat().Should().BeApproximately(1200f, 0.001f);
@@ -107,7 +108,7 @@ public sealed class FormulaEvaluatorTests
 
 		var step = BuildRampStep(task: 700f, initialValue: 500f, speed: 20f, stepDuration: 600f);
 
-		var result = evaluator.Recalculate(step, action, Speed);
+		var result = evaluator.Recalculate(step, action, Speed, ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsSuccess.Should().BeTrue();
 		result.Value.Properties[new PropertyId(Speed)].AsFloat().Should().BeApproximately(20f, 0.001f,
@@ -123,7 +124,7 @@ public sealed class FormulaEvaluatorTests
 
 		var step = BuildRampStep(task: 100000f, initialValue: 500f, speed: 10f, stepDuration: 50f);
 
-		var result = evaluator.Recalculate(step, action, TaskColumnKey);
+		var result = evaluator.Recalculate(step, action, TaskColumnKey, ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsFailed.Should().BeTrue();
 		var error = result.Errors.OfType<FormulaComputationFailedError>().FirstOrDefault();
@@ -146,7 +147,7 @@ public sealed class FormulaEvaluatorTests
 				.Add(new PropertyId("a"), PropertyValue.FromFloat(0f))
 				.Add(new PropertyId("b"), PropertyValue.FromFloat(0f)));
 
-		var result = evaluator.Recalculate(step, action, "a");
+		var result = evaluator.Recalculate(step, action, "a", ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsFailed.Should().BeTrue();
 		var error = result.Errors.OfType<FormulaComputationFailedError>().FirstOrDefault();
@@ -169,7 +170,7 @@ public sealed class FormulaEvaluatorTests
 				.Add(new PropertyId("a"), PropertyValue.FromFloat(1f))
 				.Add(new PropertyId("b"), PropertyValue.FromFloat(0f)));
 
-		var result = evaluator.Recalculate(step, action, "a");
+		var result = evaluator.Recalculate(step, action, "a", ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsFailed.Should().BeTrue();
 		var error = result.Errors.OfType<FormulaComputationFailedError>().FirstOrDefault();
@@ -191,7 +192,7 @@ public sealed class FormulaEvaluatorTests
 				.Add(new PropertyId("target"), PropertyValue.FromInt(0))
 				.Add(new PropertyId("a"), PropertyValue.FromFloat(1e10f)));
 
-		var result = evaluator.Recalculate(step, action, "a");
+		var result = evaluator.Recalculate(step, action, "a", ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().ContainItemsAssignableTo<FormulaComputationFailedError>();
@@ -212,7 +213,7 @@ public sealed class FormulaEvaluatorTests
 				.Add(new PropertyId(Speed), PropertyValue.FromString("not a number"))
 				.Add(new PropertyId(StepDuration), PropertyValue.FromFloat(600f)));
 
-		var act = () => evaluator.Recalculate(step, action, TaskColumnKey);
+		var act = () => evaluator.Recalculate(step, action, TaskColumnKey, ActiveColumnSetResolver.Resolve(action, step));
 
 		act.Should().Throw<InvalidOperationException>();
 	}
@@ -227,7 +228,7 @@ public sealed class FormulaEvaluatorTests
 
 		var step = BuildRampStep(task: 100000f, initialValue: 500f, speed: 10f, stepDuration: 50f);
 
-		var result = evaluator.Recalculate(step, action, TaskColumnKey);
+		var result = evaluator.Recalculate(step, action, TaskColumnKey, ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().ContainItemsAssignableTo<FormulaComputationFailedError>();
@@ -250,7 +251,7 @@ public sealed class FormulaEvaluatorTests
 				.Add(new PropertyId("target"), PropertyValue.FromInt(0))
 				.Add(new PropertyId("a"), PropertyValue.FromFloat((float)targetSeed)));
 
-		var result = evaluator.Recalculate(step, action, "a");
+		var result = evaluator.Recalculate(step, action, "a", ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsSuccess.Should().BeTrue();
 		result.Value.Properties[new PropertyId("target")].AsInt().Should().Be(expected);
@@ -270,7 +271,7 @@ public sealed class FormulaEvaluatorTests
 				.Add(new PropertyId("target"), PropertyValue.FromInt(1))
 				.Add(new PropertyId("a"), PropertyValue.FromInt(99)));
 
-		var result = evaluator.Recalculate(step, action, "a");
+		var result = evaluator.Recalculate(step, action, "a", ActiveColumnSetResolver.Resolve(action, step));
 
 		result.IsFailed.Should().BeTrue();
 		var error = result.Errors.OfType<FormulaComputationFailedError>().FirstOrDefault();
@@ -289,7 +290,7 @@ public sealed class FormulaEvaluatorTests
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
 				.Add(new PropertyId("x"), PropertyValue.FromFloat(1f)));
 
-		var act = () => evaluator.Recalculate(step, action, "x");
+		var act = () => evaluator.Recalculate(step, action, "x", ActiveColumnSetResolver.Resolve(action, step));
 
 		act.Should().Throw<InvalidOperationException>();
 	}
@@ -309,9 +310,116 @@ public sealed class FormulaEvaluatorTests
 				.Add(new PropertyId(InitialValue), PropertyValue.FromFloat(500f))
 				.Add(new PropertyId(StepDuration), PropertyValue.FromFloat(600f)));
 
-		var act = () => evaluator.Recalculate(step, action, TaskColumnKey);
+		var act = () => evaluator.Recalculate(step, action, TaskColumnKey, ActiveColumnSetResolver.Resolve(action, step));
 
 		act.Should().Throw<InvalidOperationException>();
+	}
+
+	[Fact]
+	public void Recalculate_InactiveRecalcVariable_SkipsAndLeavesStepUnchanged()
+	{
+		// The 'b' column is active only when selector 'mode' == 2. With mode == 1 it is inactive,
+		// so the recalc references a column that is not in the active set and must be skipped.
+		var registry = BuildSelectorGatedRegistry();
+		var evaluator = BuildEvaluator(registry);
+		var action = registry.GetAction(444).Value;
+
+		var step = new Step(
+			444,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId("mode"), PropertyValue.FromInt(1))
+				.Add(new PropertyId("a"), PropertyValue.FromFloat(5f)));
+
+		var activeColumns = ActiveColumnSetResolver.Resolve(action, step);
+		activeColumns.Should().NotContain("b");
+
+		var result = evaluator.Recalculate(step, action, "a", activeColumns);
+
+		result.IsSuccess.Should().BeTrue();
+		result.Value.Should().BeSameAs(step, "an inactive recalc variable must skip the recalc and leave the step untouched");
+	}
+
+	[Fact]
+	public void Recalculate_AllRecalcVariablesActive_RecomputesAsBefore()
+	{
+		// Same registry, but mode == 2 makes 'b' active, so the formula recalculates normally:
+		// changed = a -> target = b -> b = a * 2.
+		var registry = BuildSelectorGatedRegistry();
+		var evaluator = BuildEvaluator(registry);
+		var action = registry.GetAction(444).Value;
+
+		var step = new Step(
+			444,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId("mode"), PropertyValue.FromInt(2))
+				.Add(new PropertyId("a"), PropertyValue.FromFloat(5f))
+				.Add(new PropertyId("b"), PropertyValue.FromFloat(0f)));
+
+		var activeColumns = ActiveColumnSetResolver.Resolve(action, step);
+		activeColumns.Should().Contain("b");
+
+		var result = evaluator.Recalculate(step, action, "a", activeColumns);
+
+		result.IsSuccess.Should().BeTrue();
+		result.Value.Properties[new PropertyId("b")].AsFloat().Should().BeApproximately(10f, 0.001f);
+	}
+
+	private static RecipeMetadataRegistry BuildSelectorGatedRegistry()
+	{
+		var properties = new Dictionary<string, PropertyTypeDefinition>
+		{
+			["intp"] = new PropertyTypeDefinition("intp", "int", "decimal", null, -1000d, 1000d, null),
+			["floatp"] = new PropertyTypeDefinition("floatp", "float", "decimal", null, -1000d, 1000d, null)
+		};
+
+		var sources = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+		{
+			["a"] = "b / 2",
+			["b"] = "a * 2"
+		};
+
+		var compiled = new Dictionary<string, LogicalExpression>(StringComparer.OrdinalIgnoreCase);
+		foreach (var (key, source) in sources)
+		{
+			compiled[key] = FormulaIdentifierExtractor.Parse(source).Value.LogicalExpression;
+		}
+
+		var formula = new FormulaDefinition(
+			recalcOrder: new[] { "a", "b" },
+			compiledExpressions: compiled);
+
+		// The activation condition on 'b' is produced by the resolver from the selector's targets,
+		// not set directly: 'mode' targets subaction 4444 for value 2, which contributes 'b'.
+		// The resolved union for action 444 is [mode, b, a] with 'b' active iff mode == 2.
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[444] = new ActionDefinition(
+				id: 444,
+				uiName: "selector gated",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
+				{
+					new ActionPropertyDefinition(
+						"mode",
+						null,
+						"intp",
+						"1",
+						Targets: new Dictionary<int, int> { [2] = 4444 }),
+					new ActionPropertyDefinition("a", null, "floatp", "0")
+				},
+				formula: formula),
+			[4444] = new ActionDefinition(
+				id: 4444,
+				uiName: "manual branch",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
+				{
+					new ActionPropertyDefinition("b", null, "floatp", "0")
+				},
+				role: ActionRole.Subaction)
+		};
+
+		return new RecipeMetadataRegistry(BuildAppConfiguration(properties, actions));
 	}
 
 	private static FormulaEvaluator BuildEvaluator(RecipeMetadataRegistry registry)

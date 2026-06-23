@@ -297,6 +297,18 @@ public sealed class RecipeCoordinator : IDisposable
 			new MutationSignal.PropertyUpdated(stepIndex));
 	}
 
+	public Result UpdateStepForSelectorChange(
+		int stepIndex,
+		string selectorKey,
+		string value,
+		IReadOnlyCollection<string> columnsToDrop,
+		IReadOnlyCollection<string> columnsToSeed)
+	{
+		return TrackVoid(
+			_session.UpdateStepForSelectorChange(stepIndex, selectorKey, value, columnsToDrop, columnsToSeed),
+			new MutationSignal.PropertyUpdated(stepIndex));
+	}
+
 	public Result Undo()
 	{
 		return TrackVoid(_session.Undo(), new MutationSignal.RecipeReplaced());

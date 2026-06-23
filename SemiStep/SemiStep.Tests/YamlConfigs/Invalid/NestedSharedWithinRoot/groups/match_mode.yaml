@@ -1,0 +1,4 @@
+# Selector group for nested-action tests
+match_mode:
+  0: "Auto"
+  1: "Manual"

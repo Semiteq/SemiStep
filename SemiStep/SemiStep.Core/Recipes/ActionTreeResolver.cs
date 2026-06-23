@@ -178,9 +178,10 @@ public static class ActionTreeResolver
 			if (!existingActivation.SequenceEqual(candidateActivation))
 			{
 				return Result.Fail(
-					$"Column key '{column.Key}' is reachable from two distinct branches of action "
-					+ $"id {rootId} with different activation conditions; a subaction may not be "
-					+ "shared across branches of the same root");
+					$"Column key '{column.Key}' is reachable within action id {rootId} via more than "
+					+ $"one selector condition (for example two selector values mapping to the same "
+					+ $"subaction, or two different selectors reaching it). A column may be activated by "
+					+ $"only a single condition path; OR-activation across branches is not supported");
 			}
 
 			return Result.Ok();

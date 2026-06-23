@@ -1,0 +1,33 @@
+# Invalid: one selector maps two values (2 and 3) to the SAME subaction 3001, so its columns are
+# reachable within one root via two different selector conditions (OR-activation, unsupported).
+
+10:
+  ui_name: "Wait"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+
+3001:
+  ui_name: "Shared branch"
+  role: subaction
+  deploy_duration: immediate
+  columns:
+    - key: sub_value
+      default_value: "50"
+      property_type_id: float
+
+300:
+  ui_name: "Branching"
+  role: action
+  deploy_duration: immediate
+  columns:
+    - key: branch_sel
+      group_name: match_mode
+      property_type_id: enum
+      targets: { 2: 3001, 3: 3001 }
+    - key: comment
+      property_type_id: string

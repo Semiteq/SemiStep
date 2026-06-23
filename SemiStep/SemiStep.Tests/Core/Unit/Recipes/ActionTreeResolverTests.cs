@@ -150,7 +150,33 @@ public sealed class ActionTreeResolverTests
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
-			e.Message.Contains("two distinct branches", StringComparison.OrdinalIgnoreCase)
+			e.Message.Contains("more than one selector condition", StringComparison.OrdinalIgnoreCase)
+			&& e.Message.Contains("shared_a", StringComparison.OrdinalIgnoreCase));
+	}
+
+	[Fact]
+	public void Resolve_SameSelectorTwoValuesToSameSubaction_Fails()
+	{
+		// One selector maps two distinct values to the SAME subaction (targets: {2: X, 3: X}).
+		// The two values yield different activation paths reaching the same columns; representing
+		// OR-of-paths is unsupported, so the resolver rejects the meaningless authoring.
+		var shared = BuildSubaction(
+			5002,
+			"Shared",
+			Column("shared_a", "percent"),
+			Column("shared_b", "percent"));
+
+		var root = BuildAction(
+			500,
+			"Process",
+			Selector("mode", "enum", (2, 5002), (3, 5002)),
+			Column("tail", "string"));
+
+		var result = ActionTreeResolver.Resolve(new[] { root, shared });
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains("more than one selector condition", StringComparison.OrdinalIgnoreCase)
 			&& e.Message.Contains("shared_a", StringComparison.OrdinalIgnoreCase));
 	}
 

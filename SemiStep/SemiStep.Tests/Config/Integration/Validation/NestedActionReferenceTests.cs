@@ -63,6 +63,17 @@ public sealed class NestedActionReferenceTests
 	}
 
 	[Fact]
+	public async Task SharedColumnWithinRoot_FailsWithClearMessage()
+	{
+		var result = await ConfigTestHelper.LoadInvalidCaseAsync("NestedSharedWithinRoot");
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains("more than one selector condition", StringComparison.OrdinalIgnoreCase)
+			&& e.Message.Contains("sub_value", StringComparison.OrdinalIgnoreCase));
+	}
+
+	[Fact]
 	public async Task ValidNestedConfig_Passes()
 	{
 		var config = await ConfigTestHelper.LoadStandaloneCaseAsync("NestedActionsValid");

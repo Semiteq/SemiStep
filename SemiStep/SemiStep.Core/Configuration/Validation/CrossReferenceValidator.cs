@@ -108,6 +108,128 @@ internal static class CrossReferenceValidator
 		}
 
 		ValidateNoCycles(actions, actionsById, validationResults);
+		ValidateNoSharedColumnAcrossBranches(actions, actionsById, validationResults);
+	}
+
+	/// <summary>
+	/// Mirrors the resolver's rejection of a column reachable within a single root via more than
+	/// one selector condition (OR-activation is unsupported), so the config load fails with a clean
+	/// aggregated error instead of throwing later at registry construction. The resolver keeps its
+	/// own guard as defense-in-depth. For each root the column-key map is fresh, so the same column
+	/// shared across DIFFERENT roots is allowed and not flagged.
+	/// </summary>
+	private static void ValidateNoSharedColumnAcrossBranches(
+		List<ActionDto> actions,
+		Dictionary<int, ActionDto> actionsById,
+		List<Result> validationResults)
+	{
+		foreach (var root in actions)
+		{
+			if (IsSubaction(root))
+			{
+				continue;
+			}
+
+			var pathByColumnKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			var onPath = new HashSet<int>();
+
+			if (TryFindSharedColumn(
+					root.Id,
+					string.Empty,
+					actionsById,
+					pathByColumnKey,
+					onPath,
+					out var conflictingKey))
+			{
+				validationResults.Add(Result.Fail(
+					$"[actions, Id={root.Id}] Column key '{conflictingKey}' is reachable within action "
+					+ $"id {root.Id} via more than one selector condition (for example two selector "
+					+ $"values mapping to the same subaction, or two different selectors reaching it). "
+					+ $"A column may be activated by only a single condition path; OR-activation "
+					+ $"across branches is not supported"));
+			}
+		}
+	}
+
+	/// <summary>
+	/// Depth-first walk of the <c>targets</c> graph from one root, tracking per column key the
+	/// activation-path signature (the ordered selector edges taken to reach it; the root's own
+	/// columns have an empty signature = always-active). Returns <c>true</c> with the conflicting
+	/// key the first time a column key is reached with a path signature different from the one first
+	/// seen (OR-activation, which is unsupported), stopping the walk at most one finding per root.
+	/// Cycle-safe via <paramref name="onPath"/> (cycles are reported separately by
+	/// <see cref="ValidateNoCycles"/>).
+	/// </summary>
+	private static bool TryFindSharedColumn(
+		int actionId,
+		string pathSignature,
+		Dictionary<int, ActionDto> actionsById,
+		Dictionary<string, string> pathByColumnKey,
+		HashSet<int> onPath,
+		out string conflictingKey)
+	{
+		conflictingKey = string.Empty;
+
+		if (!onPath.Add(actionId))
+		{
+			return false;
+		}
+
+		try
+		{
+			if (!actionsById.TryGetValue(actionId, out var action) || action.Columns == null)
+			{
+				return false;
+			}
+
+			foreach (var column in action.Columns)
+			{
+				if (string.IsNullOrEmpty(column.Key))
+				{
+					continue;
+				}
+
+				if (pathByColumnKey.TryGetValue(column.Key, out var seenSignature))
+				{
+					if (!string.Equals(seenSignature, pathSignature, StringComparison.Ordinal))
+					{
+						conflictingKey = column.Key;
+						return true;
+					}
+				}
+				else
+				{
+					pathByColumnKey[column.Key] = pathSignature;
+				}
+
+				if (column.Targets == null || column.Targets.Count == 0)
+				{
+					continue;
+				}
+
+				foreach (var (selectorValue, targetId) in column.Targets)
+				{
+					var childSignature = $"{pathSignature}|{column.Key}={selectorValue}";
+
+					if (TryFindSharedColumn(
+							targetId,
+							childSignature,
+							actionsById,
+							pathByColumnKey,
+							onPath,
+							out conflictingKey))
+					{
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+		finally
+		{
+			onPath.Remove(actionId);
+		}
 	}
 
 	/// <summary>

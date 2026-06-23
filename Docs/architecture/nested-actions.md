@@ -162,8 +162,16 @@ enforces, at load, with a clear message each:
   a mis-tagged fragment);
 - every `role: subaction` is referenced by at least one `targets` (orphan subaction fails);
 - no cycle in the reference graph (a cycle reachable from any action fails);
+- no shared column across branches of one root — a column reachable within a single root via two
+  different selector conditions is rejected at config load (OR-activation is unsupported);
 - action ids are unique (enforced earlier by the loader across files; uniqueness across files
   and for subaction ids is checked by `ActionsSectionLoader`, not `ValidateReferenceGraph`).
+
+A column may carry only a **single** activation path. OR-activation is not supported, so a
+subaction reachable from two branches of the **same** root is rejected — this includes two
+selector values mapping to the same subaction (`targets: {2: X, 3: X}`), which is meaningless
+(both values would activate the same columns). Cross-**root** sharing (a subaction referenced by
+two different primary actions) is allowed; each root resolves it independently with its own path.
 
 The `role: action`/`role: subaction` rule fires regardless of depth — a subaction whose own
 selector targets a `role: action` also fails. The resolver additionally guards against cycles

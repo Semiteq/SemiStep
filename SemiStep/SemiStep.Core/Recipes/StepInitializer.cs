@@ -29,9 +29,11 @@ public static class StepInitializer
 				ResolveDefaultValue(column, recipeMetadataRegistry));
 		}
 
-		// Active set grows monotonically (seeding a selector can only add columns), so it reaches
-		// a fixpoint in at most one iteration per tree level. Cap iterations by column count as a
-		// hard termination guard.
+		// Active set grows monotonically (seeding a selector can only add columns). The loop
+		// terminates when a pass seeds nothing (seededThisPass == false) — that is the real
+		// termination mechanism, reached once the active set stops growing. The Properties.Count
+		// bound is only a defensive upper limit against an unforeseen non-convergence; it can never
+		// actually be hit first, because the active set can grow at most Properties.Count times.
 		for (var iteration = 0; iteration <= action.Properties.Count; iteration++)
 		{
 			var partialStep = new Step(action.Id, properties);

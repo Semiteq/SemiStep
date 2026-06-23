@@ -108,6 +108,41 @@ public sealed class CrossReferenceValidatorGraphTests
 	}
 
 	[Fact]
+	public void SameSelectorTwoValuesToSameSubaction_Fails_WithSpecificMessage()
+	{
+		// One selector maps two values to the same subaction: its columns are reachable within the
+		// root via two different activation paths. OR-activation is unsupported, so this fails.
+		var actions = new List<ActionDto>
+		{
+			Action(300, "Root", Selector("sel", new Dictionary<int, int> { [2] = 3002, [3] = 3002 })),
+			Subaction(3002, "Shared", new ActionColumnDto { Key = "x", PropertyTypeId = "percent" })
+		};
+
+		var result = Validate(actions);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains("more than one selector condition", StringComparison.OrdinalIgnoreCase)
+			&& e.Message.Contains("'x'", StringComparison.OrdinalIgnoreCase));
+	}
+
+	[Fact]
+	public void SharedSubactionAcrossDistinctRoots_Passes()
+	{
+		// Cross-root sharing is allowed: each root resolves the shared subaction with its own path.
+		var actions = new List<ActionDto>
+		{
+			Action(300, "RootOne", Selector("sel_one", 2, 3002)),
+			Action(301, "RootTwo", Selector("sel_two", 3, 3002)),
+			Subaction(3002, "Shared", new ActionColumnDto { Key = "x", PropertyTypeId = "percent" })
+		};
+
+		var result = Validate(actions);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Fact]
 	public void ValidNestedGraph_Passes()
 	{
 		var actions = new List<ActionDto>
@@ -177,12 +212,17 @@ public sealed class CrossReferenceValidatorGraphTests
 
 	private static ActionColumnDto Selector(string key, int selectorValue, int targetId)
 	{
+		return Selector(key, new Dictionary<int, int> { [selectorValue] = targetId });
+	}
+
+	private static ActionColumnDto Selector(string key, Dictionary<int, int> targets)
+	{
 		return new ActionColumnDto
 		{
 			Key = key,
 			PropertyTypeId = "enum",
 			GroupName = "match_mode",
-			Targets = new Dictionary<int, int> { [selectorValue] = targetId }
+			Targets = targets
 		};
 	}
 }

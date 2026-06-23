@@ -24,8 +24,7 @@ public static class ActionTreeResolver
 	{
 		ArgumentNullException.ThrowIfNull(actions);
 
-		// Ids are unique upstream (the registry passes a dictionary's values; the loader rejects
-		// cross-file duplicates), so last-write-wins is safe and needs no dedicated duplicate guard.
+		// Ids are unique upstream (loader rejects duplicates), so last-write-wins is safe.
 		var actionsById = new Dictionary<int, ActionDefinition>();
 		foreach (var action in actions)
 		{
@@ -169,10 +168,8 @@ public static class ActionTreeResolver
 					+ $"'{existing.PropertyTypeId}' and '{column.PropertyTypeId}'");
 			}
 
-			// Reached a second time within the SAME root. If the two paths carry different
-			// activation conditions, only the first path's conditions would survive on the
-			// resolved column, silently greying the column wrongly under the second branch.
-			// Representing OR-of-paths is out of scope; reject the ambiguous authoring instead.
+			// Reached again within the same root via a different activation path: OR-of-paths is
+			// unsupported by design (only the first path would survive), so reject rather than mis-grey.
 			var existingActivation = existing.Activation ?? Enumerable.Empty<ActivationCondition>();
 			var candidateActivation = activation ?? Enumerable.Empty<ActivationCondition>();
 			if (!existingActivation.SequenceEqual(candidateActivation))

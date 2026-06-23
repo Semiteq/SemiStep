@@ -42,9 +42,7 @@ internal static class CrossReferenceValidator
 		List<ActionDto> actions,
 		List<Result> validationResults)
 	{
-		// Duplicate action ids are rejected earlier by ActionsSectionLoader (across files) and
-		// by domain mapping; here the list is already unique. Last-write-wins keeps this robust
-		// if that ever changes without masking the dedicated duplicate-id error.
+		// Duplicate action ids are already rejected by ActionsSectionLoader; last-write-wins here.
 		var actionsById = new Dictionary<int, ActionDto>();
 		foreach (var action in actions)
 		{

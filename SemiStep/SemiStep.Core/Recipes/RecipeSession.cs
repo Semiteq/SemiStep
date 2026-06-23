@@ -483,9 +483,8 @@ public sealed class RecipeSession
 			properties = properties.Remove(new PropertyId(dropKey));
 		}
 
-		// Seed defaults through the same resolver StepInitializer uses, so a newly-activated column
-		// with no default_value (numeric, enum/group) gets its proper default instead of an empty
-		// string that would fail validation.
+		// Resolve seed defaults through StepInitializer so a newly-activated column with no
+		// default_value still gets a valid default instead of an empty string that fails validation.
 		foreach (var seedKey in columnsToSeed)
 		{
 			var seedPropertyResult = action.FindProperty(seedKey);

@@ -48,9 +48,7 @@ public sealed class FormulaEvaluator
 
 		var variableValues = BuildVariableMap(step, formula, action, activeColumns);
 
-		// A recalc-order variable that is currently inactive (its column is dropped from the
-		// row's active set) means the formula does not apply to this composition: skip the
-		// recalc and leave the step unchanged.
+		// Null map = a recalc variable is inactive for this composition; skip recalc, leave step as-is.
 		if (variableValues is null)
 		{
 			return Result.Ok(step);

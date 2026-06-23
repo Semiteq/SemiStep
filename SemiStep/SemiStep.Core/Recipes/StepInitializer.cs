@@ -11,13 +11,9 @@ public static class StepInitializer
 		ActionDefinition action,
 		RecipeMetadataRegistry recipeMetadataRegistry)
 	{
-		// Seed to a fixpoint. Always-active columns (no activation conditions — this includes
-		// every top-level selector) are seeded first so the active set can be computed; each
-		// newly-seeded selector can in turn activate deeper columns, so we recompute the active
-		// set and seed again until it stops growing. For a flat (non-nested) action every column
-		// is always-active, so this converges in a single pass and behaves exactly as before.
-		// Inactive columns (e.g. capacitor columns under an Авто selector) are deliberately left
-		// out so serialization writes their PLC slot as 0/empty instead of a stale default.
+		// Seed only active columns, to a fixpoint: a seeded selector can activate deeper columns,
+		// so recompute the active set and seed until it stops growing. Inactive columns are left
+		// out deliberately so serialization writes their PLC slot as 0/empty, not a stale default.
 		var properties = ImmutableDictionary<PropertyId, PropertyValue>.Empty;
 
 		var alwaysActive = action.Properties
@@ -29,11 +25,8 @@ public static class StepInitializer
 				ResolveDefaultValue(column, recipeMetadataRegistry));
 		}
 
-		// Active set grows monotonically (seeding a selector can only add columns). The loop
-		// terminates when a pass seeds nothing (seededThisPass == false) — that is the real
-		// termination mechanism, reached once the active set stops growing. The Properties.Count
-		// bound is only a defensive upper limit against an unforeseen non-convergence; it can never
-		// actually be hit first, because the active set can grow at most Properties.Count times.
+		// Real termination is the seededThisPass guard below; the Properties.Count bound is only a
+		// defensive cap (the active set can grow at most Properties.Count times).
 		for (var iteration = 0; iteration <= action.Properties.Count; iteration++)
 		{
 			var partialStep = new Step(action.Id, properties);
@@ -62,7 +55,6 @@ public static class StepInitializer
 		return new Step(action.Id, properties);
 	}
 
-	// Config registries are pre-validated at startup; .Value access is safe here.
 	internal static PropertyValue ResolveDefaultValue(
 		ActionPropertyDefinition property,
 		RecipeMetadataRegistry recipeMetadataRegistry)

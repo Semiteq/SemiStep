@@ -3,12 +3,6 @@
   ui_name: "Откачка"
   deploy_duration: longlasting
   columns:
-    - key: gate_mode
-      group_name: gate_mode
-      property_type_id: enum
-    - key: gate_setpoint
-      default_value: "0"
-      property_type_id: gate_setpoint
     - key: step_duration
       default_value: "10"
       property_type_id: time
@@ -158,12 +152,6 @@
   ui_name: "Напуск"
   deploy_duration: longlasting
   columns:
-    - key: gate_mode
-      group_name: gate_mode
-      property_type_id: enum
-    - key: gate_setpoint
-      default_value: "0"
-      property_type_id: gate_setpoint
     - key: step_duration
       default_value: "10"
       property_type_id: time

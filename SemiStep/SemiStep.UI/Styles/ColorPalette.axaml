@@ -1,19 +1,13 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Accent / Selection -->
+    <!-- Accent -->
     <Color x:Key="AccentColor">#0078D7</Color>
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
 
-    <!-- Cell State: Disabled (per-depth x past) / Disabled+Selected / Foreground, and Grid lines
-         are installed at startup by CellPaletteInstaller from GridStyleOptions
-         (colors.cells.disabled.{depth_0..3,depth_0..3_past,selected,foreground}, colors.grid_line).
-         Brush keys: CellDisabledDepth{0..3}Brush, CellDisabledDepth{0..3}PastBrush,
-         CellDisabledSelectedBackgroundBrush, CellDisabledForegroundBrush, GridLineBrush. -->
-
-    <!-- Selected text foreground (white-on-accent) -->
-    <Color x:Key="TextOnAccentColor">#FFFFFF</Color>
-    <SolidColorBrush x:Key="TextOnAccentBrush" Color="{StaticResource TextOnAccentColor}" />
+    <!-- Config-driven brushes (cell state, selection, grid lines) are installed at startup by
+         CellPaletteInstaller from GridStyleOptions. See CellPaletteInstaller for the full key
+         list and the config source paths. -->
 
     <!-- Severity indicators -->
     <Color x:Key="ErrorColor">#D32F2F</Color>

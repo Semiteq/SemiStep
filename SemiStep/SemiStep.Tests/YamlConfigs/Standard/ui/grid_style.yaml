@@ -7,6 +7,9 @@ layout:
   row_height: 24
 
 colors:
+  selection:
+    background: "#CCE4F7"
+    foreground: "#202020"
   cells:
     readonly:
       depth_0: "#D8D8D8"

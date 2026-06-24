@@ -20,6 +20,9 @@ public sealed class GridStyleMapperTests
 
 		var options = GridStyleMapper.Map(dto);
 
+		options.SelectionBackgroundColor.Should().Be("#ABCDEF");
+		options.SelectionForegroundColor.Should().Be("#FEDCBA");
+
 		options.ReadOnlyCellDepth0Color.Should().Be("#11111B");
 		options.ReadOnlyCellDepth1Color.Should().Be("#22222B");
 		options.ReadOnlyCellDepth2Color.Should().Be("#33333B");
@@ -67,6 +70,11 @@ public sealed class GridStyleMapperTests
 		{
 			Colors = new GridStyleColorsDto
 			{
+				Selection = new GridStyleSelectionColorsDto
+				{
+					Background = "#ABCDEF",
+					Foreground = "#FEDCBA"
+				},
 				Cells = new GridStyleCellColorsDto
 				{
 					ReadOnly = new GridStyleReadOnlyCellColorsDto

@@ -19,8 +19,8 @@ layout:
 
 colors:
   selection:
-    background: "#0078D7"
-    foreground: "#0078D7"
+    background: "#CCE4F7"
+    foreground: "#202020"
   cells:
     readonly:
       depth_0: "#D8D8D8"
@@ -31,7 +31,7 @@ colors:
       depth_1_past: "#BCC4CE"
       depth_2_past: "#ACB7C2"
       depth_3_past: "#8590A0"
-      selected: "#6B95C0"
+      selected: "#DCE8F4"
       foreground: "#606060"
     disabled:
       depth_0: "#E0E0E0"
@@ -42,7 +42,7 @@ colors:
       depth_1_past: "#C5CDD8"
       depth_2_past: "#B5C0CC"
       depth_3_past: "#909AAA"
-      selected: "#89B4D7"
+      selected: "#E2E9F2"
       foreground: "#808080"
     execution:
       depth_0: "#FFFFFF"

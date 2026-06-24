@@ -163,6 +163,17 @@
         <Setter Property="Background" Value="{DynamicResource CellDisabledDepth3PastBrush}" />
     </Style>
 
+    <!-- ============================================== -->
+    <!-- Changed-cell highlight. Placed after the       -->
+    <!-- inapplicable/depth chains and before           -->
+    <!-- `:selected` so last-match-wins makes orange    -->
+    <!-- beat the normal and idle-depth tints and lose  -->
+    <!-- to selection.                                  -->
+    <!-- ============================================== -->
+    <Style Selector="DataGridCell[(rg|InapplicableCellTheme.IsChanged)=True]">
+        <Setter Property="Background" Value="{DynamicResource CellChangedBrush}" />
+    </Style>
+
     <!-- User selection must remain visible on tinted rows. Placed after the depth -->
     <!-- selectors so it wins on every cell, but before the current-step marker -->
     <!-- so the marker still shows on the step-number column when the current -->

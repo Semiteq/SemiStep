@@ -11,10 +11,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Plc;
+using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 using SemiStep.Tests.Core.Helpers;
+using SemiStep.Tests.Helpers;
 
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.MessageService;
@@ -178,6 +180,68 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 
 		changed.Should().Contain(nameof(RecipeRowViewModel.InapplicableColumns));
 		row.InapplicableColumns.Should().NotBeSameAs(before);
+	}
+
+	[AvaloniaFact]
+	public void SwitchToManual_MarksSeededColumnChanged()
+	{
+		var row = AppendBranchingRow();
+
+		row.SetPropertyValue(SelectorColumn, ManualValue);
+
+		row.ChangedColumns.Should().Contain(SubColumn);
+		row.ChangedColumns.Should().NotContain(SelectorColumn);
+	}
+
+	[AvaloniaFact]
+	public void SwitchBackToAuto_DropsSeededColumnFromChanged()
+	{
+		var row = AppendBranchingRow();
+		row.SetPropertyValue(SelectorColumn, ManualValue);
+		row.ChangedColumns.Should().Contain(SubColumn);
+
+		row.SetPropertyValue(SelectorColumn, AutoValue);
+
+		row.ChangedColumns.Should().NotContain(SubColumn);
+	}
+
+	[AvaloniaFact]
+	public void FailedSelectorEdit_LeavesChangedColumnsUntouched()
+	{
+		var row = AppendBranchingRow();
+		row.SetPropertyValue(SelectorColumn, ManualValue);
+		row.ChangedColumns.Should().Contain(SubColumn);
+		var beforeFailedEdit = row.ChangedColumns;
+
+		// "2" parses as an int (so TryBuildSelectorEdit builds a SelectorEdit and routes through the
+		// selector path), but it is not a defined match_mode group value, so the coordinator rejects
+		// it. OnSelectorValueChanged takes the result.IsFailed early-return before ApplyChangedDelta:
+		// a rejected selector edit must not mutate the changed set.
+		row.SetPropertyValue(SelectorColumn, "2");
+
+		row.ChangedColumns.Should().BeSameAs(beforeFailedEdit);
+		row.ChangedColumns.Should().Contain(SubColumn);
+	}
+
+	[AvaloniaFact]
+	public void BlockedSelectorEdit_LeavesChangedColumnsUntouched()
+	{
+		var row = AppendBranchingRow();
+		row.SetPropertyValue(SelectorColumn, ManualValue);
+		row.ChangedColumns.Should().Contain(SubColumn);
+
+		// Going recipe-active both locks editing AND clears all changed highlights (execution
+		// start is one of the three clear triggers). Capture the post-clear set, then confirm the
+		// blocked selector edit takes OnSelectorValueChanged's read-only early-return and does not
+		// apply the changed delta (same instance, no new membership).
+		var stubS7 = _services.GetRequiredService<StubS7Service>();
+		stubS7.PushExecutionState(PlcExecutionInfo.Empty with { RecipeActive = true });
+		_grid.IsReadOnly.Should().BeTrue();
+		var afterExecutionStart = row.ChangedColumns;
+
+		row.SetPropertyValue(SelectorColumn, AutoValue);
+
+		row.ChangedColumns.Should().BeSameAs(afterExecutionStart);
 	}
 
 	[AvaloniaFact]

@@ -383,6 +383,100 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	public void ChangedColumns_InitiallyEmpty()
+	{
+		var row = CreateRow();
+
+		row.ChangedColumns.Should().BeEmpty();
+	}
+
+	[AvaloniaFact]
+	public void MarkChanged_SetsMembership_AndAssignsNewInstance()
+	{
+		var row = CreateRow();
+		var before = row.ChangedColumns;
+
+		row.MarkChanged(new[] { "alpha", "beta" });
+
+		row.ChangedColumns.Should().NotBeSameAs(before);
+		row.ChangedColumns.Should().BeEquivalentTo("alpha", "beta");
+		row.IsChanged("ALPHA").Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void ApplyChangedDelta_AddsAndRemoves()
+	{
+		var row = CreateRow();
+		row.MarkChanged(new[] { "alpha", "beta" });
+		var before = row.ChangedColumns;
+
+		row.ApplyChangedDelta(new[] { "gamma" }, new[] { "alpha" });
+
+		row.ChangedColumns.Should().NotBeSameAs(before);
+		row.ChangedColumns.Should().BeEquivalentTo("beta", "gamma");
+	}
+
+	[AvaloniaFact]
+	public void ClearChanged_RemovesOneKey_WhenPresent()
+	{
+		var row = CreateRow();
+		row.MarkChanged(new[] { "alpha", "beta" });
+		var before = row.ChangedColumns;
+
+		row.ClearChanged("alpha");
+
+		row.ChangedColumns.Should().NotBeSameAs(before);
+		row.ChangedColumns.Should().BeEquivalentTo("beta");
+	}
+
+	[AvaloniaFact]
+	public void ClearChanged_AbsentKey_IsNoOp_AndKeepsInstance()
+	{
+		var row = CreateRow();
+		row.MarkChanged(new[] { "alpha" });
+		var before = row.ChangedColumns;
+
+		row.ClearChanged("missing");
+
+		row.ChangedColumns.Should().BeSameAs(before);
+		row.ChangedColumns.Should().BeEquivalentTo("alpha");
+	}
+
+	[AvaloniaFact]
+	public void ClearAllChanged_EmptiesSet_WhenNonEmpty()
+	{
+		var row = CreateRow();
+		row.MarkChanged(new[] { "alpha", "beta" });
+		var before = row.ChangedColumns;
+
+		row.ClearAllChanged();
+
+		row.ChangedColumns.Should().NotBeSameAs(before);
+		row.ChangedColumns.Should().BeEmpty();
+	}
+
+	[AvaloniaFact]
+	public void ClearAllChanged_AlreadyEmpty_IsNoOp_AndKeepsInstance()
+	{
+		var row = CreateRow();
+		var before = row.ChangedColumns;
+
+		row.ClearAllChanged();
+
+		row.ChangedColumns.Should().BeSameAs(before);
+	}
+
+	[AvaloniaFact]
+	public void IsChanged_ReflectsMembership()
+	{
+		var row = CreateRow();
+		row.MarkChanged(new[] { "alpha" });
+
+		row.IsChanged("alpha").Should().BeTrue();
+		row.IsChanged("beta").Should().BeFalse();
+	}
+
+	[AvaloniaFact]
 	public void Dispose_NullsEventDelegates()
 	{
 		var row = CreateRow();

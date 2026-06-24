@@ -39,6 +39,11 @@ internal sealed class ExecutionHighlightTracker
 			return;
 		}
 
+		if (!_lastRecipeActive)
+		{
+			ClearAllChangedHighlights();
+		}
+
 		_lastRecipeActive = true;
 		_lastActualLine = info.ActualLine;
 
@@ -61,6 +66,14 @@ internal sealed class ExecutionHighlightTracker
 		{
 			row.IsCurrentStep = false;
 			row.IsPastStep = false;
+		}
+	}
+
+	private void ClearAllChangedHighlights()
+	{
+		foreach (var row in _rows)
+		{
+			row.ClearAllChanged();
 		}
 	}
 }

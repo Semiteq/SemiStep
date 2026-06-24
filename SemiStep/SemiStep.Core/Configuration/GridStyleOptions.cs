@@ -53,12 +53,7 @@ public sealed record GridStyleOptions(
 	string ExecutionDepth3PastColor,
 	string ExecutionCurrentStepMarkerColor)
 {
-	/// <summary>
-	/// Fallback configuration used for shape/wiring tests only. The `#000000` sentinel values on
-	/// the readonly, disabled, and execution cell palettes are intentional placeholders — production
-	/// runs load real colors via <c>GridStyleValidator</c> + <c>GridStyleMapper</c> and never observe
-	/// these defaults.
-	/// </summary>
+	// Test-only fallback; the #000000 cell palettes are placeholders, never rendered in production.
 	public static GridStyleOptions Default { get; } = new(
 		HeaderFontSize: 14,
 		CellFontSize: 12,

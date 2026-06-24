@@ -28,14 +28,10 @@ public static class Program
 
 		try
 		{
-			// Phase 1: pre-flight validation. Anything that can fail BEFORE Avalonia is
-			// initialised runs here. The outcome decides which window (and only one) is shown.
 			var outcome = ValidateStartup(options.ConfigDir);
 
-			// Phase 2: launch exactly one window. Both branches call BuildAvaloniaApp()
-			// exactly once; the catch below intentionally does NOT fall back to RunErrorWindow,
-			// because by the time App.Run can throw, Avalonia has already been initialised
-			// and a second BuildAvaloniaApp() would throw "Application has already been initialized".
+			// The catch must not re-launch: once App.Run has initialised Avalonia, a second
+			// BuildAvaloniaApp() would throw "Application has already been initialized".
 			if (outcome.Errors is not null)
 			{
 				App.RunErrorWindow(outcome.Errors);

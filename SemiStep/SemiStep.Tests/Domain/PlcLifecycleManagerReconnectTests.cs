@@ -75,16 +75,13 @@ public sealed class PlcLifecycleManagerReconnectTests
 	{
 		var (plc, session, s7Service, _) = await BuildAsync();
 
-		// Populate local recipe so it is non-empty.
 		var appendResult = session.AppendStep(WaitActionId);
 		appendResult.IsSuccess.Should().BeTrue();
 
-		// Configure stub: committed=true, PLC recipe different from local.
 		var plcRecipe = BuildSingleStepRecipe();
 		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
 		s7Service.RecipeToReturn = plcRecipe;
 
-		// Activate sync so the relay handles Connected events.
 		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
 
@@ -96,10 +93,8 @@ public sealed class PlcLifecycleManagerReconnectTests
 			conflictPlcRecipe = plcRec;
 		};
 
-		// Simulate an auto-reconnect: StateChanged fires Connected while sync is active.
 		s7Service.RaiseStateChanged(PlcConnectionState.Connected);
 
-		// (a) Observable state: wait until the fire-and-forget reconciliation has raised the conflict event.
 		await TestHelpers.WaitUntilAsync(
 			() => conflictLocalRecipe is not null,
 			cancellationToken: TestContext.Current.CancellationToken);
@@ -114,12 +109,9 @@ public sealed class PlcLifecycleManagerReconnectTests
 	{
 		var (plc, session, s7Service, syncService) = await BuildAsync();
 
-		// Populate local recipe so it is non-empty; AppendStep populates default properties
-		// per the action definition, so the local step is not empty.
 		var appendResult = session.AppendStep(WaitActionId);
 		appendResult.IsSuccess.Should().BeTrue();
 
-		// Configure stub: committed=true, PLC recipe is a fresh-instance deep copy of the local one.
 		// Reusing BuildSingleStepRecipe() would yield empty Properties, which differ from the
 		// session's populated step and would wrongly trip the conflict branch.
 		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
@@ -133,11 +125,8 @@ public sealed class PlcLifecycleManagerReconnectTests
 
 		var countBeforeStateChange = syncService.NotifyRecipeChangedCallCount;
 
-		// Simulate an auto-reconnect: StateChanged fires Connected while sync is active.
 		s7Service.RaiseStateChanged(PlcConnectionState.Connected);
 
-		// (a) Observable state: identical content takes the equal branch, which falls through
-		// to NotifyLocalRecipe and increments the counter.
 		await TestHelpers.WaitUntilAsync(
 			() => syncService.NotifyRecipeChangedCallCount > countBeforeStateChange,
 			cancellationToken: TestContext.Current.CancellationToken);
@@ -159,19 +148,15 @@ public sealed class PlcLifecycleManagerReconnectTests
 	{
 		var (plc, _, s7Service, syncService) = await BuildAsync();
 
-		// Configure stub: committed=false, so reconciliation should push local recipe.
 		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: false, RecipeLines: 0);
 
 		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
 
-		// Capture the call count after EnableSync to measure only the reconnect-triggered push.
 		var countBeforeStateChange = syncService.NotifyRecipeChangedCallCount;
 
-		// Simulate an auto-reconnect.
 		s7Service.RaiseStateChanged(PlcConnectionState.Connected);
 
-		// (a) Observable state: wait until the reconcile-on-reconnect pushes the local recipe.
 		await TestHelpers.WaitUntilAsync(
 			() => syncService.NotifyRecipeChangedCallCount > countBeforeStateChange,
 			cancellationToken: TestContext.Current.CancellationToken);
@@ -188,7 +173,6 @@ public sealed class PlcLifecycleManagerReconnectTests
 		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
 
-		// Simulate a connection drop while sync is active.
 		s7Service.RaiseStateChanged(PlcConnectionState.Disconnected);
 
 		syncService.WasHandleConnectionLostCalled.Should().BeTrue(
@@ -252,7 +236,6 @@ public sealed class PlcLifecycleManagerReconnectTests
 		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
 		s7Service.RecipeToReturn = plcRecipe;
 
-		// Register a no-op callback so the path completes without applying anything to the session.
 		// The session must remain empty: the lifecycle manager is forbidden from mutating it directly,
 		// because such a mutation skips UI-thread marshalling and the mutation-signal channel.
 		var callbackInvoked = false;

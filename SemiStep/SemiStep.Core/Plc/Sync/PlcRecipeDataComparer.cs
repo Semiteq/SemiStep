@@ -4,11 +4,6 @@ namespace SemiStep.Core.Plc.Sync;
 
 internal static class PlcRecipeDataComparer
 {
-	// Floats are serialised to raw IEEE 754 bytes, written to the PLC, and read back without
-	// any arithmetic transformation. The round-trip is byte-exact, so bit-exact equality is
-	// the correct comparison here — not an epsilon-based approximation.
-	// BitConverter.SingleToInt32Bits is used rather than == to correctly handle NaN payloads
-	// and distinguish +0 from -0 (different IEEE-754 bit patterns).
 	internal static bool DataMatchesExpected(PlcRecipeData actual, PlcRecipeData expected)
 	{
 		if (actual.IntValues.Length != expected.IntValues.Length)

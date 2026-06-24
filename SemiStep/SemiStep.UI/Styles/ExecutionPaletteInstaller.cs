@@ -21,10 +21,7 @@ internal static class ExecutionPaletteInstaller
 		ArgumentNullException.ThrowIfNull(resources);
 		ArgumentNullException.ThrowIfNull(gridStyle);
 
-		// `ExecRowDepth0Brush` (and its `Past` counterpart) represent the "outside any loop"
-		// tint. No selector currently consumes them — the brush is reserved for future explicit
-		// styling of non-loop rows. Keeping the resource installed lets us add that selector
-		// without revisiting the configuration model.
+		// Depth0 brushes (the "outside any loop" tint) are installed but not yet consumed by any selector.
 		resources[ExecRowDepth0BrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth0Color);
 		resources[ExecRowDepth1BrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth1Color);
 		resources[ExecRowDepth2BrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth2Color);

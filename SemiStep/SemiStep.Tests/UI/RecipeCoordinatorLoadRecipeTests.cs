@@ -165,7 +165,6 @@ public sealed class RecipeCoordinatorLoadRecipeTests
 
 		try
 		{
-			// Save the default empty recipe so we have a valid CSV file with no steps.
 			await coordinator.SaveRecipeAsync(tempFilePath);
 
 			var result = await coordinator.LoadRecipeAsync(tempFilePath);

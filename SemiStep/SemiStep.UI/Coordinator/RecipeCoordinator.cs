@@ -27,10 +27,7 @@ public sealed class RecipeCoordinator : IDisposable
 	private readonly IDisposable _canEditRecipeConnection;
 	private readonly CsvService _csvService;
 	private readonly object _disposeLock = new();
-	// PLC channels: hop to MainThreadScheduler once here at the source, expose via
-	// Publish().RefCount() so all subscribers share a single ObserveOn. Subscribers
-	// (RecipeGridViewModel, MainWindowViewModel, PlcMonitorViewModel) consume these
-	// without applying their own ObserveOn.
+	// Hopped to MainThreadScheduler once and shared via Publish().RefCount(); subscribers add no ObserveOn.
 	private readonly IObservable<PlcExecutionInfo> _executionState;
 	private readonly ImportedRecipeValidator _importedRecipeValidator;
 	private readonly ILogger<RecipeCoordinator> _logger;
@@ -209,7 +206,6 @@ public sealed class RecipeCoordinator : IDisposable
 		}
 		else
 		{
-			// Marshal the session mutation onto the UI thread (see DispatchMutation).
 			result = await Dispatcher.UIThread.InvokeAsync(() => _plc.ApplyRecipeFromPlc(readResult.Value));
 		}
 
@@ -336,7 +332,6 @@ public sealed class RecipeCoordinator : IDisposable
 		}
 		else
 		{
-			// Marshal the session mutation onto the UI thread (see DispatchMutation).
 			result = await Dispatcher.UIThread.InvokeAsync(() =>
 			{
 				var validateResult = _session.LoadAsCurrentValidated(loadResult.Value, _importedRecipeValidator);
@@ -397,7 +392,6 @@ public sealed class RecipeCoordinator : IDisposable
 		}
 		else
 		{
-			// Marshal the dirty-flag mutation onto the UI thread (see DispatchMutation).
 			await Dispatcher.UIThread.InvokeAsync(() => _session.MarkSaved());
 			_logger.LogInformation("Saved recipe to {FilePath}", filePath);
 			// Not a step-graph mutation; subscribers refresh window-title / IsDirty / status.
@@ -411,9 +405,7 @@ public sealed class RecipeCoordinator : IDisposable
 
 	private async Task<Result> ApplyReconnectPlcRecipeAsync(Recipe recipe)
 	{
-		// Reconnect reconciliation resumes on a thread-pool continuation. Hop to the UI
-		// dispatcher before mutating the session so the grid sink observes the change on
-		// the thread it asserts, then dispatch the mutation signal from the same context.
+		// Reconnect reconciliation resumes off-thread; marshal to the UI dispatcher before mutating.
 		return await Dispatcher.UIThread.InvokeAsync(() =>
 		{
 			var applyResult = _plc.ApplyRecipeFromPlc(recipe);
@@ -472,9 +464,7 @@ public sealed class RecipeCoordinator : IDisposable
 			signal.GetType().Name,
 			_session.Current.StepCount);
 
-		// Mutation entry points include async file/PLC paths that may resume off the UI
-		// thread. Subscribers (RecipeGridViewModel.OnMutation) assert UI-thread access, so
-		// marshal explicitly here instead of relying on captured sync context.
+		// Async file/PLC paths may resume off-thread; the grid sink asserts UI-thread, so marshal explicitly.
 		if (Dispatcher.UIThread.CheckAccess())
 		{
 			RaiseMutatedSafely(signal);
@@ -551,10 +541,8 @@ public sealed class RecipeCoordinator : IDisposable
 
 	private void RebuildMessagePanel()
 	{
-		// The panel reflects the CURRENT recipe's structural validity, never an operation
-		// outcome. A failed analysis (e.g. a loaded recipe with loop nesting beyond the limit)
-		// is an operation failure surfaced transiently by the initiating VM, so its IError
-		// reasons must not leak into the panel even though the failed snapshot is the current one.
+		// Panel shows the current recipe's validity, not operation outcomes; failed-analysis errors
+		// are surfaced transiently by the initiating VM and must not leak here.
 		IEnumerable<IReason> reasons = _session.Snapshot.IsSuccess
 			? _session.Snapshot.Reasons
 			: Array.Empty<IReason>();

@@ -177,25 +177,28 @@
     <!-- User selection must remain visible on tinted rows. Placed after the depth -->
     <!-- selectors so it wins on every cell, but before the current-step marker -->
     <!-- so the marker still shows on the step-number column when the current -->
-    <!-- step is also user-selected. -->
+    <!-- step is also user-selected. Selection bg/fg come from the dedicated -->
+    <!-- SelectionBackgroundBrush/SelectionForegroundBrush (config-driven), -->
+    <!-- decoupled from AccentBrush. -->
     <Style Selector="DataGridRow:selected DataGridCell">
-        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SelectionBackgroundBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />
     </Style>
 
     <!-- Selected row override for read-only cells. Must come AFTER the generic -->
     <!-- :selected rule above so last-match-wins gives read-only-selected cells -->
-    <!-- the configurable CellReadOnlySelectedBackgroundBrush instead of AccentBrush. -->
+    <!-- the configurable CellReadOnlySelectedBackgroundBrush instead of the -->
+    <!-- generic SelectionBackgroundBrush. -->
     <Style Selector="DataGridRow:selected DataGridCell.read-only-column">
         <Setter Property="Background" Value="{DynamicResource CellReadOnlySelectedBackgroundBrush}" />
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />
     </Style>
 
     <!-- Selected row override for inapplicable cells. Same last-match-wins logic -->
     <!-- gives the configurable CellDisabledSelectedBackgroundBrush. -->
     <Style Selector="DataGridRow:selected DataGridCell[(rg|InapplicableCellTheme.IsInapplicable)=True]">
         <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextOnAccentBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />
     </Style>
 
     <Style Selector="DataGridRow.current-step DataGridCell.step-number-column">

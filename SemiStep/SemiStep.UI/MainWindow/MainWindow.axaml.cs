@@ -138,23 +138,18 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 		var pressedRow = e.Row.DataContext as RecipeRowViewModel;
 		var pressedColumnKey = e.Column.Tag as string;
 
-		if (_pendingChangedCell is { } pending
-			&& (pressedRow is null
-				|| pressedColumnKey is null
-				|| !ReferenceEquals(pending.Row, pressedRow)
-				|| !string.Equals(pending.ColumnKey, pressedColumnKey, StringComparison.OrdinalIgnoreCase)))
+		var (cellToClear, newPending) = ChangedCellClickResolver.Resolve(
+			_pendingChangedCell,
+			pressedRow,
+			pressedColumnKey);
+
+		if (cellToClear is { } toClear
+			&& (ViewModel is null || ViewModel.RecipeGrid.RecipeRows.Contains(toClear.Row)))
 		{
-			if (ViewModel is null || ViewModel.RecipeGrid.RecipeRows.Contains(pending.Row))
-			{
-				pending.Row.ClearChanged(pending.ColumnKey);
-			}
+			toClear.Row.ClearChanged(toClear.ColumnKey);
 		}
 
-		_pendingChangedCell = pressedRow is not null
-			&& pressedColumnKey is not null
-			&& pressedRow.IsChanged(pressedColumnKey)
-				? (pressedRow, pressedColumnKey)
-				: null;
+		_pendingChangedCell = newPending;
 	}
 
 	private void OnDataGridLoadingRow(object? sender, DataGridRowEventArgs e)

@@ -140,7 +140,6 @@ public sealed class PlcSyncCoordinatorTests
 		var (coordinator, transport, connectionService) = Build(connected: true);
 		connectionService.SetConnected(true);
 
-		// Configure read-back for verification (empty arrays)
 		var layout = BuildTestConfiguration().Layout;
 		transport.SetReadResponseForDb(layout.IntDb.DbNumber, (_, count) => new byte[count]);
 		transport.SetReadResponseForDb(layout.FloatDb.DbNumber, (_, count) => new byte[count]);

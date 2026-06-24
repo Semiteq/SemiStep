@@ -12,10 +12,7 @@ internal static class GridStyleMapper
 		}
 
 		var defaults = GridStyleOptions.Default;
-		// Validator-first invariant: GridStyleValidator runs before this mapper and rejects
-		// any DTO where `colors.cells.readonly`, `colors.cells.disabled` or
-		// `colors.cells.execution` (or any of their hex keys) is missing. The local aliases
-		// below let us read each field without re-suppressing the chain on every line.
+		// Presence guaranteed by GridStyleValidator, which runs before this mapper; hence the `!` chain.
 		var readOnlyCells = dto.Colors!.Cells!.ReadOnly!;
 		var disabledCells = dto.Colors!.Cells!.Disabled!;
 		var executionCells = dto.Colors!.Cells!.Execution!;

@@ -12,9 +12,6 @@ using Xunit;
 
 namespace SemiStep.Tests.Core;
 
-/// <summary>
-/// Characterization tests pinning the observable contract of <see cref="RecipeSession"/>.
-/// </summary>
 [Trait("Category", "Integration")]
 [Trait("Component", "Core")]
 [Trait("Area", "Characterization")]

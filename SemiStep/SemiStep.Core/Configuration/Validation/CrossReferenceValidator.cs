@@ -109,13 +109,7 @@ internal static class CrossReferenceValidator
 		ValidateNoSharedColumnAcrossBranches(actions, actionsById, validationResults);
 	}
 
-	/// <summary>
-	/// Mirrors the resolver's rejection of a column reachable within a single root via more than
-	/// one selector condition (OR-activation is unsupported), so the config load fails with a clean
-	/// aggregated error instead of throwing later at registry construction. The resolver keeps its
-	/// own guard as defense-in-depth. For each root the column-key map is fresh, so the same column
-	/// shared across DIFFERENT roots is allowed and not flagged.
-	/// </summary>
+	// Shared-column / OR-activation rule documented in Docs/architecture/nested-actions.md.
 	private static void ValidateNoSharedColumnAcrossBranches(
 		List<ActionDto> actions,
 		Dictionary<int, ActionDto> actionsById,
@@ -149,15 +143,6 @@ internal static class CrossReferenceValidator
 		}
 	}
 
-	/// <summary>
-	/// Depth-first walk of the <c>targets</c> graph from one root, tracking per column key the
-	/// activation-path signature (the ordered selector edges taken to reach it; the root's own
-	/// columns have an empty signature = always-active). Returns <c>true</c> with the conflicting
-	/// key the first time a column key is reached with a path signature different from the one first
-	/// seen (OR-activation, which is unsupported), stopping the walk at most one finding per root.
-	/// Cycle-safe via <paramref name="onPath"/> (cycles are reported separately by
-	/// <see cref="ValidateNoCycles"/>).
-	/// </summary>
 	private static bool TryFindSharedColumn(
 		int actionId,
 		string pathSignature,
@@ -230,12 +215,7 @@ internal static class CrossReferenceValidator
 		}
 	}
 
-	/// <summary>
-	/// Surfaces a reference-graph cycle as a clean config-load validation error, consistent with
-	/// the sibling dangling/orphan rules. The resolver also guards against cycles defensively, but
-	/// reporting it here means the config load fails with all reference errors together rather than
-	/// throwing later at registry construction.
-	/// </summary>
+	// Reported here, not at registry construction, so all reference errors surface together.
 	private static void ValidateNoCycles(
 		List<ActionDto> actions,
 		Dictionary<int, ActionDto> actionsById,

@@ -80,10 +80,8 @@ public class App : Application
 		EnsureSingleStart();
 		BuildAvaloniaApp()
 			.AfterSetup(_ =>
-				// UseReactiveUI() above has already registered AvaloniaScheduler as
-				// RxSchedulers.MainThreadScheduler. Initialize services here — after the
-				// scheduler is set — so that ReactiveCommand singletons capture the
-				// correct scheduler at construction time.
+				// Initialize after setup: UseReactiveUI() has registered AvaloniaScheduler as
+				// MainThreadScheduler by now, so ReactiveCommand singletons capture it at construction.
 				InitializeServices(serviceProvider))
 			.AfterSetup(builder =>
 			{
@@ -97,10 +95,7 @@ public class App : Application
 	{
 		var session = provider.GetRequiredService<RecipeSession>();
 
-		// session.Reset() returns Result<RecipeSnapshot> from analyzing Recipe.Empty.
-		// Empty-recipe analysis can surface configuration validator warnings that should
-		// be logged but never block startup — the MessagePanel rebuild on first PLC tick
-		// will surface them to the user. Logged for diagnostic visibility only.
+		// Empty-recipe analysis can surface validator warnings; log them but never block startup.
 		var resetResult = session.Reset();
 		if (resetResult.IsFailed)
 		{

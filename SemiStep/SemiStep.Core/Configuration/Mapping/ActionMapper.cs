@@ -162,7 +162,6 @@ internal static class ActionMapper
 
 		var failures = new List<Result>();
 
-		// Normalize expression dictionary to a case-insensitive lookup once; reject case-only duplicates.
 		var expressionsByKey = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		foreach (var (key, value) in rawExpressions)
 		{
@@ -189,14 +188,12 @@ internal static class ActionMapper
 				$"[{section}] formula.recalc_order contains duplicate entries"));
 		}
 
-		// Map case-insensitively to action column key (canonical casing).
 		var columnByKey = new Dictionary<string, ActionPropertyDefinition>(StringComparer.OrdinalIgnoreCase);
 		foreach (var column in columns)
 		{
 			columnByKey[column.Key] = column;
 		}
 
-		// Normalize recalc_order entries to canonical column casing.
 		var canonicalRecalcOrder = new List<string>(rawRecalcOrder.Count);
 		foreach (var variable in rawRecalcOrder)
 		{
@@ -211,7 +208,6 @@ internal static class ActionMapper
 			}
 		}
 
-		// Validate system_type is numeric (int/float).
 		foreach (var variable in canonicalRecalcOrder)
 		{
 			if (!columnByKey.TryGetValue(variable, out var column))

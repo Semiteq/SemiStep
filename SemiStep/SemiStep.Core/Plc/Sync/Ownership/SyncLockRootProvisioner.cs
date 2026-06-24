@@ -46,8 +46,7 @@ internal sealed class SyncLockRootProvisioner
 		{
 			// Best-effort ACL provisioning. A different Windows user that cannot open the
 			// lock file is mapped to a clean refusal in FileSyncOwnership.TryAcquire,
-			// so a failure to widen the ACL here does not crash the caller. Installer-time
-			// provisioning is documented in the plan's Post-Completion section.
+			// so a failure to widen the ACL here does not crash the caller.
 		}
 	}
 }

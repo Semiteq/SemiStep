@@ -27,7 +27,6 @@ public static class TestDataCopier
 	{
 		var tempDir = new TempDirectory();
 
-		// Step 1: Copy baseline (Standard)
 		var baselineDir = GetTestDataPath(BaselineCaseName);
 		if (!Directory.Exists(baselineDir))
 		{
@@ -36,7 +35,6 @@ public static class TestDataCopier
 
 		CopyDirectory(baselineDir, tempDir.Path);
 
-		// Step 2: Overlay invalid case files
 		var invalidDir = GetTestDataPath(Path.Combine(InvalidCasesFolder, invalidCaseName));
 		if (!Directory.Exists(invalidDir))
 		{

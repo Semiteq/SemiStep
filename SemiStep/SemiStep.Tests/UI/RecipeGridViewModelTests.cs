@@ -427,4 +427,56 @@ public sealed class RecipeGridViewModelTests : IAsyncLifetime
 		_logger.Entries.Should().NotContain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("Stale"));
 	}
+
+	[AvaloniaFact]
+	public void ChangeStepAction_MarksChangedColumns_ToNewStepPropertyKeys()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		_fixture.Coordinator.ChangeStepAction(0, RecipeTestDriver.ForLoopActionId);
+
+		var expected = _fixture.Coordinator.CurrentRecipe.Steps[0].Properties.Keys
+			.Select(id => id.Value)
+			.ToList();
+		_grid.RecipeRows[0].ChangedColumns.Should().BeEquivalentTo(expected);
+	}
+
+	[AvaloniaFact]
+	public void AppendStep_DoesNotMarkChangedColumns()
+	{
+		_fixture.Coordinator.NewRecipe();
+
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+
+		_grid.RecipeRows[0].ChangedColumns.Should().BeEmpty();
+	}
+
+	[AvaloniaFact]
+	public void PropertyEdit_ClearsChangedColumn_AfterSuccessfulUpdate()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		var row = _grid.RecipeRows[0];
+		row.MarkChanged(new[] { RecipeTestDriver.StepDurationColumn });
+
+		row.SetPropertyValue(RecipeTestDriver.StepDurationColumn, "15");
+
+		row.ChangedColumns.Should().NotContain(RecipeTestDriver.StepDurationColumn);
+	}
+
+	[AvaloniaFact]
+	public void PropertyEdit_RejectedValue_PreservesChangedColumn()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		var row = _grid.RecipeRows[0];
+		row.MarkChanged(new[] { RecipeTestDriver.StepDurationColumn });
+
+		// "999999" exceeds the duration property maximum, so UpdateStepProperty returns IsFailed and
+		// OnCellValueChanged takes the early-return before ClearChanged: a rejected edit keeps orange.
+		row.SetPropertyValue(RecipeTestDriver.StepDurationColumn, "999999");
+
+		row.ChangedColumns.Should().Contain(RecipeTestDriver.StepDurationColumn);
+	}
 }

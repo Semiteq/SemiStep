@@ -24,4 +24,14 @@ internal static class CellApplicabilityBinding
 			Mode = BindingMode.OneWay,
 		};
 	}
+
+	public static Binding CreateChangedBinding(string columnKey)
+	{
+		return new Binding(nameof(RecipeRowViewModel.ChangedColumns))
+		{
+			Converter = new FuncValueConverter<IReadOnlySet<string>?, bool>(
+				set => set is not null && set.Contains(columnKey)),
+			Mode = BindingMode.OneWay,
+		};
+	}
 }

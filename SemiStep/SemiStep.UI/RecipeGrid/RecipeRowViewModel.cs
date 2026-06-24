@@ -82,6 +82,12 @@ public sealed class RecipeRowViewModel(
 		private set => this.RaiseAndSetIfChanged(ref field, value);
 	} = inapplicableColumns;
 
+	public IReadOnlySet<string> ChangedColumns
+	{
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	} = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
 	public IReadOnlyDictionary<string, string?> ColumnUnits => _columnMetadata.Units;
 
 	public IReadOnlyDictionary<string, string> ColumnFormatKinds => _columnMetadata.FormatKinds;
@@ -188,6 +194,51 @@ public sealed class RecipeRowViewModel(
 	public void RecomputeInapplicableColumns()
 	{
 		InapplicableColumns = BuildInapplicableColumns(action, _step, recipeMetadataRegistry);
+	}
+
+	/// <summary>
+	/// Replaces <see cref="ChangedColumns"/> with a fresh set built from <paramref name="keys"/>.
+	/// Like <see cref="InapplicableColumns"/>, the OneWay cell binding only re-fires on a reference
+	/// change, so every mutator assigns a NEW set instance rather than mutating in place.
+	/// </summary>
+	public void MarkChanged(IEnumerable<string> keys)
+	{
+		ChangedColumns = new HashSet<string>(keys, StringComparer.OrdinalIgnoreCase);
+	}
+
+	public void ApplyChangedDelta(IReadOnlyCollection<string> add, IReadOnlyCollection<string> remove)
+	{
+		var next = new HashSet<string>(ChangedColumns, StringComparer.OrdinalIgnoreCase);
+		next.UnionWith(add);
+		next.ExceptWith(remove);
+		ChangedColumns = next;
+	}
+
+	public void ClearChanged(string columnKey)
+	{
+		if (!ChangedColumns.Contains(columnKey))
+		{
+			return;
+		}
+
+		var next = new HashSet<string>(ChangedColumns, StringComparer.OrdinalIgnoreCase);
+		next.Remove(columnKey);
+		ChangedColumns = next;
+	}
+
+	public void ClearAllChanged()
+	{
+		if (ChangedColumns.Count == 0)
+		{
+			return;
+		}
+
+		ChangedColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+	}
+
+	public bool IsChanged(string columnKey)
+	{
+		return ChangedColumns.Contains(columnKey);
 	}
 
 	/// <summary>

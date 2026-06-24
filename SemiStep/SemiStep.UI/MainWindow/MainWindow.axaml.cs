@@ -20,6 +20,7 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 	private bool _forceClose;
 	private bool _isEditing;
 	private bool _columnsBuilt;
+	private (RecipeRowViewModel Row, string ColumnKey)? _pendingChangedCell;
 
 	public MainWindow()
 	{
@@ -51,6 +52,7 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 			RecipeGrid.BeginningEdit += OnBeginningEdit;
 			RecipeGrid.CellEditEnded += OnCellEditEnded;
 			RecipeGrid.SelectionChanged += OnSelectionChanged;
+			RecipeGrid.CellPointerPressed += OnCellPointerPressed;
 			ViewModel.RecipeGrid.SelectionRequested += OnSelectionRequested;
 
 			Disposable.Create(() =>
@@ -58,6 +60,8 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 				RecipeGrid.BeginningEdit -= OnBeginningEdit;
 				RecipeGrid.CellEditEnded -= OnCellEditEnded;
 				RecipeGrid.SelectionChanged -= OnSelectionChanged;
+				RecipeGrid.CellPointerPressed -= OnCellPointerPressed;
+				_pendingChangedCell = null;
 				if (ViewModel is not null)
 				{
 					ViewModel.RecipeGrid.SelectionRequested -= OnSelectionRequested;
@@ -125,6 +129,32 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 	private void OnCellEditEnded(object? sender, DataGridCellEditEndedEventArgs e)
 	{
 		_isEditing = false;
+	}
+
+	// Click-away rule: a changed (orange) cell clears the moment any OTHER cell is pressed. This is
+	// not an edit, so it must run even while the grid is read-only during PLC sync — no IsReadOnly guard.
+	private void OnCellPointerPressed(object? sender, DataGridCellPointerPressedEventArgs e)
+	{
+		var pressedRow = e.Row.DataContext as RecipeRowViewModel;
+		var pressedColumnKey = e.Column.Tag as string;
+
+		if (_pendingChangedCell is { } pending
+			&& (pressedRow is null
+				|| pressedColumnKey is null
+				|| !ReferenceEquals(pending.Row, pressedRow)
+				|| !string.Equals(pending.ColumnKey, pressedColumnKey, StringComparison.OrdinalIgnoreCase)))
+		{
+			if (ViewModel is null || ViewModel.RecipeGrid.RecipeRows.Contains(pending.Row))
+			{
+				pending.Row.ClearChanged(pending.ColumnKey);
+			}
+		}
+
+		_pendingChangedCell = pressedRow is not null
+			&& pressedColumnKey is not null
+			&& pressedRow.IsChanged(pressedColumnKey)
+				? (pressedRow, pressedColumnKey)
+				: null;
 	}
 
 	private void OnDataGridLoadingRow(object? sender, DataGridRowEventArgs e)

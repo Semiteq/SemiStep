@@ -149,6 +149,37 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 		}
 	}
 
+	[AvaloniaFact]
+	public void ExecutionStart_ClearsAllChangedColumns()
+	{
+		var rows = BuildRows(10);
+		rows[2].MarkChanged(new[] { "Temperature" });
+		rows[5].MarkChanged(new[] { "Pressure", "Duration" });
+		var tracker = new ExecutionHighlightTracker(rows);
+
+		tracker.OnExecutionStateChanged(BuildActive(0));
+
+		foreach (var row in rows)
+		{
+			row.ChangedColumns.Should().BeEmpty();
+		}
+	}
+
+	[AvaloniaFact]
+	public void AlreadyActiveLineChange_DoesNotReClearChangedColumns()
+	{
+		var rows = BuildRows(10);
+		var tracker = new ExecutionHighlightTracker(rows);
+
+		tracker.OnExecutionStateChanged(BuildActive(0));
+
+		rows[3].MarkChanged(new[] { "Temperature" });
+
+		tracker.OnExecutionStateChanged(BuildActive(4));
+
+		rows[3].ChangedColumns.Should().Contain("Temperature");
+	}
+
 	private static PlcExecutionInfo BuildActive(int actualLine)
 	{
 		return new PlcExecutionInfo(

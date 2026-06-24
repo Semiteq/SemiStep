@@ -201,7 +201,10 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		if (result.IsFailed)
 		{
 			_messagePanel.ReportFailure(result, $"Step {stepIndex + 1}");
+			return;
 		}
+
+		row.ClearChanged(columnKey);
 	}
 
 	private void OnSelectorValueChanged(RecipeRowViewModel row, SelectorEdit selectorEdit)
@@ -231,6 +234,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		}
 
 		row.RecomputeInapplicableColumns();
+		row.ApplyChangedDelta(add: selectorEdit.ColumnsToSeed, remove: selectorEdit.ColumnsToDrop);
 	}
 
 	private void OnActionChanged(RecipeRowViewModel row, int newActionId)
@@ -383,13 +387,16 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
-		var row = TryCreateRow(recipe.Steps[stepIndex], stepIndex + 1);
+		var step = recipe.Steps[stepIndex];
+		var row = TryCreateRow(step, stepIndex + 1);
 		if (row is null)
 		{
 			return;
 		}
 		RecipeRows[stepIndex].Dispose();
 		RecipeRows[stepIndex] = row;
+
+		row.MarkChanged(step.Properties.Keys.Select(id => id.Value));
 	}
 
 	private void RenumberRows(int fromIndex)

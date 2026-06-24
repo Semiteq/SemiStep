@@ -23,6 +23,11 @@
     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
     <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
 
+    <!-- Changed-cell highlight: a value seeded with a default by an action / selector change.
+         Flat brush, not routed through the config-driven per-depth palette. -->
+    <Color x:Key="CellChangedColor">#FFCC80</Color>
+    <SolidColorBrush x:Key="CellChangedBrush" Color="{StaticResource CellChangedColor}" />
+
     <!-- Connection status -->
     <Color x:Key="ConnectedColor">#44BB44</Color>
     <Color x:Key="DisconnectedColor">#FF4444</Color>

@@ -1,5 +1,8 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Data;
+using Avalonia.Layout;
+using Avalonia.Media;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
@@ -12,6 +15,11 @@ public sealed class ColumnBuilder(
 {
 	private const string ReadOnlyColumnClass = "read-only-column";
 	private const string StepNumberColumnClass = "step-number-column";
+
+	// Assigned as the column's HeaderTemplate, not as a DataGridColumnHeader ContentTemplate setter:
+	// the header binds ContentTemplate from HeaderTemplate, so a style setter is overridden and the
+	// header would not wrap. See Docs/architecture/recipe-grid-column-sizing.md.
+	private readonly IDataTemplate _wrappingHeaderTemplate = BuildWrappingHeaderTemplate(gridStyle);
 
 	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(recipeMetadataRegistry);
 
@@ -30,18 +38,42 @@ public sealed class ColumnBuilder(
 		}
 	}
 
-	private static void AddNumberingColumn(DataGrid grid)
+	private void AddNumberingColumn(DataGrid grid)
 	{
 		var column = new DataGridTextColumn
 		{
 			Header = "No",
+			HeaderTemplate = _wrappingHeaderTemplate,
 			Binding = new Binding("StepNumber"),
 			IsReadOnly = true,
 			Width = DataGridLength.Auto,
+			MinWidth = ColumnWidthCalculator.MinColumnWidth,
 			CanUserSort = false
 		};
 		column.CellStyleClasses.Add(StepNumberColumnClass);
 		grid.Columns.Add(column);
+	}
+
+	private static IDataTemplate BuildWrappingHeaderTemplate(GridStyleOptions gridStyle)
+	{
+		return new FuncDataTemplate<object?>(
+			(_, _) =>
+			{
+				var textBlock = new TextBlock
+				{
+					FontSize = gridStyle.HeaderFontSize,
+					FontWeight = FontWeight.Bold,
+					TextWrapping = TextWrapping.Wrap,
+					MaxLines = 2,
+					TextTrimming = TextTrimming.CharacterEllipsis,
+					TextAlignment = TextAlignment.Center,
+					HorizontalAlignment = HorizontalAlignment.Stretch,
+					VerticalAlignment = VerticalAlignment.Center
+				};
+				textBlock.Bind(TextBlock.TextProperty, new Binding());
+				return textBlock;
+			},
+			supportsRecycling: true);
 	}
 
 	private DataGridColumn CreateColumn(GridColumnDefinition columnDef)
@@ -53,6 +85,8 @@ public sealed class ColumnBuilder(
 			column.CellStyleClasses.Add(ReadOnlyColumnClass);
 		}
 		column.CellTheme = InapplicableCellTheme.Create(columnDef.Key);
+		column.MinWidth = ColumnWidthCalculator.MinColumnWidth;
+		column.HeaderTemplate = _wrappingHeaderTemplate;
 
 		return column;
 	}
@@ -81,7 +115,7 @@ public sealed class ColumnBuilder(
 	private int? ResolveMaxLength(GridColumnDefinition columnDef)
 	{
 		var propertyDef = recipeMetadataRegistry.GetProperty(columnDef.PropertyTypeId).Value;
-		var isStringTyped = string.Equals(propertyDef.SystemType, "string", StringComparison.OrdinalIgnoreCase);
+		var isStringTyped = SystemTypes.Comparer.Equals(propertyDef.SystemType, SystemTypes.String);
 
 		return isStringTyped ? recipeMetadataRegistry.GetStringMaxLength() : null;
 	}

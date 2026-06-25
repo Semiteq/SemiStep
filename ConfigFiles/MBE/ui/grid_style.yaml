@@ -22,6 +22,7 @@ colors:
     background: "#CCE4F7"
     foreground: "#202020"
   cells:
+    changed: "#FFCC80"
     readonly:
       depth_0: "#D8D8D8"
       depth_1: "#CCD5E0"

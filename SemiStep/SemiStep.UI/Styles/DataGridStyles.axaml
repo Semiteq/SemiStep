@@ -212,6 +212,13 @@
         <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />
     </Style>
 
+    <!-- Changed + selected: keep the selection background legible and signal the change with an orange
+         border instead, so both read at once (issue #80). Border, not Background, is what survives selection. -->
+    <Style Selector="DataGridRow:selected DataGridCell[(rg|InapplicableCellTheme.IsChanged)=True]">
+        <Setter Property="BorderBrush" Value="{DynamicResource CellChangedBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+
     <Style Selector="DataGridRow.current-step DataGridCell.step-number-column">
         <Setter Property="Background" Value="{DynamicResource CurrentStepMarkerBrush}" />
     </Style>

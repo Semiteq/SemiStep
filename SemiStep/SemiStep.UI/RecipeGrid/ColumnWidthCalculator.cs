@@ -38,10 +38,14 @@ public sealed class ColumnWidthCalculator(
 
 	public DataGridLength CalculateColumnWidth(GridColumnDefinition columnDef)
 	{
+		if (ColumnTypes.IsGroupBoundColumn(columnDef.ColumnType))
+		{
+			return CalculateGroupColumnWidth(columnDef);
+		}
+
 		return columnDef.ColumnType.ToLowerInvariant() switch
 		{
 			ColumnTypes.ActionComboBox => CalculateActionColumnWidth(columnDef),
-			ColumnTypes.ActionTargetComboBox => CalculateGroupColumnWidth(columnDef),
 			ColumnTypes.PropertyField => CalculatePropertyFieldWidth(columnDef),
 			ColumnTypes.StepStartTimeField => CalculateTimeColumnWidth(columnDef),
 			ColumnTypes.TextField => new DataGridLength(1, DataGridLengthUnitType.Star),

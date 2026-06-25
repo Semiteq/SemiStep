@@ -22,6 +22,7 @@ public sealed class GridStyleMapperTests
 
 		options.SelectionBackgroundColor.Should().Be("#ABCDEF");
 		options.SelectionForegroundColor.Should().Be("#FEDCBA");
+		options.CellChangedColor.Should().Be("#0ABBCD");
 
 		options.ReadOnlyCellDepth0Color.Should().Be("#11111B");
 		options.ReadOnlyCellDepth1Color.Should().Be("#22222B");
@@ -64,6 +65,17 @@ public sealed class GridStyleMapperTests
 		options.Should().Be(GridStyleOptions.Default);
 	}
 
+	[Fact]
+	public void Map_OmittedChangedColor_FallsBackToDefault()
+	{
+		var dto = BuildCompleteDto();
+		dto.Colors!.Cells!.Changed = null;
+
+		var options = GridStyleMapper.Map(dto);
+
+		options.CellChangedColor.Should().Be(GridStyleOptions.Default.CellChangedColor);
+	}
+
 	private static GridStyleOptionsDto BuildCompleteDto()
 	{
 		return new GridStyleOptionsDto
@@ -77,6 +89,7 @@ public sealed class GridStyleMapperTests
 				},
 				Cells = new GridStyleCellColorsDto
 				{
+					Changed = "#0ABBCD",
 					ReadOnly = new GridStyleReadOnlyCellColorsDto
 					{
 						Depth0 = "#11111B",

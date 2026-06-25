@@ -42,6 +42,7 @@ public sealed class CellPaletteInstallerTests
 			DisabledCellForegroundColor = "#808080",
 			SelectionBackgroundColor = "#CCE4F7",
 			SelectionForegroundColor = "#202020",
+			CellChangedColor = "#FFCC80",
 			GridLineColor = "#CCCCCC",
 		};
 		var resources = new ResourceDictionary();
@@ -70,9 +71,10 @@ public sealed class CellPaletteInstallerTests
 		AssertBrush(resources, CellPaletteInstaller.CellDisabledForegroundBrushKey, "#808080");
 		AssertBrush(resources, CellPaletteInstaller.SelectionBackgroundBrushKey, "#CCE4F7");
 		AssertBrush(resources, CellPaletteInstaller.SelectionForegroundBrushKey, "#202020");
+		AssertBrush(resources, CellPaletteInstaller.CellChangedBrushKey, "#FFCC80");
 		AssertBrush(resources, CellPaletteInstaller.GridLineBrushKey, "#CCCCCC");
 
-		resources.Count.Should().Be(23);
+		resources.Count.Should().Be(24);
 	}
 
 	private static void AssertBrush(IResourceDictionary resources, string key, string expectedHex)

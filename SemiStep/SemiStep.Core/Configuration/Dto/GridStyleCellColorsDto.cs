@@ -4,6 +4,8 @@ namespace SemiStep.Core.Configuration.Dto;
 
 internal sealed class GridStyleCellColorsDto
 {
+	[YamlMember(Alias = "changed")] public string? Changed { get; set; }
+
 	[YamlMember(Alias = "readonly")] public GridStyleReadOnlyCellColorsDto? ReadOnly { get; set; }
 
 	[YamlMember(Alias = "disabled")] public GridStyleDisabledCellColorsDto? Disabled { get; set; }

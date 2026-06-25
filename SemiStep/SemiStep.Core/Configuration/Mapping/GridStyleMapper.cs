@@ -27,6 +27,7 @@ internal static class GridStyleMapper
 			RowHeight: dto.Layout?.RowHeight ?? defaults.RowHeight,
 			SelectionBackgroundColor: dto.Colors?.Selection?.Background ?? defaults.SelectionBackgroundColor,
 			SelectionForegroundColor: dto.Colors?.Selection?.Foreground ?? defaults.SelectionForegroundColor,
+			CellChangedColor: dto.Colors?.Cells?.Changed ?? defaults.CellChangedColor,
 			DisabledCellDepth0Color: disabledCells.Depth0!,
 			DisabledCellDepth1Color: disabledCells.Depth1!,
 			DisabledCellDepth2Color: disabledCells.Depth2!,

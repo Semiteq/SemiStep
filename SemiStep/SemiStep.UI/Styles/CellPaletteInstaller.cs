@@ -29,6 +29,7 @@ internal static class CellPaletteInstaller
 	public const string SelectionBackgroundBrushKey = "SelectionBackgroundBrush";
 	public const string SelectionForegroundBrushKey = "SelectionForegroundBrush";
 	public const string CellChangedBrushKey = "CellChangedBrush";
+	public const string CellChangedSelectedBackgroundBrushKey = "CellChangedSelectedBackgroundBrush";
 	public const string GridLineBrushKey = "GridLineBrush";
 
 	public static void Install(IResourceDictionary resources, GridStyleOptions gridStyle)
@@ -59,6 +60,8 @@ internal static class CellPaletteInstaller
 		resources[SelectionBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.SelectionBackgroundColor);
 		resources[SelectionForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.SelectionForegroundColor);
 		resources[CellChangedBrushKey] = PaletteBrushFactory.From(gridStyle.CellChangedColor);
+		resources[CellChangedSelectedBackgroundBrushKey] =
+			PaletteBrushFactory.From(gridStyle.CellChangedSelectedColor);
 		resources[GridLineBrushKey] = PaletteBrushFactory.From(gridStyle.GridLineColor);
 	}
 }

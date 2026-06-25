@@ -212,11 +212,12 @@
         <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />
     </Style>
 
-    <!-- Changed + selected: keep the selection background legible and signal the change with an orange
-         border instead, so both read at once (issue #80). Border, not Background, is what survives selection. -->
+    <!-- Changed + selected: a dedicated blended background so both signals read at once (issue #80),
+         mirroring the read-only/disabled selected variants above. A border would change the cell box and
+         make the selected row taller, so the signal is carried by Background, not a border. -->
     <Style Selector="DataGridRow:selected DataGridCell[(rg|InapplicableCellTheme.IsChanged)=True]">
-        <Setter Property="BorderBrush" Value="{DynamicResource CellChangedBrush}" />
-        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="Background" Value="{DynamicResource CellChangedSelectedBackgroundBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />
     </Style>
 
     <Style Selector="DataGridRow.current-step DataGridCell.step-number-column">

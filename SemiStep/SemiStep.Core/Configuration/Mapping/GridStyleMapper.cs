@@ -28,6 +28,7 @@ internal static class GridStyleMapper
 			SelectionBackgroundColor: dto.Colors?.Selection?.Background ?? defaults.SelectionBackgroundColor,
 			SelectionForegroundColor: dto.Colors?.Selection?.Foreground ?? defaults.SelectionForegroundColor,
 			CellChangedColor: dto.Colors?.Cells?.Changed ?? defaults.CellChangedColor,
+			CellChangedSelectedColor: dto.Colors?.Cells?.ChangedSelected ?? defaults.CellChangedSelectedColor,
 			DisabledCellDepth0Color: disabledCells.Depth0!,
 			DisabledCellDepth1Color: disabledCells.Depth1!,
 			DisabledCellDepth2Color: disabledCells.Depth2!,

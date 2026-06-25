@@ -6,11 +6,12 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Layout;
 
+using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
 
 namespace SemiStep.UI.RecipeGrid;
 
-internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataRegistry)
+internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataRegistry, GridStyleOptions gridStyle)
 {
 	public DataGridColumn CreateActionColumn(GridColumnDefinition columnDef, DataGridLength width)
 	{
@@ -109,11 +110,14 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 		}, supportsRecycling: true);
 	}
 
-	private static ComboBox CreateStyledComboBox()
+	// FontSize explicit: the Fluent ComboBox selection box does not inherit the grid font, so without it
+	// the text renders at the theme default and the chevron clips it. See Docs/architecture/recipe-grid-column-sizing.md.
+	private ComboBox CreateStyledComboBox()
 	{
 		return new ComboBox
 		{
 			DisplayMemberBinding = new Binding(nameof(ComboBoxItemViewModel.DisplayText)),
+			FontSize = gridStyle.CellFontSize,
 			HorizontalAlignment = HorizontalAlignment.Stretch,
 			VerticalAlignment = VerticalAlignment.Center,
 		};

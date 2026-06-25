@@ -15,16 +15,26 @@ public sealed class ColumnWidthCalculator(
 	// Raw seconds whose units-bearing render ("00:00:00 с") is the widest step-start-time cell value.
 	private const string RepresentativeTimeRawSeconds = "0";
 
-	// The numbering column (ColumnBuilder) uses it as its MinWidth, so do not lower it.
-	public const int MinColumnWidth = 72;
-
 	// String MaxLength can be very large (production props use 64/255); cap the representative sample
 	// so a wide string column does not dominate the available FullHD width.
 	private const int MaxStringSampleLength = 12;
 
-	// Additive budget (cell/header padding plus an off-the-border reserve) added once to the content
-	// and header-word floors; sized for the tightest case. See Docs/architecture/recipe-grid-column-sizing.md.
-	private const double CellChromeAllowance = 26;
+	// ceil(CellFontSize × 2.0); calibration of the prior 26 px. See Docs/architecture/recipe-grid-column-sizing.md
+	private const double ChromeFontMultiple = 2.0;
+
+	// em multiple calibrated to reproduce 72 at the default font. See Docs/architecture/recipe-grid-column-sizing.md
+	private const double MinColumnWidthEms = 6.0;
+
+	// 32 chevron column + 6 left padding; fixed theme DIP. See Docs/architecture/recipe-grid-column-sizing.md
+	private const int ComboBoxChromeWidth = 38;
+
+	// See Docs/architecture/recipe-grid-column-sizing.md
+	private int ContentChrome => (int)Math.Ceiling(gridStyle.CellFontSize * ChromeFontMultiple);
+
+	private int HeaderFloorChrome => (int)Math.Ceiling(gridStyle.HeaderFontSize * ChromeFontMultiple);
+
+	// The numbering column (ColumnBuilder) uses it as its MinWidth, so do not lower it.
+	public int MinColumnWidth => (int)Math.Ceiling(gridStyle.CellFontSize * MinColumnWidthEms);
 
 	public DataGridLength CalculateColumnWidth(GridColumnDefinition columnDef)
 	{
@@ -43,14 +53,14 @@ public sealed class ColumnWidthCalculator(
 	{
 		var actionNames = recipeMetadataRegistry.GetAllActions().Select(a => a.UiName);
 
-		return CalculateWidth(actionNames, columnDef.UiName);
+		return CalculateWidth(actionNames, columnDef.UiName, ComboBoxChromeWidth);
 	}
 
 	private DataGridLength CalculateGroupColumnWidth(GridColumnDefinition columnDef)
 	{
 		var displayStrings = CollectGroupDisplayStrings(columnDef.Key);
 
-		return CalculateWidth(displayStrings, columnDef.UiName);
+		return CalculateWidth(displayStrings, columnDef.UiName, ComboBoxChromeWidth);
 	}
 
 	private DataGridLength CalculateTimeColumnWidth(GridColumnDefinition columnDef)
@@ -106,7 +116,7 @@ public sealed class ColumnWidthCalculator(
 		return TimeFormatHelper.FormatValue(rawValue, propertyDef.FormatKind, propertyDef.Units);
 	}
 
-	private DataGridLength CalculateWidth(IEnumerable<string> contentStrings, string headerText)
+	private DataGridLength CalculateWidth(IEnumerable<string> contentStrings, string headerText, double? chromeOverride = null)
 	{
 		var maxContentWidth = 0.0;
 		foreach (var text in contentStrings)
@@ -123,7 +133,7 @@ public sealed class ColumnWidthCalculator(
 			}
 		}
 
-		var contentBudget = maxContentWidth + CellChromeAllowance;
+		var contentBudget = maxContentWidth + (chromeOverride ?? ContentChrome);
 		var pixelWidth = (int)Math.Ceiling(
 			Math.Max(Math.Max(contentBudget, LongestHeaderWordFloor(headerText)), MinColumnWidth));
 
@@ -149,7 +159,7 @@ public sealed class ColumnWidthCalculator(
 			}
 		}
 
-		return maxWordWidth + CellChromeAllowance;
+		return maxWordWidth + HeaderFloorChrome;
 	}
 
 	private IEnumerable<string> CollectGroupDisplayStrings(string columnKey)

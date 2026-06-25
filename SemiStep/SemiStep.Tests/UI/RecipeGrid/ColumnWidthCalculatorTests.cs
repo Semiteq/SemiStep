@@ -25,8 +25,23 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	// Mirrors the private MaxStringSampleLength cap in ColumnWidthCalculator.
 	private const int StringSampleCap = 12;
 
-	// Mirrors the private CellChromeAllowance in ColumnWidthCalculator.
-	private const double CellChromeAllowance = 26;
+	// Mirror the font-proportional chrome of ColumnWidthCalculator, derived from GridStyleOptions.Default.
+	private const double ChromeFontMultiple = 2.0;
+	private const double MinColumnWidthEms = 6.0;
+	private const double ComboBoxChromeWidth = 38;
+
+	// Larger fonts for the font-scaling tests.
+	private const int LargeCellFontSize = 24;
+	private const int LargeHeaderFontSize = 28;
+
+	private static int ContentChrome =>
+		(int)Math.Ceiling(GridStyleOptions.Default.CellFontSize * ChromeFontMultiple);
+
+	private static int HeaderFloorChrome =>
+		(int)Math.Ceiling(GridStyleOptions.Default.HeaderFontSize * ChromeFontMultiple);
+
+	private static int MinColumnWidthFloor =>
+		(int)Math.Ceiling(GridStyleOptions.Default.CellFontSize * MinColumnWidthEms);
 
 	private readonly UIFixture _fixture = new();
 	private ColumnWidthCalculator _calculator = null!;
@@ -49,13 +64,13 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 
 		var pixelWidth = GetPixelWidth(_calculator.CalculateColumnWidth(actionColumn));
 
-		pixelWidth.Should().BeGreaterThanOrEqualTo(ColumnWidthCalculator.MinColumnWidth);
+		pixelWidth.Should().BeGreaterThanOrEqualTo(MinColumnWidthFloor);
 
 		var contentWidth = MeasureActionContentWidth();
 		var oldFormulaWidth = (int)Math.Ceiling((contentWidth + 32) * 1.4);
 		pixelWidth.Should().BeLessThan(oldFormulaWidth);
 
-		var expectedWidth = ExpectedWidth(contentWidth, actionColumn.UiName);
+		var expectedWidth = ExpectedWidth(contentWidth, actionColumn.UiName, ComboBoxChromeWidth);
 		pixelWidth.Should().Be(expectedWidth);
 	}
 
@@ -71,11 +86,11 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var contentWidth = MeasureActionContentWidth();
 		var longHeaderWidth = GetPixelWidth(_calculator.CalculateColumnWidth(longHeaderColumn));
 
-		var expectedWidth = ExpectedWidth(contentWidth, longHeaderColumn.UiName);
+		var expectedWidth = ExpectedWidth(contentWidth, longHeaderColumn.UiName, ComboBoxChromeWidth);
 		longHeaderWidth.Should().Be(expectedWidth,
 			"only the longest header word floors the width, not the whole header");
 		longHeaderWidth.Should().BeLessThanOrEqualTo(
-			(int)Math.Ceiling(Math.Max(contentWidth + CellChromeAllowance, LongestHeaderWordFloor(longHeaderColumn.UiName))));
+			(int)Math.Ceiling(Math.Max(contentWidth + ComboBoxChromeWidth, LongestHeaderWordFloor(longHeaderColumn.UiName))));
 	}
 
 	[AvaloniaFact]
@@ -94,9 +109,9 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 			.OrderByDescending(word => MeasureText(word, GridStyleOptions.Default.HeaderFontSize, FontWeight.Bold))
 			.First();
 		var longestWordFloor = (int)Math.Ceiling(
-			MeasureText(longestWord, GridStyleOptions.Default.HeaderFontSize, FontWeight.Bold) + CellChromeAllowance);
+			MeasureText(longestWord, GridStyleOptions.Default.HeaderFontSize, FontWeight.Bold) + HeaderFloorChrome);
 		var wholeHeaderWidth = (int)Math.Ceiling(
-			MeasureText(header, GridStyleOptions.Default.HeaderFontSize, FontWeight.Bold) + CellChromeAllowance);
+			MeasureText(header, GridStyleOptions.Default.HeaderFontSize, FontWeight.Bold) + HeaderFloorChrome);
 
 		pixelWidth.Should().Be(longestWordFloor,
 			"empty content makes the width equal the longest-word floor exactly");
@@ -123,7 +138,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 
 		var longestWordFloor = LongestHeaderWordFloor(header);
 		var wholeHeaderWidth = MeasureText(header, GridStyleOptions.Default.HeaderFontSize, FontWeight.Bold)
-			+ CellChromeAllowance;
+			+ HeaderFloorChrome;
 
 		longestWordFloor.Should().BeLessThan(wholeHeaderWidth / 2,
 			"the floor is the longest WORD, not the whole single-line header (FullHD safety)");
@@ -151,8 +166,8 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 			UiName = "Длительность"
 		};
 
-		var headerWordFloor = ExpectedWidth(0, taskColumn.UiName);
-		headerWordFloor.Should().BeGreaterThan(ColumnWidthCalculator.MinColumnWidth,
+		var headerWordFloor = ExpectedWidth(0, taskColumn.UiName, ContentChrome);
+		headerWordFloor.Should().BeGreaterThan(MinColumnWidthFloor,
 			"the chosen header's longest word must exceed MinColumnWidth so the floor is load-bearing");
 
 		var pixelWidth = GetPixelWidth(_calculator.CalculateColumnWidth(taskColumn));
@@ -175,10 +190,10 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 			durationProperty.FormatKind,
 			durationProperty.Units);
 		var contentWidth = MeasureText(representative, GridStyleOptions.Default.CellFontSize, FontWeight.Normal);
-		var expectedWidth = ExpectedWidth(contentWidth, durationColumn.UiName);
+		var expectedWidth = ExpectedWidth(contentWidth, durationColumn.UiName, ContentChrome);
 
 		pixelWidth.Should().Be(expectedWidth);
-		pixelWidth.Should().BeGreaterThan(ColumnWidthCalculator.MinColumnWidth,
+		pixelWidth.Should().BeGreaterThan(MinColumnWidthFloor,
 			"the formatted Max value is wider than the floor");
 	}
 
@@ -199,14 +214,14 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 
 		var cappedRepresentative = new string('0', StringSampleCap);
 		var cappedContentWidth = MeasureText(cappedRepresentative, GridStyleOptions.Default.CellFontSize, FontWeight.Normal);
-		var expectedWidth = ExpectedWidth(cappedContentWidth, stringColumn.UiName);
+		var expectedWidth = ExpectedWidth(cappedContentWidth, stringColumn.UiName, ContentChrome);
 
 		pixelWidth.Should().Be(expectedWidth);
-		pixelWidth.Should().BeGreaterThanOrEqualTo(ColumnWidthCalculator.MinColumnWidth);
+		pixelWidth.Should().BeGreaterThanOrEqualTo(MinColumnWidthFloor);
 
 		var fullLengthRepresentative = new string('0', stringProperty.MaxLength!.Value);
 		var fullLengthWidth = (int)Math.Ceiling(
-			MeasureText(fullLengthRepresentative, GridStyleOptions.Default.CellFontSize, FontWeight.Normal) + CellChromeAllowance);
+			MeasureText(fullLengthRepresentative, GridStyleOptions.Default.CellFontSize, FontWeight.Normal) + ContentChrome);
 		pixelWidth.Should().BeLessThan(fullLengthWidth,
 			"the cap must keep the column far below the full MaxLength width");
 	}
@@ -220,8 +235,8 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		};
 		var unknownPropertyColumn = taskColumn with { PropertyTypeId = "does_not_exist" };
 
-		var headerWordFloor = ExpectedWidth(0, unknownPropertyColumn.UiName);
-		headerWordFloor.Should().BeGreaterThan(ColumnWidthCalculator.MinColumnWidth,
+		var headerWordFloor = ExpectedWidth(0, unknownPropertyColumn.UiName, ContentChrome);
+		headerWordFloor.Should().BeGreaterThan(MinColumnWidthFloor,
 			"the chosen header's longest word must exceed MinColumnWidth so the floor is load-bearing");
 
 		var pixelWidth = GetPixelWidth(_calculator.CalculateColumnWidth(unknownPropertyColumn));
@@ -238,8 +253,8 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 			UiName = "Длительность"
 		};
 
-		var headerWordFloor = ExpectedWidth(0, unknownTypeColumn.UiName);
-		headerWordFloor.Should().BeGreaterThan(ColumnWidthCalculator.MinColumnWidth,
+		var headerWordFloor = ExpectedWidth(0, unknownTypeColumn.UiName, ContentChrome);
+		headerWordFloor.Should().BeGreaterThan(MinColumnWidthFloor,
 			"the chosen header's longest word must exceed MinColumnWidth so the floor is load-bearing");
 
 		var length = _calculator.CalculateColumnWidth(unknownTypeColumn);
@@ -279,8 +294,8 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 
 		var pixelWidth = GetPixelWidth(calculator.CalculateColumnWidth(valueColumn));
 
-		var flowWidth = ExpectedWidth(MeasureRepresentative(flow, flow.Max!.Value), valueColumn.UiName);
-		var percentWidth = ExpectedWidth(MeasureRepresentative(percent, percent.Max!.Value), valueColumn.UiName);
+		var flowWidth = ExpectedWidth(MeasureRepresentative(flow, flow.Max!.Value), valueColumn.UiName, ContentChrome);
+		var percentWidth = ExpectedWidth(MeasureRepresentative(percent, percent.Max!.Value), valueColumn.UiName, ContentChrome);
 
 		pixelWidth.Should().Be(flowWidth,
 			"the column sizes to the widest unit-bearing value any action binds to its key");
@@ -310,13 +325,131 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 
 		var pixelWidth = GetPixelWidth(calculator.CalculateColumnWidth(speedColumn));
 
-		var minWidth = ExpectedWidth(MeasureRepresentative(speed, speed.Min!.Value), speedColumn.UiName);
-		var maxWidth = ExpectedWidth(MeasureRepresentative(speed, speed.Max!.Value), speedColumn.UiName);
+		var minWidth = ExpectedWidth(MeasureRepresentative(speed, speed.Min!.Value), speedColumn.UiName, ContentChrome);
+		var maxWidth = ExpectedWidth(MeasureRepresentative(speed, speed.Max!.Value), speedColumn.UiName, ContentChrome);
 
 		pixelWidth.Should().Be(minWidth,
 			"the negative Min ('-100 %/мин') is the widest representative and drives the width");
 		minWidth.Should().BeGreaterThan(maxWidth,
 			"the leading minus makes Min wider than Max for a symmetric range");
+	}
+
+	[AvaloniaFact]
+	public void Chrome_ScalesWithFont_ChromeRemainderGrowsBeyondContentScaling()
+	{
+		var smallCellFont = GridStyleOptions.Default.CellFontSize;
+		var largeCellFont = LargeCellFontSize;
+		var durationColumn = _fixture.RecipeMetadataRegistry.GetColumn("step_duration").Value;
+
+		var smallFontCalculator = new ColumnWidthCalculator(
+			_fixture.RecipeMetadataRegistry, GridStyleOptions.Default);
+		var largeFontCalculator = new ColumnWidthCalculator(
+			_fixture.RecipeMetadataRegistry,
+			GridStyleOptions.Default with { CellFontSize = largeCellFont, HeaderFontSize = LargeHeaderFontSize });
+
+		var smallFontWidth = GetPixelWidth(smallFontCalculator.CalculateColumnWidth(durationColumn));
+		var largeFontWidth = GetPixelWidth(largeFontCalculator.CalculateColumnWidth(durationColumn));
+
+		var representative = TimeFormatHelper.FormatValue(
+			"0", TimeFormatHelper.TimeHmsFormat, TimeFormatHelper.TimeUnits);
+		var smallContent = MeasureText(representative, smallCellFont, FontWeight.Normal);
+		var largeContent = MeasureText(representative, largeCellFont, FontWeight.Normal);
+
+		var smallChromeRemainder = smallFontWidth - smallContent;
+		var largeChromeRemainder = largeFontWidth - largeContent;
+
+		largeChromeRemainder.Should().BeGreaterThan(smallChromeRemainder,
+			"the chrome reserve is a font multiple, so at a larger font the width grows by MORE than pure content scaling");
+
+		largeFontCalculator.MinColumnWidth.Should().BeGreaterThan(smallFontCalculator.MinColumnWidth,
+			"the minimum-width floor is a font multiple, so it grows with the cell font");
+	}
+
+	[AvaloniaFact]
+	public void ComboColumn_WiderThanContentColumn_ByChevronBudget()
+	{
+		var representative = new string('0', StringSampleCap);
+		var sampleProperty = TestPropertyTypeDefinitionBuilder.CreateString("sample", StringSampleCap);
+
+		var comboColumn = new GridColumnDefinition(
+			Key: "value",
+			ColumnType: ColumnTypes.ActionComboBox,
+			UiName: "X",
+			PropertyTypeId: "sample",
+			ReadOnly: false,
+			SaveToCsv: true);
+		var contentColumn = comboColumn with { ColumnType = ColumnTypes.PropertyField };
+
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[1] = new ActionDefinition(1, representative, DeployDuration.Immediate,
+				new[] { new ActionPropertyDefinition("value", null, "sample", null) })
+		};
+
+		var calculator = BuildCalculator(
+			new[] { sampleProperty },
+			actions,
+			new Dictionary<string, GridColumnDefinition>
+			{
+				["combo"] = comboColumn,
+				["content"] = contentColumn
+			});
+
+		var comboWidth = GetPixelWidth(calculator.CalculateColumnWidth(comboColumn));
+		var contentWidth = GetPixelWidth(calculator.CalculateColumnWidth(contentColumn));
+
+		var delta = comboWidth - contentWidth;
+		var expectedDelta = (int)(ComboBoxChromeWidth - ContentChrome);
+
+		delta.Should().BeGreaterThan(0,
+			"the combo path budgets the wider Fluent ComboBox chrome, so the combo column exceeds the content column");
+		delta.Should().Be(expectedDelta,
+			"the width gap between the two real outputs equals the chevron budget (ComboBoxChromeWidth - ContentChrome): "
+			+ "both chrome terms are integers and the two content measurements are identical, so there is no rounding divergence");
+	}
+
+	[AvaloniaFact]
+	public void ComboChrome_StaysConstantAcrossFonts_WhileContentChromeGrows()
+	{
+		var smallCellFont = GridStyleOptions.Default.CellFontSize;
+		var largeCellFont = LargeCellFontSize;
+		var representative = new string('0', StringSampleCap);
+		var sampleProperty = TestPropertyTypeDefinitionBuilder.CreateString("sample", StringSampleCap);
+
+		var comboColumn = new GridColumnDefinition(
+			Key: "value",
+			ColumnType: ColumnTypes.ActionComboBox,
+			UiName: "X",
+			PropertyTypeId: "sample",
+			ReadOnly: false,
+			SaveToCsv: true);
+
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[1] = new ActionDefinition(1, representative, DeployDuration.Immediate,
+				new[] { new ActionPropertyDefinition("value", null, "sample", null) })
+		};
+
+		var registry = TestRecipeMetadataRegistryFactory.Build(
+			new[] { sampleProperty }, actions,
+			columns: new Dictionary<string, GridColumnDefinition> { ["combo"] = comboColumn });
+
+		var smallFontCalculator = new ColumnWidthCalculator(registry, GridStyleOptions.Default);
+		var largeFontCalculator = new ColumnWidthCalculator(
+			registry, GridStyleOptions.Default with { CellFontSize = largeCellFont, HeaderFontSize = LargeHeaderFontSize });
+
+		var smallComboWidth = GetPixelWidth(smallFontCalculator.CalculateColumnWidth(comboColumn));
+		var largeComboWidth = GetPixelWidth(largeFontCalculator.CalculateColumnWidth(comboColumn));
+
+		var smallContent = MeasureText(representative, smallCellFont, FontWeight.Normal);
+		var largeContent = MeasureText(representative, largeCellFont, FontWeight.Normal);
+
+		var smallComboChrome = smallComboWidth - smallContent;
+		var largeComboChrome = largeComboWidth - largeContent;
+
+		largeComboChrome.Should().BeApproximately(smallComboChrome, 1.0,
+			"the combo chevron budget is a fixed theme DIP (ComboBoxChromeWidth), so it does not scale with the font "
+			+ "even as the content grows");
 	}
 
 	private static ColumnWidthCalculator BuildCalculator(
@@ -339,11 +472,11 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		return MeasureText(representative, GridStyleOptions.Default.CellFontSize, FontWeight.Normal);
 	}
 
-	private static int ExpectedWidth(double contentWidth, string headerText)
+	private static int ExpectedWidth(double contentWidth, string headerText, double chromeOverride)
 	{
-		var contentBudget = contentWidth + CellChromeAllowance;
+		var contentBudget = contentWidth + chromeOverride;
 		return (int)Math.Ceiling(
-			Math.Max(Math.Max(contentBudget, LongestHeaderWordFloor(headerText)), ColumnWidthCalculator.MinColumnWidth));
+			Math.Max(Math.Max(contentBudget, LongestHeaderWordFloor(headerText)), MinColumnWidthFloor));
 	}
 
 	private static double LongestHeaderWordFloor(string header)
@@ -365,7 +498,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 			}
 		}
 
-		return maxWordWidth + CellChromeAllowance;
+		return maxWordWidth + HeaderFloorChrome;
 	}
 
 	private double MeasureActionContentWidth()

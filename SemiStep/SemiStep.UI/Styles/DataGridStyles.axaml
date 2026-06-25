@@ -32,6 +32,8 @@
     <Style Selector="DataGrid ComboBox">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
+        <!-- left padding 6 to match the ComboBoxChromeWidth budget. See Docs/architecture/recipe-grid-column-sizing.md -->
+        <Setter Property="Padding" Value="6,5,0,7" />
     </Style>
 
     <!-- ============================================== -->

@@ -21,9 +21,9 @@ public sealed class ColumnBuilder(
 	// header would not wrap. See Docs/architecture/recipe-grid-column-sizing.md.
 	private readonly IDataTemplate _wrappingHeaderTemplate = BuildWrappingHeaderTemplate(gridStyle);
 
-	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(recipeMetadataRegistry);
+	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(recipeMetadataRegistry, gridStyle);
 
-	private readonly TextCellFactory _textCellFactory = new();
+	private readonly TextCellFactory _textCellFactory = new(gridStyle);
 	private readonly ColumnWidthCalculator _widthCalculator = new(recipeMetadataRegistry, gridStyle);
 
 	public void BuildColumns(DataGrid grid)
@@ -45,9 +45,10 @@ public sealed class ColumnBuilder(
 			Header = "No",
 			HeaderTemplate = _wrappingHeaderTemplate,
 			Binding = new Binding("StepNumber"),
+			FontSize = gridStyle.CellFontSize,
 			IsReadOnly = true,
 			Width = DataGridLength.Auto,
-			MinWidth = ColumnWidthCalculator.MinColumnWidth,
+			MinWidth = _widthCalculator.MinColumnWidth,
 			CanUserSort = false
 		};
 		column.CellStyleClasses.Add(StepNumberColumnClass);
@@ -85,7 +86,9 @@ public sealed class ColumnBuilder(
 			column.CellStyleClasses.Add(ReadOnlyColumnClass);
 		}
 		column.CellTheme = InapplicableCellTheme.Create(columnDef.Key);
-		column.MinWidth = ColumnWidthCalculator.MinColumnWidth;
+		// Pin absolute columns to their content width so a narrow window scrolls instead of clipping
+		// (the DataGrid otherwise shrinks columns to MinWidth). See Docs/architecture/recipe-grid-column-sizing.md.
+		column.MinWidth = width.IsAbsolute ? width.Value : _widthCalculator.MinColumnWidth;
 		column.HeaderTemplate = _wrappingHeaderTemplate;
 
 		return column;

@@ -68,7 +68,7 @@ public sealed class RecipeGridStringMaxLengthTests : IAsyncLifetime
 		// at the framework default (0 = unlimited). The integration test above covers the
 		// ColumnBuilder end-to-end path for the live string column; this complements it by pinning
 		// the null-branch contract that no live column currently exercises.
-		var template = TextCellFactory.CreateEditingTemplate("any_key", maxLength: null);
+		var template = new TextCellFactory(GridStyleOptions.Default).CreateEditingTemplate("any_key", maxLength: null);
 		var row = CreateRow();
 
 		var built = template.Build(row);

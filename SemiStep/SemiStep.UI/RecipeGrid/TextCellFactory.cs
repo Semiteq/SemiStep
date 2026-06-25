@@ -5,11 +5,12 @@ using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
 
+using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
 
 namespace SemiStep.UI.RecipeGrid;
 
-internal sealed class TextCellFactory
+internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 {
 	public DataGridColumn CreateReadOnlyColumn(GridColumnDefinition columnDef, DataGridLength width)
 	{
@@ -42,12 +43,13 @@ internal sealed class TextCellFactory
 		};
 	}
 
-	private static FuncDataTemplate<RecipeRowViewModel> CreateStepStartTimeTemplate()
+	private FuncDataTemplate<RecipeRowViewModel> CreateStepStartTimeTemplate()
 	{
 		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
 		{
 			var textBlock = new TextBlock
 			{
+				FontSize = gridStyle.CellFontSize,
 				VerticalAlignment = VerticalAlignment.Center,
 				Padding = new Thickness(4, 2),
 				TextAlignment = TextAlignment.Center,
@@ -62,7 +64,7 @@ internal sealed class TextCellFactory
 		}, supportsRecycling: true);
 	}
 
-	private static FuncDataTemplate<RecipeRowViewModel> CreateMultiBindingTemplate(string columnKey)
+	private FuncDataTemplate<RecipeRowViewModel> CreateMultiBindingTemplate(string columnKey)
 	{
 		var bindingPath = ResolveBindingPath(columnKey);
 		var unitsConverter = new DictionaryEntryConverter<string?>(columnKey, null);
@@ -73,6 +75,7 @@ internal sealed class TextCellFactory
 		{
 			var textBlock = new TextBlock
 			{
+				FontSize = gridStyle.CellFontSize,
 				VerticalAlignment = VerticalAlignment.Center,
 				Padding = new Thickness(4, 2),
 				TextAlignment = TextAlignment.Center,
@@ -101,7 +104,7 @@ internal sealed class TextCellFactory
 		}, supportsRecycling: true);
 	}
 
-	public static FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(string columnKey, int? maxLength)
+	public FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(string columnKey, int? maxLength)
 	{
 		var bindingPath = ResolveBindingPath(columnKey);
 
@@ -114,6 +117,7 @@ internal sealed class TextCellFactory
 
 			var textBox = new TextBox
 			{
+				FontSize = gridStyle.CellFontSize,
 				VerticalAlignment = VerticalAlignment.Center,
 				HorizontalAlignment = HorizontalAlignment.Stretch,
 				BorderThickness = new Thickness(0),

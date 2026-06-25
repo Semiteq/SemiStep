@@ -5,6 +5,10 @@
     <Color x:Key="AccentColor">#0078D7</Color>
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
 
+    <!-- Override the Fluent DataGrid sort-glyph reserve (default 32px) to 0: sorting is disabled
+         on every column, so the reserved column otherwise just crowds the header text. -->
+    <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
+
     <!-- Config-driven brushes (cell state, selection, grid lines) are installed at startup by
          CellPaletteInstaller from GridStyleOptions. See CellPaletteInstaller for the full key
          list and the config source paths. -->

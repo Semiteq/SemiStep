@@ -22,11 +22,14 @@
         <KeyBinding Gesture="Ctrl+N" Command="{Binding RecipeCommands.AddStepCommand}" />
     </Window.KeyBindings>
 
-    <Grid RowDefinitions="Auto,*,Auto,Auto">
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
 
         <local:RecipeMenuBar Grid.Row="0" />
 
-        <DataGrid Grid.Row="1"
+        <local:RecipeToolBar Grid.Row="1"
+                             IsVisible="{Binding IsToolBarVisible}" />
+
+        <DataGrid Grid.Row="2"
                   x:Name="RecipeGrid"
                   ItemsSource="{Binding RecipeGrid.RecipeRows}"
                   AutoGenerateColumns="False"
@@ -60,12 +63,12 @@
             </DataGrid.ContextMenu>
         </DataGrid>
 
-        <messageService:MessagePanel Grid.Row="2"
+        <messageService:MessagePanel Grid.Row="3"
                                      x:Name="LogPanel"
                                      DataContext="{Binding MessagePanel}"
                                      IsVisible="{Binding ShowPanel}" />
 
-        <local:AppStatusBar Grid.Row="3" x:Name="StatusBar" />
+        <local:AppStatusBar Grid.Row="4" x:Name="StatusBar" />
 
     </Grid>
 

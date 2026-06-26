@@ -30,6 +30,8 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	private readonly ILogger<MainWindowViewModel> _logger;
 	private readonly Func<GridStyleEditorViewModel> _gridStyleEditorViewModelFactory;
 
+	private bool _isToolBarVisible = true;
+
 	public MainWindowViewModel(
 		RecipeCoordinator coordinator,
 		RecipeGridViewModel recipeGrid,
@@ -56,6 +58,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		ExitCommand = ReactiveCommand.Create(ExecuteExit);
 		ToggleSyncCommand = ReactiveCommand.CreateFromTask(ExecuteToggleSyncAsync);
 		OpenStyleEditorCommand = ReactiveCommand.CreateFromTask(ExecuteOpenStyleEditorAsync);
+		ToggleToolBarCommand = ReactiveCommand.Create(ExecuteToggleToolBar);
 
 		ToggleSyncCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
@@ -106,6 +109,14 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public ReactiveCommand<Unit, Unit> OpenStyleEditorCommand { get; }
 
+	public ReactiveCommand<Unit, Unit> ToggleToolBarCommand { get; }
+
+	public bool IsToolBarVisible
+	{
+		get => _isToolBarVisible;
+		private set => this.RaiseAndSetIfChanged(ref _isToolBarVisible, value);
+	}
+
 	public bool IsConnectedToPlc => _coordinator.IsConnected;
 
 	public string ConnectionStatus => IsConnectedToPlc ? "Connected" : "Disconnected";
@@ -138,6 +149,11 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	private static void ExecuteExit()
 	{
 		DesktopShutdownService.Shutdown();
+	}
+
+	private void ExecuteToggleToolBar()
+	{
+		IsToolBarVisible = !IsToolBarVisible;
 	}
 
 	private async Task ExecuteOpenStyleEditorAsync()

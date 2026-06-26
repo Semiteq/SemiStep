@@ -52,6 +52,10 @@
                       InputGesture="Ctrl+Shift+Z" />
         </MenuItem>
         <MenuItem Header="_View">
+            <MenuItem Header="_Toolbar"
+                      Command="{Binding ToggleToolBarCommand}"
+                      ToggleType="CheckBox"
+                      IsChecked="{Binding IsToolBarVisible, Mode=OneWay}" />
             <MenuItem Header="_Notification Log"
                       Command="{Binding MessagePanel.ToggleCommand}" />
             <Separator />

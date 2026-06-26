@@ -1,0 +1,111 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SemiStep.UI.MainWindow"
+             mc:Ignorable="d"
+             x:Class="SemiStep.UI.MainWindow.RecipeToolBar"
+             x:DataType="local:MainWindowViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Button.toolbar">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.toolbar Image">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+        </Style>
+        <Style Selector="Border.group-separator">
+            <Setter Property="Width" Value="1" />
+            <Setter Property="Margin" Value="4,6" />
+            <Setter Property="Background" Value="{DynamicResource GridBorderBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <Border Background="{DynamicResource GridBackgroundBrush}"
+            BorderBrush="{DynamicResource GridBorderBrush}"
+            BorderThickness="0,0,0,1"
+            Padding="4,2">
+        <StackPanel Orientation="Horizontal" Spacing="2">
+
+            <Button x:Name="AddButton"
+                    Classes="toolbar"
+                    Command="{Binding RecipeCommands.AddStepCommand}"
+                    ToolTip.Tip="Add Step">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="avares://Semistep/Assets/Icons/add.png" />
+                    <TextBlock Text="Add" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="DeleteButton"
+                    Classes="toolbar"
+                    Command="{Binding RecipeCommands.DeleteStepCommand}"
+                    ToolTip.Tip="Delete Step">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="avares://Semistep/Assets/Icons/delete.png" />
+                    <TextBlock Text="Delete" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <Border Classes="group-separator" />
+
+            <Button x:Name="CopyButton"
+                    Classes="toolbar"
+                    Command="{Binding Clipboard.CopyStepCommand}"
+                    ToolTip.Tip="Copy Steps">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="avares://Semistep/Assets/Icons/copy.png" />
+                    <TextBlock Text="Copy" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="CutButton"
+                    Classes="toolbar"
+                    Command="{Binding Clipboard.CutStepCommand}"
+                    ToolTip.Tip="Cut Steps">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="avares://Semistep/Assets/Icons/cut.png" />
+                    <TextBlock Text="Cut" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="PasteButton"
+                    Classes="toolbar"
+                    Command="{Binding Clipboard.PasteStepCommand}"
+                    ToolTip.Tip="Paste Steps">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="avares://Semistep/Assets/Icons/paste.png" />
+                    <TextBlock Text="Paste" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <Border Classes="group-separator" />
+
+            <Button x:Name="UndoButton"
+                    Classes="toolbar"
+                    Command="{Binding RecipeCommands.UndoCommand}"
+                    ToolTip.Tip="Undo">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="avares://Semistep/Assets/Icons/undo.png" />
+                    <TextBlock Text="Undo" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="RedoButton"
+                    Classes="toolbar"
+                    Command="{Binding RecipeCommands.RedoCommand}"
+                    ToolTip.Tip="Redo">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="avares://Semistep/Assets/Icons/redo.png" />
+                    <TextBlock Text="Redo" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
+        </StackPanel>
+    </Border>
+
+</UserControl>

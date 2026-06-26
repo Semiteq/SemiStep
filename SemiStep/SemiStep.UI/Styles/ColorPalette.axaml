@@ -13,32 +13,10 @@
          CellPaletteInstaller from GridStyleOptions. See CellPaletteInstaller for the full key
          list and the config source paths. -->
 
-    <!-- Severity indicators -->
-    <Color x:Key="ErrorColor">#D32F2F</Color>
-    <Color x:Key="WarningColor">#F57C00</Color>
-    <Color x:Key="InfoColor">#1976D2</Color>
-    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}" />
-    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
-    <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
-
-    <!-- Connection status -->
-    <Color x:Key="ConnectedColor">#44BB44</Color>
-    <Color x:Key="DisconnectedColor">#FF4444</Color>
-    <SolidColorBrush x:Key="ConnectedBrush" Color="{StaticResource ConnectedColor}" />
-    <SolidColorBrush x:Key="DisconnectedBrush" Color="{StaticResource DisconnectedColor}" />
-
-    <!-- Chrome / Layout -->
-    <Color x:Key="StatusBarBackgroundColor">#F0F0F0</Color>
-    <Color x:Key="PanelBackgroundColor">#F8F8F8</Color>
-    <Color x:Key="PanelHeaderBackgroundColor">#EEEEEE</Color>
-    <Color x:Key="SubtleBorderColor">#D0D0D0</Color>
-    <Color x:Key="SeparatorColor">#C0C0C0</Color>
-    <Color x:Key="SecondaryForegroundColor">#888888</Color>
-    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="{StaticResource StatusBarBackgroundColor}" />
-    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="{StaticResource PanelBackgroundColor}" />
-    <SolidColorBrush x:Key="PanelHeaderBackgroundBrush" Color="{StaticResource PanelHeaderBackgroundColor}" />
-    <SolidColorBrush x:Key="SubtleBorderBrush" Color="{StaticResource SubtleBorderColor}" />
-    <SolidColorBrush x:Key="SeparatorBrush" Color="{StaticResource SeparatorColor}" />
-    <SolidColorBrush x:Key="SecondaryForegroundBrush" Color="{StaticResource SecondaryForegroundColor}" />
+    <!-- Severity, connection, and chrome brushes (InfoBrush, ConnectedBrush, DisconnectedBrush,
+         PanelBackgroundBrush, PanelHeaderBackgroundBrush, SubtleBorderBrush, SeparatorBrush,
+         SecondaryForegroundBrush, GridBorderBrush, GridBackgroundBrush, HeaderForegroundBrush) are
+         config-driven, installed at startup by CellPaletteInstaller from GridStyleOptions. ErrorBrush/
+         WarningBrush come from ValidationPanelErrorColor/ValidationPanelWarningColor. -->
 
 </ResourceDictionary>

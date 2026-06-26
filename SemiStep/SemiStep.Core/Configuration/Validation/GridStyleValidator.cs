@@ -85,6 +85,82 @@ internal static class GridStyleValidator
 				},
 			errors);
 
+		var chrome = dto.Chrome;
+		ValidateOptionalSection(
+			"chrome",
+			chrome is null
+				? null
+				: new (string Name, string? Value)[]
+				{
+					("info", chrome.Info),
+					("connected", chrome.Connected),
+					("disconnected", chrome.Disconnected),
+					("panel_background", chrome.PanelBackground),
+					("panel_header_background", chrome.PanelHeaderBackground),
+					("subtle_border", chrome.SubtleBorder),
+					("separator", chrome.Separator),
+					("secondary_foreground", chrome.SecondaryForeground),
+					("grid_border", chrome.GridBorder),
+					("grid_background", chrome.GridBackground),
+					("header_foreground", chrome.HeaderForeground)
+				},
+			errors);
+
+		var selection = dto.Colors.Selection;
+		ValidateOptionalSection(
+			"colors.selection",
+			selection is null
+				? null
+				: new (string Name, string? Value)[]
+				{
+					("background", selection.Background),
+					("foreground", selection.Foreground)
+				},
+			errors);
+
+		var cells = dto.Colors.Cells;
+		ValidateOptionalSection(
+			"colors.cells",
+			cells is null
+				? null
+				: new (string Name, string? Value)[]
+				{
+					("changed", cells.Changed),
+					("changed_selected", cells.ChangedSelected)
+				},
+			errors);
+
+		if (dto.Colors.GridLine is not null)
+		{
+			ValidateKey("colors", "grid_line", dto.Colors.GridLine, errors);
+		}
+
+		var statusBar = dto.StatusBar;
+		ValidateOptionalSection(
+			"status_bar",
+			statusBar is null
+				? null
+				: new (string Name, string? Value)[]
+				{
+					("background", statusBar.Background),
+					("foreground", statusBar.Foreground)
+				},
+			errors);
+
+		var validationPanel = dto.ValidationPanel;
+		ValidateOptionalSection(
+			"validation_panel",
+			validationPanel is null
+				? null
+				: new (string Name, string? Value)[]
+				{
+					("background", validationPanel.Background),
+					("foreground", validationPanel.Foreground),
+					("error_color", validationPanel.ErrorColor),
+					("warning_color", validationPanel.WarningColor)
+				},
+			errors);
+
 		if (errors.Count > 0)
 		{
 			return Result.Fail(errors);
@@ -106,6 +182,27 @@ internal static class GridStyleValidator
 
 		foreach (var (name, value) in keys)
 		{
+			ValidateKey(sectionPath, name, value, errors);
+		}
+	}
+
+	private static void ValidateOptionalSection(
+		string sectionPath,
+		IReadOnlyList<(string Name, string? Value)>? keys,
+		List<IError> errors)
+	{
+		if (keys is null)
+		{
+			return;
+		}
+
+		foreach (var (name, value) in keys)
+		{
+			if (value is null)
+			{
+				continue;
+			}
+
 			ValidateKey(sectionPath, name, value, errors);
 		}
 	}

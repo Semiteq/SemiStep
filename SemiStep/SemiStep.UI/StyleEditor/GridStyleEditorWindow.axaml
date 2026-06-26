@@ -1,0 +1,358 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:styleEditor="clr-namespace:SemiStep.UI.StyleEditor"
+        mc:Ignorable="d"
+        d:DesignWidth="860"
+        d:DesignHeight="820"
+        x:Class="SemiStep.UI.StyleEditor.GridStyleEditorWindow"
+        x:DataType="styleEditor:GridStyleEditorViewModel"
+        Title="Grid Style Settings"
+        Width="880"
+        Height="900"
+        MinWidth="720"
+        MinHeight="500"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+        <Style Selector="Border.section-card">
+            <Setter Property="BorderBrush" Value="{DynamicResource SubtleBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="14,10,14,12" />
+            <Setter Property="Margin" Value="0,0,0,14" />
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}" />
+        </Style>
+        <Style Selector="TextBlock.card-header">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Margin" Value="0,0,0,8" />
+        </Style>
+        <Style Selector="TextBlock.field-label">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,3,12,3" />
+        </Style>
+        <Style Selector="ColorPicker">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Margin" Value="0,2,0,2" />
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Width" Value="120" />
+            <Setter Property="Margin" Value="0,2,0,2" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="*,Auto">
+
+        <ScrollViewer Grid.Row="0" Padding="16,14,16,14" HorizontalScrollBarVisibility="Disabled">
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto">
+
+                <!-- ===== Left column ===== -->
+                <StackPanel Grid.Column="0" Margin="0,0,7,0" Orientation="Vertical">
+
+                    <Border Classes="section-card">
+                        <StackPanel>
+                            <TextBlock Classes="card-header" Text="Fonts and Layout" />
+                            <Grid ColumnDefinitions="170,*"
+                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Header font size" />
+                                <NumericUpDown Grid.Row="0" Grid.Column="1" Minimum="6" Maximum="72" Increment="1"
+                                               Value="{Binding HeaderFontSize}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Cell font size" />
+                                <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="6" Maximum="72" Increment="1"
+                                               Value="{Binding CellFontSize}" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="Row height" />
+                                <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="12" Maximum="400" Increment="1"
+                                               Value="{Binding RowHeight}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="Cell padding left" />
+                                <NumericUpDown Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="100" Increment="1"
+                                               Value="{Binding CellPaddingLeft}" />
+                                <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="Cell padding top" />
+                                <NumericUpDown Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="100" Increment="1"
+                                               Value="{Binding CellPaddingTop}" />
+                                <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="Cell padding right" />
+                                <NumericUpDown Grid.Row="5" Grid.Column="1" Minimum="0" Maximum="100" Increment="1"
+                                               Value="{Binding CellPaddingRight}" />
+                                <TextBlock Grid.Row="6" Grid.Column="0" Classes="field-label" Text="Cell padding bottom" />
+                                <NumericUpDown Grid.Row="6" Grid.Column="1" Minimum="0" Maximum="100" Increment="1"
+                                               Value="{Binding CellPaddingBottom}" />
+                                <TextBlock Grid.Row="7" Grid.Column="0" Classes="field-label" Text="Status bar padding" />
+                                <NumericUpDown Grid.Row="7" Grid.Column="1" Minimum="0" Maximum="100" Increment="1"
+                                               Value="{Binding StatusBarPadding}" />
+                                <TextBlock Grid.Row="8" Grid.Column="0" Classes="field-label" Text="Status bar item spacing" />
+                                <NumericUpDown Grid.Row="8" Grid.Column="1" Minimum="0" Maximum="100" Increment="1"
+                                               Value="{Binding StatusBarItemSpacing}" />
+                                <TextBlock Grid.Row="9" Grid.Column="0" Classes="field-label" Text="Validation panel max height" />
+                                <NumericUpDown Grid.Row="9" Grid.Column="1" Minimum="20" Maximum="2000" Increment="10"
+                                               Value="{Binding ValidationPanelMaxHeight}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="section-card">
+                        <StackPanel>
+                            <TextBlock Classes="card-header" Text="Disabled Cell Palette" />
+                            <Grid ColumnDefinitions="170,*"
+                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Depth 0" />
+                                <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding DisabledCellDepth0}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Depth 1" />
+                                <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding DisabledCellDepth1}" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="Depth 2" />
+                                <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding DisabledCellDepth2}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="Depth 3" />
+                                <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding DisabledCellDepth3}" />
+                                <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="Depth 0 (past)" />
+                                <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding DisabledCellDepth0Past}" />
+                                <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="Depth 1 (past)" />
+                                <ColorPicker Grid.Row="5" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding DisabledCellDepth1Past}" />
+                                <TextBlock Grid.Row="6" Grid.Column="0" Classes="field-label" Text="Depth 2 (past)" />
+                                <ColorPicker Grid.Row="6" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding DisabledCellDepth2Past}" />
+                                <TextBlock Grid.Row="7" Grid.Column="0" Classes="field-label" Text="Depth 3 (past)" />
+                                <ColorPicker Grid.Row="7" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding DisabledCellDepth3Past}" />
+                                <TextBlock Grid.Row="8" Grid.Column="0" Classes="field-label" Text="Selected" />
+                                <ColorPicker Grid.Row="8" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding DisabledCellSelected}" />
+                                <TextBlock Grid.Row="9" Grid.Column="0" Classes="field-label" Text="Foreground" />
+                                <ColorPicker Grid.Row="9" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding DisabledCellForeground}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="section-card">
+                        <StackPanel>
+                            <TextBlock Classes="card-header" Text="Read-Only Cell Palette" />
+                            <Grid ColumnDefinitions="170,*"
+                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Depth 0" />
+                                <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ReadOnlyCellDepth0}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Depth 1" />
+                                <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ReadOnlyCellDepth1}" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="Depth 2" />
+                                <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ReadOnlyCellDepth2}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="Depth 3" />
+                                <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ReadOnlyCellDepth3}" />
+                                <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="Depth 0 (past)" />
+                                <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ReadOnlyCellDepth0Past}" />
+                                <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="Depth 1 (past)" />
+                                <ColorPicker Grid.Row="5" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ReadOnlyCellDepth1Past}" />
+                                <TextBlock Grid.Row="6" Grid.Column="0" Classes="field-label" Text="Depth 2 (past)" />
+                                <ColorPicker Grid.Row="6" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ReadOnlyCellDepth2Past}" />
+                                <TextBlock Grid.Row="7" Grid.Column="0" Classes="field-label" Text="Depth 3 (past)" />
+                                <ColorPicker Grid.Row="7" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ReadOnlyCellDepth3Past}" />
+                                <TextBlock Grid.Row="8" Grid.Column="0" Classes="field-label" Text="Selected" />
+                                <ColorPicker Grid.Row="8" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ReadOnlyCellSelected}" />
+                                <TextBlock Grid.Row="9" Grid.Column="0" Classes="field-label" Text="Foreground" />
+                                <ColorPicker Grid.Row="9" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ReadOnlyCellForeground}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Height="32" />
+
+                </StackPanel>
+
+                <!-- ===== Right column ===== -->
+                <StackPanel Grid.Column="1" Margin="7,0,0,0" Orientation="Vertical">
+
+                    <Border Classes="section-card">
+                        <StackPanel>
+                            <TextBlock Classes="card-header" Text="Selection" />
+                            <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Selection background" />
+                                <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding SelectionBackground}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Selection foreground" />
+                                <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding SelectionForeground}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="section-card">
+                        <StackPanel>
+                            <TextBlock Classes="card-header" Text="Changed Cells" />
+                            <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Changed" />
+                                <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding CellChanged}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Changed (selected)" />
+                                <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding CellChangedSelected}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="section-card">
+                        <StackPanel>
+                            <TextBlock Classes="card-header" Text="Execution Palette" />
+                            <Grid ColumnDefinitions="170,*"
+                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Depth 0" />
+                                <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ExecutionDepth0}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Depth 1" />
+                                <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ExecutionDepth1}" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="Depth 2" />
+                                <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ExecutionDepth2}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="Depth 3" />
+                                <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ExecutionDepth3}" />
+                                <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="Depth 0 (past)" />
+                                <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ExecutionDepth0Past}" />
+                                <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="Depth 1 (past)" />
+                                <ColorPicker Grid.Row="5" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ExecutionDepth1Past}" />
+                                <TextBlock Grid.Row="6" Grid.Column="0" Classes="field-label" Text="Depth 2 (past)" />
+                                <ColorPicker Grid.Row="6" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ExecutionDepth2Past}" />
+                                <TextBlock Grid.Row="7" Grid.Column="0" Classes="field-label" Text="Depth 3 (past)" />
+                                <ColorPicker Grid.Row="7" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ExecutionDepth3Past}" />
+                                <TextBlock Grid.Row="8" Grid.Column="0" Classes="field-label" Text="Current step marker" />
+                                <ColorPicker Grid.Row="8" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ExecutionCurrentStepMarker}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="section-card">
+                        <StackPanel>
+                            <TextBlock Classes="card-header" Text="Grid Lines and Status Bar" />
+                            <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Grid line" />
+                                <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding GridLine}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Status bar background" />
+                                <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding StatusBarBackground}" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="Status bar foreground" />
+                                <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding StatusBarForeground}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="section-card">
+                        <StackPanel>
+                            <TextBlock Classes="card-header" Text="Validation Panel" />
+                            <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Background" />
+                                <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ValidationPanelBackground}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Foreground" />
+                                <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ValidationPanelForeground}" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="Error severity" />
+                                <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ValidationPanelError}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="Warning severity" />
+                                <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding ValidationPanelWarning}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="section-card">
+                        <StackPanel>
+                            <TextBlock Classes="card-header" Text="Application Chrome" />
+                            <Grid ColumnDefinitions="170,*"
+                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="Info" />
+                                <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding Info}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="Connected" />
+                                <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding Connected}" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="Disconnected" />
+                                <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding Disconnected}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="Panel background" />
+                                <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding PanelBackground}" />
+                                <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="Panel header background" />
+                                <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding PanelHeaderBackground}" />
+                                <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="Subtle border" />
+                                <ColorPicker Grid.Row="5" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding SubtleBorder}" />
+                                <TextBlock Grid.Row="6" Grid.Column="0" Classes="field-label" Text="Separator" />
+                                <ColorPicker Grid.Row="6" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding Separator}" />
+                                <TextBlock Grid.Row="7" Grid.Column="0" Classes="field-label" Text="Secondary foreground" />
+                                <ColorPicker Grid.Row="7" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding SecondaryForeground}" />
+                                <TextBlock Grid.Row="8" Grid.Column="0" Classes="field-label" Text="Grid border" />
+                                <ColorPicker Grid.Row="8" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding GridBorder}" />
+                                <TextBlock Grid.Row="9" Grid.Column="0" Classes="field-label" Text="Grid background" />
+                                <ColorPicker Grid.Row="9" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding GridBackground}" />
+                                <TextBlock Grid.Row="10" Grid.Column="0" Classes="field-label" Text="Header foreground" />
+                                <ColorPicker Grid.Row="10" Grid.Column="1" IsHexInputVisible="True"
+                                             Color="{Binding HeaderForeground}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Height="32" />
+
+                </StackPanel>
+
+            </Grid>
+        </ScrollViewer>
+
+        <Border Grid.Row="1"
+                BorderThickness="0,1,0,0"
+                BorderBrush="{DynamicResource SubtleBorderBrush}"
+                Padding="16,10,16,12">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0"
+                           Text="{Binding ErrorMessage}"
+                           Foreground="{DynamicResource ErrorBrush}"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center"
+                           IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="10">
+                    <Button Content="Save"
+                            Width="90"
+                            IsDefault="True"
+                            Command="{Binding SaveCommand}" />
+                    <Button Content="Cancel"
+                            Width="90"
+                            IsCancel="True"
+                            Click="OnCancelClick" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+    </Grid>
+
+</Window>

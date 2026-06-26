@@ -19,6 +19,7 @@
     <PackageReference Include="Avalonia.Themes.Fluent"/>
     <PackageReference Include="ReactiveUI.Avalonia"/>
     <PackageReference Include="Avalonia.Controls.DataGrid"/>
+    <PackageReference Include="Avalonia.Controls.ColorPicker"/>
     <PackageReference Include="Avalonia.Win32"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
     <PackageReference Include="Microsoft.Extensions.Logging"/>
@@ -55,6 +56,14 @@
     </Compile>
     <Compile Update="MainWindow\RecipeMenuBar.axaml.cs">
       <DependentUpon>RecipeMenuBar.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="StyleEditor\GridStyleEditorWindow.axaml.cs">
+      <DependentUpon>GridStyleEditorWindow.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="StyleEditor\RestartPromptDialog.axaml.cs">
+      <DependentUpon>RestartPromptDialog.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

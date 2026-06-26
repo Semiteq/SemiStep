@@ -28,6 +28,7 @@ public sealed class ColumnBuilder(
 
 	public void BuildColumns(DataGrid grid)
 	{
+		grid.RowHeight = gridStyle.RowHeight;
 		grid.Columns.Clear();
 		AddNumberingColumn(grid);
 

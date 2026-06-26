@@ -48,13 +48,7 @@ colors:
       depth_2_past: "#C4D2E0"
       depth_3_past: "#9CB4CC"
       current_step_marker: "#FF8800"
-  rows:
-    alternating_background: "#FAFAFA"
-    normal_background: "#FFFFFF"
   grid_line: "#E0E0E0"
-
-borders:
-  grid_line_thickness: 1.0
 
 status_bar:
   background: "#F0F0F0"
@@ -68,3 +62,16 @@ validation_panel:
   error_color: "#D32F2F"
   warning_color: "#F57C00"
   max_height: 100
+
+chrome:
+  info: "#1976D2"
+  connected: "#44BB44"
+  disconnected: "#FF4444"
+  panel_background: "#F8F8F8"
+  panel_header_background: "#EEEEEE"
+  subtle_border: "#D0D0D0"
+  separator: "#C0C0C0"
+  secondary_foreground: "#888888"
+  grid_border: "#808080"
+  grid_background: "#FFFFFF"
+  header_foreground: "#000000"

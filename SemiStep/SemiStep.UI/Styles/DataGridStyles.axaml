@@ -4,17 +4,29 @@
 
     <!-- Base DataGrid styles -->
     <Style Selector="DataGrid">
-        <Setter Property="BorderBrush" Value="Gray" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GridBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="GridLinesVisibility" Value="All" />
         <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
         <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
     </Style>
 
+    <!-- The Fluent DataGridCell/DataGridRow themes hard-code MinHeight=32. Without this override that
+         floor fights the config-driven RowHeight (set in ColumnBuilder): the cell measures at 32 but is
+         arranged into the shorter row, clipping the Stretch-aligned focus/current Rectangle into a broken
+         box. Binding MinHeight to the same config value lets the focus/current border render cleanly on a
+         row of the configured height. See Docs/architecture/grid-style-configuration.md. -->
+    <Style Selector="DataGridRow">
+        <Setter Property="MinHeight" Value="{DynamicResource GridRowHeight}" />
+    </Style>
+    <Style Selector="DataGridCell">
+        <Setter Property="MinHeight" Value="{DynamicResource GridRowHeight}" />
+    </Style>
+
     <!-- Stretch is load-bearing: the Fluent header panel aligns by it, and only Stretch gives the
          wrapping header TextBlock the column width it needs. See Docs/architecture/recipe-grid-column-sizing.md. -->
     <Style Selector="DataGridColumnHeader">
-        <Setter Property="Foreground" Value="Black" />
+        <Setter Property="Foreground" Value="{DynamicResource HeaderForegroundBrush}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Padding" Value="6,3" />

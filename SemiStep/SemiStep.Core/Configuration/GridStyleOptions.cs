@@ -32,9 +32,6 @@ public sealed record GridStyleOptions(
 	string ReadOnlyCellDepth3PastColor,
 	string ReadOnlyCellSelectedColor,
 	string ReadOnlyCellForegroundColor,
-	string AlternatingRowBackgroundColor,
-	string NormalRowBackgroundColor,
-	double GridLineThickness,
 	string GridLineColor,
 	string StatusBarBackgroundColor,
 	string StatusBarForegroundColor,
@@ -53,7 +50,18 @@ public sealed record GridStyleOptions(
 	string ExecutionDepth1PastColor,
 	string ExecutionDepth2PastColor,
 	string ExecutionDepth3PastColor,
-	string ExecutionCurrentStepMarkerColor)
+	string ExecutionCurrentStepMarkerColor,
+	string InfoColor,
+	string ConnectedColor,
+	string DisconnectedColor,
+	string PanelBackgroundColor,
+	string PanelHeaderBackgroundColor,
+	string SubtleBorderColor,
+	string SeparatorColor,
+	string SecondaryForegroundColor,
+	string GridBorderColor,
+	string GridBackgroundColor,
+	string HeaderForegroundColor)
 {
 	// Test-only fallback; the #000000 cell palettes are placeholders, never rendered in production.
 	public static GridStyleOptions Default { get; } = new(
@@ -88,9 +96,6 @@ public sealed record GridStyleOptions(
 		ReadOnlyCellDepth3PastColor: "#000000",
 		ReadOnlyCellSelectedColor: "#000000",
 		ReadOnlyCellForegroundColor: "#000000",
-		AlternatingRowBackgroundColor: "#FAFAFA",
-		NormalRowBackgroundColor: "#FFFFFF",
-		GridLineThickness: 1.0,
 		GridLineColor: "#E0E0E0",
 		StatusBarBackgroundColor: "#F0F0F0",
 		StatusBarForegroundColor: "#000000",
@@ -109,5 +114,16 @@ public sealed record GridStyleOptions(
 		ExecutionDepth1PastColor: "#000000",
 		ExecutionDepth2PastColor: "#000000",
 		ExecutionDepth3PastColor: "#000000",
-		ExecutionCurrentStepMarkerColor: "#000000");
+		ExecutionCurrentStepMarkerColor: "#000000",
+		InfoColor: "#1976D2",
+		ConnectedColor: "#44BB44",
+		DisconnectedColor: "#FF4444",
+		PanelBackgroundColor: "#F8F8F8",
+		PanelHeaderBackgroundColor: "#EEEEEE",
+		SubtleBorderColor: "#D0D0D0",
+		SeparatorColor: "#C0C0C0",
+		SecondaryForegroundColor: "#888888",
+		GridBorderColor: "#808080",
+		GridBackgroundColor: "#FFFFFF",
+		HeaderForegroundColor: "#000000");
 }

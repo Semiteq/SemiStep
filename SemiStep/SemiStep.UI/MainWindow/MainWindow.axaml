@@ -38,8 +38,8 @@
                   GridLinesVisibility="All"
                   HeadersVisibility="Column"
                   BorderThickness="1"
-                  BorderBrush="Gray"
-                  Background="White"
+                  BorderBrush="{DynamicResource GridBorderBrush}"
+                  Background="{DynamicResource GridBackgroundBrush}"
                   SelectionMode="Extended"
                   ClipboardCopyMode="None"
                   LoadingRow="OnDataGridLoadingRow">

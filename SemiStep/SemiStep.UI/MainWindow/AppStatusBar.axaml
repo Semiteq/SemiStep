@@ -21,7 +21,9 @@
             Background="{DynamicResource StatusBarBackgroundBrush}"
             BorderBrush="{DynamicResource SubtleBorderBrush}"
             BorderThickness="0,1,0,0"
-            Padding="8,4">
+            TextElement.Foreground="{DynamicResource StatusBarForegroundBrush}"
+            TextElement.FontSize="12"
+            Padding="{DynamicResource StatusBarPadding}">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -44,7 +46,7 @@
                     Padding="4,2"
                     VerticalAlignment="Center"
                     Cursor="Hand">
-                <StackPanel Orientation="Horizontal" Spacing="10">
+                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource StatusBarItemSpacing}">
                     <!-- Error count -->
                     <StackPanel Orientation="Horizontal"
                                 Spacing="4"
@@ -53,7 +55,6 @@
                                  Fill="{DynamicResource ErrorBrush}"
                                  VerticalAlignment="Center" />
                         <TextBlock Text="{Binding MessagePanel.ErrorCountText}"
-                                   FontSize="12"
                                    Foreground="{DynamicResource ErrorBrush}"
                                    VerticalAlignment="Center" />
                     </StackPanel>
@@ -66,7 +67,6 @@
                                  Fill="{DynamicResource WarningBrush}"
                                  VerticalAlignment="Center" />
                         <TextBlock Text="{Binding MessagePanel.WarningCountText}"
-                                   FontSize="12"
                                    Foreground="{DynamicResource WarningBrush}"
                                    VerticalAlignment="Center" />
                     </StackPanel>
@@ -89,7 +89,6 @@
                 <!-- Sync toggle button: label switches based on IsSyncEnabled -->
                 <Button Command="{Binding ToggleSyncCommand}"
                         Padding="6,2"
-                        FontSize="12"
                         VerticalAlignment="Center">
                     <Panel>
                         <TextBlock Text="Sync: ON"
@@ -102,13 +101,11 @@
 
                 <!-- Sync status label -->
                 <TextBlock Text="{Binding PlcSyncStatusText}"
-                           FontSize="12"
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource SecondaryForegroundBrush}" />
 
                 <!-- Last sync time -->
-                <TextBlock FontSize="12"
-                           VerticalAlignment="Center"
+                <TextBlock VerticalAlignment="Center"
                            Foreground="{DynamicResource SecondaryForegroundBrush}"
                            Text="{Binding LastSyncTimeText, StringFormat='Last sync: {0}'}" />
 
@@ -123,28 +120,24 @@
             <!-- Execution time info (always visible; VM maps idle state via text content) -->
             <StackPanel Grid.Column="4"
                         Orientation="Horizontal"
-                        Spacing="10"
+                        Spacing="{DynamicResource StatusBarItemSpacing}"
                         VerticalAlignment="Center">
 
                 <!-- Time left in current step -->
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <TextBlock Text="Шаг:"
-                               FontSize="12"
                                Foreground="{DynamicResource SecondaryForegroundBrush}"
                                VerticalAlignment="Center" />
                     <TextBlock Text="{Binding PlcMonitor.TimeLeftInStepText}"
-                               FontSize="12"
                                VerticalAlignment="Center" />
                 </StackPanel>
 
                 <!-- Time left in recipe -->
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <TextBlock Text="Рецепт:"
-                               FontSize="12"
                                Foreground="{DynamicResource SecondaryForegroundBrush}"
                                VerticalAlignment="Center" />
                     <TextBlock Text="{Binding PlcMonitor.TimeLeftInRecipeText}"
-                               FontSize="12"
                                VerticalAlignment="Center" />
                 </StackPanel>
 
@@ -165,20 +158,16 @@
                         IsVisible="{Binding PlcMonitor.IsRecipeActive}">
 
                 <TextBlock Text="FOR:"
-                           FontSize="12"
                            Foreground="{DynamicResource SecondaryForegroundBrush}"
                            VerticalAlignment="Center" />
 
                 <TextBlock Text="{Binding PlcMonitor.ForLoopCount1}"
-                           FontSize="12"
                            VerticalAlignment="Center" />
 
                 <TextBlock Text="{Binding PlcMonitor.ForLoopCount2}"
-                           FontSize="12"
                            VerticalAlignment="Center" />
 
                 <TextBlock Text="{Binding PlcMonitor.ForLoopCount3}"
-                           FontSize="12"
                            VerticalAlignment="Center" />
 
             </StackPanel>
@@ -198,8 +187,7 @@
                          Classes.connected="{Binding IsConnectedToPlc}" />
                 <TextBlock Name="ConnectionText"
                            Text="{Binding ConnectionStatus}"
-                           VerticalAlignment="Center"
-                           FontSize="12" />
+                           VerticalAlignment="Center" />
             </StackPanel>
         </Grid>
     </Border>

@@ -20,10 +20,11 @@
         </Style>
     </UserControl.Styles>
 
-    <Border Background="{DynamicResource PanelBackgroundBrush}"
+    <Border Background="{DynamicResource ValidationPanelBackgroundBrush}"
             BorderBrush="{DynamicResource SubtleBorderBrush}"
             BorderThickness="0,1,0,0"
-            MaxHeight="200">
+            TextElement.Foreground="{DynamicResource ValidationPanelForegroundBrush}"
+            MaxHeight="{DynamicResource ValidationPanelMaxHeight}">
 
         <Grid RowDefinitions="Auto,*">
 
@@ -70,8 +71,7 @@
 
             <!-- Log entries list -->
             <ScrollViewer Grid.Row="1"
-                          VerticalScrollBarVisibility="Auto"
-                          MaxHeight="160">
+                          VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding Entries}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="messageService:MessageEntry">

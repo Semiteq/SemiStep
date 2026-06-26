@@ -1,12 +1,15 @@
-﻿using YamlDotNet.Serialization;
+﻿using YamlDotNet.Core;
+using YamlDotNet.Serialization;
 
 namespace SemiStep.Core.Configuration.Dto;
 
 internal sealed class StatusBarStyleDto
 {
-	[YamlMember(Alias = "background")] public string? Background { get; set; }
+	[YamlMember(Alias = "background", ScalarStyle = ScalarStyle.DoubleQuoted)]
+	public string? Background { get; set; }
 
-	[YamlMember(Alias = "foreground")] public string? Foreground { get; set; }
+	[YamlMember(Alias = "foreground", ScalarStyle = ScalarStyle.DoubleQuoted)]
+	public string? Foreground { get; set; }
 
 	[YamlMember(Alias = "padding")] public double? Padding { get; set; }
 

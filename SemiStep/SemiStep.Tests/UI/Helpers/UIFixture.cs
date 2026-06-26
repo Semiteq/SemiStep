@@ -1,17 +1,26 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Reactive.Concurrency;
+
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
 
+using SemiStep.UI.Clipboard;
 using SemiStep.UI.Coordinator;
+using SemiStep.UI.MainWindow;
 using SemiStep.UI.MessageService;
+using SemiStep.UI.Plc;
+using SemiStep.UI.RecipeFile;
+using SemiStep.UI.RecipeGrid;
+using SemiStep.UI.StyleEditor;
 
 using Xunit;
 
@@ -59,6 +68,54 @@ public sealed class UIFixture : IAsyncLifetime
 		Coordinator.Dispose();
 		MessagePanel.Dispose();
 		return ValueTask.CompletedTask;
+	}
+
+	public MainWindowViewModel CreateMainWindowViewModel(
+		Func<GridStyleEditorViewModel>? styleEditorFactory = null)
+	{
+		var grid = new RecipeGridViewModel(
+			Coordinator,
+			RecipeMetadataRegistry,
+			MessagePanel,
+			NullLogger<RecipeGridViewModel>.Instance);
+
+		var commands = new RecipeCommandsViewModel(Coordinator, grid);
+
+		var clipboardSerializer = new ClipboardSerializer(RecipeMetadataRegistry);
+		var importedRecipeValidator = new ImportedRecipeValidator(RecipeMetadataRegistry);
+		var clipboard = new ClipboardViewModel(
+			Coordinator,
+			grid,
+			clipboardSerializer,
+			importedRecipeValidator,
+			MessagePanel);
+
+		var recipeFile = new RecipeFileViewModel(Coordinator, MessagePanel);
+
+		var columnBuilder = new ColumnBuilder(AppConfiguration.GridStyle, RecipeMetadataRegistry);
+
+		var plcMonitor = new PlcMonitorViewModel(
+			Coordinator,
+			RecipeMetadataRegistry,
+			new HistoricalScheduler());
+
+		var gridStyleEditorViewModelFactory = styleEditorFactory ?? new Func<GridStyleEditorViewModel>(
+			() => new GridStyleEditorViewModel(
+				new GridStyleEditorFacade(),
+				@"C:\does-not-exist",
+				AppConfiguration.GridStyle));
+
+		return new MainWindowViewModel(
+			Coordinator,
+			grid,
+			commands,
+			clipboard,
+			recipeFile,
+			MessagePanel,
+			columnBuilder,
+			plcMonitor,
+			gridStyleEditorViewModelFactory,
+			NullLogger<MainWindowViewModel>.Instance);
 	}
 
 	public void SetSyncEnabled(bool isSyncEnabled)

@@ -34,6 +34,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AvaloniaResource Include="Assets\**"/>
+    <AvaloniaResource Remove="Assets\**\*.md"/>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Dialogs\ErrorWindow.axaml.cs">
       <DependentUpon>ErrorWindow.axaml</DependentUpon>
       <SubType>Code</SubType>
@@ -56,6 +61,10 @@
     </Compile>
     <Compile Update="MainWindow\RecipeMenuBar.axaml.cs">
       <DependentUpon>RecipeMenuBar.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="MainWindow\RecipeToolBar.axaml.cs">
+      <DependentUpon>RecipeToolBar.axaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="StyleEditor\GridStyleEditorWindow.axaml.cs">

@@ -52,6 +52,8 @@
                       InputGesture="Ctrl+Shift+Z" />
         </MenuItem>
         <MenuItem Header="_View">
+            <MenuItem Header="_Toolbar"
+                      Command="{Binding ToggleToolBarCommand}" />
             <MenuItem Header="_Notification Log"
                       Command="{Binding MessagePanel.ToggleCommand}" />
             <Separator />

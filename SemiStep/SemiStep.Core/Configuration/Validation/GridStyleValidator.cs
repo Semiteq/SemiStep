@@ -85,6 +85,27 @@ internal static class GridStyleValidator
 				},
 			errors);
 
+		var chrome = dto.Chrome;
+		ValidateOptionalSection(
+			"chrome",
+			chrome is null
+				? null
+				: new (string Name, string? Value)[]
+				{
+					("info", chrome.Info),
+					("connected", chrome.Connected),
+					("disconnected", chrome.Disconnected),
+					("panel_background", chrome.PanelBackground),
+					("panel_header_background", chrome.PanelHeaderBackground),
+					("subtle_border", chrome.SubtleBorder),
+					("separator", chrome.Separator),
+					("secondary_foreground", chrome.SecondaryForeground),
+					("grid_border", chrome.GridBorder),
+					("grid_background", chrome.GridBackground),
+					("header_foreground", chrome.HeaderForeground)
+				},
+			errors);
+
 		if (errors.Count > 0)
 		{
 			return Result.Fail(errors);
@@ -106,6 +127,27 @@ internal static class GridStyleValidator
 
 		foreach (var (name, value) in keys)
 		{
+			ValidateKey(sectionPath, name, value, errors);
+		}
+	}
+
+	private static void ValidateOptionalSection(
+		string sectionPath,
+		IReadOnlyList<(string Name, string? Value)>? keys,
+		List<IError> errors)
+	{
+		if (keys is null)
+		{
+			return;
+		}
+
+		foreach (var (name, value) in keys)
+		{
+			if (value is null)
+			{
+				continue;
+			}
+
 			ValidateKey(sectionPath, name, value, errors);
 		}
 	}

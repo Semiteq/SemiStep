@@ -28,7 +28,7 @@ public static class Program
 
 		try
 		{
-			var outcome = ValidateStartup(options.ConfigDir);
+			var outcome = ValidateStartup(options);
 
 			// The catch must not re-launch: once App.Run has initialised Avalonia, a second
 			// BuildAvaloniaApp() would throw "Application has already been initialized".
@@ -51,11 +51,11 @@ public static class Program
 		}
 	}
 
-	private static StartupOutcome ValidateStartup(string configDir)
+	private static StartupOutcome ValidateStartup(StartupOptions options)
 	{
 		try
 		{
-			return Task.Run(() => StartupAsync(configDir)).GetAwaiter().GetResult();
+			return Task.Run(() => StartupAsync(options)).GetAwaiter().GetResult();
 		}
 		catch (Exception ex)
 		{
@@ -64,9 +64,9 @@ public static class Program
 		}
 	}
 
-	private static async Task<StartupOutcome> StartupAsync(string configDir)
+	private static async Task<StartupOutcome> StartupAsync(StartupOptions options)
 	{
-		var result = await ConfigFacade.LoadAndValidateAsync(configDir);
+		var result = await ConfigFacade.LoadAndValidateAsync(options.ConfigDir);
 
 		if (result.IsFailed)
 		{
@@ -80,6 +80,7 @@ public static class Program
 
 		var services =
 			new ServiceCollection()
+				.AddSingleton(options)
 				.AddSingleton(result.Value)
 				.AddRecipe()
 				.AddS7()

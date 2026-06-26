@@ -13,6 +13,7 @@ using SemiStep.UI.MessageService;
 using SemiStep.UI.Plc;
 using SemiStep.UI.RecipeFile;
 using SemiStep.UI.RecipeGrid;
+using SemiStep.UI.StyleEditor;
 
 namespace SemiStep.UI;
 
@@ -21,6 +22,7 @@ public static class UiDi
 	public static IServiceCollection AddUi(this IServiceCollection services)
 	{
 		services.AddSingleton(sp => sp.GetRequiredService<AppConfiguration>().GridStyle);
+		services.AddSingleton<GridStyleEditorFacade>();
 		services.AddSingleton<IScheduler>(_ => RxSchedulers.MainThreadScheduler);
 		services.AddSingleton<MessagePanelViewModel>();
 		services.AddSingleton<RecipeCoordinator>();
@@ -31,6 +33,9 @@ public static class UiDi
 		services.AddSingleton<ColumnBuilder>();
 		services.AddSingleton<PlcMonitorViewModel>();
 		services.AddSingleton<MainWindowViewModel>();
+		services.AddTransient<GridStyleEditorViewModel>();
+		services.AddSingleton<Func<GridStyleEditorViewModel>>(
+			sp => sp.GetRequiredService<GridStyleEditorViewModel>);
 
 		return services;
 	}

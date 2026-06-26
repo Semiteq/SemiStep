@@ -54,6 +54,9 @@
         <MenuItem Header="_View">
             <MenuItem Header="_Notification Log"
                       Command="{Binding MessagePanel.ToggleCommand}" />
+            <Separator />
+            <MenuItem Header="Grid _Style Settings..."
+                      Command="{Binding OpenStyleEditorCommand}" />
         </MenuItem>
 
         <MenuItem Header="_Help">

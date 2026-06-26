@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
+using Avalonia.Controls;
 
 using SemiStep.Core.Configuration;
 
@@ -31,6 +32,28 @@ internal static class CellPaletteInstaller
 	public const string CellChangedBrushKey = "CellChangedBrush";
 	public const string CellChangedSelectedBackgroundBrushKey = "CellChangedSelectedBackgroundBrush";
 	public const string GridLineBrushKey = "GridLineBrush";
+	public const string StatusBarBackgroundBrushKey = "StatusBarBackgroundBrush";
+	public const string StatusBarForegroundBrushKey = "StatusBarForegroundBrush";
+	public const string StatusBarPaddingKey = "StatusBarPadding";
+	public const string StatusBarItemSpacingKey = "StatusBarItemSpacing";
+	public const string StatusBarFontSizeKey = "StatusBarFontSize";
+	public const string ErrorBrushKey = "ErrorBrush";
+	public const string WarningBrushKey = "WarningBrush";
+	public const string ValidationPanelBackgroundBrushKey = "ValidationPanelBackgroundBrush";
+	public const string ValidationPanelForegroundBrushKey = "ValidationPanelForegroundBrush";
+	public const string ValidationPanelMaxHeightKey = "ValidationPanelMaxHeight";
+	public const string InfoBrushKey = "InfoBrush";
+	public const string ConnectedBrushKey = "ConnectedBrush";
+	public const string DisconnectedBrushKey = "DisconnectedBrush";
+	public const string PanelBackgroundBrushKey = "PanelBackgroundBrush";
+	public const string PanelHeaderBackgroundBrushKey = "PanelHeaderBackgroundBrush";
+	public const string SubtleBorderBrushKey = "SubtleBorderBrush";
+	public const string SeparatorBrushKey = "SeparatorBrush";
+	public const string SecondaryForegroundBrushKey = "SecondaryForegroundBrush";
+	public const string GridBorderBrushKey = "GridBorderBrush";
+	public const string GridBackgroundBrushKey = "GridBackgroundBrush";
+	public const string HeaderForegroundBrushKey = "HeaderForegroundBrush";
+	public const string RowHeightKey = "GridRowHeight";
 
 	public static void Install(IResourceDictionary resources, GridStyleOptions gridStyle)
 	{
@@ -63,5 +86,29 @@ internal static class CellPaletteInstaller
 		resources[CellChangedSelectedBackgroundBrushKey] =
 			PaletteBrushFactory.From(gridStyle.CellChangedSelectedColor);
 		resources[GridLineBrushKey] = PaletteBrushFactory.From(gridStyle.GridLineColor);
+		resources[StatusBarBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.StatusBarBackgroundColor);
+		resources[StatusBarForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.StatusBarForegroundColor);
+		resources[StatusBarPaddingKey] = new Thickness(gridStyle.StatusBarPadding);
+		resources[StatusBarItemSpacingKey] = gridStyle.StatusBarItemSpacing;
+		resources[StatusBarFontSizeKey] = (double)gridStyle.CellFontSize;
+		resources[ErrorBrushKey] = PaletteBrushFactory.From(gridStyle.ValidationPanelErrorColor);
+		resources[WarningBrushKey] = PaletteBrushFactory.From(gridStyle.ValidationPanelWarningColor);
+		resources[ValidationPanelBackgroundBrushKey] =
+			PaletteBrushFactory.From(gridStyle.ValidationPanelBackgroundColor);
+		resources[ValidationPanelForegroundBrushKey] =
+			PaletteBrushFactory.From(gridStyle.ValidationPanelForegroundColor);
+		resources[ValidationPanelMaxHeightKey] = gridStyle.ValidationPanelMaxHeight;
+		resources[InfoBrushKey] = PaletteBrushFactory.From(gridStyle.InfoColor);
+		resources[ConnectedBrushKey] = PaletteBrushFactory.From(gridStyle.ConnectedColor);
+		resources[DisconnectedBrushKey] = PaletteBrushFactory.From(gridStyle.DisconnectedColor);
+		resources[PanelBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.PanelBackgroundColor);
+		resources[PanelHeaderBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.PanelHeaderBackgroundColor);
+		resources[SubtleBorderBrushKey] = PaletteBrushFactory.From(gridStyle.SubtleBorderColor);
+		resources[SeparatorBrushKey] = PaletteBrushFactory.From(gridStyle.SeparatorColor);
+		resources[SecondaryForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.SecondaryForegroundColor);
+		resources[GridBorderBrushKey] = PaletteBrushFactory.From(gridStyle.GridBorderColor);
+		resources[GridBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.GridBackgroundColor);
+		resources[HeaderForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.HeaderForegroundColor);
+		resources[RowHeightKey] = gridStyle.RowHeight;
 	}
 }

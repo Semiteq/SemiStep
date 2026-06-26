@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 
@@ -45,6 +46,27 @@ public sealed class CellPaletteInstallerTests
 			CellChangedColor = "#FFCC80",
 			CellChangedSelectedColor = "#EFD3A4",
 			GridLineColor = "#CCCCCC",
+			StatusBarBackgroundColor = "#F0F0F0",
+			StatusBarForegroundColor = "#111111",
+			StatusBarPadding = 5,
+			StatusBarItemSpacing = 10,
+			CellFontSize = 12,
+			ValidationPanelBackgroundColor = "#FBFBFB",
+			ValidationPanelForegroundColor = "#222222",
+			ValidationPanelErrorColor = "#D32F2F",
+			ValidationPanelWarningColor = "#F57C00",
+			ValidationPanelMaxHeight = 100,
+			InfoColor = "#1976D2",
+			ConnectedColor = "#44BB44",
+			DisconnectedColor = "#FF4444",
+			PanelBackgroundColor = "#F8F8F8",
+			PanelHeaderBackgroundColor = "#EEEEEE",
+			SubtleBorderColor = "#D0D0D0",
+			SeparatorColor = "#C0C0C0",
+			SecondaryForegroundColor = "#888888",
+			GridBorderColor = "#808080",
+			GridBackgroundColor = "#FFFFFF",
+			HeaderForegroundColor = "#000000",
 		};
 		var resources = new ResourceDictionary();
 
@@ -75,8 +97,31 @@ public sealed class CellPaletteInstallerTests
 		AssertBrush(resources, CellPaletteInstaller.CellChangedBrushKey, "#FFCC80");
 		AssertBrush(resources, CellPaletteInstaller.CellChangedSelectedBackgroundBrushKey, "#EFD3A4");
 		AssertBrush(resources, CellPaletteInstaller.GridLineBrushKey, "#CCCCCC");
+		AssertBrush(resources, CellPaletteInstaller.StatusBarBackgroundBrushKey, "#F0F0F0");
+		AssertBrush(resources, CellPaletteInstaller.StatusBarForegroundBrushKey, "#111111");
+		AssertBrush(resources, CellPaletteInstaller.ErrorBrushKey, "#D32F2F");
+		AssertBrush(resources, CellPaletteInstaller.WarningBrushKey, "#F57C00");
+		AssertBrush(resources, CellPaletteInstaller.ValidationPanelBackgroundBrushKey, "#FBFBFB");
+		AssertBrush(resources, CellPaletteInstaller.ValidationPanelForegroundBrushKey, "#222222");
+		AssertBrush(resources, CellPaletteInstaller.InfoBrushKey, "#1976D2");
+		AssertBrush(resources, CellPaletteInstaller.ConnectedBrushKey, "#44BB44");
+		AssertBrush(resources, CellPaletteInstaller.DisconnectedBrushKey, "#FF4444");
+		AssertBrush(resources, CellPaletteInstaller.PanelBackgroundBrushKey, "#F8F8F8");
+		AssertBrush(resources, CellPaletteInstaller.PanelHeaderBackgroundBrushKey, "#EEEEEE");
+		AssertBrush(resources, CellPaletteInstaller.SubtleBorderBrushKey, "#D0D0D0");
+		AssertBrush(resources, CellPaletteInstaller.SeparatorBrushKey, "#C0C0C0");
+		AssertBrush(resources, CellPaletteInstaller.SecondaryForegroundBrushKey, "#888888");
+		AssertBrush(resources, CellPaletteInstaller.GridBorderBrushKey, "#808080");
+		AssertBrush(resources, CellPaletteInstaller.GridBackgroundBrushKey, "#FFFFFF");
+		AssertBrush(resources, CellPaletteInstaller.HeaderForegroundBrushKey, "#000000");
 
-		resources.Count.Should().Be(25);
+		resources[CellPaletteInstaller.StatusBarPaddingKey].Should().Be(new Thickness(5));
+		resources[CellPaletteInstaller.StatusBarItemSpacingKey].Should().Be(10d);
+		resources[CellPaletteInstaller.StatusBarFontSizeKey].Should().Be(12d);
+		resources[CellPaletteInstaller.ValidationPanelMaxHeightKey].Should().Be(100d);
+		resources[CellPaletteInstaller.RowHeightKey].Should().Be(gridStyle.RowHeight);
+
+		resources.Count.Should().Be(47);
 	}
 
 	private static void AssertBrush(IResourceDictionary resources, string key, string expectedHex)

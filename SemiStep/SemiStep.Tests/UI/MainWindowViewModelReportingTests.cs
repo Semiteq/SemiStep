@@ -7,16 +7,17 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
+using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.UI.Helpers;
-
 using SemiStep.UI.Clipboard;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.Plc;
 using SemiStep.UI.RecipeFile;
 using SemiStep.UI.RecipeGrid;
+using SemiStep.UI.StyleEditor;
 
 using Xunit;
 
@@ -81,6 +82,12 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 			_fixture.RecipeMetadataRegistry,
 			new HistoricalScheduler());
 
+		var gridStyleEditorViewModelFactory = new Func<GridStyleEditorViewModel>(
+			() => new GridStyleEditorViewModel(
+				new GridStyleEditorFacade(),
+				@"C:\does-not-exist",
+				_fixture.AppConfiguration.GridStyle));
+
 		return new MainWindowViewModel(
 			_fixture.Coordinator,
 			grid,
@@ -90,6 +97,7 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 			_fixture.MessagePanel,
 			columnBuilder,
 			plcMonitor,
+			gridStyleEditorViewModelFactory,
 			NullLogger<MainWindowViewModel>.Instance);
 	}
 }

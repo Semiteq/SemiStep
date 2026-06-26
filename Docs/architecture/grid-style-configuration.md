@@ -1,0 +1,135 @@
+# Grid Style Configuration
+
+## Overview
+
+Every recipe-grid and app-chrome style flows from one YAML file per equipment config:
+`{configDir}/ui/grid_style.yaml`. No style is hardcoded in the UI — fonts, paddings, row height,
+cell/execution/selection palettes, status-bar and validation-panel chrome, and the main-window
+border/background/header colors all come from that file. An in-app editor edits the same file; the
+operator does not hand-edit YAML. Changes apply on the next restart.
+
+This file is the styling counterpart of `recipe-grid-column-sizing.md`: the sizing doc explains how a
+column's width is computed; this one explains where the style values (including the font sizes that
+feed that computation) come from and how they reach the screen.
+
+## YAML is the single source of truth
+
+`grid_style.yaml` is the only style file. The other config sections (`actions/`, `columns/`,
+`groups/`, `properties/`) are loaded by globbing `*.yaml` in their subfolder and merging. Grid styles
+are the deliberate exception: `GridStyleLoader.LoadAsync` reads exactly one file —
+`{configDir}/ui/grid_style.yaml` — never globbed, never merged. That keeps the editor's write target
+unambiguous: one config-dir maps to one style file. If styles were ever split across `ui/*.yaml`,
+write-back would have no single target, so single-file is intentional.
+
+The file header documents the accepted hex formats (`#RGB`, `#RRGGBB`, `#ARGB`, `#AARRGGBB`); the
+writer preserves that header on save.
+
+## The load pipeline
+
+```
+grid_style.yaml
+  → GridStyleOptionsDto            (internal DTOs, snake_case [YamlMember], one per section)
+  → GridStyleValidator.Validate    (hex-format check; see "Known gap" below)
+  → GridStyleMapper.Map            (DTO → record, applies defaults)
+  → GridStyleOptions               (immutable record, SemiStep.Core, Avalonia-free)
+  → AppConfiguration.GridStyle     (bundled by ConfigFacade)
+  → DI singleton                   (UiDi.AddUi: AppConfiguration.GridStyle registered as GridStyleOptions)
+```
+
+`ConfigFacade` loads the DTO, runs `GridStyleValidator`, calls `GridStyleMapper.Map`, and bundles the
+resulting `GridStyleOptions` record into `AppConfiguration`. `UiDi.AddUi` registers
+`AppConfiguration.GridStyle` as a `GridStyleOptions` singleton, so every consumer (the installers, the
+column factories, `ColumnWidthCalculator`) injects the same typed record.
+
+`GridStyleOptions` is an immutable record with a `Default` fallback used only by tests; the `#000000`
+cell-palette placeholders in `Default` are never rendered in production.
+
+## Resources projection
+
+The typed record is projected into `Application.Resources` at startup so XAML can bind styles via
+`{DynamicResource}`:
+
+- `CellPaletteInstaller.Install` pushes `SolidColorBrush` objects for the read-only / disabled / changed
+  cell palettes, selection, grid line, status-bar and validation-panel colors, the app-wide
+  `ErrorBrush` / `WarningBrush` (driven by the validation-panel severity colors), and all app-chrome
+  brushes (`InfoBrush`, `ConnectedBrush`, `DisconnectedBrush`, `PanelBackgroundBrush`,
+  `PanelHeaderBackgroundBrush`, `SubtleBorderBrush`, `SeparatorBrush`, `SecondaryForegroundBrush`,
+  `GridBorderBrush`, `GridBackgroundBrush`, `HeaderForegroundBrush`).
+- `ExecutionPaletteInstaller.Install` pushes the per-depth execution row brushes plus the
+  current-step-marker brush.
+
+Alongside the brushes, the cell installer pushes a few **numeric** layout resources that XAML consumes
+directly: `StatusBarFontSize` (the cell font size as a `double`), `StatusBarPadding` (a `Thickness`),
+`StatusBarItemSpacing` (a `double`), and `ValidationPanelMaxHeight` (a `double`). These let the status
+bar and message panel read their layout from config without a code-side calculation.
+
+## Why the typed record cannot be replaced by raw resources
+
+Colors and most layout values could live entirely as resources. `CellFontSize` cannot:
+`ColumnWidthCalculator.MeasureText` needs it as a number in C# to measure text and size each column
+(see `recipe-grid-column-sizing.md`). A `DynamicResource` brush is opaque to that code path. So the
+typed `GridStyleOptions` record stays the canonical model, and resources are a projection of it — not
+the other way around.
+
+## Editor write-back
+
+The in-app editor is the write path back to the same file:
+
+```
+GridStyleEditorWindow
+  → GridStyleEditorViewModel    (mutable draft: Color per color, decimal? per size)
+  → GridStyleEditorFacade       (the single public Core seam)
+  → GridStyleWriter             (record → DTO, serialize, atomic write)
+```
+
+- **ViewModel.** Seeds a mutable draft from the loaded record (a separate copy, never the DI
+  singleton). Colors are exposed as `Color` for the `ColorPicker`; sizes as `decimal?` for
+  `NumericUpDown`. Hex↔`Color` goes through an explicit `HexColor.ToHex` / `HexColor.Parse`, not
+  `Color.ToString()`. `CanSave` is gated by **both** the facade's color validation **and** VM-side
+  numeric range checks (font/padding/row-height/spacing/panel-height bounds). The editor surfaces
+  effectively the whole record (all ~52 colors and all 10 numerics). `BuildRecord` rebuilds the record
+  with `with` over the seeded source, so the mechanism still preserves any field that happened not to
+  be surfaced.
+- **Facade.** `GridStyleEditorFacade` is the only public Core seam for the editor:
+  `Load(configDir)` → `Result<GridStyleOptions>`, `Validate(GridStyleOptions)` → `Result`,
+  `Save(configDir, GridStyleOptions)` → `Result`. The loader, validator, writer, and the ~12 DTOs stay
+  `internal`. The UI never touches Core internals directly. (Layering: the config stays in
+  `SemiStep.Core`, settled by review; the editor reaches it only through this facade.)
+- **Writer.** `GridStyleWriter` maps the record back to the DTO (`GridStyleDtoMapper`), serializes with
+  the underscored naming convention, re-prepends the file's leading comment block (the header), then
+  normalizes to LF and writes UTF-8 no-BOM via a temp-then-move atomic replace in the same `ui/` dir.
+  Every color DTO property carries `[YamlMember(ScalarStyle = ScalarStyle.DoubleQuoted)]` so hex values
+  emit quoted and quoting stays uniform.
+
+The editor edits the **merged** record (defaults already applied), so `Save` writes a
+fully-populated file — every key is emitted, no omitted-key preservation. That is acceptable for a
+one-file settings editor and removes any in-place DTO-patching.
+
+## Restart to apply
+
+v1 applies changes on restart: the loader re-runs the normal pipeline on the next launch and the new
+values flow through. There is no live preview. Live color preview is deferred (Task 8): it would
+require the installers to re-push brushes through a provider on change. Font and size changes always
+need a layout rebuild regardless (they feed `ColumnWidthCalculator` and the column build), so a full
+restart is the simplest correct behavior for v1.
+
+## What is intentionally not wired
+
+- **Execution depth-0.** `ExecutionDepth0Color` / `ExecRowDepth0Brush` stay installed for palette
+  symmetry but have no `for-depth-0` selector. `RecipeRowExecutionClassBinder` binds only
+  `current-step` / `past-step` / `for-depth-1..3`, and depth-0 already renders default white
+  (`#FFFFFF`), so a selector would be a no-op. The brush is installed; no selector is added.
+- **Removed fields.** Grid-line thickness, alternating-row background, and normal-row background were
+  dropped from the model, DTOs, mapper, and shipped configs. Avalonia's Fluent `DataGrid` exposes no
+  inner-gridline-thickness or alternating-row-background property, so they had no wire target.
+
+## Known gap
+
+`GridStyleValidator` currently format-checks only the execution / readonly / disabled cell palettes and
+the optional chrome section. These colors are **not** Core-validated: selection (background /
+foreground), changed-cell (`changed` / `changed_selected`), the grid line, the status-bar
+(background / foreground), and the validation-panel (background / foreground / error / warning). In
+practice the editor's `ColorPicker` constrains those to valid `Color` structs, so a malformed value
+cannot reach `Save` through the editor — but a hand-edited file could carry an invalid hex in those
+keys without the validator catching it. Noted honestly; closing the gap would mean extending
+`GridStyleValidator` to cover the remaining sections.

@@ -59,6 +59,52 @@ public sealed class GridStyleMapperTests
 	}
 
 	[Fact]
+	public void Map_WiresEveryChromeFieldFromDto()
+	{
+		var dto = BuildCompleteDto();
+		dto.Chrome = new GridStyleChromeColorsDto
+		{
+			Info = "#1976D2",
+			Connected = "#44BB44",
+			Disconnected = "#FF4444",
+			PanelBackground = "#F8F8F8",
+			PanelHeaderBackground = "#EEEEEE",
+			SubtleBorder = "#D0D0D0",
+			Separator = "#C0C0C0",
+			SecondaryForeground = "#888888",
+			GridBorder = "#808080",
+			GridBackground = "#FFFFFF",
+			HeaderForeground = "#000000"
+		};
+
+		var options = GridStyleMapper.Map(dto);
+
+		options.InfoColor.Should().Be("#1976D2");
+		options.ConnectedColor.Should().Be("#44BB44");
+		options.DisconnectedColor.Should().Be("#FF4444");
+		options.PanelBackgroundColor.Should().Be("#F8F8F8");
+		options.PanelHeaderBackgroundColor.Should().Be("#EEEEEE");
+		options.SubtleBorderColor.Should().Be("#D0D0D0");
+		options.SeparatorColor.Should().Be("#C0C0C0");
+		options.SecondaryForegroundColor.Should().Be("#888888");
+		options.GridBorderColor.Should().Be("#808080");
+		options.GridBackgroundColor.Should().Be("#FFFFFF");
+		options.HeaderForegroundColor.Should().Be("#000000");
+	}
+
+	[Fact]
+	public void Map_OmittedChromeSection_FallsBackToDefaults()
+	{
+		var dto = BuildCompleteDto();
+
+		var options = GridStyleMapper.Map(dto);
+
+		options.InfoColor.Should().Be(GridStyleOptions.Default.InfoColor);
+		options.GridBorderColor.Should().Be(GridStyleOptions.Default.GridBorderColor);
+		options.HeaderForegroundColor.Should().Be(GridStyleOptions.Default.HeaderForegroundColor);
+	}
+
+	[Fact]
 	public void Map_NullDto_ReturnsDefaults()
 	{
 		var options = GridStyleMapper.Map(null);

@@ -19,6 +19,7 @@ using SemiStep.UI.Plc;
 using SemiStep.UI.RecipeFile;
 using SemiStep.UI.RecipeGrid;
 using SemiStep.UI.ShutdownService;
+using SemiStep.UI.StyleEditor;
 
 namespace SemiStep.UI.MainWindow;
 
@@ -27,6 +28,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	private readonly RecipeCoordinator _coordinator;
 	private readonly CompositeDisposable _disposables = new();
 	private readonly ILogger<MainWindowViewModel> _logger;
+	private readonly Func<GridStyleEditorViewModel> _gridStyleEditorViewModelFactory;
 
 	public MainWindowViewModel(
 		RecipeCoordinator coordinator,
@@ -37,10 +39,12 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		MessagePanelViewModel messagePanel,
 		ColumnBuilder columnBuilder,
 		PlcMonitorViewModel plcMonitor,
+		Func<GridStyleEditorViewModel> gridStyleEditorViewModelFactory,
 		ILogger<MainWindowViewModel> logger)
 	{
 		_coordinator = coordinator;
 		_logger = logger;
+		_gridStyleEditorViewModelFactory = gridStyleEditorViewModelFactory;
 		RecipeGrid = recipeGrid;
 		RecipeCommands = recipeCommands;
 		Clipboard = clipboard;
@@ -51,6 +55,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 		ExitCommand = ReactiveCommand.Create(ExecuteExit);
 		ToggleSyncCommand = ReactiveCommand.CreateFromTask(ExecuteToggleSyncAsync);
+		OpenStyleEditorCommand = ReactiveCommand.CreateFromTask(ExecuteOpenStyleEditorAsync);
 
 		ToggleSyncCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
@@ -94,6 +99,8 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public ReactiveCommand<Unit, Unit> ToggleSyncCommand { get; }
 
+	public ReactiveCommand<Unit, Unit> OpenStyleEditorCommand { get; }
+
 	public bool IsConnectedToPlc => _coordinator.IsConnected;
 
 	public string ConnectionStatus => IsConnectedToPlc ? "Connected" : "Disconnected";
@@ -126,6 +133,20 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	private static void ExecuteExit()
 	{
 		DesktopShutdownService.Shutdown();
+	}
+
+	private async Task ExecuteOpenStyleEditorAsync()
+	{
+		if (MainWindow is null)
+		{
+			return;
+		}
+
+		var viewModel = _gridStyleEditorViewModelFactory();
+		await viewModel.LoadAsync();
+
+		var window = new GridStyleEditorWindow { DataContext = viewModel };
+		await window.ShowDialog(MainWindow);
 	}
 
 	private async Task ExecuteToggleSyncAsync()

@@ -49,10 +49,6 @@ internal static class GridStyleMapper
 			ReadOnlyCellDepth3PastColor: readOnlyCells.Depth3Past!,
 			ReadOnlyCellSelectedColor: readOnlyCells.Selected!,
 			ReadOnlyCellForegroundColor: readOnlyCells.Foreground!,
-			AlternatingRowBackgroundColor: dto.Colors?.Rows?.AlternatingBackground ??
-										   defaults.AlternatingRowBackgroundColor,
-			NormalRowBackgroundColor: dto.Colors?.Rows?.NormalBackground ?? defaults.NormalRowBackgroundColor,
-			GridLineThickness: dto.Borders?.GridLineThickness ?? defaults.GridLineThickness,
 			GridLineColor: dto.Colors?.GridLine ?? defaults.GridLineColor,
 			StatusBarBackgroundColor: dto.StatusBar?.Background ?? defaults.StatusBarBackgroundColor,
 			StatusBarForegroundColor: dto.StatusBar?.Foreground ?? defaults.StatusBarForegroundColor,
@@ -71,6 +67,17 @@ internal static class GridStyleMapper
 			ExecutionDepth1PastColor: executionCells.Depth1Past!,
 			ExecutionDepth2PastColor: executionCells.Depth2Past!,
 			ExecutionDepth3PastColor: executionCells.Depth3Past!,
-			ExecutionCurrentStepMarkerColor: executionCells.CurrentStepMarker!);
+			ExecutionCurrentStepMarkerColor: executionCells.CurrentStepMarker!,
+			InfoColor: dto.Chrome?.Info ?? defaults.InfoColor,
+			ConnectedColor: dto.Chrome?.Connected ?? defaults.ConnectedColor,
+			DisconnectedColor: dto.Chrome?.Disconnected ?? defaults.DisconnectedColor,
+			PanelBackgroundColor: dto.Chrome?.PanelBackground ?? defaults.PanelBackgroundColor,
+			PanelHeaderBackgroundColor: dto.Chrome?.PanelHeaderBackground ?? defaults.PanelHeaderBackgroundColor,
+			SubtleBorderColor: dto.Chrome?.SubtleBorder ?? defaults.SubtleBorderColor,
+			SeparatorColor: dto.Chrome?.Separator ?? defaults.SeparatorColor,
+			SecondaryForegroundColor: dto.Chrome?.SecondaryForeground ?? defaults.SecondaryForegroundColor,
+			GridBorderColor: dto.Chrome?.GridBorder ?? defaults.GridBorderColor,
+			GridBackgroundColor: dto.Chrome?.GridBackground ?? defaults.GridBackgroundColor,
+			HeaderForegroundColor: dto.Chrome?.HeaderForeground ?? defaults.HeaderForegroundColor);
 	}
 }

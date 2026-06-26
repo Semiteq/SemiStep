@@ -51,7 +51,11 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 			{
 				FontSize = gridStyle.CellFontSize,
 				VerticalAlignment = VerticalAlignment.Center,
-				Padding = new Thickness(4, 2),
+				Padding = new Thickness(
+					gridStyle.CellPaddingLeft,
+					gridStyle.CellPaddingTop,
+					gridStyle.CellPaddingRight,
+					gridStyle.CellPaddingBottom),
 				TextAlignment = TextAlignment.Center,
 			};
 
@@ -77,7 +81,11 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 			{
 				FontSize = gridStyle.CellFontSize,
 				VerticalAlignment = VerticalAlignment.Center,
-				Padding = new Thickness(4, 2),
+				Padding = new Thickness(
+					gridStyle.CellPaddingLeft,
+					gridStyle.CellPaddingTop,
+					gridStyle.CellPaddingRight,
+					gridStyle.CellPaddingBottom),
 				TextAlignment = TextAlignment.Center,
 			};
 
@@ -119,9 +127,17 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 			{
 				FontSize = gridStyle.CellFontSize,
 				VerticalAlignment = VerticalAlignment.Center,
+				VerticalContentAlignment = VerticalAlignment.Center,
 				HorizontalAlignment = HorizontalAlignment.Stretch,
+				// The Fluent TextBox theme floors MinHeight at 32; on a shorter configured row that
+				// inflates the editing cell and pushes the text above the display position. Size to the row.
+				MinHeight = 0,
 				BorderThickness = new Thickness(0),
-				Padding = new Thickness(4, 2),
+				Padding = new Thickness(
+					gridStyle.CellPaddingLeft,
+					gridStyle.CellPaddingTop,
+					gridStyle.CellPaddingRight,
+					gridStyle.CellPaddingBottom),
 				TextAlignment = TextAlignment.Center,
 			};
 

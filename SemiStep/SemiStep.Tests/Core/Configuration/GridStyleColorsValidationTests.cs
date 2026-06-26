@@ -292,6 +292,48 @@ public sealed class GridStyleColorsValidationTests
 		result.IsSuccess.Should().BeTrue();
 	}
 
+	[Fact]
+	public void Validate_OmittedChromeSection_Succeeds()
+	{
+		var dto = CreateValidDto();
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Fact]
+	public void Validate_ValidChromeSection_Succeeds()
+	{
+		var dto = CreateValidDto();
+		dto.Chrome = new GridStyleChromeColorsDto
+		{
+			Info = "#1976D2",
+			GridBorder = "#808080",
+			HeaderForeground = "#000000"
+		};
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Fact]
+	public void Validate_MalformedChromeHex_FailsNamingKey()
+	{
+		var dto = CreateValidDto();
+		dto.Chrome = new GridStyleChromeColorsDto
+		{
+			GridBorder = "not-a-color"
+		};
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains("'chrome.grid_border'") && e.Message.Contains("not-a-color"));
+	}
+
 	private static GridStyleOptionsDto CreateValidDto()
 	{
 		return new GridStyleOptionsDto

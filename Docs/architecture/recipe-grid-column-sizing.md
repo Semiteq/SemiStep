@@ -123,13 +123,15 @@ content.
   header budgets are font-proportional. The combo chevron stays fixed by design (it is a template
   literal).
 
-### Known inconsistency: content-cell padding is hardcoded
+### Content-cell padding is config-driven, but unknown at measure time
 
-`TextCellFactory` renders content cells with a hardcoded `Thickness(4, 2)` and does **not** read
-`gridStyle.CellPaddingLeft/Right`, so config cell padding does not flow into content-cell layout.
-That is why the chrome is expressed as a font multiple (covering the rendered padding + reserve
-together) rather than as `configPadding + reserve` — the latter would be a false story. The header
-path is consistent (header style padding `6,3` is both measured and rendered).
+`TextCellFactory` builds each content cell's `Padding` from
+`gridStyle.CellPaddingLeft/Top/Right/Bottom`, so config cell padding does flow into content-cell
+layout. The chrome is still expressed as a font multiple rather than as `configPadding + reserve`
+because `ColumnWidthCalculator` measures column widths before any cell is templated and does not read
+the runtime padding at measure time. The font multiple covers the rendered padding plus reserve
+together without the calculator needing to know the exact padding values. The header path is
+consistent (header style padding `6,3` is both measured and rendered).
 
 ### "Fits 1920" is a per-config property
 

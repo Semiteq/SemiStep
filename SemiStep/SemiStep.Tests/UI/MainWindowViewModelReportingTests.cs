@@ -1,7 +1,9 @@
 ﻿using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 
+using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Threading;
 
 using FluentAssertions;
 
@@ -54,7 +56,40 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 		_fixture.MessagePanel.ErrorCount.Should().Be(0);
 	}
 
-	private MainWindowViewModel CreateViewModel()
+	[AvaloniaFact]
+	public async Task OpenStyleEditor_WhenFactoryThrows_ReportsErrorAndDoesNotEscape()
+	{
+		var viewModel = CreateViewModel(
+			() => throw new InvalidOperationException("factory boom"));
+
+		try
+		{
+			viewModel.MainWindow = new Window();
+
+			try
+			{
+				await viewModel.OpenStyleEditorCommand.Execute();
+			}
+			catch (InvalidOperationException)
+			{
+				// Exception is routed to ThrownExceptions; awaiting also surfaces it here.
+			}
+
+			Dispatcher.UIThread.RunJobs();
+
+			var operationEntry = _fixture.MessagePanel.Entries
+				.Should().ContainSingle(e => e.Severity == MessageSeverity.Error).Subject;
+			operationEntry.Message.Should().StartWith("Style editor failed:");
+			operationEntry.Message.Should().Contain("factory boom");
+		}
+		finally
+		{
+			viewModel.Dispose();
+		}
+	}
+
+	private MainWindowViewModel CreateViewModel(
+		Func<GridStyleEditorViewModel>? styleEditorFactory = null)
 	{
 		var grid = new RecipeGridViewModel(
 			_fixture.Coordinator,
@@ -82,7 +117,7 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 			_fixture.RecipeMetadataRegistry,
 			new HistoricalScheduler());
 
-		var gridStyleEditorViewModelFactory = new Func<GridStyleEditorViewModel>(
+		var gridStyleEditorViewModelFactory = styleEditorFactory ?? new Func<GridStyleEditorViewModel>(
 			() => new GridStyleEditorViewModel(
 				new GridStyleEditorFacade(),
 				@"C:\does-not-exist",

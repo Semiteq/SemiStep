@@ -106,6 +106,61 @@ internal static class GridStyleValidator
 				},
 			errors);
 
+		var selection = dto.Colors.Selection;
+		ValidateOptionalSection(
+			"colors.selection",
+			selection is null
+				? null
+				: new (string Name, string? Value)[]
+				{
+					("background", selection.Background),
+					("foreground", selection.Foreground)
+				},
+			errors);
+
+		var cells = dto.Colors.Cells;
+		ValidateOptionalSection(
+			"colors.cells",
+			cells is null
+				? null
+				: new (string Name, string? Value)[]
+				{
+					("changed", cells.Changed),
+					("changed_selected", cells.ChangedSelected)
+				},
+			errors);
+
+		if (dto.Colors.GridLine is not null)
+		{
+			ValidateKey("colors", "grid_line", dto.Colors.GridLine, errors);
+		}
+
+		var statusBar = dto.StatusBar;
+		ValidateOptionalSection(
+			"status_bar",
+			statusBar is null
+				? null
+				: new (string Name, string? Value)[]
+				{
+					("background", statusBar.Background),
+					("foreground", statusBar.Foreground)
+				},
+			errors);
+
+		var validationPanel = dto.ValidationPanel;
+		ValidateOptionalSection(
+			"validation_panel",
+			validationPanel is null
+				? null
+				: new (string Name, string? Value)[]
+				{
+					("background", validationPanel.Background),
+					("foreground", validationPanel.Foreground),
+					("error_color", validationPanel.ErrorColor),
+					("warning_color", validationPanel.WarningColor)
+				},
+			errors);
+
 		if (errors.Count > 0)
 		{
 			return Result.Fail(errors);

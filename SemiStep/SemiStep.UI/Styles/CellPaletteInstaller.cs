@@ -36,7 +36,6 @@ internal static class CellPaletteInstaller
 	public const string StatusBarForegroundBrushKey = "StatusBarForegroundBrush";
 	public const string StatusBarPaddingKey = "StatusBarPadding";
 	public const string StatusBarItemSpacingKey = "StatusBarItemSpacing";
-	public const string StatusBarFontSizeKey = "StatusBarFontSize";
 	public const string ErrorBrushKey = "ErrorBrush";
 	public const string WarningBrushKey = "WarningBrush";
 	public const string ValidationPanelBackgroundBrushKey = "ValidationPanelBackgroundBrush";
@@ -90,7 +89,6 @@ internal static class CellPaletteInstaller
 		resources[StatusBarForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.StatusBarForegroundColor);
 		resources[StatusBarPaddingKey] = new Thickness(gridStyle.StatusBarPadding);
 		resources[StatusBarItemSpacingKey] = gridStyle.StatusBarItemSpacing;
-		resources[StatusBarFontSizeKey] = (double)gridStyle.CellFontSize;
 		resources[ErrorBrushKey] = PaletteBrushFactory.From(gridStyle.ValidationPanelErrorColor);
 		resources[WarningBrushKey] = PaletteBrushFactory.From(gridStyle.ValidationPanelWarningColor);
 		resources[ValidationPanelBackgroundBrushKey] =

@@ -334,6 +334,182 @@ public sealed class GridStyleColorsValidationTests
 			e.Message.Contains("'chrome.grid_border'") && e.Message.Contains("not-a-color"));
 	}
 
+	[Fact]
+	public void Validate_OmittedOptionalSections_Succeeds()
+	{
+		var dto = CreateValidDto();
+
+		dto.Colors!.Selection.Should().BeNull();
+		dto.Colors!.Cells!.Changed.Should().BeNull();
+		dto.Colors!.GridLine.Should().BeNull();
+		dto.StatusBar.Should().BeNull();
+		dto.ValidationPanel.Should().BeNull();
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Fact]
+	public void Validate_ValidSelectionSection_Succeeds()
+	{
+		var dto = CreateValidDto();
+		dto.Colors!.Selection = new GridStyleSelectionColorsDto
+		{
+			Background = "#CCE4F7",
+			Foreground = "#202020"
+		};
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Theory]
+	[InlineData("background")]
+	[InlineData("foreground")]
+	public void Validate_MalformedSelectionHex_FailsNamingKey(string keyName)
+	{
+		var dto = CreateValidDto();
+		dto.Colors!.Selection = new GridStyleSelectionColorsDto
+		{
+			Background = keyName == "background" ? "not-a-color" : "#CCE4F7",
+			Foreground = keyName == "foreground" ? "not-a-color" : "#202020"
+		};
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains($"'colors.selection.{keyName}'") && e.Message.Contains("not-a-color"));
+	}
+
+	[Fact]
+	public void Validate_ValidChangedCellColors_Succeeds()
+	{
+		var dto = CreateValidDto();
+		dto.Colors!.Cells!.Changed = "#FFCC80";
+		dto.Colors!.Cells!.ChangedSelected = "#EFD3A4";
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Theory]
+	[InlineData("changed")]
+	[InlineData("changed_selected")]
+	public void Validate_MalformedChangedCellHex_FailsNamingKey(string keyName)
+	{
+		var dto = CreateValidDto();
+		dto.Colors!.Cells!.Changed = keyName == "changed" ? "not-a-color" : "#FFCC80";
+		dto.Colors!.Cells!.ChangedSelected = keyName == "changed_selected" ? "not-a-color" : "#EFD3A4";
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains($"'colors.cells.{keyName}'") && e.Message.Contains("not-a-color"));
+	}
+
+	[Fact]
+	public void Validate_ValidGridLine_Succeeds()
+	{
+		var dto = CreateValidDto();
+		dto.Colors!.GridLine = "#CCCCCC";
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Fact]
+	public void Validate_MalformedGridLineHex_FailsNamingKey()
+	{
+		var dto = CreateValidDto();
+		dto.Colors!.GridLine = "not-a-color";
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains("'colors.grid_line'") && e.Message.Contains("not-a-color"));
+	}
+
+	[Fact]
+	public void Validate_ValidStatusBarSection_Succeeds()
+	{
+		var dto = CreateValidDto();
+		dto.StatusBar = new StatusBarStyleDto
+		{
+			Background = "#F0F0F0",
+			Foreground = "#111111"
+		};
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Theory]
+	[InlineData("background")]
+	[InlineData("foreground")]
+	public void Validate_MalformedStatusBarHex_FailsNamingKey(string keyName)
+	{
+		var dto = CreateValidDto();
+		dto.StatusBar = new StatusBarStyleDto
+		{
+			Background = keyName == "background" ? "not-a-color" : "#F0F0F0",
+			Foreground = keyName == "foreground" ? "not-a-color" : "#111111"
+		};
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains($"'status_bar.{keyName}'") && e.Message.Contains("not-a-color"));
+	}
+
+	[Fact]
+	public void Validate_ValidValidationPanelSection_Succeeds()
+	{
+		var dto = CreateValidDto();
+		dto.ValidationPanel = new ValidationPanelStyleDto
+		{
+			Background = "#FBFBFB",
+			Foreground = "#222222",
+			ErrorColor = "#D32F2F",
+			WarningColor = "#F57C00"
+		};
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Theory]
+	[InlineData("background")]
+	[InlineData("foreground")]
+	[InlineData("error_color")]
+	[InlineData("warning_color")]
+	public void Validate_MalformedValidationPanelHex_FailsNamingKey(string keyName)
+	{
+		var dto = CreateValidDto();
+		dto.ValidationPanel = new ValidationPanelStyleDto
+		{
+			Background = keyName == "background" ? "not-a-color" : "#FBFBFB",
+			Foreground = keyName == "foreground" ? "not-a-color" : "#222222",
+			ErrorColor = keyName == "error_color" ? "not-a-color" : "#D32F2F",
+			WarningColor = keyName == "warning_color" ? "not-a-color" : "#F57C00"
+		};
+
+		var result = GridStyleValidator.Validate(dto);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().Contain(e =>
+			e.Message.Contains($"'validation_panel.{keyName}'") && e.Message.Contains("not-a-color"));
+	}
+
 	private static GridStyleOptionsDto CreateValidDto()
 	{
 		return new GridStyleOptionsDto

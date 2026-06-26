@@ -117,11 +117,10 @@ public sealed class CellPaletteInstallerTests
 
 		resources[CellPaletteInstaller.StatusBarPaddingKey].Should().Be(new Thickness(5));
 		resources[CellPaletteInstaller.StatusBarItemSpacingKey].Should().Be(10d);
-		resources[CellPaletteInstaller.StatusBarFontSizeKey].Should().Be(12d);
 		resources[CellPaletteInstaller.ValidationPanelMaxHeightKey].Should().Be(100d);
 		resources[CellPaletteInstaller.RowHeightKey].Should().Be(gridStyle.RowHeight);
 
-		resources.Count.Should().Be(47);
+		resources.Count.Should().Be(46);
 	}
 
 	private static void AssertBrush(IResourceDictionary resources, string key, string expectedHex)

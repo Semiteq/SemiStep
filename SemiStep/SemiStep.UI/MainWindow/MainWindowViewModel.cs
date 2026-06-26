@@ -62,6 +62,11 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			.Subscribe(ex => messagePanel.ReportError($"Sync toggle failed: {ex.Message}"))
 			.DisposeWith(_disposables);
 
+		OpenStyleEditorCommand.ThrownExceptions
+			.ObserveOn(RxSchedulers.MainThreadScheduler)
+			.Subscribe(ex => messagePanel.ReportError($"Style editor failed: {ex.Message}"))
+			.DisposeWith(_disposables);
+
 		_coordinator.Mutated += OnCoordinatorMutated;
 		_disposables.Add(Disposable.Create(() => _coordinator.Mutated -= OnCoordinatorMutated));
 

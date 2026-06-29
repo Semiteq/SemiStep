@@ -58,10 +58,76 @@ The typed record is projected into `Application.Resources` at startup so XAML ca
 - `ExecutionPaletteInstaller.Install` pushes the per-depth execution row brushes plus the
   current-step-marker brush.
 
-Alongside the brushes, the cell installer pushes a few **numeric** layout resources that XAML consumes
-directly: `StatusBarFontSize` (the cell font size as a `double`), `StatusBarPadding` (a `Thickness`),
-`StatusBarItemSpacing` (a `double`), and `ValidationPanelMaxHeight` (a `double`). These let the status
-bar and message panel read their layout from config without a code-side calculation.
+Alongside the brushes, the cell installer pushes a few **numeric / layout** resources that XAML
+consumes directly: `StatusBarPadding` (a `Thickness`), `StatusBarItemSpacing` (a `double`), and
+`ValidationPanelMaxHeight` (a `double`). These let the status bar and message panel read their layout
+from config without a code-side calculation. The status-bar **font** resources are described in the
+font-model section below.
+
+## The font model
+
+Fonts span every text role the palette drives. The model is one **global font family** plus
+**per-role size, weight, and italic**. There are five roles:
+
+| Role | Where it renders | Default size | Default weight | Default italic |
+| --- | --- | --- | --- | --- |
+| Grid header | column header text | 14 | 700 (Bold) | false |
+| Grid cell | cell / numbering / combo text | 12 | 400 (Normal) | false |
+| Status-bar text | all non-timer status text | 12 | 400 | false |
+| Status-bar timer **label** | `Шаг:` / `Рецепт:` captions | 14 | 400 | false |
+| Status-bar timer **value** | the two countdown readouts | 24 | 400 | false |
+
+The earlier single `StatusBarTimerFontSize` (one size for both label and value) is **replaced** by the
+two timer roles, so the caption and the countdown can carry independent fonts. With the shipped config
+the label renders at 14 and the value at 24 — they no longer share one size.
+
+- **Family** is a single `string` on the record (`GridStyleOptions.FontFamily`). The default is `""`,
+  meaning "theme default": consumers leave `FontFamily` unset so the Fluent theme's bundled font
+  (Inter) stays in place. A non-empty value sets the family for every role. The editor offers
+  `FontManager.Current.SystemFonts`; an unknown saved family falls back to the theme default rather
+  than failing.
+- **Weight** is stored as an `int` (100–900) in the record and YAML — culture-free and easy to
+  validate. Consumers cast it to Avalonia's `FontWeight` enum.
+- **Italic** is a `bool`; consumers convert it to `FontStyle.Italic` / `FontStyle.Normal`.
+
+### How each role reaches the screen
+
+The status-bar roles use the **`DynamicResource` cascade**: `CellPaletteInstaller.Install` projects
+the typed record into these resource keys, and `AppStatusBar.axaml` binds `TextElement.*` attached
+properties to them (the global family + status-text role on the root `Border`; the timer label/value
+roles set directly on the four timer `TextBlock`s):
+
+| Resource key | Type | YAML source |
+| --- | --- | --- |
+| `AppFontFamily` | `FontFamily` | `fonts.family` |
+| `StatusBarFontSize` | `double` | `status_bar.font_size` |
+| `StatusBarFontWeight` | `FontWeight` | `status_bar.weight` |
+| `StatusBarFontStyle` | `FontStyle` | `status_bar.italic` |
+| `StatusBarTimerLabelFontSize` | `double` | `status_bar.timer_label_font_size` |
+| `StatusBarTimerLabelFontWeight` | `FontWeight` | `status_bar.timer_label_weight` |
+| `StatusBarTimerLabelFontStyle` | `FontStyle` | `status_bar.timer_label_italic` |
+| `StatusBarTimerValueFontSize` | `double` | `status_bar.timer_value_font_size` |
+| `StatusBarTimerValueFontWeight` | `FontWeight` | `status_bar.timer_value_weight` |
+| `StatusBarTimerValueFontStyle` | `FontStyle` | `status_bar.timer_value_italic` |
+
+The grid roles are **code-assigned**, not resources: `ColumnBuilder`, `TextCellFactory`, and
+`ComboBoxCellFactory` set `FontFamily` / `FontWeight` / `FontStyle` / `FontSize` directly from the
+injected `GridStyleOptions` (the header's old hard-coded `FontWeight.Bold` is now
+`HeaderFontWeight`). When the family is empty they leave `FontFamily` unset. `ColumnWidthCalculator`
+builds its measuring `Typeface` from the same configured family/weight/italic so the measured width
+matches the rendered typeface (empty family → `FontFamily.Default` for measurement). The grid font
+keys are read in C# (see "Why the typed record cannot be replaced by raw resources"), so they have no
+resource projection.
+
+### YAML keys
+
+The font fields live in two DTO sections. All members are nullable; an omitted key falls back to the
+default, so existing `grid_style.yaml` files load unchanged.
+
+- `fonts:` — `family` (string), `header_size`, `header_weight`, `header_italic`,
+  `cell_size`, `cell_weight`, `cell_italic`.
+- `status_bar:` — `font_size`, `weight`, `italic`, `timer_label_font_size`, `timer_label_weight`,
+  `timer_label_italic`, `timer_value_font_size`, `timer_value_weight`, `timer_value_italic`.
 
 ## Why the typed record cannot be replaced by raw resources
 
@@ -87,7 +153,12 @@ GridStyleEditorWindow
   `NumericUpDown`. Hex↔`Color` goes through an explicit `HexColor.ToHex` / `HexColor.Parse`, not
   `Color.ToString()`. `CanSave` is gated by **both** the facade's color validation **and** VM-side
   numeric range checks (font/padding/row-height/spacing/panel-height bounds). The editor surfaces
-  effectively the whole record (all ~52 colors and all 10 numerics). `BuildRecord` rebuilds the record
+  effectively the whole record: all ~52 colors, 13 numerics, plus the font controls — one global
+  font-family `ComboBox`, and a per-role weight `ComboBox` (curated 300–900 list) and italic
+  `CheckBox`. The window groups these into two cards: **Fonts** (the family row plus a size / weight /
+  italic row per role) and **Layout** (paddings, row height, status padding/spacing, panel height).
+  The family/weight pickers always include the seeded value even when it is outside the offered list,
+  so a hand-edited family or weight round-trips losslessly. `BuildRecord` rebuilds the record
   with `with` over the seeded source, so the mechanism still preserves any field that happened not to
   be surfaced.
 - **Facade.** `GridStyleEditorFacade` is the only public Core seam for the editor:

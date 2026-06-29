@@ -49,7 +49,6 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 		{
 			var textBlock = new TextBlock
 			{
-				FontSize = gridStyle.CellFontSize,
 				VerticalAlignment = VerticalAlignment.Center,
 				Padding = new Thickness(
 					gridStyle.CellPaddingLeft,
@@ -58,6 +57,7 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 					gridStyle.CellPaddingBottom),
 				TextAlignment = TextAlignment.Center,
 			};
+			GridFontApplier.ApplyCellFont(textBlock, gridStyle);
 
 			textBlock.Bind(TextBlock.TextProperty, new Binding(nameof(RecipeRowViewModel.StepStartTime))
 			{
@@ -79,7 +79,6 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 		{
 			var textBlock = new TextBlock
 			{
-				FontSize = gridStyle.CellFontSize,
 				VerticalAlignment = VerticalAlignment.Center,
 				Padding = new Thickness(
 					gridStyle.CellPaddingLeft,
@@ -88,6 +87,7 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 					gridStyle.CellPaddingBottom),
 				TextAlignment = TextAlignment.Center,
 			};
+			GridFontApplier.ApplyCellFont(textBlock, gridStyle);
 
 			textBlock.Bind(TextBlock.TextProperty, new MultiBinding
 			{
@@ -125,7 +125,6 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 
 			var textBox = new TextBox
 			{
-				FontSize = gridStyle.CellFontSize,
 				VerticalAlignment = VerticalAlignment.Center,
 				VerticalContentAlignment = VerticalAlignment.Center,
 				HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -140,6 +139,7 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 					gridStyle.CellPaddingBottom),
 				TextAlignment = TextAlignment.Center,
 			};
+			GridFontApplier.ApplyCellFont(textBox, gridStyle);
 
 			if (maxLength.HasValue)
 			{

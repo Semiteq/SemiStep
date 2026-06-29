@@ -22,7 +22,10 @@
             BorderBrush="{DynamicResource SubtleBorderBrush}"
             BorderThickness="0,1,0,0"
             TextElement.Foreground="{DynamicResource StatusBarForegroundBrush}"
-            TextElement.FontSize="12"
+            TextElement.FontFamily="{DynamicResource AppFontFamily}"
+            TextElement.FontSize="{DynamicResource StatusBarFontSize}"
+            TextElement.FontWeight="{DynamicResource StatusBarFontWeight}"
+            TextElement.FontStyle="{DynamicResource StatusBarFontStyle}"
             Padding="{DynamicResource StatusBarPadding}">
         <Grid>
             <Grid.ColumnDefinitions>
@@ -127,8 +130,14 @@
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <TextBlock Text="Шаг:"
                                Foreground="{DynamicResource SecondaryForegroundBrush}"
+                               FontSize="{DynamicResource StatusBarTimerLabelFontSize}"
+                               FontWeight="{DynamicResource StatusBarTimerLabelFontWeight}"
+                               FontStyle="{DynamicResource StatusBarTimerLabelFontStyle}"
                                VerticalAlignment="Center" />
                     <TextBlock Text="{Binding PlcMonitor.TimeLeftInStepText}"
+                               FontSize="{DynamicResource StatusBarTimerValueFontSize}"
+                               FontWeight="{DynamicResource StatusBarTimerValueFontWeight}"
+                               FontStyle="{DynamicResource StatusBarTimerValueFontStyle}"
                                VerticalAlignment="Center" />
                 </StackPanel>
 
@@ -136,8 +145,14 @@
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <TextBlock Text="Рецепт:"
                                Foreground="{DynamicResource SecondaryForegroundBrush}"
+                               FontSize="{DynamicResource StatusBarTimerLabelFontSize}"
+                               FontWeight="{DynamicResource StatusBarTimerLabelFontWeight}"
+                               FontStyle="{DynamicResource StatusBarTimerLabelFontStyle}"
                                VerticalAlignment="Center" />
                     <TextBlock Text="{Binding PlcMonitor.TimeLeftInRecipeText}"
+                               FontSize="{DynamicResource StatusBarTimerValueFontSize}"
+                               FontWeight="{DynamicResource StatusBarTimerValueFontWeight}"
+                               FontStyle="{DynamicResource StatusBarTimerValueFontStyle}"
                                VerticalAlignment="Center" />
                 </StackPanel>
 

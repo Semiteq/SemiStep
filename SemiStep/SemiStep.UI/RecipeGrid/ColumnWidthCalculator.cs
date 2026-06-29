@@ -130,7 +130,7 @@ public sealed class ColumnWidthCalculator(
 				continue;
 			}
 
-			var contentWidth = MeasureText(text, gridStyle.CellFontSize, FontWeight.Normal);
+			var contentWidth = MeasureContent(text);
 			if (contentWidth > maxContentWidth)
 			{
 				maxContentWidth = contentWidth;
@@ -156,7 +156,7 @@ public sealed class ColumnWidthCalculator(
 		var maxWordWidth = 0.0;
 		foreach (var word in words)
 		{
-			var wordWidth = MeasureText(word, gridStyle.HeaderFontSize, FontWeight.Bold);
+			var wordWidth = MeasureHeaderWord(word);
 			if (wordWidth > maxWordWidth)
 			{
 				maxWordWidth = wordWidth;
@@ -195,14 +195,36 @@ public sealed class ColumnWidthCalculator(
 		}
 	}
 
-	private static double MeasureText(string text, double fontSize, FontWeight fontWeight)
+	// Empty family means "theme default": measure with FontFamily.Default so the width matches the
+	// rendered cell, which also leaves its FontFamily unset.
+	private FontFamily MeasureFontFamily =>
+		string.IsNullOrWhiteSpace(gridStyle.FontFamily) ? FontFamily.Default : new FontFamily(gridStyle.FontFamily);
+
+	// The single typeface the cell-role measurement uses, threading the configured family, weight, and
+	// italic so the measured width tracks the rendered cell. Exposed for the measurement-threading test.
+	internal Typeface CellTypeface =>
+		new(MeasureFontFamily, gridStyle.CellItalic ? FontStyle.Italic : FontStyle.Normal, (FontWeight)gridStyle.CellFontWeight);
+
+	internal Typeface HeaderTypeface =>
+		new(MeasureFontFamily, gridStyle.HeaderItalic ? FontStyle.Italic : FontStyle.Normal, (FontWeight)gridStyle.HeaderFontWeight);
+
+	private double MeasureContent(string text)
+	{
+		return MeasureText(text, CellTypeface, gridStyle.CellFontSize);
+	}
+
+	private double MeasureHeaderWord(string word)
+	{
+		return MeasureText(word, HeaderTypeface, gridStyle.HeaderFontSize);
+	}
+
+	private static double MeasureText(string text, Typeface typeface, double fontSize)
 	{
 		if (string.IsNullOrEmpty(text))
 		{
 			return 0;
 		}
 
-		var typeface = new Typeface(FontFamily.Default, FontStyle.Normal, fontWeight);
 		var formattedText = new FormattedText(
 			text,
 			CultureInfo.CurrentCulture,

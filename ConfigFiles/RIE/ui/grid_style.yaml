@@ -1,6 +1,12 @@
 fonts:
+  # Font family plus per-role weight and italic are configurable in-app (View > Grid Style Settings).
+  family: ""
   header_size: 14
+  header_weight: 700
+  header_italic: false
   cell_size: 12
+  cell_weight: 400
+  cell_italic: false
 
 layout:
   cell_padding_left: 6
@@ -55,6 +61,16 @@ status_bar:
   foreground: "#000000"
   padding: 5
   item_spacing: 10
+  # Status-bar text and the step/recipe timer label/value fonts are configurable in-app.
+  font_size: 12
+  weight: 400
+  italic: false
+  timer_label_font_size: 12
+  timer_label_weight: 400
+  timer_label_italic: false
+  timer_value_font_size: 20
+  timer_value_weight: 400
+  timer_value_italic: false
 
 validation_panel:
   background: "#FFFFFF"

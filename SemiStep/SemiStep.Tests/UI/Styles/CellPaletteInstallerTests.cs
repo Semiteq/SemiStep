@@ -50,6 +50,16 @@ public sealed class CellPaletteInstallerTests
 			StatusBarForegroundColor = "#111111",
 			StatusBarPadding = 5,
 			StatusBarItemSpacing = 10,
+			FontFamily = "Arial",
+			StatusBarFontSize = 14,
+			StatusBarFontWeight = 700,
+			StatusBarItalic = true,
+			StatusBarTimerLabelFontSize = 16,
+			StatusBarTimerLabelFontWeight = 500,
+			StatusBarTimerLabelItalic = true,
+			StatusBarTimerValueFontSize = 28,
+			StatusBarTimerValueFontWeight = 600,
+			StatusBarTimerValueItalic = false,
 			CellFontSize = 12,
 			ValidationPanelBackgroundColor = "#FBFBFB",
 			ValidationPanelForegroundColor = "#222222",
@@ -117,10 +127,35 @@ public sealed class CellPaletteInstallerTests
 
 		resources[CellPaletteInstaller.StatusBarPaddingKey].Should().Be(new Thickness(5));
 		resources[CellPaletteInstaller.StatusBarItemSpacingKey].Should().Be(10d);
+		resources[CellPaletteInstaller.StatusBarFontSizeKey].Should().Be(14d);
 		resources[CellPaletteInstaller.ValidationPanelMaxHeightKey].Should().Be(100d);
 		resources[CellPaletteInstaller.RowHeightKey].Should().Be(gridStyle.RowHeight);
 
-		resources.Count.Should().Be(46);
+		resources[CellPaletteInstaller.AppFontFamilyKey].Should().BeOfType<FontFamily>()
+			.Which.Name.Should().Be("Arial");
+		resources[CellPaletteInstaller.StatusBarFontWeightKey].Should().Be(FontWeight.Bold);
+		resources[CellPaletteInstaller.StatusBarFontStyleKey].Should().Be(FontStyle.Italic);
+		resources[CellPaletteInstaller.StatusBarTimerLabelFontSizeKey].Should().Be(16d);
+		resources[CellPaletteInstaller.StatusBarTimerLabelFontWeightKey].Should().Be(FontWeight.Medium);
+		resources[CellPaletteInstaller.StatusBarTimerLabelFontStyleKey].Should().Be(FontStyle.Italic);
+		resources[CellPaletteInstaller.StatusBarTimerValueFontSizeKey].Should().Be(28d);
+		resources[CellPaletteInstaller.StatusBarTimerValueFontWeightKey].Should().Be(FontWeight.SemiBold);
+		resources[CellPaletteInstaller.StatusBarTimerValueFontStyleKey].Should().Be(FontStyle.Normal);
+
+		resources.ContainsKey("StatusBarTimerFontSize").Should().BeFalse();
+
+		resources.Count.Should().Be(56);
+	}
+
+	[AvaloniaFact]
+	public void Install_EmptyFontFamily_InstallsThemeDefaultFamily()
+	{
+		var gridStyle = GridStyleOptions.Default with { FontFamily = "" };
+		var resources = new ResourceDictionary();
+
+		CellPaletteInstaller.Install(resources, gridStyle);
+
+		resources[CellPaletteInstaller.AppFontFamilyKey].Should().Be(FontFamily.Default);
 	}
 
 	private static void AssertBrush(IResourceDictionary resources, string key, string expectedHex)

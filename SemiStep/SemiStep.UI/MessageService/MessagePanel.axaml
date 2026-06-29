@@ -28,7 +28,7 @@
 
         <Grid RowDefinitions="Auto,*">
 
-            <!-- Header with counts and clear button -->
+            <!-- Header with counts and close button -->
             <Border Grid.Row="0"
                     Background="{DynamicResource PanelHeaderBackgroundBrush}"
                     Padding="8,4">
@@ -65,6 +65,21 @@
                         </StackPanel>
 
                     </StackPanel>
+
+                    <Button x:Name="CloseButton"
+                            Grid.Column="1"
+                            Command="{Binding ToggleCommand}"
+                            ToolTip.Tip="Close"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Padding="6,2"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="✕"
+                                   FontSize="12"
+                                   VerticalAlignment="Center" />
+                    </Button>
 
                 </Grid>
             </Border>

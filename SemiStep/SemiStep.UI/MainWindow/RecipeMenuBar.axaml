@@ -57,7 +57,9 @@
                       ToggleType="CheckBox"
                       IsChecked="{Binding IsToolBarVisible, Mode=OneWay}" />
             <MenuItem Header="_Notification Log"
-                      Command="{Binding MessagePanel.ToggleCommand}" />
+                      Command="{Binding MessagePanel.ToggleCommand}"
+                      ToggleType="CheckBox"
+                      IsChecked="{Binding MessagePanel.ShowPanel, Mode=OneWay}" />
             <Separator />
             <MenuItem Header="Grid _Style Settings..."
                       Command="{Binding OpenStyleEditorCommand}" />

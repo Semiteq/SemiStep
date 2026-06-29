@@ -47,11 +47,18 @@ public sealed class ColumnBuilder(
 			HeaderTemplate = _wrappingHeaderTemplate,
 			Binding = new Binding("StepNumber"),
 			FontSize = gridStyle.CellFontSize,
+			FontWeight = (FontWeight)gridStyle.CellFontWeight,
+			FontStyle = gridStyle.CellItalic ? FontStyle.Italic : FontStyle.Normal,
 			IsReadOnly = true,
 			Width = DataGridLength.Auto,
 			MinWidth = _widthCalculator.MinColumnWidth,
 			CanUserSort = false
 		};
+		if (!string.IsNullOrWhiteSpace(gridStyle.FontFamily))
+		{
+			column.FontFamily = new FontFamily(gridStyle.FontFamily);
+		}
+
 		column.CellStyleClasses.Add(StepNumberColumnClass);
 		grid.Columns.Add(column);
 	}
@@ -63,8 +70,6 @@ public sealed class ColumnBuilder(
 			{
 				var textBlock = new TextBlock
 				{
-					FontSize = gridStyle.HeaderFontSize,
-					FontWeight = FontWeight.Bold,
 					TextWrapping = TextWrapping.Wrap,
 					MaxLines = 2,
 					TextTrimming = TextTrimming.CharacterEllipsis,
@@ -72,6 +77,7 @@ public sealed class ColumnBuilder(
 					HorizontalAlignment = HorizontalAlignment.Stretch,
 					VerticalAlignment = VerticalAlignment.Center
 				};
+				GridFontApplier.ApplyHeaderFont(textBlock, gridStyle);
 				textBlock.Bind(TextBlock.TextProperty, new Binding());
 				return textBlock;
 			},

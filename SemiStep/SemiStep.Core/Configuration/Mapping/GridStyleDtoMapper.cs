@@ -10,8 +10,13 @@ internal static class GridStyleDtoMapper
 		{
 			Fonts = new GridStyleFontsDto
 			{
+				Family = options.FontFamily,
 				HeaderSize = options.HeaderFontSize,
-				CellSize = options.CellFontSize
+				HeaderWeight = options.HeaderFontWeight,
+				HeaderItalic = options.HeaderItalic,
+				CellSize = options.CellFontSize,
+				CellWeight = options.CellFontWeight,
+				CellItalic = options.CellItalic
 			},
 			Layout = new GridStyleLayoutDto
 			{
@@ -78,7 +83,16 @@ internal static class GridStyleDtoMapper
 				Background = options.StatusBarBackgroundColor,
 				Foreground = options.StatusBarForegroundColor,
 				Padding = options.StatusBarPadding,
-				ItemSpacing = options.StatusBarItemSpacing
+				ItemSpacing = options.StatusBarItemSpacing,
+				FontSize = options.StatusBarFontSize,
+				Weight = options.StatusBarFontWeight,
+				Italic = options.StatusBarItalic,
+				TimerLabelFontSize = options.StatusBarTimerLabelFontSize,
+				TimerLabelWeight = options.StatusBarTimerLabelFontWeight,
+				TimerLabelItalic = options.StatusBarTimerLabelItalic,
+				TimerValueFontSize = options.StatusBarTimerValueFontSize,
+				TimerValueWeight = options.StatusBarTimerValueFontWeight,
+				TimerValueItalic = options.StatusBarTimerValueItalic
 			},
 			ValidationPanel = new ValidationPanelStyleDto
 			{

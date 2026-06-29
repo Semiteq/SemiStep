@@ -114,13 +114,15 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 	// the text renders at the theme default and the chevron clips it. See Docs/architecture/recipe-grid-column-sizing.md.
 	private ComboBox CreateStyledComboBox()
 	{
-		return new ComboBox
+		var comboBox = new ComboBox
 		{
 			DisplayMemberBinding = new Binding(nameof(ComboBoxItemViewModel.DisplayText)),
-			FontSize = gridStyle.CellFontSize,
 			HorizontalAlignment = HorizontalAlignment.Stretch,
 			VerticalAlignment = VerticalAlignment.Center,
 		};
+		GridFontApplier.ApplyCellFont(comboBox, gridStyle);
+
+		return comboBox;
 	}
 
 	private static void ApplyInputBlocking(ComboBox comboBox, string columnKey, bool isColumnReadOnly)

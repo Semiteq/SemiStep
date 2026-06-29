@@ -366,6 +366,31 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	public void Typefaces_ThreadConfiguredFamilyWeightAndItalic_PerRole()
+	{
+		// The headless text shaper measures by glyph count and size only, so weight/family/italic
+		// produce identical widths; assert the role typefaces the measurement uses instead, which
+		// fails if a regression drops family/weight/italic from the measured Typeface.
+		var style = GridStyleOptions.Default with
+		{
+			FontFamily = "Courier New",
+			CellFontWeight = 600,
+			CellItalic = true,
+			HeaderFontWeight = 900,
+			HeaderItalic = false
+		};
+		var calculator = new ColumnWidthCalculator(_fixture.RecipeMetadataRegistry, style);
+
+		calculator.CellTypeface.FontFamily.Name.Should().Be("Courier New");
+		calculator.CellTypeface.Weight.Should().Be((FontWeight)600);
+		calculator.CellTypeface.Style.Should().Be(FontStyle.Italic);
+
+		calculator.HeaderTypeface.FontFamily.Name.Should().Be("Courier New");
+		calculator.HeaderTypeface.Weight.Should().Be((FontWeight)900);
+		calculator.HeaderTypeface.Style.Should().Be(FontStyle.Normal);
+	}
+
+	[AvaloniaFact]
 	public void ComboColumn_WiderThanContentColumn_ByChevronBudget()
 	{
 		var representative = new string('0', StringSampleCap);

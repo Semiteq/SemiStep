@@ -19,12 +19,18 @@ public sealed class GridStyleEditorViewModelTests
 	[AvaloniaFact]
 	public void Seed_PopulatesColorAndNumericProps_FromRecord()
 	{
-		var source = GridStyleOptions.Default;
+		var source = GridStyleOptions.Default with
+		{
+			StatusBarFontSize = 15,
+			StatusBarTimerValueFontSize = 30
+		};
 		var viewModel = CreateViewModel(source);
 
 		viewModel.CellFontSize.Should().Be(source.CellFontSize);
 		viewModel.RowHeight.Should().Be((decimal)source.RowHeight);
 		viewModel.ValidationPanelMaxHeight.Should().Be((decimal)source.ValidationPanelMaxHeight);
+		viewModel.StatusBarFontSize.Should().Be(15);
+		viewModel.StatusBarTimerValueFontSize.Should().Be(30);
 
 		viewModel.SelectionBackground.Should().Be(Color.Parse(source.SelectionBackgroundColor));
 		viewModel.HeaderForeground.Should().Be(Color.Parse(source.HeaderForegroundColor));
@@ -58,6 +64,146 @@ public sealed class GridStyleEditorViewModelTests
 			SelectionBackgroundColor = "#123456"
 		};
 		record.Should().Be(expected);
+	}
+
+	[AvaloniaFact]
+	public void BuildRecord_AfterEditingStatusBarFontSizes_CarriesBothBack()
+	{
+		var source = GridStyleOptions.Default;
+		var viewModel = CreateViewModel(source);
+
+		viewModel.StatusBarFontSize = 15;
+		viewModel.StatusBarTimerValueFontSize = 30;
+
+		var record = viewModel.BuildRecord();
+
+		record.StatusBarFontSize.Should().Be(15);
+		record.StatusBarTimerValueFontSize.Should().Be(30);
+	}
+
+	[AvaloniaFact]
+	public void BuildRecord_RoundsFractionalStatusBarFontSize_ToNearestInt()
+	{
+		var viewModel = CreateViewModel(GridStyleOptions.Default);
+
+		viewModel.StatusBarFontSize = 14.6m;
+
+		viewModel.BuildRecord().StatusBarFontSize.Should().Be(15);
+	}
+
+	[AvaloniaTheory]
+	[InlineData(5)]
+	[InlineData(73)]
+	public void CanSave_IsFalse_WhenStatusBarFontSizeOutOfRange(int fontSize)
+	{
+		var viewModel = CreateViewModel(GridStyleOptions.Default);
+
+		viewModel.StatusBarFontSize = fontSize;
+
+		viewModel.CanSave.Should().BeFalse();
+	}
+
+	[AvaloniaTheory]
+	[InlineData(5)]
+	[InlineData(73)]
+	public void CanSave_IsFalse_WhenStatusBarTimerValueFontSizeOutOfRange(int fontSize)
+	{
+		var viewModel = CreateViewModel(GridStyleOptions.Default);
+
+		viewModel.StatusBarTimerValueFontSize = fontSize;
+
+		viewModel.CanSave.Should().BeFalse();
+	}
+
+	[AvaloniaTheory]
+	[InlineData(5)]
+	[InlineData(73)]
+	public void CanSave_IsFalse_WhenStatusBarTimerLabelFontSizeOutOfRange(int fontSize)
+	{
+		var viewModel = CreateViewModel(GridStyleOptions.Default);
+
+		viewModel.StatusBarTimerLabelFontSize = fontSize;
+
+		viewModel.CanSave.Should().BeFalse();
+	}
+
+	[AvaloniaFact]
+	public void Seed_PopulatesFontFamilyWeightAndItalic_FromRecord()
+	{
+		var source = GridStyleOptions.Default with
+		{
+			FontFamily = "Cascadia Code",
+			HeaderFontWeight = 600,
+			HeaderItalic = true,
+			CellFontWeight = 500,
+			StatusBarTimerLabelFontSize = 18,
+			StatusBarTimerLabelItalic = true
+		};
+		var viewModel = CreateViewModel(source);
+
+		viewModel.FontFamily.Should().Be("Cascadia Code");
+		viewModel.HeaderFontWeight.Should().Be(600);
+		viewModel.HeaderItalic.Should().BeTrue();
+		viewModel.CellFontWeight.Should().Be(500);
+		viewModel.StatusBarTimerLabelFontSize.Should().Be(18);
+		viewModel.StatusBarTimerLabelItalic.Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void BuildRecord_CarriesEditedFontFamilyWeightAndItalic()
+	{
+		var source = GridStyleOptions.Default;
+		var viewModel = CreateViewModel(source);
+
+		viewModel.FontFamily = "Consolas";
+		viewModel.HeaderFontWeight = 900;
+		viewModel.CellItalic = true;
+		viewModel.StatusBarTimerValueFontWeight = 300;
+
+		var record = viewModel.BuildRecord();
+
+		record.FontFamily.Should().Be("Consolas");
+		record.HeaderFontWeight.Should().Be(900);
+		record.CellItalic.Should().BeTrue();
+		record.StatusBarTimerValueFontWeight.Should().Be(300);
+	}
+
+	[AvaloniaFact]
+	public void BuildRecord_RoundTripsFamilyAndWeight_NotInOfferedLists()
+	{
+		var source = GridStyleOptions.Default with
+		{
+			FontFamily = "No Such Installed Font 12345",
+			HeaderFontWeight = 333,
+			CellFontWeight = 650
+		};
+		var viewModel = CreateViewModel(source);
+
+		var record = viewModel.BuildRecord();
+
+		record.FontFamily.Should().Be("No Such Installed Font 12345");
+		record.HeaderFontWeight.Should().Be(333);
+		record.CellFontWeight.Should().Be(650);
+	}
+
+	[AvaloniaFact]
+	public void AvailableFontWeights_IncludeSeededWeights_NotInCuratedList()
+	{
+		var source = GridStyleOptions.Default with { HeaderFontWeight = 333 };
+		var viewModel = CreateViewModel(source);
+
+		viewModel.AvailableFontWeights.Should().Contain(option => option.Value == 333);
+	}
+
+	[AvaloniaFact]
+	public void AvailableFontFamilies_StartWithDefaultSentinel_AndIncludeSeededFamily()
+	{
+		var source = GridStyleOptions.Default with { FontFamily = "No Such Installed Font 12345" };
+		var viewModel = CreateViewModel(source);
+
+		viewModel.AvailableFontFamilies[0].Value.Should().Be("");
+		viewModel.AvailableFontFamilies[0].Name.Should().Be("(Default)");
+		viewModel.AvailableFontFamilies.Should().Contain(option => option.Value == "No Such Installed Font 12345");
 	}
 
 	[AvaloniaFact]

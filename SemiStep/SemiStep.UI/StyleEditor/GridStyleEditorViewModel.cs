@@ -83,7 +83,37 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 	public decimal? RowHeight { get => field; set => SetNumber(ref field, value); }
 	public decimal? StatusBarPadding { get => field; set => SetNumber(ref field, value); }
 	public decimal? StatusBarItemSpacing { get => field; set => SetNumber(ref field, value); }
+	public decimal? StatusBarFontSize { get => field; set => SetNumber(ref field, value); }
+	public decimal? StatusBarTimerLabelFontSize { get => field; set => SetNumber(ref field, value); }
+	public decimal? StatusBarTimerValueFontSize { get => field; set => SetNumber(ref field, value); }
 	public decimal? ValidationPanelMaxHeight { get => field; set => SetNumber(ref field, value); }
+
+	// Global font family ("" = theme default). Weight (int 100-900) and italic per role.
+	public string? FontFamily { get => field; set => SetValue(ref field, value); }
+	public int HeaderFontWeight { get => field; set => SetValue(ref field, value); }
+	public bool HeaderItalic { get => field; set => SetValue(ref field, value); }
+	public int CellFontWeight { get => field; set => SetValue(ref field, value); }
+	public bool CellItalic { get => field; set => SetValue(ref field, value); }
+	public int StatusBarFontWeight { get => field; set => SetValue(ref field, value); }
+	public bool StatusBarItalic { get => field; set => SetValue(ref field, value); }
+	public int StatusBarTimerLabelFontWeight { get => field; set => SetValue(ref field, value); }
+	public bool StatusBarTimerLabelItalic { get => field; set => SetValue(ref field, value); }
+	public int StatusBarTimerValueFontWeight { get => field; set => SetValue(ref field, value); }
+	public bool StatusBarTimerValueItalic { get => field; set => SetValue(ref field, value); }
+
+	// Picker sources. Always contain the seeded value so the bound string/int is never nulled
+	// by a missing SelectedItem/SelectedValue (protects the lossless-seed contract).
+	public IReadOnlyList<FontFamilyOption> AvailableFontFamilies
+	{
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	} = [];
+
+	public IReadOnlyList<FontWeightOption> AvailableFontWeights
+	{
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	} = [];
 
 	// Color draft (Color for ColorPicker).
 	public Color SelectionBackground { get => field; set => SetColor(ref field, value); }
@@ -165,7 +195,21 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 			RowHeight = ToDouble(RowHeight, _source.RowHeight),
 			StatusBarPadding = ToDouble(StatusBarPadding, _source.StatusBarPadding),
 			StatusBarItemSpacing = ToDouble(StatusBarItemSpacing, _source.StatusBarItemSpacing),
+			StatusBarFontSize = ToInt(StatusBarFontSize, _source.StatusBarFontSize),
+			StatusBarTimerLabelFontSize = ToInt(StatusBarTimerLabelFontSize, _source.StatusBarTimerLabelFontSize),
+			StatusBarTimerValueFontSize = ToInt(StatusBarTimerValueFontSize, _source.StatusBarTimerValueFontSize),
 			ValidationPanelMaxHeight = ToDouble(ValidationPanelMaxHeight, _source.ValidationPanelMaxHeight),
+			FontFamily = FontFamily ?? _source.FontFamily,
+			HeaderFontWeight = HeaderFontWeight,
+			HeaderItalic = HeaderItalic,
+			CellFontWeight = CellFontWeight,
+			CellItalic = CellItalic,
+			StatusBarFontWeight = StatusBarFontWeight,
+			StatusBarItalic = StatusBarItalic,
+			StatusBarTimerLabelFontWeight = StatusBarTimerLabelFontWeight,
+			StatusBarTimerLabelItalic = StatusBarTimerLabelItalic,
+			StatusBarTimerValueFontWeight = StatusBarTimerValueFontWeight,
+			StatusBarTimerValueItalic = StatusBarTimerValueItalic,
 			SelectionBackgroundColor = HexColor.ToHex(SelectionBackground),
 			SelectionForegroundColor = HexColor.ToHex(SelectionForeground),
 			CellChangedColor = HexColor.ToHex(CellChanged),
@@ -252,7 +296,25 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 		RowHeight = (decimal)options.RowHeight;
 		StatusBarPadding = (decimal)options.StatusBarPadding;
 		StatusBarItemSpacing = (decimal)options.StatusBarItemSpacing;
+		StatusBarFontSize = options.StatusBarFontSize;
+		StatusBarTimerLabelFontSize = options.StatusBarTimerLabelFontSize;
+		StatusBarTimerValueFontSize = options.StatusBarTimerValueFontSize;
 		ValidationPanelMaxHeight = (decimal)options.ValidationPanelMaxHeight;
+
+		FontFamily = options.FontFamily;
+		HeaderFontWeight = options.HeaderFontWeight;
+		HeaderItalic = options.HeaderItalic;
+		CellFontWeight = options.CellFontWeight;
+		CellItalic = options.CellItalic;
+		StatusBarFontWeight = options.StatusBarFontWeight;
+		StatusBarItalic = options.StatusBarItalic;
+		StatusBarTimerLabelFontWeight = options.StatusBarTimerLabelFontWeight;
+		StatusBarTimerLabelItalic = options.StatusBarTimerLabelItalic;
+		StatusBarTimerValueFontWeight = options.StatusBarTimerValueFontWeight;
+		StatusBarTimerValueItalic = options.StatusBarTimerValueItalic;
+
+		AvailableFontFamilies = BuildFontFamilies(options.FontFamily);
+		AvailableFontWeights = BuildFontWeights(options);
 
 		SelectionBackground = HexColor.Parse(options.SelectionBackgroundColor);
 		SelectionForeground = HexColor.Parse(options.SelectionForegroundColor);
@@ -322,6 +384,64 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 		RecomputeCanSave();
 	}
 
+	private void SetValue<TValue>(ref TValue field, TValue value, [CallerMemberName] string? propertyName = null)
+	{
+		this.RaiseAndSetIfChanged(ref field, value, propertyName);
+		RecomputeCanSave();
+	}
+
+	private static IReadOnlyList<FontFamilyOption> BuildFontFamilies(string seededFamily)
+	{
+		var systemFamilies = FontManager.Current.SystemFonts
+			.Select(font => font.Name)
+			.Where(name => !string.IsNullOrWhiteSpace(name))
+			.Distinct()
+			.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+			.ToList();
+
+		var families = new List<FontFamilyOption> { new("", "(Default)") };
+		if (!string.IsNullOrWhiteSpace(seededFamily) && !systemFamilies.Contains(seededFamily))
+		{
+			families.Add(new FontFamilyOption(seededFamily, seededFamily));
+		}
+
+		families.AddRange(systemFamilies.Select(name => new FontFamilyOption(name, name)));
+		return families;
+	}
+
+	private static IReadOnlyList<FontWeightOption> BuildFontWeights(GridStyleOptions options)
+	{
+		var weights = new List<FontWeightOption>
+		{
+			new(300, "Light"),
+			new(400, "Normal"),
+			new(500, "Medium"),
+			new(600, "SemiBold"),
+			new(700, "Bold"),
+			new(800, "ExtraBold"),
+			new(900, "Black")
+		};
+
+		var seededWeights = new[]
+		{
+			options.HeaderFontWeight,
+			options.CellFontWeight,
+			options.StatusBarFontWeight,
+			options.StatusBarTimerLabelFontWeight,
+			options.StatusBarTimerValueFontWeight
+		};
+
+		foreach (var weight in seededWeights.Distinct())
+		{
+			if (weights.All(option => option.Value != weight))
+			{
+				weights.Add(new FontWeightOption(weight, weight.ToString()));
+			}
+		}
+
+		return weights;
+	}
+
 	private void RecomputeCanSave()
 	{
 		if (_seeding)
@@ -343,6 +463,9 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 			&& InRange(CellPaddingBottom, MinPadding, MaxPadding)
 			&& InRange(StatusBarPadding, MinPadding, MaxPadding)
 			&& InRange(StatusBarItemSpacing, MinSpacing, MaxSpacing)
+			&& InRange(StatusBarFontSize, MinFontSize, MaxFontSize)
+			&& InRange(StatusBarTimerLabelFontSize, MinFontSize, MaxFontSize)
+			&& InRange(StatusBarTimerValueFontSize, MinFontSize, MaxFontSize)
 			&& InRange(ValidationPanelMaxHeight, MinPanelMaxHeight, MaxPanelMaxHeight);
 	}
 

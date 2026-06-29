@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 
 using SemiStep.Core.Configuration;
 
@@ -36,6 +37,16 @@ internal static class CellPaletteInstaller
 	public const string StatusBarForegroundBrushKey = "StatusBarForegroundBrush";
 	public const string StatusBarPaddingKey = "StatusBarPadding";
 	public const string StatusBarItemSpacingKey = "StatusBarItemSpacing";
+	public const string AppFontFamilyKey = "AppFontFamily";
+	public const string StatusBarFontSizeKey = "StatusBarFontSize";
+	public const string StatusBarFontWeightKey = "StatusBarFontWeight";
+	public const string StatusBarFontStyleKey = "StatusBarFontStyle";
+	public const string StatusBarTimerLabelFontSizeKey = "StatusBarTimerLabelFontSize";
+	public const string StatusBarTimerLabelFontWeightKey = "StatusBarTimerLabelFontWeight";
+	public const string StatusBarTimerLabelFontStyleKey = "StatusBarTimerLabelFontStyle";
+	public const string StatusBarTimerValueFontSizeKey = "StatusBarTimerValueFontSize";
+	public const string StatusBarTimerValueFontWeightKey = "StatusBarTimerValueFontWeight";
+	public const string StatusBarTimerValueFontStyleKey = "StatusBarTimerValueFontStyle";
 	public const string ErrorBrushKey = "ErrorBrush";
 	public const string WarningBrushKey = "WarningBrush";
 	public const string ValidationPanelBackgroundBrushKey = "ValidationPanelBackgroundBrush";
@@ -89,6 +100,16 @@ internal static class CellPaletteInstaller
 		resources[StatusBarForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.StatusBarForegroundColor);
 		resources[StatusBarPaddingKey] = new Thickness(gridStyle.StatusBarPadding);
 		resources[StatusBarItemSpacingKey] = gridStyle.StatusBarItemSpacing;
+		resources[AppFontFamilyKey] = ToFontFamily(gridStyle.FontFamily);
+		resources[StatusBarFontSizeKey] = (double)gridStyle.StatusBarFontSize;
+		resources[StatusBarFontWeightKey] = (FontWeight)gridStyle.StatusBarFontWeight;
+		resources[StatusBarFontStyleKey] = ToFontStyle(gridStyle.StatusBarItalic);
+		resources[StatusBarTimerLabelFontSizeKey] = (double)gridStyle.StatusBarTimerLabelFontSize;
+		resources[StatusBarTimerLabelFontWeightKey] = (FontWeight)gridStyle.StatusBarTimerLabelFontWeight;
+		resources[StatusBarTimerLabelFontStyleKey] = ToFontStyle(gridStyle.StatusBarTimerLabelItalic);
+		resources[StatusBarTimerValueFontSizeKey] = (double)gridStyle.StatusBarTimerValueFontSize;
+		resources[StatusBarTimerValueFontWeightKey] = (FontWeight)gridStyle.StatusBarTimerValueFontWeight;
+		resources[StatusBarTimerValueFontStyleKey] = ToFontStyle(gridStyle.StatusBarTimerValueItalic);
 		resources[ErrorBrushKey] = PaletteBrushFactory.From(gridStyle.ValidationPanelErrorColor);
 		resources[WarningBrushKey] = PaletteBrushFactory.From(gridStyle.ValidationPanelWarningColor);
 		resources[ValidationPanelBackgroundBrushKey] =
@@ -108,5 +129,17 @@ internal static class CellPaletteInstaller
 		resources[GridBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.GridBackgroundColor);
 		resources[HeaderForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.HeaderForegroundColor);
 		resources[RowHeightKey] = gridStyle.RowHeight;
+	}
+
+	// An empty family means "theme default": FontFamily.Default keeps the application's default
+	// typeface instead of overriding it with a specific font.
+	private static FontFamily ToFontFamily(string family)
+	{
+		return string.IsNullOrWhiteSpace(family) ? FontFamily.Default : new FontFamily(family);
+	}
+
+	private static FontStyle ToFontStyle(bool italic)
+	{
+		return italic ? FontStyle.Italic : FontStyle.Normal;
 	}
 }

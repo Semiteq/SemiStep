@@ -1,18 +1,74 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:semi="https://irihi.tech/semi"
              x:Class="SemiStep.UI.App"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Light">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://Semistep/Styles/ColorPalette.axaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Uniform 4px rounding on interactive controls. Semi's component radius keys alias
+                 SemiBorderRadiusSmall (3) via StaticResource, so the primitive cannot be retargeted;
+                 the component keys are overridden directly and consumed by templates via DynamicResource. -->
+            <CornerRadius x:Key="ButtonCornerRadius">4</CornerRadius>
+            <CornerRadius x:Key="TextBoxDefaultCornerRadius">4</CornerRadius>
+            <CornerRadius x:Key="ComboBoxSelectorCornerRadius">4</CornerRadius>
+            <CornerRadius x:Key="NumericUpDownCornerRadius">4</CornerRadius>
+            <CornerRadius x:Key="CheckBoxBoxCornerRadius">4</CornerRadius>
+            <CornerRadius x:Key="MenuItemCornerRadius">4</CornerRadius>
+
+            <!-- Kill Semi's row pointer-over "halo": its DataGridRow template paints an inset, rounded
+                 Border#BackgroundBorder with DataGridRowPointeroverBackground. The app paints cell
+                 backgrounds itself, so flatten the row corner radius to 0 (brushes neutralized in the
+                 Light ThemeDictionary below). -->
+            <CornerRadius x:Key="DataGridRowCornerRadius">0</CornerRadius>
+
+            <!-- JetBrains Int UI (Light) retint of Semi semantic tokens. Light variant only;
+                 the app runs RequestedThemeVariant="Light". Background0 = content/window surface,
+                 Background1 = the panel surface (the one role the app tints off white). -->
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="SemiColorPrimary" Color="#3574F0" />
+                    <SolidColorBrush x:Key="SemiColorText0" Color="#000000" />
+                    <SolidColorBrush x:Key="SemiColorText1" Color="#000000" Opacity="0.8" />
+                    <SolidColorBrush x:Key="SemiColorText2" Color="#818594" />
+                    <SolidColorBrush x:Key="SemiColorText3" Color="#A8ADBD" />
+                    <SolidColorBrush x:Key="SemiColorBackground1" Color="#F7F8FA" />
+                    <SolidColorBrush x:Key="SemiColorBorder" Color="#EBECF0" />
+                    <SolidColorBrush x:Key="SemiColorDisabledText" Color="#A8ADBD" />
+
+                    <!-- Neutralize Semi's row pointer-over highlight (the inset "halo"). Selection is
+                         painted at cell level by CellPaletteInstaller, so the selected-on-hover variant
+                         can also go transparent without losing the selection look. -->
+                    <SolidColorBrush x:Key="DataGridRowPointeroverBackground" Color="Transparent" />
+                    <SolidColorBrush x:Key="DataGridRowSelectedPointeroverBackground" Color="Transparent" />
+
+                    <!-- Black frame on the current/focused cell. Semi draws the CurrencyVisual/FocusVisual
+                         rectangles (Stroke = DataGridCellCurrentBorderBrush / DataGridCellFocusBorderBrush)
+                         in a light brush that does not read; retint black. -->
+                    <SolidColorBrush x:Key="DataGridCellCurrentBorderBrush" Color="#000000" />
+                    <SolidColorBrush x:Key="DataGridCellFocusBorderBrush" Color="#000000" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
     <Application.Styles>
-        <FluentTheme />
-        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
-        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
+        <semi:SemiTheme />
+        <semi:ColorPickerSemiTheme />
+        <semi:DataGridSemiTheme />
+        <!-- Chrome input density. Placed before the DataGrid style include so DataGrid cell ComboBoxes
+             keep their own padding (set in DataGridStyles.axaml) under last-match-wins. -->
+        <Style Selector="ComboBox, NumericUpDown, TextBox">
+            <Setter Property="MinHeight" Value="26" />
+            <Setter Property="Padding" Value="8,3" />
+        </Style>
         <StyleInclude Source="avares://Semistep/Styles/DataGridStyles.axaml" />
+        <StyleInclude Source="avares://Semistep/Styles/Buttons.axaml" />
+        <Style Selector="Window">
+            <Setter Property="FontFamily" Value="{DynamicResource ChromeFontFamily}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
     </Application.Styles>
 </Application>

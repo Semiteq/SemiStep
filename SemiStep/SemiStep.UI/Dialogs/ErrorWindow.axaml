@@ -34,7 +34,7 @@
 
         <Button Grid.Row="2"
                 Content="Выход"
-                Width="80"
+                Classes="primary"
                 HorizontalAlignment="Right"
                 Margin="0,16,0,0"
                 Click="OnExitClick"

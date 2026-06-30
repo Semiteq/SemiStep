@@ -16,7 +16,9 @@
     <PackageReference Include="Avalonia"/>
     <PackageReference Include="Avalonia.HarfBuzz"/>
     <PackageReference Include="Avalonia.Desktop"/>
-    <PackageReference Include="Avalonia.Themes.Fluent"/>
+    <PackageReference Include="Semi.Avalonia"/>
+    <PackageReference Include="Semi.Avalonia.DataGrid"/>
+    <PackageReference Include="Semi.Avalonia.ColorPicker"/>
     <PackageReference Include="ReactiveUI.Avalonia"/>
     <PackageReference Include="Avalonia.Controls.DataGrid"/>
     <PackageReference Include="Avalonia.Controls.ColorPicker"/>

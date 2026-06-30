@@ -110,7 +110,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 		}, supportsRecycling: true);
 	}
 
-	// FontSize explicit: the Fluent ComboBox selection box does not inherit the grid font, so without it
+	// FontSize explicit: the Semi ComboBox selection box does not inherit the grid font, so without it
 	// the text renders at the theme default and the chevron clips it. See Docs/architecture/recipe-grid-column-sizing.md.
 	private ComboBox CreateStyledComboBox()
 	{
@@ -119,6 +119,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 			DisplayMemberBinding = new Binding(nameof(ComboBoxItemViewModel.DisplayText)),
 			HorizontalAlignment = HorizontalAlignment.Stretch,
 			VerticalAlignment = VerticalAlignment.Center,
+			MinHeight = 0,
 		};
 		GridFontApplier.ApplyCellFont(comboBox, gridStyle);
 

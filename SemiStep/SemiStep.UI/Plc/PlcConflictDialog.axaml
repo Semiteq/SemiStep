@@ -38,10 +38,10 @@
                     Spacing="10"
                     Margin="0,20,0,0">
             <Button Content="Keep local"
-                    Width="100"
+                    Classes="primary"
                     Click="OnKeepLocalClick" />
             <Button Content="Load from PLC"
-                    Width="110"
+                    Classes="secondary"
                     Click="OnLoadFromPlcClick" />
         </StackPanel>
     </Grid>

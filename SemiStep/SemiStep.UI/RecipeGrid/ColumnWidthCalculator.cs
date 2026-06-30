@@ -195,10 +195,10 @@ public sealed class ColumnWidthCalculator(
 		}
 	}
 
-	// Empty family means "theme default": measure with FontFamily.Default so the width matches the
-	// rendered cell, which also leaves its FontFamily unset.
+	// Empty family means "grid default": measure with the chrome font so the width matches the
+	// rendered cell, which also falls back to the chrome font.
 	private FontFamily MeasureFontFamily =>
-		string.IsNullOrWhiteSpace(gridStyle.FontFamily) ? FontFamily.Default : new FontFamily(gridStyle.FontFamily);
+		string.IsNullOrWhiteSpace(gridStyle.FontFamily) ? GridFonts.DefaultFamily : new FontFamily(gridStyle.FontFamily);
 
 	// The single typeface the cell-role measurement uses, threading the configured family, weight, and
 	// italic so the measured width tracks the rendered cell. Exposed for the measurement-threading test.
@@ -232,6 +232,10 @@ public sealed class ColumnWidthCalculator(
 			typeface,
 			fontSize,
 			Brushes.Black);
+
+		// Cells render with tabular figures (GridFontApplier/ColumnBuilder set tnum); measure with the
+		// same feature so digit-column auto-width matches the rendered advances.
+		formattedText.SetFontFeatures(GridFonts.TabularFigures);
 
 		return formattedText.WidthIncludingTrailingWhitespace;
 	}

@@ -63,14 +63,14 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void NumberingColumn_EmptyFamily_LeavesFontFamilyUnset()
+	public void NumberingColumn_EmptyFamily_UsesChromeFontDefault()
 	{
 		var grid = BuildGrid(GridStyleOptions.Default with { FontFamily = "" });
 
 		var numberingColumn = (DataGridTextColumn)grid.Columns[0];
 
-		numberingColumn.FontFamily.Should().Be(FontFamily.Default,
-			"an empty family must leave the numbering column's FontFamily unset so the theme default applies");
+		numberingColumn.FontFamily.Should().Be(GridFonts.DefaultFamily,
+			"an empty family must fall back to the chrome font for the numbering column");
 	}
 
 	[AvaloniaFact]
@@ -110,7 +110,7 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void EmptyFamily_LeavesFontFamilyUnset()
+	public void EmptyFamily_UsesChromeFontDefault()
 	{
 		var factory = new TextCellFactory(GridStyleOptions.Default with { FontFamily = "" });
 		var columnDef = _fixture.RecipeMetadataRegistry.GetColumn("task").Value;
@@ -119,8 +119,8 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 
 		var displayCell = (TextBlock)column.CellTemplate!.Build(null)!;
 
-		displayCell.IsSet(TextBlock.FontFamilyProperty).Should().BeFalse(
-			"an empty family must leave FontFamily unset so the theme default applies");
+		displayCell.FontFamily.Should().Be(GridFonts.DefaultFamily,
+			"an empty family must fall back to the chrome font for grid cells");
 	}
 
 	private GridStyleOptions NonDefaultStyle()

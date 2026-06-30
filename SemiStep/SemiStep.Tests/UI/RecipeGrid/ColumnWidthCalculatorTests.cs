@@ -427,7 +427,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var expectedDelta = (int)(ComboBoxChromeWidth - ContentChrome);
 
 		delta.Should().BeGreaterThan(0,
-			"the combo path budgets the wider Fluent ComboBox chrome, so the combo column exceeds the content column");
+			"the combo path budgets the wider Semi ComboBox chrome, so the combo column exceeds the content column");
 		delta.Should().Be(expectedDelta,
 			"the width gap between the two real outputs equals the chevron budget (ComboBoxChromeWidth - ContentChrome): "
 			+ "both chrome terms are integers and the two content measurements are identical, so there is no rounding divergence");
@@ -543,7 +543,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 
 	private static double MeasureText(string text, double fontSize, FontWeight fontWeight)
 	{
-		var typeface = new Typeface(FontFamily.Default, FontStyle.Normal, fontWeight);
+		var typeface = new Typeface(GridFonts.DefaultFamily, FontStyle.Normal, fontWeight);
 		var formattedText = new FormattedText(
 			text,
 			CultureInfo.CurrentCulture,

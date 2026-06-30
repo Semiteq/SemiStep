@@ -12,6 +12,26 @@ This file is the styling counterpart of `recipe-grid-column-sizing.md`: the sizi
 column's width is computed; this one explains where the style values (including the font sizes that
 feed that computation) come from and how they reach the screen.
 
+## Visual theme vs config palette (the theming contract)
+
+The app chrome (buttons, scrollbars, inputs, window surfaces) is themed by **Semi.Avalonia**, retinted
+toward JetBrains/IntelliJ "New UI" tokens — **Light variant only**. The retint is applied by overriding
+Semi's semantic-token keys (`SemiColorPrimary`, `SemiColorText0..3`, `SemiColorBackground0..3`,
+`SemiColorBorder`, `SemiColorDisabledText`, the `*CornerRadius` keys → 4) plus the static tokens in
+`Styles/ColorPalette.axaml`, all in `App.axaml`. The UI font is the native system Segoe UI (set via
+`ChromeFontFamily` in `Styles/ColorPalette.axaml`); the grid uses that same Segoe family with OpenType
+tabular figures (`+tnum`) so digit columns align without a monospaced font. There are no embedded fonts
+(no `Assets/Fonts`).
+
+The boundary between that fixed theme and per-equipment config is exact: **the brush keys the two
+installers push from `grid_style.yaml`** (`CellPaletteInstaller`, `ExecutionPaletteInstaller`, listed in
+"Resources projection" below) are the config-driven palette — cell states, selection, execution tints,
+status bar, and app chrome. Everything else is the Semi-plus-overrides theme. Together those two — the
+installer brush keys and the Semi semantic-token overrides in `App.axaml` — are the theming contract: a
+config file restyles the grid/chrome palette through the installer keys without touching the base theme,
+and the base theme governs every control the installers do not reach. Dark mode is deferred; styles
+consume tokens via `DynamicResource` to stay dark-ready.
+
 ## YAML is the single source of truth
 
 `grid_style.yaml` is the only style file. The other config sections (`actions/`, `columns/`,
@@ -82,10 +102,11 @@ two timer roles, so the caption and the countdown can carry independent fonts. W
 the label renders at 14 and the value at 24 — they no longer share one size.
 
 - **Family** is a single `string` on the record (`GridStyleOptions.FontFamily`). The default is `""`,
-  meaning "theme default": consumers leave `FontFamily` unset so the Fluent theme's bundled font
-  (Inter) stays in place. A non-empty value sets the family for every role. The editor offers
-  `FontManager.Current.SystemFonts`; an unknown saved family falls back to the theme default rather
-  than failing.
+  meaning "grid default": consumers fall back to `GridFonts.DefaultFamily`
+  (`"Segoe UI Variable Text, Segoe UI"`, the same proportional Segoe as the app chrome) and render with
+  `GridFonts.TabularFigures` (the `tnum` feature) so digit columns stay aligned. A non-empty value sets
+  the family for every role. The editor offers `FontManager.Current.SystemFonts`; an unknown saved
+  family falls back to that Segoe default rather than failing.
 - **Weight** is stored as an `int` (100–900) in the record and YAML — culture-free and easy to
   validate. Consumers cast it to Avalonia's `FontWeight` enum.
 - **Italic** is a `bool`; consumers convert it to `FontStyle.Italic` / `FontStyle.Normal`.
@@ -110,14 +131,16 @@ roles set directly on the four timer `TextBlock`s):
 | `StatusBarTimerValueFontWeight` | `FontWeight` | `status_bar.timer_value_weight` |
 | `StatusBarTimerValueFontStyle` | `FontStyle` | `status_bar.timer_value_italic` |
 
-The grid roles are **code-assigned**, not resources: `ColumnBuilder`, `TextCellFactory`, and
-`ComboBoxCellFactory` set `FontFamily` / `FontWeight` / `FontStyle` / `FontSize` directly from the
-injected `GridStyleOptions` (the header's old hard-coded `FontWeight.Bold` is now
-`HeaderFontWeight`). When the family is empty they leave `FontFamily` unset. `ColumnWidthCalculator`
-builds its measuring `Typeface` from the same configured family/weight/italic so the measured width
-matches the rendered typeface (empty family → `FontFamily.Default` for measurement). The grid font
-keys are read in C# (see "Why the typed record cannot be replaced by raw resources"), so they have no
-resource projection.
+The grid roles are **code-assigned**, not resources: `GridFontApplier` (used by `ColumnBuilder`,
+`TextCellFactory`, and `ComboBoxCellFactory`) sets `FontFamily` / `FontWeight` / `FontStyle` /
+`FontSize` directly from the injected `GridStyleOptions` (the header's old hard-coded `FontWeight.Bold`
+is now `HeaderFontWeight`) and also sets `TextElement.FontFeaturesProperty` to `GridFonts.TabularFigures`.
+`ColumnBuilder` additionally sets that feature grid-wide so it reaches the `DataGridTextColumn`
+numbering cells through inheritance. When the family is empty they fall back to `GridFonts.DefaultFamily`.
+`ColumnWidthCalculator` builds its measuring `Typeface` from the same configured family/weight/italic and
+calls `FormattedText.SetFontFeatures(GridFonts.TabularFigures)` so the measured width matches the
+rendered cell (empty family → `GridFonts.DefaultFamily` for measurement). The grid font keys are read in
+C# (see "Why the typed record cannot be replaced by raw resources"), so they have no resource projection.
 
 ### YAML keys
 
@@ -191,7 +214,7 @@ restart is the simplest correct behavior for v1.
   `current-step` / `past-step` / `for-depth-1..3`, and depth-0 already renders default white
   (`#FFFFFF`), so a selector would be a no-op. The brush is installed; no selector is added.
 - **Removed fields.** Grid-line thickness, alternating-row background, and normal-row background were
-  dropped from the model, DTOs, mapper, and shipped configs. Avalonia's Fluent `DataGrid` exposes no
+  dropped from the model, DTOs, mapper, and shipped configs. Semi's `DataGrid` exposes no
   inner-gridline-thickness or alternating-row-background property, so they had no wire target.
 
 ## Known gap

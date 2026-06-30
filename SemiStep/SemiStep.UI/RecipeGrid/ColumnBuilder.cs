@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Layout;
@@ -29,6 +30,9 @@ public sealed class ColumnBuilder(
 	public void BuildColumns(DataGrid grid)
 	{
 		grid.RowHeight = gridStyle.RowHeight;
+		// The numbering column is a DataGridTextColumn with no FontFeatures property; tabular figures
+		// reach its generated cells through the inherited grid-level value set here.
+		grid.SetValue(TextElement.FontFeaturesProperty, GridFonts.TabularFigures);
 		grid.Columns.Clear();
 		AddNumberingColumn(grid);
 
@@ -54,10 +58,9 @@ public sealed class ColumnBuilder(
 			MinWidth = _widthCalculator.MinColumnWidth,
 			CanUserSort = false
 		};
-		if (!string.IsNullOrWhiteSpace(gridStyle.FontFamily))
-		{
-			column.FontFamily = new FontFamily(gridStyle.FontFamily);
-		}
+		column.FontFamily = string.IsNullOrWhiteSpace(gridStyle.FontFamily)
+			? GridFonts.DefaultFamily
+			: new FontFamily(gridStyle.FontFamily);
 
 		column.CellStyleClasses.Add(StepNumberColumnClass);
 		grid.Columns.Add(column);

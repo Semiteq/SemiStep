@@ -1,13 +1,11 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Accent -->
-    <Color x:Key="AccentColor">#0078D7</Color>
-    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
-
-    <!-- Override the Fluent DataGrid sort-glyph reserve (default 32px) to 0: sorting is disabled
-         on every column, so the reserved column otherwise just crowds the header text. -->
-    <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
+    <!-- The system Segoe chrome font, applied to top-level Windows via the Window style in App.axaml.
+         Keep this string in sync with GridFonts.DefaultFamily (the grid's empty-family fallback).
+         Note: controls that set their own FontFamily (e.g. AppStatusBar binds AppFontFamily) do not
+         inherit this, so it is not a single source for every glyph in the app. -->
+    <FontFamily x:Key="ChromeFontFamily">Segoe UI Variable Text, Segoe UI</FontFamily>
 
     <!-- Config-driven brushes (cell state, selection, grid lines) are installed at startup by
          CellPaletteInstaller from GridStyleOptions. See CellPaletteInstaller for the full key

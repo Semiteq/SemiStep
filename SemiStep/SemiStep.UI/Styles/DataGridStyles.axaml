@@ -11,7 +11,7 @@
         <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource GridLineBrush}" />
     </Style>
 
-    <!-- The Fluent DataGridCell/DataGridRow themes hard-code MinHeight=32. Without this override that
+    <!-- The Semi DataGridCell/DataGridRow themes hard-code MinHeight=32. Without this override that
          floor fights the config-driven RowHeight (set in ColumnBuilder): the cell measures at 32 but is
          arranged into the shorter row, clipping the Stretch-aligned focus/current Rectangle into a broken
          box. Binding MinHeight to the same config value lets the focus/current border render cleanly on a
@@ -21,9 +21,10 @@
     </Style>
     <Style Selector="DataGridCell">
         <Setter Property="MinHeight" Value="{DynamicResource GridRowHeight}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 
-    <!-- Stretch is load-bearing: the Fluent header panel aligns by it, and only Stretch gives the
+    <!-- Stretch is load-bearing: the Semi header panel aligns by it, and only Stretch gives the
          wrapping header TextBlock the column width it needs. See Docs/architecture/recipe-grid-column-sizing.md. -->
     <Style Selector="DataGridColumnHeader">
         <Setter Property="Foreground" Value="{DynamicResource HeaderForegroundBrush}" />
@@ -45,7 +46,24 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <!-- left padding 6 to match the ComboBoxChromeWidth budget. See Docs/architecture/recipe-grid-column-sizing.md -->
-        <Setter Property="Padding" Value="6,5,0,7" />
+        <Setter Property="Padding" Value="6,0,0,0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- Cell ComboBoxes must stay chrome-less in every interaction state. Semi's :pointerover/:focus/:pressed
+         paint a rounded selector Background + BorderBrush (ComboBoxSelectorPointeroverBackground etc.), which
+         shows as a "halo" frame inside the colored cell. Neutralize those states for combos inside the grid
+         only — editor combos (weight/font-family pickers) keep their normal hover. -->
+    <Style Selector="DataGrid ComboBox:pointerover, DataGrid ComboBox:focus, DataGrid ComboBox:pressed">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+
+    <!-- Every recipe column is non-sortable, but Semi's header template always reserves a ~24px sort-icon
+         column. That floor overflows the header-width calc and Avalonia breaks the longest word mid-word
+         ("Начальн/ое"). Collapsing the icon frees the width so the longest word fits on one line. -->
+    <Style Selector="DataGridColumnHeader /template/ PathIcon#SortIcon">
+        <Setter Property="IsVisible" Value="False" />
     </Style>
 
     <!-- ============================================== -->
@@ -201,8 +219,7 @@
     <!-- selectors so it wins on every cell, but before the current-step marker -->
     <!-- so the marker still shows on the step-number column when the current -->
     <!-- step is also user-selected. Selection bg/fg come from the dedicated -->
-    <!-- SelectionBackgroundBrush/SelectionForegroundBrush (config-driven), -->
-    <!-- decoupled from AccentBrush. -->
+    <!-- config-driven SelectionBackgroundBrush/SelectionForegroundBrush. -->
     <Style Selector="DataGridRow:selected DataGridCell">
         <Setter Property="Background" Value="{DynamicResource SelectionBackgroundBrush}" />
         <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />

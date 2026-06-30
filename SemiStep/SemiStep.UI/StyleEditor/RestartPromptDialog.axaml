@@ -28,10 +28,10 @@
                     Spacing="10"
                     Margin="0,20,0,0">
             <Button Content="Exit Now"
-                    Width="90"
+                    Classes="secondary"
                     Click="OnExitNowClick" />
             <Button Content="Restart Later"
-                    Width="110"
+                    Classes="primary"
                     Click="OnRestartLaterClick"
                     IsDefault="True"
                     IsCancel="True" />

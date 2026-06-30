@@ -1,0 +1,23 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style Selector="Button">
+        <Setter Property="MinHeight" Value="26" />
+        <Setter Property="Padding" Value="12,4" />
+    </Style>
+
+    <!-- primary → Semi SolidButton (retinted SemiColorPrimary). MinWidth here, not on the global
+         Button selector, so the compact recipe-toolbar buttons stay narrow. -->
+    <Style Selector="Button.primary">
+        <Setter Property="Theme" Value="{DynamicResource SolidButton}" />
+        <Setter Property="MinWidth" Value="75" />
+    </Style>
+
+    <!-- secondary → Semi OutlineButton. -->
+    <Style Selector="Button.secondary">
+        <Setter Property="Theme" Value="{DynamicResource OutlineButton}" />
+        <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
+        <Setter Property="MinWidth" Value="75" />
+    </Style>
+
+</Styles>

@@ -7,6 +7,8 @@ description: Use when building or reviewing Avalonia settings, preferences, opti
 
 How to design and audit desktop settings/editor windows in Avalonia so labels and controls form clean vertical scan lines, cards are uniform width, and nothing clips under DPI scaling.
 
+This skill is about **layout and alignment within one form**. For the visual *theme* — colors, fonts, corner radius, dark mode, the JetBrains/IntelliJ look via Semi.Avalonia + design tokens — use the companion `avalonia-visual-style` skill. They compose: visual-style picks the palette and control chrome; form-layout arranges the rows.
+
 **Version assumption:** Avalonia 12 (verified on 12.0.4: `IsSharedSizeScopeProperty`, `SharedSizeGroupProperty`, `Grid.ColumnSpacing`/`RowSpacing` all present). On Avalonia 11.x there is no shared-size mechanism and this entire scheme changes — do not apply it there.
 
 ## Core mechanism in one sentence

@@ -28,13 +28,13 @@
                     Spacing="10"
                     Margin="0,20,0,0">
             <Button Content="Save"
-                    Width="80"
+                    Classes="primary"
                     Click="OnSaveClick" />
             <Button Content="Don't Save"
-                    Width="90"
+                    Classes="secondary"
                     Click="OnDontSaveClick" />
             <Button Content="Cancel"
-                    Width="80"
+                    Classes="secondary"
                     Click="OnCancelClick"
                     IsCancel="True" />
         </StackPanel>

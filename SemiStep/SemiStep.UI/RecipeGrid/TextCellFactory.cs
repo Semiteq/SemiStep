@@ -128,7 +128,7 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 				VerticalAlignment = VerticalAlignment.Center,
 				VerticalContentAlignment = VerticalAlignment.Center,
 				HorizontalAlignment = HorizontalAlignment.Stretch,
-				// The Fluent TextBox theme floors MinHeight at 32; on a shorter configured row that
+				// The Semi TextBox theme floors MinHeight at 32; on a shorter configured row that
 				// inflates the editing cell and pushes the text above the display position. Size to the row.
 				MinHeight = 0,
 				BorderThickness = new Thickness(0),

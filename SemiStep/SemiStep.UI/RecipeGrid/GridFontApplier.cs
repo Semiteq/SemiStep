@@ -27,10 +27,12 @@ internal static class GridFontApplier
 		control.SetValue(TextElement.FontWeightProperty, (FontWeight)fontWeight);
 		control.SetValue(TextElement.FontStyleProperty, italic ? FontStyle.Italic : FontStyle.Normal);
 
-		// Empty family means "theme default": leave FontFamily unset so the Fluent default applies.
-		if (!string.IsNullOrWhiteSpace(fontFamily))
-		{
-			control.SetValue(TextElement.FontFamilyProperty, new FontFamily(fontFamily));
-		}
+		// Empty family means "grid default": fall back to the chrome font (system Segoe).
+		control.SetValue(
+			TextElement.FontFamilyProperty,
+			string.IsNullOrWhiteSpace(fontFamily) ? GridFonts.DefaultFamily : new FontFamily(fontFamily));
+
+		// Tabular figures so digit columns align under the proportional chrome font.
+		control.SetValue(TextElement.FontFeaturesProperty, GridFonts.TabularFigures);
 	}
 }

@@ -14,7 +14,7 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 	private readonly Subject<PlcExecutionInfo> _executionState = new();
 	private bool _disposed;
 
-	public bool IsConnected => true;
+	public bool IsConnected { get; set; } = true;
 
 	public bool IsRecipeActive => false;
 

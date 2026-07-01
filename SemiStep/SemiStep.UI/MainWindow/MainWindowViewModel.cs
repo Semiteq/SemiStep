@@ -119,8 +119,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public bool IsConnectedToPlc => _coordinator.IsConnected;
 
-	public string ConnectionStatus => IsConnectedToPlc ? "Connected" : "Disconnected";
-
 	public string WindowTitle => BuildWindowTitle();
 
 	public bool IsDirty => _coordinator.IsDirty;
@@ -128,6 +126,12 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	public bool CanRedo => _coordinator.CanRedo;
 
 	public bool IsSyncEnabled => _coordinator.IsSyncEnabled;
+
+	public bool IsSyncLocalMode => !IsSyncEnabled;
+
+	public bool IsSyncNoLink => IsSyncEnabled && !IsConnectedToPlc;
+
+	public bool IsSyncLinked => IsSyncEnabled && IsConnectedToPlc;
 
 	public string PlcSyncStatusText => MapSyncStatus(_coordinator.SyncStatus);
 
@@ -242,8 +246,10 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	private void RaiseConnectionStateProperties()
 	{
 		this.RaisePropertyChanged(nameof(IsConnectedToPlc));
-		this.RaisePropertyChanged(nameof(ConnectionStatus));
 		this.RaisePropertyChanged(nameof(IsSyncEnabled));
+		this.RaisePropertyChanged(nameof(IsSyncLocalMode));
+		this.RaisePropertyChanged(nameof(IsSyncNoLink));
+		this.RaisePropertyChanged(nameof(IsSyncLinked));
 		this.RaisePropertyChanged(nameof(PlcSyncStatusText));
 		this.RaisePropertyChanged(nameof(LastSyncTimeText));
 	}
@@ -255,7 +261,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			PlcSyncStatus.Idle => "Idle",
 			PlcSyncStatus.Syncing => "Syncing...",
 			PlcSyncStatus.Synced => "Synced",
-			PlcSyncStatus.OutOfSync => "Out of sync",
+			PlcSyncStatus.OutOfSync => string.Empty,
 			PlcSyncStatus.Failed => "Failed",
 			_ => status.ToString()
 		};

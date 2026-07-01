@@ -67,6 +67,28 @@ public sealed class GridStyleEditorViewModelTests
 	}
 
 	[AvaloniaFact]
+	public void Seed_PopulatesLocalMode_FromRecord()
+	{
+		var source = GridStyleOptions.Default with { LocalModeColor = "#6C707E" };
+		var viewModel = CreateViewModel(source);
+
+		viewModel.LocalMode.Should().Be(Color.Parse("#6C707E"));
+	}
+
+	[AvaloniaFact]
+	public void BuildRecord_AfterEditingLocalMode_CarriesItBack()
+	{
+		var source = GridStyleOptions.Default;
+		var viewModel = CreateViewModel(source);
+
+		viewModel.LocalMode = Color.Parse("#123456");
+
+		var record = viewModel.BuildRecord();
+
+		record.Should().Be(source with { LocalModeColor = "#123456" });
+	}
+
+	[AvaloniaFact]
 	public void BuildRecord_AfterEditingStatusBarFontSizes_CarriesBothBack()
 	{
 		var source = GridStyleOptions.Default;

@@ -95,6 +95,7 @@ internal static class GridStyleValidator
 					("info", chrome.Info),
 					("connected", chrome.Connected),
 					("disconnected", chrome.Disconnected),
+					("local_mode", chrome.LocalMode),
 					("panel_background", chrome.PanelBackground),
 					("panel_header_background", chrome.PanelHeaderBackground),
 					("subtle_border", chrome.SubtleBorder),

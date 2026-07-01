@@ -85,6 +85,7 @@ internal static class GridStyleMapper
 			InfoColor: dto.Chrome?.Info ?? defaults.InfoColor,
 			ConnectedColor: dto.Chrome?.Connected ?? defaults.ConnectedColor,
 			DisconnectedColor: dto.Chrome?.Disconnected ?? defaults.DisconnectedColor,
+			LocalModeColor: dto.Chrome?.LocalMode ?? defaults.LocalModeColor,
 			PanelBackgroundColor: dto.Chrome?.PanelBackground ?? defaults.PanelBackgroundColor,
 			PanelHeaderBackgroundColor: dto.Chrome?.PanelHeaderBackground ?? defaults.PanelHeaderBackgroundColor,
 			SubtleBorderColor: dto.Chrome?.SubtleBorder ?? defaults.SubtleBorderColor,

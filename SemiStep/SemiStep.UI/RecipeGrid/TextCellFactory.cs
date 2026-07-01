@@ -121,7 +121,7 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 			var formatKind = row?.ColumnFormatKinds.GetValueOrDefault(columnKey)
 				?? TimeFormatHelper.DefaultFormatKind;
 
-			var editingConverter = new PropertyTimeEditingConverter(formatKind);
+			var editingConverter = new PropertyTimeEditingConverter(formatKind, allowsEmpty: maxLength.HasValue);
 
 			var textBox = new TextBox
 			{

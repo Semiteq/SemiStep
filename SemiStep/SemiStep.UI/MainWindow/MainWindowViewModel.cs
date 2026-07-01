@@ -129,9 +129,13 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public bool IsSyncLocalMode => !IsSyncEnabled;
 
-	public bool IsSyncNoLink => IsSyncEnabled && !IsConnectedToPlc;
+	public bool IsSyncConnecting => IsSyncEnabled && _coordinator.IsConnecting;
 
-	public bool IsSyncLinked => IsSyncEnabled && IsConnectedToPlc;
+	public bool IsSyncNoLink => IsSyncEnabled && !IsConnectedToPlc && !_coordinator.IsConnecting;
+
+	public bool IsSyncLinked => IsSyncEnabled && IsConnectedToPlc && !_coordinator.IsConnecting;
+
+	public bool IsSyncOnIdle => IsSyncEnabled && !IsSyncConnecting;
 
 	public string PlcSyncStatusText => MapSyncStatus(_coordinator.SyncStatus);
 
@@ -248,8 +252,10 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		this.RaisePropertyChanged(nameof(IsConnectedToPlc));
 		this.RaisePropertyChanged(nameof(IsSyncEnabled));
 		this.RaisePropertyChanged(nameof(IsSyncLocalMode));
+		this.RaisePropertyChanged(nameof(IsSyncConnecting));
 		this.RaisePropertyChanged(nameof(IsSyncNoLink));
 		this.RaisePropertyChanged(nameof(IsSyncLinked));
+		this.RaisePropertyChanged(nameof(IsSyncOnIdle));
 		this.RaisePropertyChanged(nameof(PlcSyncStatusText));
 		this.RaisePropertyChanged(nameof(LastSyncTimeText));
 	}

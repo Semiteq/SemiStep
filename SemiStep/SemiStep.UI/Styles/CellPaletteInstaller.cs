@@ -56,6 +56,7 @@ internal static class CellPaletteInstaller
 	public const string ConnectedBrushKey = "ConnectedBrush";
 	public const string DisconnectedBrushKey = "DisconnectedBrush";
 	public const string LocalModeBrushKey = "LocalModeBrush";
+	public const string ConnectingBrushKey = "ConnectingBrush";
 	public const string PanelBackgroundBrushKey = "PanelBackgroundBrush";
 	public const string PanelHeaderBackgroundBrushKey = "PanelHeaderBackgroundBrush";
 	public const string SubtleBorderBrushKey = "SubtleBorderBrush";
@@ -122,6 +123,7 @@ internal static class CellPaletteInstaller
 		resources[ConnectedBrushKey] = PaletteBrushFactory.From(gridStyle.ConnectedColor);
 		resources[DisconnectedBrushKey] = PaletteBrushFactory.From(gridStyle.DisconnectedColor);
 		resources[LocalModeBrushKey] = PaletteBrushFactory.From(gridStyle.LocalModeColor);
+		resources[ConnectingBrushKey] = PaletteBrushFactory.From(gridStyle.ConnectingColor);
 		resources[PanelBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.PanelBackgroundColor);
 		resources[PanelHeaderBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.PanelHeaderBackgroundColor);
 		resources[SubtleBorderBrushKey] = PaletteBrushFactory.From(gridStyle.SubtleBorderColor);

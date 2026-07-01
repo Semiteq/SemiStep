@@ -388,7 +388,7 @@
 
                     <TextBlock Classes="sub-header" Text="Colors" />
                     <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
                             <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
@@ -411,6 +411,9 @@
                         <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="Local mode" />
                         <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
                                      Color="{Binding LocalMode}" />
+                        <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="Connecting" />
+                        <ColorPicker Grid.Row="5" Grid.Column="1" IsHexInputVisible="True"
+                                     Color="{Binding Connecting}" />
                     </Grid>
                 </StackPanel>
 

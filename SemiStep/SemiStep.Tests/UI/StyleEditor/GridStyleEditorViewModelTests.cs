@@ -89,6 +89,28 @@ public sealed class GridStyleEditorViewModelTests
 	}
 
 	[AvaloniaFact]
+	public void Seed_PopulatesConnecting_FromRecord()
+	{
+		var source = GridStyleOptions.Default with { ConnectingColor = "#FFAF0F" };
+		var viewModel = CreateViewModel(source);
+
+		viewModel.Connecting.Should().Be(Color.Parse("#FFAF0F"));
+	}
+
+	[AvaloniaFact]
+	public void BuildRecord_AfterEditingConnecting_CarriesItBack()
+	{
+		var source = GridStyleOptions.Default;
+		var viewModel = CreateViewModel(source);
+
+		viewModel.Connecting = Color.Parse("#123456");
+
+		var record = viewModel.BuildRecord();
+
+		record.Should().Be(source with { ConnectingColor = "#123456" });
+	}
+
+	[AvaloniaFact]
 	public void BuildRecord_AfterEditingStatusBarFontSizes_CarriesBothBack()
 	{
 		var source = GridStyleOptions.Default;

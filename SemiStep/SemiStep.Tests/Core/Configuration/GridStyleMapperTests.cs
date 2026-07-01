@@ -68,6 +68,7 @@ public sealed class GridStyleMapperTests
 			Connected = "#44BB44",
 			Disconnected = "#FF4444",
 			LocalMode = "#6C707E",
+			Connecting = "#FFAF0F",
 			PanelBackground = "#F8F8F8",
 			PanelHeaderBackground = "#EEEEEE",
 			SubtleBorder = "#D0D0D0",
@@ -84,6 +85,7 @@ public sealed class GridStyleMapperTests
 		options.ConnectedColor.Should().Be("#44BB44");
 		options.DisconnectedColor.Should().Be("#FF4444");
 		options.LocalModeColor.Should().Be("#6C707E");
+		options.ConnectingColor.Should().Be("#FFAF0F");
 		options.PanelBackgroundColor.Should().Be("#F8F8F8");
 		options.PanelHeaderBackgroundColor.Should().Be("#EEEEEE");
 		options.SubtleBorderColor.Should().Be("#D0D0D0");
@@ -103,6 +105,7 @@ public sealed class GridStyleMapperTests
 
 		options.InfoColor.Should().Be(GridStyleOptions.Default.InfoColor);
 		options.LocalModeColor.Should().Be(GridStyleOptions.Default.LocalModeColor);
+		options.ConnectingColor.Should().Be(GridStyleOptions.Default.ConnectingColor);
 		options.GridBorderColor.Should().Be(GridStyleOptions.Default.GridBorderColor);
 		options.HeaderForegroundColor.Should().Be(GridStyleOptions.Default.HeaderForegroundColor);
 	}
@@ -258,6 +261,16 @@ public sealed class GridStyleMapperTests
 		var dto = GridStyleDtoMapper.Map(options);
 
 		dto.Chrome!.LocalMode.Should().Be("#123456");
+	}
+
+	[Fact]
+	public void Map_OptionsToDto_WritesConnectingChromeColor()
+	{
+		var options = GridStyleOptions.Default with { ConnectingColor = "#123456" };
+
+		var dto = GridStyleDtoMapper.Map(options);
+
+		dto.Chrome!.Connecting.Should().Be("#123456");
 	}
 
 	private static GridStyleOptionsDto BuildCompleteDto()

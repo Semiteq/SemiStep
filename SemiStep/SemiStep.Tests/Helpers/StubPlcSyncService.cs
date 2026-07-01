@@ -16,7 +16,7 @@ public sealed class StubPlcSyncService : IPlcSyncService
 
 	public bool IsSyncEnabled { get; private set; }
 
-	public PlcSyncStatus Status => PlcSyncStatus.Idle;
+	public PlcSyncStatus Status { get; set; } = PlcSyncStatus.Idle;
 
 	public DateTimeOffset? LastSyncTime => null;
 

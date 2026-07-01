@@ -67,6 +67,7 @@ public sealed class GridStyleMapperTests
 			Info = "#1976D2",
 			Connected = "#44BB44",
 			Disconnected = "#FF4444",
+			LocalMode = "#6C707E",
 			PanelBackground = "#F8F8F8",
 			PanelHeaderBackground = "#EEEEEE",
 			SubtleBorder = "#D0D0D0",
@@ -82,6 +83,7 @@ public sealed class GridStyleMapperTests
 		options.InfoColor.Should().Be("#1976D2");
 		options.ConnectedColor.Should().Be("#44BB44");
 		options.DisconnectedColor.Should().Be("#FF4444");
+		options.LocalModeColor.Should().Be("#6C707E");
 		options.PanelBackgroundColor.Should().Be("#F8F8F8");
 		options.PanelHeaderBackgroundColor.Should().Be("#EEEEEE");
 		options.SubtleBorderColor.Should().Be("#D0D0D0");
@@ -100,6 +102,7 @@ public sealed class GridStyleMapperTests
 		var options = GridStyleMapper.Map(dto);
 
 		options.InfoColor.Should().Be(GridStyleOptions.Default.InfoColor);
+		options.LocalModeColor.Should().Be(GridStyleOptions.Default.LocalModeColor);
 		options.GridBorderColor.Should().Be(GridStyleOptions.Default.GridBorderColor);
 		options.HeaderForegroundColor.Should().Be(GridStyleOptions.Default.HeaderForegroundColor);
 	}
@@ -245,6 +248,16 @@ public sealed class GridStyleMapperTests
 		dto.StatusBar!.TimerValueFontSize.Should().Be(30);
 		dto.StatusBar!.TimerValueWeight.Should().Be(800);
 		dto.StatusBar!.TimerValueItalic.Should().BeTrue();
+	}
+
+	[Fact]
+	public void Map_OptionsToDto_WritesLocalModeChromeColor()
+	{
+		var options = GridStyleOptions.Default with { LocalModeColor = "#123456" };
+
+		var dto = GridStyleDtoMapper.Map(options);
+
+		dto.Chrome!.LocalMode.Should().Be("#123456");
 	}
 
 	private static GridStyleOptionsDto BuildCompleteDto()

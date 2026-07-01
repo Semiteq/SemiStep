@@ -160,6 +160,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 	public Color Connected { get => field; set => SetColor(ref field, value); }
 	public Color Disconnected { get => field; set => SetColor(ref field, value); }
 	public Color LocalMode { get => field; set => SetColor(ref field, value); }
+	public Color Connecting { get => field; set => SetColor(ref field, value); }
 	public Color PanelBackground { get => field; set => SetColor(ref field, value); }
 	public Color PanelHeaderBackground { get => field; set => SetColor(ref field, value); }
 	public Color SubtleBorder { get => field; set => SetColor(ref field, value); }
@@ -255,6 +256,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 			ConnectedColor = HexColor.ToHex(Connected),
 			DisconnectedColor = HexColor.ToHex(Disconnected),
 			LocalModeColor = HexColor.ToHex(LocalMode),
+			ConnectingColor = HexColor.ToHex(Connecting),
 			PanelBackgroundColor = HexColor.ToHex(PanelBackground),
 			PanelHeaderBackgroundColor = HexColor.ToHex(PanelHeaderBackground),
 			SubtleBorderColor = HexColor.ToHex(SubtleBorder),
@@ -362,6 +364,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 		Connected = HexColor.Parse(options.ConnectedColor);
 		Disconnected = HexColor.Parse(options.DisconnectedColor);
 		LocalMode = HexColor.Parse(options.LocalModeColor);
+		Connecting = HexColor.Parse(options.ConnectingColor);
 		PanelBackground = HexColor.Parse(options.PanelBackgroundColor);
 		PanelHeaderBackground = HexColor.Parse(options.PanelHeaderBackgroundColor);
 		SubtleBorder = HexColor.Parse(options.SubtleBorderColor);

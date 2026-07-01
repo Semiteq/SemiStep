@@ -39,6 +39,7 @@ public sealed class RecipeCoordinator : IDisposable
 	private readonly IObservable<PlcSessionSnapshot> _plcStateChangedShared;
 	private readonly RecipeMetadataRegistry _recipeMetadataRegistry;
 	private readonly RecipeSession _session;
+	private PlcConnectionState _connectionState = PlcConnectionState.Disconnected;
 	private bool _disposed;
 	private bool _initialized;
 	private IDisposable? _plcFaultsSubscription;
@@ -102,6 +103,7 @@ public sealed class RecipeCoordinator : IDisposable
 	public bool CanRedo => _session.CanRedo;
 
 	public bool IsConnected => _plc.IsConnected;
+	public bool IsConnecting => _connectionState == PlcConnectionState.Connecting;
 	public bool IsRecipeActive => _plc.IsRecipeActive;
 	public bool IsSyncEnabled => _plc.IsSyncEnabled;
 	public IObservable<PlcExecutionInfo> ExecutionState => _executionState;
@@ -498,6 +500,10 @@ public sealed class RecipeCoordinator : IDisposable
 			}
 
 			LogPlcStateChange(snapshot);
+
+			// Cache before the emit: the VM subscriber re-reads IsConnecting synchronously on this
+			// snapshot, so assigning after OnNext would surface a value stale by one snapshot.
+			_connectionState = snapshot.ConnectionState;
 
 			_plcStateChanged.OnNext(snapshot);
 		}

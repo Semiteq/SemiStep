@@ -72,18 +72,23 @@ The typed record is projected into `Application.Resources` at startup so XAML ca
 - `CellPaletteInstaller.Install` pushes `SolidColorBrush` objects for the read-only / disabled / changed
   cell palettes, selection, grid line, status-bar and validation-panel colors, the app-wide
   `ErrorBrush` / `WarningBrush` (driven by the validation-panel severity colors), and all app-chrome
-  brushes (`InfoBrush`, `ConnectedBrush`, `DisconnectedBrush`, `LocalModeBrush`, `PanelBackgroundBrush`,
+  brushes (`InfoBrush`, `ConnectedBrush`, `DisconnectedBrush`, `LocalModeBrush`, `ConnectingBrush`,
+  `PanelBackgroundBrush`,
   `PanelHeaderBackgroundBrush`, `SubtleBorderBrush`, `SeparatorBrush`, `SecondaryForegroundBrush`,
   `GridBorderBrush`, `GridBackgroundBrush`, `HeaderForegroundBrush`).
 - `ExecutionPaletteInstaller.Install` pushes the per-depth execution row brushes plus the
   current-step-marker brush.
 
-The merged status-bar sync toggle draws its fill from three of those chrome brushes, one per sync
-state: `ConnectedBrush` (green `connected`, sync on and link up), `DisconnectedBrush`
-(red `disconnected`, sync on and no link), and `LocalModeBrush` (grey `local_mode`, sync off / local
-mode). Like every other chrome color, all three come from the `chrome:` section of `grid_style.yaml`
-under their snake_case aliases (`connected`, `disconnected`, `local_mode`); `local_mode` defaults to
-`#6C707E` and is installed as `LocalModeBrush`.
+The merged status-bar sync toggle draws its fill from four of those chrome brushes, one per sync
+state: `LocalModeBrush` (grey `local_mode`, sync off / local mode), `ConnectingBrush`
+(amber `connecting`, sync on and a PLC connect attempt in flight — the button shows "Connecting" with a
+subtle three-dot animation), `DisconnectedBrush` (red `disconnected`, sync on and no link — settled),
+and `ConnectedBrush` (green `connected`, sync on and link up). The connecting state distinguishes
+"actively trying" from a settled "no link"; the four states are mutually exclusive. Like every other
+chrome color, all four come from the `chrome:` section of `grid_style.yaml` under their snake_case
+aliases (`connected`, `disconnected`, `local_mode`, `connecting`); `local_mode` defaults to `#6C707E`
+and is installed as `LocalModeBrush`, `connecting` defaults to `#FFAF0F` (JetBrains warning amber) and
+is installed as `ConnectingBrush`.
 
 Alongside the brushes, the cell installer pushes a few **numeric / layout** resources that XAML
 consumes directly: `StatusBarPadding` (a `Thickness`), `StatusBarItemSpacing` (a `double`), and
@@ -183,7 +188,7 @@ GridStyleEditorWindow
   `NumericUpDown`. Hex↔`Color` goes through an explicit `HexColor.ToHex` / `HexColor.Parse`, not
   `Color.ToString()`. `CanSave` is gated by **both** the facade's color validation **and** VM-side
   numeric range checks (font/padding/row-height/spacing/panel-height bounds). The editor surfaces
-  effectively the whole record: all ~53 colors, 13 numerics, plus the font controls — one global
+  effectively the whole record: all ~54 colors, 13 numerics, plus the font controls — one global
   font-family `ComboBox`, and a per-role weight `ComboBox` (curated 300–900 list) and italic
   `CheckBox`. The window groups these into two cards: **Fonts** (the family row plus a size / weight /
   italic row per role) and **Layout** (paddings, row height, status padding/spacing, panel height).

@@ -70,6 +70,7 @@ public sealed class CellPaletteInstallerTests
 			ConnectedColor = "#44BB44",
 			DisconnectedColor = "#FF4444",
 			LocalModeColor = "#6C707E",
+			ConnectingColor = "#FFAF0F",
 			PanelBackgroundColor = "#F8F8F8",
 			PanelHeaderBackgroundColor = "#EEEEEE",
 			SubtleBorderColor = "#D0D0D0",
@@ -118,6 +119,7 @@ public sealed class CellPaletteInstallerTests
 		AssertBrush(resources, CellPaletteInstaller.ConnectedBrushKey, "#44BB44");
 		AssertBrush(resources, CellPaletteInstaller.DisconnectedBrushKey, "#FF4444");
 		AssertBrush(resources, CellPaletteInstaller.LocalModeBrushKey, "#6C707E");
+		AssertBrush(resources, CellPaletteInstaller.ConnectingBrushKey, "#FFAF0F");
 		AssertBrush(resources, CellPaletteInstaller.PanelBackgroundBrushKey, "#F8F8F8");
 		AssertBrush(resources, CellPaletteInstaller.PanelHeaderBackgroundBrushKey, "#EEEEEE");
 		AssertBrush(resources, CellPaletteInstaller.SubtleBorderBrushKey, "#D0D0D0");
@@ -146,7 +148,7 @@ public sealed class CellPaletteInstallerTests
 
 		resources.ContainsKey("StatusBarTimerFontSize").Should().BeFalse();
 
-		resources.Count.Should().Be(57);
+		resources.Count.Should().Be(58);
 	}
 
 	[AvaloniaFact]

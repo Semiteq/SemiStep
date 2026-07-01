@@ -108,6 +108,7 @@ internal static class GridStyleDtoMapper
 				Connected = options.ConnectedColor,
 				Disconnected = options.DisconnectedColor,
 				LocalMode = options.LocalModeColor,
+				Connecting = options.ConnectingColor,
 				PanelBackground = options.PanelBackgroundColor,
 				PanelHeaderBackground = options.PanelHeaderBackgroundColor,
 				SubtleBorder = options.SubtleBorderColor,

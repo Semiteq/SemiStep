@@ -8,12 +8,44 @@
              x:DataType="local:MainWindowViewModel">
 
     <UserControl.Styles>
-        <!-- Connection indicator color via style class binding -->
-        <Style Selector="Ellipse.connection-dot">
-            <Setter Property="Fill" Value="{DynamicResource DisconnectedBrush}" />
+        <Style Selector="Button.sync-toggle">
+            <Setter Property="Theme" Value="{StaticResource {x:Type Button}}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#33000000" />
+            <Setter Property="Padding" Value="10,3" />
+            <Setter Property="MinHeight" Value="24" />
+            <Setter Property="MinWidth" Value="76" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
         </Style>
-        <Style Selector="Ellipse.connection-dot.connected">
-            <Setter Property="Fill" Value="{DynamicResource ConnectedBrush}" />
+
+        <Style Selector="Button.sync-toggle.sync-local">
+            <Setter Property="Background" Value="{DynamicResource LocalModeBrush}" />
+        </Style>
+        <Style Selector="Button.sync-toggle.sync-nolink">
+            <Setter Property="Background" Value="{DynamicResource DisconnectedBrush}" />
+        </Style>
+        <Style Selector="Button.sync-toggle.sync-linked">
+            <Setter Property="Background" Value="{DynamicResource ConnectedBrush}" />
+        </Style>
+
+        <!-- Hold the state color on hover; the generic :pressed scrim below darkens the press -->
+        <Style Selector="Button.sync-toggle.sync-local:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource LocalModeBrush}" />
+        </Style>
+        <Style Selector="Button.sync-toggle.sync-nolink:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource DisconnectedBrush}" />
+        </Style>
+        <Style Selector="Button.sync-toggle.sync-linked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ConnectedBrush}" />
+        </Style>
+        <Style Selector="Button.sync-toggle:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#22000000" />
         </Style>
     </UserControl.Styles>
 
@@ -35,8 +67,6 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
@@ -89,16 +119,17 @@
                         Spacing="6"
                         VerticalAlignment="Center">
 
-                <!-- Sync toggle button: label switches based on IsSyncEnabled -->
+                <!-- Merged sync/connection toggle: fill color encodes IsSyncEnabled + IsConnectedToPlc -->
                 <Button Command="{Binding ToggleSyncCommand}"
-                        Padding="6,2"
-                        VerticalAlignment="Center">
+                        Classes="sync-toggle"
+                        Classes.sync-local="{Binding IsSyncLocalMode}"
+                        Classes.sync-nolink="{Binding IsSyncNoLink}"
+                        Classes.sync-linked="{Binding IsSyncLinked}">
                     <Panel>
-                        <TextBlock Text="Sync: ON"
+                        <TextBlock Text="Sync ON"
                                    IsVisible="{Binding IsSyncEnabled}" />
-                        <TextBlock Text="Sync: OFF"
-                                   IsVisible="{Binding IsSyncEnabled,
-                                               Converter={x:Static BoolConverters.Not}}" />
+                        <TextBlock Text="Sync OFF"
+                                   IsVisible="{Binding IsSyncEnabled, Converter={x:Static BoolConverters.Not}}" />
                     </Panel>
                 </Button>
 
@@ -187,23 +218,6 @@
 
             </StackPanel>
 
-            <!-- Spacer -->
-            <Panel Grid.Column="7" />
-
-            <!-- Connection Status -->
-            <StackPanel Grid.Column="8"
-                        Orientation="Horizontal"
-                        VerticalAlignment="Center">
-                <Ellipse Width="8"
-                         Height="8"
-                         Margin="0,0,6,0"
-                         VerticalAlignment="Center"
-                         Classes="connection-dot"
-                         Classes.connected="{Binding IsConnectedToPlc}" />
-                <TextBlock Name="ConnectionText"
-                           Text="{Binding ConnectionStatus}"
-                           VerticalAlignment="Center" />
-            </StackPanel>
         </Grid>
     </Border>
 

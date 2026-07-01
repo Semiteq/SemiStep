@@ -5,7 +5,7 @@ using Avalonia.Data.Converters;
 
 namespace SemiStep.UI.RecipeGrid;
 
-internal sealed class PropertyTimeEditingConverter(string formatKind) : IValueConverter
+internal sealed class PropertyTimeEditingConverter(string formatKind, bool allowsEmpty) : IValueConverter
 {
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
 	{
@@ -28,7 +28,7 @@ internal sealed class PropertyTimeEditingConverter(string formatKind) : IValueCo
 		var text = value?.ToString()?.Trim();
 		if (string.IsNullOrEmpty(text))
 		{
-			return BindingOperations.DoNothing;
+			return allowsEmpty ? string.Empty : BindingOperations.DoNothing;
 		}
 
 		var parsed = TimeFormatHelper.ParseValue(text);

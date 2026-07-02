@@ -7,8 +7,6 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
     <PackageReference Include="NCalcSync"/>
     <PackageReference Include="S7netplus"/>
-    <PackageReference Include="Serilog"/>
-    <PackageReference Include="System.IO.Hashing"/>
     <PackageReference Include="System.Reactive"/>
     <PackageReference Include="YamlDotNet"/>
   </ItemGroup>

@@ -66,6 +66,13 @@
         <Setter Property="IsVisible" Value="False" />
     </Style>
 
+    <Style Selector="DataGridColumnHeader:pointerover /template/ Border#HeaderBackground">
+        <Setter Property="Background" Value="{DynamicResource DataGridColumnHeaderBackground}" />
+    </Style>
+    <Style Selector="DataGridColumnHeader:pressed /template/ Border#HeaderBackground">
+        <Setter Property="Background" Value="{DynamicResource DataGridColumnHeaderBackground}" />
+    </Style>
+
     <!-- ============================================== -->
     <!-- Read-only and inapplicable cell appearance.    -->
     <!-- Two DISJOINT signals, each with its own        -->

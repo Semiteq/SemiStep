@@ -1,7 +1,6 @@
 ﻿using FluentResults;
 
 using NCalc;
-using NCalc.Domain;
 
 namespace SemiStep.Core.Recipes.Formulas;
 

@@ -4,7 +4,7 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
-using NCalc.Domain;
+using NCalc;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;

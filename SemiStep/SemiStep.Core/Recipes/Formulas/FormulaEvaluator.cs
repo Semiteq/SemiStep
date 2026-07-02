@@ -5,7 +5,6 @@ using FluentResults;
 using Microsoft.Extensions.Logging;
 
 using NCalc;
-using NCalc.Domain;
 
 using SemiStep.Core.Recipes.Formulas.Errors;
 

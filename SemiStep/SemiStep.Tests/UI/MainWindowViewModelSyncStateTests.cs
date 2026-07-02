@@ -5,6 +5,7 @@ using FluentAssertions;
 using SemiStep.Core.Plc.State;
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
+using SemiStep.Tests.UI.Localization;
 using SemiStep.UI.MainWindow;
 
 using Xunit;
@@ -124,9 +125,21 @@ public sealed class MainWindowViewModelSyncStateTests : IAsyncLifetime
 	[InlineData(PlcSyncStatus.Failed, "Failed")]
 	public void PlcSyncStatusText_ForPipelineStatuses_ReturnsText(PlcSyncStatus status, string expected)
 	{
-		_fixture.PlcSyncService.Status = status;
+		using (ResourcesCultureScope.Use("en"))
+		{
+			_fixture.PlcSyncService.Status = status;
 
-		_viewModel.PlcSyncStatusText.Should().Be(expected);
+			_viewModel.PlcSyncStatusText.Should().Be(expected);
+		}
+	}
+
+	[AvaloniaFact]
+	public void WindowTitle_NewRecipe_UnderRussianCulture_UsesRussianLabelAndKeepsBrand()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			_viewModel.WindowTitle.Should().Be("SemiStep - Новый рецепт");
+		}
 	}
 
 	private int CountTrueStates()

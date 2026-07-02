@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="SemiStep.UI.Dialogs.ErrorWindow"
-        Title="Ошибка загрузки конфигурации"
+        Title="Configuration Load Error"
         Width="600"
         Height="400"
         CanResize="False"
@@ -16,7 +16,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
-                   Text="Ошибки загрузки конфигурации:"
+                   Text="Configuration load errors:"
                    FontWeight="Bold"
                    Margin="0,0,0,10" />
 
@@ -33,7 +33,7 @@
         </ScrollViewer>
 
         <Button Grid.Row="2"
-                Content="Выход"
+                Content="Exit"
                 Classes="primary"
                 HorizontalAlignment="Right"
                 Margin="0,16,0,0"

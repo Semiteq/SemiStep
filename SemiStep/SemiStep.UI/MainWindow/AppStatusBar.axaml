@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:SemiStep.UI.MainWindow"
+             xmlns:l="clr-namespace:SemiStep.UI.Localization"
              mc:Ignorable="d"
              x:Class="SemiStep.UI.MainWindow.AppStatusBar"
              x:DataType="local:MainWindowViewModel">
@@ -15,7 +16,7 @@
             <Setter Property="BorderBrush" Value="#33000000" />
             <Setter Property="Padding" Value="10,3" />
             <Setter Property="MinHeight" Value="24" />
-            <Setter Property="Width" Value="108" />
+            <Setter Property="Width" Value="128" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="#FFFFFF" />
@@ -179,13 +180,13 @@
                         Classes.sync-linked="{Binding IsSyncLinked}"
                         Classes.sync-connecting="{Binding IsSyncConnecting}">
                     <Panel>
-                        <TextBlock Text="Sync ON"
+                        <TextBlock Text="{x:Static l:Resources.StatusSyncOn}"
                                    IsVisible="{Binding IsSyncOnIdle}" />
-                        <TextBlock Text="Sync OFF"
+                        <TextBlock Text="{x:Static l:Resources.StatusSyncOff}"
                                    IsVisible="{Binding IsSyncLocalMode}" />
                         <StackPanel Orientation="Horizontal"
                                     IsVisible="{Binding IsSyncConnecting}">
-                            <TextBlock Text="Connecting" />
+                            <TextBlock Text="{x:Static l:Resources.StatusConnecting}" />
                             <TextBlock Classes="sync-dot d1" Text="." />
                             <TextBlock Classes="sync-dot d2" Text="." />
                             <TextBlock Classes="sync-dot d3" Text="." />
@@ -201,7 +202,7 @@
                 <!-- Last sync time -->
                 <TextBlock VerticalAlignment="Center"
                            Foreground="{DynamicResource SecondaryForegroundBrush}"
-                           Text="{Binding LastSyncTimeText, StringFormat='Last sync: {0}'}" />
+                           Text="{Binding LastSyncTimeText}" />
 
             </StackPanel>
 
@@ -219,7 +220,7 @@
 
                 <!-- Time left in current step -->
                 <StackPanel Orientation="Horizontal" Spacing="4">
-                    <TextBlock Text="Шаг:"
+                    <TextBlock Text="{x:Static l:Resources.StatusStepLabel}"
                                Foreground="{DynamicResource SecondaryForegroundBrush}"
                                FontSize="{DynamicResource StatusBarTimerLabelFontSize}"
                                FontWeight="{DynamicResource StatusBarTimerLabelFontWeight}"
@@ -234,7 +235,7 @@
 
                 <!-- Time left in recipe -->
                 <StackPanel Orientation="Horizontal" Spacing="4">
-                    <TextBlock Text="Рецепт:"
+                    <TextBlock Text="{x:Static l:Resources.StatusRecipeLabel}"
                                Foreground="{DynamicResource SecondaryForegroundBrush}"
                                FontSize="{DynamicResource StatusBarTimerLabelFontSize}"
                                FontWeight="{DynamicResource StatusBarTimerLabelFontWeight}"
@@ -263,7 +264,7 @@
                         VerticalAlignment="Center"
                         IsVisible="{Binding PlcMonitor.IsRecipeActive}">
 
-                <TextBlock Text="FOR:"
+                <TextBlock Text="{x:Static l:Resources.StatusForLabel}"
                            Foreground="{DynamicResource SecondaryForegroundBrush}"
                            VerticalAlignment="Center" />
 

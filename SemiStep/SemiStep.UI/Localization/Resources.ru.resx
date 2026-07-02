@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="MenuFile" xml:space="preserve">
+    <value>_Файл</value>
+  </data>
+  <data name="MenuFileNewRecipe" xml:space="preserve">
+    <value>Со_здать рецепт</value>
+  </data>
+  <data name="MenuFileOpenRecipe" xml:space="preserve">
+    <value>_Открыть рецепт…</value>
+  </data>
+  <data name="MenuFileSaveRecipe" xml:space="preserve">
+    <value>_Сохранить рецепт</value>
+  </data>
+  <data name="MenuFileSaveRecipeAs" xml:space="preserve">
+    <value>Сохранить рецепт _как…</value>
+  </data>
+  <data name="MenuFileExit" xml:space="preserve">
+    <value>В_ыход</value>
+  </data>
+  <data name="MenuEdit" xml:space="preserve">
+    <value>_Правка</value>
+  </data>
+  <data name="MenuEditAddStep" xml:space="preserve">
+    <value>_Добавить шаг</value>
+  </data>
+  <data name="MenuEditDeleteStep" xml:space="preserve">
+    <value>_Удалить шаг</value>
+  </data>
+  <data name="MenuEditCopySteps" xml:space="preserve">
+    <value>_Копировать шаги</value>
+  </data>
+  <data name="MenuEditCutSteps" xml:space="preserve">
+    <value>В_ырезать шаги</value>
+  </data>
+  <data name="MenuEditPasteSteps" xml:space="preserve">
+    <value>Вст_авить шаги</value>
+  </data>
+  <data name="MenuEditUndo" xml:space="preserve">
+    <value>_Отменить</value>
+  </data>
+  <data name="MenuEditRedo" xml:space="preserve">
+    <value>_Повторить</value>
+  </data>
+  <data name="MenuView" xml:space="preserve">
+    <value>_Вид</value>
+  </data>
+  <data name="MenuViewToolbar" xml:space="preserve">
+    <value>_Панель инструментов</value>
+  </data>
+  <data name="MenuViewNotificationLog" xml:space="preserve">
+    <value>_Журнал уведомлений</value>
+  </data>
+  <data name="MenuViewGridStyleSettings" xml:space="preserve">
+    <value>Настройки _стиля таблицы…</value>
+  </data>
+  <data name="MenuHelp" xml:space="preserve">
+    <value>_Справка</value>
+  </data>
+  <data name="MenuHelpAbout" xml:space="preserve">
+    <value>_О программе</value>
+  </data>
+  <data name="ContextAddStep" xml:space="preserve">
+    <value>Добавить шаг</value>
+  </data>
+  <data name="ContextDeleteStep" xml:space="preserve">
+    <value>Удалить шаг</value>
+  </data>
+  <data name="ContextCopyStep" xml:space="preserve">
+    <value>Копировать шаги</value>
+  </data>
+  <data name="ContextCutStep" xml:space="preserve">
+    <value>Вырезать шаги</value>
+  </data>
+  <data name="ContextPasteStep" xml:space="preserve">
+    <value>Вставить шаги</value>
+  </data>
+  <data name="ToolbarAddStep" xml:space="preserve">
+    <value>Добавить</value>
+  </data>
+  <data name="ToolbarDeleteStep" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="ToolbarCopyStep" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="ToolbarCutStep" xml:space="preserve">
+    <value>Вырезать</value>
+  </data>
+  <data name="ToolbarPasteStep" xml:space="preserve">
+    <value>Вставить</value>
+  </data>
+  <data name="ToolbarUndo" xml:space="preserve">
+    <value>Отменить</value>
+  </data>
+  <data name="ToolbarRedo" xml:space="preserve">
+    <value>Повторить</value>
+  </data>
+  <data name="StatusSyncOn" xml:space="preserve">
+    <value>Синхр. ВКЛ</value>
+  </data>
+  <data name="StatusSyncOff" xml:space="preserve">
+    <value>Синхр. ВЫКЛ</value>
+  </data>
+  <data name="StatusConnecting" xml:space="preserve">
+    <value>Подключение</value>
+  </data>
+  <data name="StatusStepLabel" xml:space="preserve">
+    <value>Шаг:</value>
+  </data>
+  <data name="StatusRecipeLabel" xml:space="preserve">
+    <value>Рецепт:</value>
+  </data>
+  <data name="StatusForLabel" xml:space="preserve">
+    <value>FOR:</value>
+  </data>
+  <data name="MessagePanelClose" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="DialogMessageTitle" xml:space="preserve">
+    <value>Сообщение</value>
+  </data>
+  <data name="DialogOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="DialogExitTitle" xml:space="preserve">
+    <value>Несохранённые изменения</value>
+  </data>
+  <data name="DialogExitMessage" xml:space="preserve">
+    <value>Имеются несохранённые изменения. Сохранить перед выходом?</value>
+  </data>
+  <data name="DialogSave" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="DialogDontSave" xml:space="preserve">
+    <value>Не сохранять</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="PlcConflictTitle" xml:space="preserve">
+    <value>Конфликт рецептов</value>
+  </data>
+  <data name="PlcConflictLine1" xml:space="preserve">
+    <value>В ПЛК находится другой рецепт.</value>
+  </data>
+  <data name="PlcConflictQuestion" xml:space="preserve">
+    <value>Какую версию оставить?</value>
+  </data>
+  <data name="PlcConflictKeepLocal" xml:space="preserve">
+    <value>Оставить локальный</value>
+  </data>
+  <data name="PlcConflictLoadFromPlc" xml:space="preserve">
+    <value>Загрузить из ПЛК</value>
+  </data>
+  <data name="StatusIdle" xml:space="preserve">
+    <value>Ожидание</value>
+  </data>
+  <data name="StatusSyncing" xml:space="preserve">
+    <value>Синхронизация…</value>
+  </data>
+  <data name="StatusSynced" xml:space="preserve">
+    <value>Синхронизировано</value>
+  </data>
+  <data name="StatusFailed" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <data name="LastSyncNever" xml:space="preserve">
+    <value>Никогда</value>
+  </data>
+  <data name="LastSyncAgoFormat" xml:space="preserve">
+    <value>{0} с назад</value>
+  </data>
+  <data name="LastSyncPrefix" xml:space="preserve">
+    <value>Синхр.: {0}</value>
+  </data>
+  <data name="WindowTitleNewRecipe" xml:space="preserve">
+    <value>Новый рецепт</value>
+  </data>
+  <data name="PlcConflictLocalSteps" xml:space="preserve">
+    <value>Локально шагов: {0}</value>
+  </data>
+  <data name="PlcConflictPlcSteps" xml:space="preserve">
+    <value>Шагов в ПЛК: {0}</value>
+  </data>
+  <data name="MessagePanelErrorsFormat" xml:space="preserve">
+    <value>Ошибок: {0}</value>
+  </data>
+  <data name="MessagePanelWarningsFormat" xml:space="preserve">
+    <value>Предупреждений: {0}</value>
+  </data>
+  <data name="EditorTitle" xml:space="preserve">
+    <value>Настройки стиля таблицы</value>
+  </data>
+  <data name="EditorRecipeGrid" xml:space="preserve">
+    <value>Таблица рецепта</value>
+  </data>
+  <data name="EditorStatusBar" xml:space="preserve">
+    <value>Строка состояния</value>
+  </data>
+  <data name="EditorNotificationPanel" xml:space="preserve">
+    <value>Панель уведомлений</value>
+  </data>
+  <data name="EditorApplicationTheme" xml:space="preserve">
+    <value>Тема приложения</value>
+  </data>
+  <data name="EditorDimensions" xml:space="preserve">
+    <value>Размеры</value>
+  </data>
+  <data name="EditorFonts" xml:space="preserve">
+    <value>Шрифты</value>
+  </data>
+  <data name="EditorColors" xml:space="preserve">
+    <value>Цвета</value>
+  </data>
+  <data name="EditorReadOnlyCells" xml:space="preserve">
+    <value>Ячейки только для чтения</value>
+  </data>
+  <data name="EditorDisabledCells" xml:space="preserve">
+    <value>Отключённые ячейки</value>
+  </data>
+  <data name="EditorExecutionHighlight" xml:space="preserve">
+    <value>Подсветка выполнения</value>
+  </data>
+  <data name="EditorTypography" xml:space="preserve">
+    <value>Типографика</value>
+  </data>
+  <data name="EditorSharedColors" xml:space="preserve">
+    <value>Общие цвета</value>
+  </data>
+  <data name="EditorSize" xml:space="preserve">
+    <value>Размер</value>
+  </data>
+  <data name="EditorWeight" xml:space="preserve">
+    <value>Насыщенность</value>
+  </data>
+  <data name="EditorItalic" xml:space="preserve">
+    <value>Курсив</value>
+  </data>
+  <data name="EditorCurrent" xml:space="preserve">
+    <value>Текущий</value>
+  </data>
+  <data name="EditorPast" xml:space="preserve">
+    <value>Прошедший</value>
+  </data>
+  <data name="EditorRowHeight" xml:space="preserve">
+    <value>Высота строки</value>
+  </data>
+  <data name="EditorCellPaddingLeft" xml:space="preserve">
+    <value>Отступ ячейки слева</value>
+  </data>
+  <data name="EditorCellPaddingTop" xml:space="preserve">
+    <value>Отступ ячейки сверху</value>
+  </data>
+  <data name="EditorCellPaddingRight" xml:space="preserve">
+    <value>Отступ ячейки справа</value>
+  </data>
+  <data name="EditorCellPaddingBottom" xml:space="preserve">
+    <value>Отступ ячейки снизу</value>
+  </data>
+  <data name="EditorGridHeader" xml:space="preserve">
+    <value>Заголовок таблицы</value>
+  </data>
+  <data name="EditorGridCell" xml:space="preserve">
+    <value>Ячейка таблицы</value>
+  </data>
+  <data name="EditorGridBackground" xml:space="preserve">
+    <value>Фон таблицы</value>
+  </data>
+  <data name="EditorGridBorder" xml:space="preserve">
+    <value>Граница таблицы</value>
+  </data>
+  <data name="EditorGridLine" xml:space="preserve">
+    <value>Линия сетки</value>
+  </data>
+  <data name="EditorHeaderForeground" xml:space="preserve">
+    <value>Текст заголовка</value>
+  </data>
+  <data name="EditorSelectionBackground" xml:space="preserve">
+    <value>Фон выделения</value>
+  </data>
+  <data name="EditorSelectionForeground" xml:space="preserve">
+    <value>Текст выделения</value>
+  </data>
+  <data name="EditorChanged" xml:space="preserve">
+    <value>Изменённая</value>
+  </data>
+  <data name="EditorChangedSelected" xml:space="preserve">
+    <value>Изменённая (выбранная)</value>
+  </data>
+  <data name="EditorDepth0" xml:space="preserve">
+    <value>Глубина 0</value>
+  </data>
+  <data name="EditorDepth1" xml:space="preserve">
+    <value>Глубина 1</value>
+  </data>
+  <data name="EditorDepth2" xml:space="preserve">
+    <value>Глубина 2</value>
+  </data>
+  <data name="EditorDepth3" xml:space="preserve">
+    <value>Глубина 3</value>
+  </data>
+  <data name="EditorSelected" xml:space="preserve">
+    <value>Выбранная</value>
+  </data>
+  <data name="EditorForeground" xml:space="preserve">
+    <value>Текст</value>
+  </data>
+  <data name="EditorCurrentStepMarker" xml:space="preserve">
+    <value>Маркер текущего шага</value>
+  </data>
+  <data name="EditorPadding" xml:space="preserve">
+    <value>Отступ</value>
+  </data>
+  <data name="EditorItemSpacing" xml:space="preserve">
+    <value>Интервал элементов</value>
+  </data>
+  <data name="EditorText" xml:space="preserve">
+    <value>Текст</value>
+  </data>
+  <data name="EditorTimerLabel" xml:space="preserve">
+    <value>Подпись таймера</value>
+  </data>
+  <data name="EditorTimerValue" xml:space="preserve">
+    <value>Значение таймера</value>
+  </data>
+  <data name="EditorBackground" xml:space="preserve">
+    <value>Фон</value>
+  </data>
+  <data name="EditorConnected" xml:space="preserve">
+    <value>Подключено</value>
+  </data>
+  <data name="EditorDisconnected" xml:space="preserve">
+    <value>Отключено</value>
+  </data>
+  <data name="EditorLocalMode" xml:space="preserve">
+    <value>Локальный режим</value>
+  </data>
+  <data name="EditorConnecting" xml:space="preserve">
+    <value>Подключение</value>
+  </data>
+  <data name="EditorMaxHeight" xml:space="preserve">
+    <value>Макс. высота</value>
+  </data>
+  <data name="EditorInfoSeverity" xml:space="preserve">
+    <value>Уровень: информация</value>
+  </data>
+  <data name="EditorErrorSeverity" xml:space="preserve">
+    <value>Уровень: ошибка</value>
+  </data>
+  <data name="EditorWarningSeverity" xml:space="preserve">
+    <value>Уровень: предупреждение</value>
+  </data>
+  <data name="EditorFontFamily" xml:space="preserve">
+    <value>Гарнитура шрифта</value>
+  </data>
+  <data name="EditorPanelBackground" xml:space="preserve">
+    <value>Фон панели</value>
+  </data>
+  <data name="EditorPanelHeaderBackground" xml:space="preserve">
+    <value>Фон заголовка панели</value>
+  </data>
+  <data name="EditorSubtleBorder" xml:space="preserve">
+    <value>Тонкая граница</value>
+  </data>
+  <data name="EditorSeparator" xml:space="preserve">
+    <value>Разделитель</value>
+  </data>
+  <data name="EditorSecondaryForeground" xml:space="preserve">
+    <value>Вторичный текст</value>
+  </data>
+  <data name="EditorRestartTitle" xml:space="preserve">
+    <value>Настройки сохранены</value>
+  </data>
+  <data name="EditorRestartMessage" xml:space="preserve">
+    <value>Настройки сохранены. Перезапустите приложение, чтобы применить изменения.</value>
+  </data>
+  <data name="EditorExitNow" xml:space="preserve">
+    <value>Выйти сейчас</value>
+  </data>
+  <data name="EditorRestartLater" xml:space="preserve">
+    <value>Перезапустить позже</value>
+  </data>
+  <data name="EditorCannotSave" xml:space="preserve">
+    <value>Сохранение невозможно: черновик стиля содержит недопустимые значения или значения вне диапазона.</value>
+  </data>
+  <data name="EditorDefaultFont" xml:space="preserve">
+    <value>(По умолчанию)</value>
+  </data>
+</root>

@@ -45,7 +45,8 @@ public sealed class S7ServiceTests
 			Groups: new Dictionary<string, GroupDefinition>(),
 			Actions: new Dictionary<int, ActionDefinition>(),
 			GridStyle: GridStyleOptions.Default,
-			PlcConfiguration: PlcConfiguration.Default);
+			PlcConfiguration: PlcConfiguration.Default,
+			Ui: AppUiOptions.Default);
 
 		return new RecipeMetadataRegistry(config);
 	}

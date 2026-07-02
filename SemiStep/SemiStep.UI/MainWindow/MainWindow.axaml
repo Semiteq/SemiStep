@@ -5,6 +5,7 @@
         xmlns:messageService="clr-namespace:SemiStep.UI.MessageService"
         xmlns:recipeGrid="clr-namespace:SemiStep.UI.RecipeGrid"
         xmlns:local="clr-namespace:SemiStep.UI.MainWindow"
+        xmlns:l="clr-namespace:SemiStep.UI.Localization"
         mc:Ignorable="d"
         d:DesignWidth="1600"
         d:DesignHeight="800"
@@ -48,16 +49,16 @@
                   LoadingRow="OnDataGridLoadingRow">
             <DataGrid.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="Add Step"
+                    <MenuItem Header="{x:Static l:Resources.ContextAddStep}"
                               Command="{Binding RecipeCommands.AddStepCommand}" />
-                    <MenuItem Header="Delete Step"
+                    <MenuItem Header="{x:Static l:Resources.ContextDeleteStep}"
                               Command="{Binding RecipeCommands.DeleteStepCommand}" />
                     <Separator />
-                    <MenuItem Header="Copy Steps"
+                    <MenuItem Header="{x:Static l:Resources.ContextCopyStep}"
                               Command="{Binding Clipboard.CopyStepCommand}" />
-                    <MenuItem Header="Cut Steps"
+                    <MenuItem Header="{x:Static l:Resources.ContextCutStep}"
                               Command="{Binding Clipboard.CutStepCommand}" />
-                    <MenuItem Header="Paste Steps"
+                    <MenuItem Header="{x:Static l:Resources.ContextPasteStep}"
                               Command="{Binding Clipboard.PasteStepCommand}" />
                 </ContextMenu>
             </DataGrid.ContextMenu>

@@ -3,70 +3,71 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:SemiStep.UI.MainWindow"
+             xmlns:l="clr-namespace:SemiStep.UI.Localization"
              mc:Ignorable="d"
              x:Class="SemiStep.UI.MainWindow.RecipeMenuBar"
              x:DataType="local:MainWindowViewModel">
 
     <Menu>
-        <MenuItem Header="_File">
-            <MenuItem Header="_New Recipe"
+        <MenuItem Header="{x:Static l:Resources.MenuFile}">
+            <MenuItem Header="{x:Static l:Resources.MenuFileNewRecipe}"
                       Command="{Binding RecipeFile.NewRecipeCommand}" />
-            <MenuItem Header="_Open Recipe..."
+            <MenuItem Header="{x:Static l:Resources.MenuFileOpenRecipe}"
                       Command="{Binding RecipeFile.LoadRecipeCommand}"
                       InputGesture="Ctrl+O" />
-            <MenuItem Header="_Save Recipe"
+            <MenuItem Header="{x:Static l:Resources.MenuFileSaveRecipe}"
                       Command="{Binding RecipeFile.SaveRecipeCommand}"
                       InputGesture="Ctrl+S" />
-            <MenuItem Header="Save Recipe _As..."
+            <MenuItem Header="{x:Static l:Resources.MenuFileSaveRecipeAs}"
                       Command="{Binding RecipeFile.SaveAsRecipeCommand}"
                       InputGesture="Ctrl+Shift+S" />
             <Separator />
-            <MenuItem Header="E_xit"
+            <MenuItem Header="{x:Static l:Resources.MenuFileExit}"
                       Command="{Binding ExitCommand}"
                       InputGesture="Alt+F4" />
         </MenuItem>
 
-        <MenuItem Header="_Edit">
-            <MenuItem Header="_Add Step"
+        <MenuItem Header="{x:Static l:Resources.MenuEdit}">
+            <MenuItem Header="{x:Static l:Resources.MenuEditAddStep}"
                       Command="{Binding RecipeCommands.AddStepCommand}"
                       InputGesture="Ctrl+N" />
-            <MenuItem Header="_Delete Step"
+            <MenuItem Header="{x:Static l:Resources.MenuEditDeleteStep}"
                       Command="{Binding RecipeCommands.DeleteStepCommand}"
                       InputGesture="Delete" />
             <Separator />
-            <MenuItem Header="Cop_y Steps"
+            <MenuItem Header="{x:Static l:Resources.MenuEditCopySteps}"
                       Command="{Binding Clipboard.CopyStepCommand}"
                       InputGesture="Ctrl+C" />
-            <MenuItem Header="Cu_t Steps"
+            <MenuItem Header="{x:Static l:Resources.MenuEditCutSteps}"
                       Command="{Binding Clipboard.CutStepCommand}"
                       InputGesture="Ctrl+X" />
-            <MenuItem Header="_Paste Steps"
+            <MenuItem Header="{x:Static l:Resources.MenuEditPasteSteps}"
                       Command="{Binding Clipboard.PasteStepCommand}"
                       InputGesture="Ctrl+V" />
             <Separator />
-            <MenuItem Header="_Undo"
+            <MenuItem Header="{x:Static l:Resources.MenuEditUndo}"
                       Command="{Binding RecipeCommands.UndoCommand}"
                       InputGesture="Ctrl+Z" />
-            <MenuItem Header="_Redo"
+            <MenuItem Header="{x:Static l:Resources.MenuEditRedo}"
                       Command="{Binding RecipeCommands.RedoCommand}"
                       InputGesture="Ctrl+Shift+Z" />
         </MenuItem>
-        <MenuItem Header="_View">
-            <MenuItem Header="_Toolbar"
+        <MenuItem Header="{x:Static l:Resources.MenuView}">
+            <MenuItem Header="{x:Static l:Resources.MenuViewToolbar}"
                       Command="{Binding ToggleToolBarCommand}"
                       ToggleType="CheckBox"
                       IsChecked="{Binding IsToolBarVisible, Mode=OneWay}" />
-            <MenuItem Header="_Notification Log"
+            <MenuItem Header="{x:Static l:Resources.MenuViewNotificationLog}"
                       Command="{Binding MessagePanel.ToggleCommand}"
                       ToggleType="CheckBox"
                       IsChecked="{Binding MessagePanel.ShowPanel, Mode=OneWay}" />
             <Separator />
-            <MenuItem Header="Grid _Style Settings..."
+            <MenuItem Header="{x:Static l:Resources.MenuViewGridStyleSettings}"
                       Command="{Binding OpenStyleEditorCommand}" />
         </MenuItem>
 
-        <MenuItem Header="_Help">
-            <MenuItem Header="_About"
+        <MenuItem Header="{x:Static l:Resources.MenuHelp}">
+            <MenuItem Header="{x:Static l:Resources.MenuHelpAbout}"
                       IsEnabled="False" />
         </MenuItem>
     </Menu>

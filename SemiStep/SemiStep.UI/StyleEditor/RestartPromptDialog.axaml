@@ -2,9 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:l="clr-namespace:SemiStep.UI.Localization"
         mc:Ignorable="d"
         x:Class="SemiStep.UI.StyleEditor.RestartPromptDialog"
-        Title="Settings Saved"
+        Title="{x:Static l:Resources.EditorRestartTitle}"
         Width="420"
         Height="160"
         WindowStartupLocation="CenterOwner"
@@ -18,7 +19,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
-                   Text="Settings saved. Restart the application to apply the changes."
+                   Text="{x:Static l:Resources.EditorRestartMessage}"
                    TextWrapping="Wrap"
                    VerticalAlignment="Center" />
 
@@ -27,10 +28,10 @@
                     HorizontalAlignment="Right"
                     Spacing="10"
                     Margin="0,20,0,0">
-            <Button Content="Exit Now"
+            <Button Content="{x:Static l:Resources.EditorExitNow}"
                     Classes="secondary"
                     Click="OnExitNowClick" />
-            <Button Content="Restart Later"
+            <Button Content="{x:Static l:Resources.EditorRestartLater}"
                     Classes="primary"
                     Click="OnRestartLaterClick"
                     IsDefault="True"

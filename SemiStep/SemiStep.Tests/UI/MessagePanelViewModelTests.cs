@@ -6,6 +6,7 @@ using FluentResults;
 
 using SemiStep.Core.Shared;
 
+using SemiStep.Tests.UI.Localization;
 using SemiStep.UI.MessageService;
 
 using Xunit;
@@ -31,32 +32,38 @@ public sealed class MessagePanelViewModelTests
 	}
 
 	[AvaloniaTheory]
-	[InlineData(1, "1 Error")]
-	[InlineData(2, "2 Errors")]
-	public void ErrorCountText_UsesSingularOrPlural(int errorCount, string expected)
+	[InlineData(1, "Errors: 1")]
+	[InlineData(2, "Errors: 2")]
+	public void ErrorCountText_UsesLabelThenCount(int errorCount, string expected)
 	{
-		var panel = new MessagePanelViewModel();
-		var reasons = Enumerable.Range(0, errorCount).Select(IReason (i) => new Error($"msg{i}")).ToList();
+		using (ResourcesCultureScope.Use("en"))
+		{
+			var panel = new MessagePanelViewModel();
+			var reasons = Enumerable.Range(0, errorCount).Select(IReason (i) => new Error($"msg{i}")).ToList();
 
-		panel.RefreshReasons(reasons);
+			panel.RefreshReasons(reasons);
 
-		panel.ErrorCountText.Should().Be(expected);
+			panel.ErrorCountText.Should().Be(expected);
+		}
 	}
 
 	[AvaloniaTheory]
-	[InlineData(1, 1, "1 Error, 1 Warning")]
-	[InlineData(2, 0, "2 Errors")]
-	[InlineData(0, 1, "1 Warning")]
+	[InlineData(1, 1, "Errors: 1, Warnings: 1")]
+	[InlineData(2, 0, "Errors: 2")]
+	[InlineData(0, 1, "Warnings: 1")]
 	public void StatusErrorSummary_CombinesErrorsAndWarnings(int errorCount, int warningCount, string expected)
 	{
-		var panel = new MessagePanelViewModel();
-		var reasons = new List<IReason>();
-		reasons.AddRange(Enumerable.Range(0, errorCount).Select(IReason (i) => new Error($"e{i}")));
-		reasons.AddRange(Enumerable.Range(0, warningCount).Select(IReason (i) => new Warning($"w{i}")));
+		using (ResourcesCultureScope.Use("en"))
+		{
+			var panel = new MessagePanelViewModel();
+			var reasons = new List<IReason>();
+			reasons.AddRange(Enumerable.Range(0, errorCount).Select(IReason (i) => new Error($"e{i}")));
+			reasons.AddRange(Enumerable.Range(0, warningCount).Select(IReason (i) => new Warning($"w{i}")));
 
-		panel.RefreshReasons(reasons);
+			panel.RefreshReasons(reasons);
 
-		panel.StatusErrorSummary.Should().Be(expected);
+			panel.StatusErrorSummary.Should().Be(expected);
+		}
 	}
 
 	[AvaloniaFact]

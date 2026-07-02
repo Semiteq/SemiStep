@@ -664,7 +664,8 @@ public sealed class FormulaEvaluatorTests
 			Groups: groups,
 			Actions: actions,
 			GridStyle: GridStyleOptions.Default,
-			PlcConfiguration: PlcConfiguration.Default));
+			PlcConfiguration: PlcConfiguration.Default,
+			Ui: AppUiOptions.Default));
 	}
 
 	private static RecipeMetadataRegistry BuildRegistryWithoutFormula()
@@ -698,7 +699,8 @@ public sealed class FormulaEvaluatorTests
 			Groups: new Dictionary<string, GroupDefinition>(),
 			Actions: actions,
 			GridStyle: GridStyleOptions.Default,
-			PlcConfiguration: PlcConfiguration.Default);
+			PlcConfiguration: PlcConfiguration.Default,
+			Ui: AppUiOptions.Default);
 	}
 
 	private static void EnsureStringSentinelProperty(Dictionary<string, PropertyTypeDefinition> properties)

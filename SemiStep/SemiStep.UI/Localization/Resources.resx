@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="MenuFile" xml:space="preserve">
+    <value>_File</value>
+  </data>
+  <data name="MenuFileNewRecipe" xml:space="preserve">
+    <value>_New Recipe</value>
+  </data>
+  <data name="MenuFileOpenRecipe" xml:space="preserve">
+    <value>_Open Recipe...</value>
+  </data>
+  <data name="MenuFileSaveRecipe" xml:space="preserve">
+    <value>_Save Recipe</value>
+  </data>
+  <data name="MenuFileSaveRecipeAs" xml:space="preserve">
+    <value>Save Recipe _As...</value>
+  </data>
+  <data name="MenuFileExit" xml:space="preserve">
+    <value>E_xit</value>
+  </data>
+  <data name="MenuEdit" xml:space="preserve">
+    <value>_Edit</value>
+  </data>
+  <data name="MenuEditAddStep" xml:space="preserve">
+    <value>_Add Step</value>
+  </data>
+  <data name="MenuEditDeleteStep" xml:space="preserve">
+    <value>_Delete Step</value>
+  </data>
+  <data name="MenuEditCopySteps" xml:space="preserve">
+    <value>Cop_y Steps</value>
+  </data>
+  <data name="MenuEditCutSteps" xml:space="preserve">
+    <value>Cu_t Steps</value>
+  </data>
+  <data name="MenuEditPasteSteps" xml:space="preserve">
+    <value>_Paste Steps</value>
+  </data>
+  <data name="MenuEditUndo" xml:space="preserve">
+    <value>_Undo</value>
+  </data>
+  <data name="MenuEditRedo" xml:space="preserve">
+    <value>_Redo</value>
+  </data>
+  <data name="MenuView" xml:space="preserve">
+    <value>_View</value>
+  </data>
+  <data name="MenuViewToolbar" xml:space="preserve">
+    <value>_Toolbar</value>
+  </data>
+  <data name="MenuViewNotificationLog" xml:space="preserve">
+    <value>_Notification Log</value>
+  </data>
+  <data name="MenuViewGridStyleSettings" xml:space="preserve">
+    <value>Grid _Style Settings...</value>
+  </data>
+  <data name="MenuHelp" xml:space="preserve">
+    <value>_Help</value>
+  </data>
+  <data name="MenuHelpAbout" xml:space="preserve">
+    <value>_About</value>
+  </data>
+  <data name="ContextAddStep" xml:space="preserve">
+    <value>Add Step</value>
+  </data>
+  <data name="ContextDeleteStep" xml:space="preserve">
+    <value>Delete Step</value>
+  </data>
+  <data name="ContextCopyStep" xml:space="preserve">
+    <value>Copy Steps</value>
+  </data>
+  <data name="ContextCutStep" xml:space="preserve">
+    <value>Cut Steps</value>
+  </data>
+  <data name="ContextPasteStep" xml:space="preserve">
+    <value>Paste Steps</value>
+  </data>
+  <data name="ToolbarAddStep" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="ToolbarDeleteStep" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="ToolbarCopyStep" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="ToolbarCutStep" xml:space="preserve">
+    <value>Cut</value>
+  </data>
+  <data name="ToolbarPasteStep" xml:space="preserve">
+    <value>Paste</value>
+  </data>
+  <data name="ToolbarUndo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="ToolbarRedo" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="StatusSyncOn" xml:space="preserve">
+    <value>Sync ON</value>
+  </data>
+  <data name="StatusSyncOff" xml:space="preserve">
+    <value>Sync OFF</value>
+  </data>
+  <data name="StatusConnecting" xml:space="preserve">
+    <value>Connecting</value>
+  </data>
+  <data name="StatusStepLabel" xml:space="preserve">
+    <value>Step:</value>
+  </data>
+  <data name="StatusRecipeLabel" xml:space="preserve">
+    <value>Recipe:</value>
+  </data>
+  <data name="StatusForLabel" xml:space="preserve">
+    <value>FOR:</value>
+  </data>
+  <data name="MessagePanelClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="DialogMessageTitle" xml:space="preserve">
+    <value>Message</value>
+  </data>
+  <data name="DialogOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="DialogExitTitle" xml:space="preserve">
+    <value>Unsaved Changes</value>
+  </data>
+  <data name="DialogExitMessage" xml:space="preserve">
+    <value>You have unsaved changes. Do you want to save before exiting?</value>
+  </data>
+  <data name="DialogSave" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="DialogDontSave" xml:space="preserve">
+    <value>Don't Save</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="PlcConflictTitle" xml:space="preserve">
+    <value>Recipe Conflict</value>
+  </data>
+  <data name="PlcConflictLine1" xml:space="preserve">
+    <value>The PLC contains a different recipe.</value>
+  </data>
+  <data name="PlcConflictQuestion" xml:space="preserve">
+    <value>Which version do you want to keep?</value>
+  </data>
+  <data name="PlcConflictKeepLocal" xml:space="preserve">
+    <value>Keep local</value>
+  </data>
+  <data name="PlcConflictLoadFromPlc" xml:space="preserve">
+    <value>Load from PLC</value>
+  </data>
+  <data name="StatusIdle" xml:space="preserve">
+    <value>Idle</value>
+  </data>
+  <data name="StatusSyncing" xml:space="preserve">
+    <value>Syncing...</value>
+  </data>
+  <data name="StatusSynced" xml:space="preserve">
+    <value>Synced</value>
+  </data>
+  <data name="StatusFailed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="LastSyncNever" xml:space="preserve">
+    <value>Never</value>
+  </data>
+  <data name="LastSyncAgoFormat" xml:space="preserve">
+    <value>{0} s ago</value>
+  </data>
+  <data name="LastSyncPrefix" xml:space="preserve">
+    <value>Last sync: {0}</value>
+  </data>
+  <data name="WindowTitleNewRecipe" xml:space="preserve">
+    <value>New Recipe</value>
+  </data>
+  <data name="PlcConflictLocalSteps" xml:space="preserve">
+    <value>Local steps: {0}</value>
+  </data>
+  <data name="PlcConflictPlcSteps" xml:space="preserve">
+    <value>PLC steps: {0}</value>
+  </data>
+  <data name="MessagePanelErrorsFormat" xml:space="preserve">
+    <value>Errors: {0}</value>
+  </data>
+  <data name="MessagePanelWarningsFormat" xml:space="preserve">
+    <value>Warnings: {0}</value>
+  </data>
+  <data name="EditorTitle" xml:space="preserve">
+    <value>Grid Style Settings</value>
+  </data>
+  <data name="EditorRecipeGrid" xml:space="preserve">
+    <value>Recipe Grid</value>
+  </data>
+  <data name="EditorStatusBar" xml:space="preserve">
+    <value>Status Bar</value>
+  </data>
+  <data name="EditorNotificationPanel" xml:space="preserve">
+    <value>Notification Panel</value>
+  </data>
+  <data name="EditorApplicationTheme" xml:space="preserve">
+    <value>Application Theme</value>
+  </data>
+  <data name="EditorDimensions" xml:space="preserve">
+    <value>Dimensions</value>
+  </data>
+  <data name="EditorFonts" xml:space="preserve">
+    <value>Fonts</value>
+  </data>
+  <data name="EditorColors" xml:space="preserve">
+    <value>Colors</value>
+  </data>
+  <data name="EditorReadOnlyCells" xml:space="preserve">
+    <value>Read-only cells</value>
+  </data>
+  <data name="EditorDisabledCells" xml:space="preserve">
+    <value>Disabled cells</value>
+  </data>
+  <data name="EditorExecutionHighlight" xml:space="preserve">
+    <value>Execution highlight</value>
+  </data>
+  <data name="EditorTypography" xml:space="preserve">
+    <value>Typography</value>
+  </data>
+  <data name="EditorSharedColors" xml:space="preserve">
+    <value>Shared colors</value>
+  </data>
+  <data name="EditorSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="EditorWeight" xml:space="preserve">
+    <value>Weight</value>
+  </data>
+  <data name="EditorItalic" xml:space="preserve">
+    <value>Italic</value>
+  </data>
+  <data name="EditorCurrent" xml:space="preserve">
+    <value>Current</value>
+  </data>
+  <data name="EditorPast" xml:space="preserve">
+    <value>Past</value>
+  </data>
+  <data name="EditorRowHeight" xml:space="preserve">
+    <value>Row height</value>
+  </data>
+  <data name="EditorCellPaddingLeft" xml:space="preserve">
+    <value>Cell padding left</value>
+  </data>
+  <data name="EditorCellPaddingTop" xml:space="preserve">
+    <value>Cell padding top</value>
+  </data>
+  <data name="EditorCellPaddingRight" xml:space="preserve">
+    <value>Cell padding right</value>
+  </data>
+  <data name="EditorCellPaddingBottom" xml:space="preserve">
+    <value>Cell padding bottom</value>
+  </data>
+  <data name="EditorGridHeader" xml:space="preserve">
+    <value>Grid header</value>
+  </data>
+  <data name="EditorGridCell" xml:space="preserve">
+    <value>Grid cell</value>
+  </data>
+  <data name="EditorGridBackground" xml:space="preserve">
+    <value>Grid background</value>
+  </data>
+  <data name="EditorGridBorder" xml:space="preserve">
+    <value>Grid border</value>
+  </data>
+  <data name="EditorGridLine" xml:space="preserve">
+    <value>Grid line</value>
+  </data>
+  <data name="EditorHeaderForeground" xml:space="preserve">
+    <value>Header foreground</value>
+  </data>
+  <data name="EditorSelectionBackground" xml:space="preserve">
+    <value>Selection background</value>
+  </data>
+  <data name="EditorSelectionForeground" xml:space="preserve">
+    <value>Selection foreground</value>
+  </data>
+  <data name="EditorChanged" xml:space="preserve">
+    <value>Changed</value>
+  </data>
+  <data name="EditorChangedSelected" xml:space="preserve">
+    <value>Changed (selected)</value>
+  </data>
+  <data name="EditorDepth0" xml:space="preserve">
+    <value>Depth 0</value>
+  </data>
+  <data name="EditorDepth1" xml:space="preserve">
+    <value>Depth 1</value>
+  </data>
+  <data name="EditorDepth2" xml:space="preserve">
+    <value>Depth 2</value>
+  </data>
+  <data name="EditorDepth3" xml:space="preserve">
+    <value>Depth 3</value>
+  </data>
+  <data name="EditorSelected" xml:space="preserve">
+    <value>Selected</value>
+  </data>
+  <data name="EditorForeground" xml:space="preserve">
+    <value>Foreground</value>
+  </data>
+  <data name="EditorCurrentStepMarker" xml:space="preserve">
+    <value>Current step marker</value>
+  </data>
+  <data name="EditorPadding" xml:space="preserve">
+    <value>Padding</value>
+  </data>
+  <data name="EditorItemSpacing" xml:space="preserve">
+    <value>Item spacing</value>
+  </data>
+  <data name="EditorText" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="EditorTimerLabel" xml:space="preserve">
+    <value>Timer label</value>
+  </data>
+  <data name="EditorTimerValue" xml:space="preserve">
+    <value>Timer value</value>
+  </data>
+  <data name="EditorBackground" xml:space="preserve">
+    <value>Background</value>
+  </data>
+  <data name="EditorConnected" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="EditorDisconnected" xml:space="preserve">
+    <value>Disconnected</value>
+  </data>
+  <data name="EditorLocalMode" xml:space="preserve">
+    <value>Local mode</value>
+  </data>
+  <data name="EditorConnecting" xml:space="preserve">
+    <value>Connecting</value>
+  </data>
+  <data name="EditorMaxHeight" xml:space="preserve">
+    <value>Max height</value>
+  </data>
+  <data name="EditorInfoSeverity" xml:space="preserve">
+    <value>Info severity</value>
+  </data>
+  <data name="EditorErrorSeverity" xml:space="preserve">
+    <value>Error severity</value>
+  </data>
+  <data name="EditorWarningSeverity" xml:space="preserve">
+    <value>Warning severity</value>
+  </data>
+  <data name="EditorFontFamily" xml:space="preserve">
+    <value>Font family</value>
+  </data>
+  <data name="EditorPanelBackground" xml:space="preserve">
+    <value>Panel background</value>
+  </data>
+  <data name="EditorPanelHeaderBackground" xml:space="preserve">
+    <value>Panel header background</value>
+  </data>
+  <data name="EditorSubtleBorder" xml:space="preserve">
+    <value>Subtle border</value>
+  </data>
+  <data name="EditorSeparator" xml:space="preserve">
+    <value>Separator</value>
+  </data>
+  <data name="EditorSecondaryForeground" xml:space="preserve">
+    <value>Secondary foreground</value>
+  </data>
+  <data name="EditorRestartTitle" xml:space="preserve">
+    <value>Settings Saved</value>
+  </data>
+  <data name="EditorRestartMessage" xml:space="preserve">
+    <value>Settings saved. Restart the application to apply the changes.</value>
+  </data>
+  <data name="EditorExitNow" xml:space="preserve">
+    <value>Exit Now</value>
+  </data>
+  <data name="EditorRestartLater" xml:space="preserve">
+    <value>Restart Later</value>
+  </data>
+  <data name="EditorCannotSave" xml:space="preserve">
+    <value>Cannot save: the current style draft has invalid or out-of-range values.</value>
+  </data>
+  <data name="EditorDefaultFont" xml:space="preserve">
+    <value>(Default)</value>
+  </data>
+</root>

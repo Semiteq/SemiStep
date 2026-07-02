@@ -154,7 +154,8 @@ public sealed class RecipeSessionSelectorSeedIntegrationTests
 			Groups: new Dictionary<string, GroupDefinition>(),
 			Actions: actions,
 			GridStyle: GridStyleOptions.Default,
-			PlcConfiguration: PlcConfiguration.Default);
+			PlcConfiguration: PlcConfiguration.Default,
+			Ui: AppUiOptions.Default);
 
 		return new RecipeMetadataRegistry(configuration);
 	}

@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
@@ -11,6 +12,8 @@ using FluentResults;
 using ReactiveUI;
 
 using SemiStep.Core.Shared;
+
+using SemiStep.UI.Localization;
 
 namespace SemiStep.UI.MessageService;
 
@@ -54,13 +57,13 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 			.DisposeWith(_disposables);
 
 		_errorCountText = this.WhenAnyValue(x => x.ErrorCount)
-			.Select(c => $"{c} {(c == 1 ? "Error" : "Errors")}")
-			.ToProperty(this, x => x.ErrorCountText, initialValue: "0 Errors")
+			.Select(FormatErrorCount)
+			.ToProperty(this, x => x.ErrorCountText, initialValue: FormatErrorCount(0))
 			.DisposeWith(_disposables);
 
 		_warningCountText = this.WhenAnyValue(x => x.WarningCount)
-			.Select(c => $"{c} {(c == 1 ? "Warning" : "Warnings")}")
-			.ToProperty(this, x => x.WarningCountText, initialValue: "0 Warnings")
+			.Select(FormatWarningCount)
+			.ToProperty(this, x => x.WarningCountText, initialValue: FormatWarningCount(0))
 			.DisposeWith(_disposables);
 
 		_statusErrorSummary = this.WhenAnyValue(
@@ -223,5 +226,15 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 		WarningCount = _validationEntries.Count(e => e.IsWarning);
 		HasEntries = _validationEntries.Count > 0
 			|| _operationEntry is { Severity: MessageSeverity.Error or MessageSeverity.Warning };
+	}
+
+	internal static string FormatErrorCount(int count)
+	{
+		return string.Format(CultureInfo.InvariantCulture, Resources.MessagePanelErrorsFormat, count);
+	}
+
+	internal static string FormatWarningCount(int count)
+	{
+		return string.Format(CultureInfo.InvariantCulture, Resources.MessagePanelWarningsFormat, count);
 	}
 }

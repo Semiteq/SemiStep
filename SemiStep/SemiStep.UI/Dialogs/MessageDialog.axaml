@@ -2,9 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:l="clr-namespace:SemiStep.UI.Localization"
         mc:Ignorable="d"
         x:Class="SemiStep.UI.Dialogs.MessageDialog"
-        Title="Message"
+        Title="{x:Static l:Resources.DialogMessageTitle}"
         Width="400"
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
@@ -24,7 +25,7 @@
                    MinHeight="50" />
 
         <Button Grid.Row="1"
-                Content="OK"
+                Content="{x:Static l:Resources.DialogOk}"
                 Classes="primary"
                 HorizontalAlignment="Right"
                 Margin="0,20,0,0"

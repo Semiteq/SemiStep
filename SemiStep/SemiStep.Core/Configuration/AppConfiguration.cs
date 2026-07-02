@@ -9,4 +9,5 @@ public sealed record AppConfiguration(
 	IReadOnlyDictionary<string, GroupDefinition> Groups,
 	IReadOnlyDictionary<int, ActionDefinition> Actions,
 	GridStyleOptions GridStyle,
-	PlcConfiguration PlcConfiguration);
+	PlcConfiguration PlcConfiguration,
+	AppUiOptions Ui);

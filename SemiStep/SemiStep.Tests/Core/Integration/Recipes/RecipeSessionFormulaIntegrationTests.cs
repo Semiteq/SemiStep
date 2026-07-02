@@ -188,7 +188,8 @@ public sealed class RecipeSessionFormulaIntegrationTests
 			Groups: new Dictionary<string, GroupDefinition>(),
 			Actions: actions,
 			GridStyle: GridStyleOptions.Default,
-			PlcConfiguration: PlcConfiguration.Default);
+			PlcConfiguration: PlcConfiguration.Default,
+			Ui: AppUiOptions.Default);
 
 		var registry = new RecipeMetadataRegistry(configuration);
 		var analyzer = new RecipeAnalyzer(registry);

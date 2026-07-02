@@ -8,6 +8,8 @@ using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Import;
 
+using SemiStep.UI.Localization;
+
 using Serilog;
 using Serilog.Events;
 
@@ -19,6 +21,10 @@ public static class Program
 	[STAThread]
 	public static void Main(string[] args)
 	{
+		// Baseline UI culture before config load. Harmless: the only pre-config UI is
+		// ErrorWindow, which is hardcoded English and does not depend on culture/resx.
+		CultureInfo.DefaultThreadCurrentUICulture = UiCultureSelector.Resolve(null);
+
 		var options = StartupOptions.Parse(args);
 
 		CreateLogger(
@@ -77,6 +83,12 @@ public static class Program
 
 			return StartupOutcome.Failed(errors);
 		}
+
+		// Override the UI culture from the loaded locale. Only UICulture changes; CurrentCulture
+		// stays invariant so number/date formatting and logs remain English.
+		var uiCulture = UiCultureSelector.Resolve(result.Value.Ui.Locale);
+		CultureInfo.DefaultThreadCurrentUICulture = uiCulture;
+		Resources.Culture = uiCulture;
 
 		var services =
 			new ServiceCollection()

@@ -1,4 +1,5 @@
-﻿using System.Reactive;
+﻿using System.Globalization;
+using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
@@ -14,6 +15,7 @@ using SemiStep.Core.Recipes;
 
 using SemiStep.UI.Clipboard;
 using SemiStep.UI.Coordinator;
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.Plc;
 using SemiStep.UI.RecipeFile;
@@ -260,36 +262,36 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		this.RaisePropertyChanged(nameof(LastSyncTimeText));
 	}
 
-	private static string MapSyncStatus(PlcSyncStatus status)
+	internal static string MapSyncStatus(PlcSyncStatus status)
 	{
 		return status switch
 		{
-			PlcSyncStatus.Idle => "Idle",
-			PlcSyncStatus.Syncing => "Syncing...",
-			PlcSyncStatus.Synced => "Synced",
+			PlcSyncStatus.Idle => Resources.StatusIdle,
+			PlcSyncStatus.Syncing => Resources.StatusSyncing,
+			PlcSyncStatus.Synced => Resources.StatusSynced,
 			PlcSyncStatus.OutOfSync => string.Empty,
-			PlcSyncStatus.Failed => "Failed",
+			PlcSyncStatus.Failed => Resources.StatusFailed,
 			_ => status.ToString()
 		};
 	}
 
-	private static string FormatLastSyncTime(DateTimeOffset? lastSyncTime)
+	internal static string FormatLastSyncTime(DateTimeOffset? lastSyncTime)
 	{
-		if (lastSyncTime is null)
-		{
-			return "Never";
-		}
+		var value = lastSyncTime is null
+			? Resources.LastSyncNever
+			: string.Format(
+				CultureInfo.InvariantCulture,
+				Resources.LastSyncAgoFormat,
+				(DateTimeOffset.UtcNow - lastSyncTime.Value).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture));
 
-		var elapsed = (DateTimeOffset.UtcNow - lastSyncTime.Value).TotalSeconds;
-
-		return $"{elapsed:0.0} s ago";
+		return string.Format(CultureInfo.InvariantCulture, Resources.LastSyncPrefix, value);
 	}
 
 	private string BuildWindowTitle()
 	{
 		var fileName = RecipeFile.CurrentFilePath is not null
 			? Path.GetFileNameWithoutExtension(RecipeFile.CurrentFilePath)
-			: "New Recipe";
+			: Resources.WindowTitleNewRecipe;
 		var dirtyIndicator = IsDirty ? " *" : "";
 
 		return $"SemiStep - {fileName}{dirtyIndicator}";

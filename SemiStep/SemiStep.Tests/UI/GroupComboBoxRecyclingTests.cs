@@ -214,7 +214,8 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 			Groups: groups,
 			Actions: new Dictionary<int, ActionDefinition>(),
 			GridStyle: GridStyleOptions.Default,
-			PlcConfiguration: PlcConfiguration.Default);
+			PlcConfiguration: PlcConfiguration.Default,
+			Ui: AppUiOptions.Default);
 
 		return new RecipeMetadataRegistry(config);
 	}

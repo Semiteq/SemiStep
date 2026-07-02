@@ -8,6 +8,7 @@ using FluentAssertions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Tests.UI.Helpers;
+using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.Styles;
 
@@ -53,10 +54,11 @@ public sealed class AppStatusBarTimerFontTests : IAsyncLifetime
 
 		var labels = statusBar.GetVisualDescendants()
 			.OfType<TextBlock>()
-			.Where(textBlock => textBlock.Text is "Шаг:" or "Рецепт:")
+			.Where(textBlock => textBlock.Text == Resources.StatusStepLabel
+				|| textBlock.Text == Resources.StatusRecipeLabel)
 			.ToList();
 
-		labels.Should().HaveCount(2, "each timer row carries a Шаг:/Рецепт: label TextBlock");
+		labels.Should().HaveCount(2, "each timer row carries a step/recipe label TextBlock");
 
 		foreach (var label in labels)
 		{

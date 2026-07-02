@@ -29,7 +29,7 @@ public static class ConfigFacade
 			return LogAndPropagate(loadResult);
 		}
 
-		var (properties, columns, groups, actions, gridStyle, connection) = loadResult.Value;
+		var (properties, columns, groups, actions, gridStyle, connection, appUi) = loadResult.Value;
 
 		var gridStyleResult = GridStyleValidator.Validate(gridStyle);
 		if (gridStyleResult.IsFailed)
@@ -49,7 +49,7 @@ public static class ConfigFacade
 			return LogAndPropagate(defaultsResult, loadResult, xrefResult);
 		}
 
-		var mapResult = MapToDomain(properties, columns, groups, actions, gridStyle, connection);
+		var mapResult = MapToDomain(properties, columns, groups, actions, gridStyle, connection, appUi);
 
 		if (mapResult.IsFailed)
 		{
@@ -98,6 +98,7 @@ public static class ConfigFacade
 		var actionsResult = await ActionsSectionLoader.LoadAsync(configDirectory);
 		var gridStyleResult = await GridStyleLoader.LoadAsync(configDirectory);
 		var connectionResult = await ConnectionLoader.LoadAsync(configDirectory);
+		var appUiResult = await AppUiOptionsLoader.LoadAsync(configDirectory);
 
 		var merged = Result.Merge(
 			propertiesResult.ToResult(),
@@ -105,7 +106,8 @@ public static class ConfigFacade
 			groupsResult.ToResult(),
 			actionsResult.ToResult(),
 			gridStyleResult.ToResult(),
-			connectionResult.ToResult());
+			connectionResult.ToResult(),
+			appUiResult.ToResult());
 
 		if (merged.IsFailed)
 		{
@@ -118,7 +120,8 @@ public static class ConfigFacade
 			groupsResult.Value,
 			actionsResult.Value,
 			gridStyleResult.Value,
-			connectionResult.Value);
+			connectionResult.Value,
+			appUiResult.Value);
 
 		return Result.Ok(sections).WithReasons(merged.Reasons);
 	}
@@ -129,7 +132,8 @@ public static class ConfigFacade
 		Dictionary<string, Dictionary<int, string>> groups,
 		List<Dto.ActionDto> actions,
 		Dto.GridStyleOptionsDto? gridStyle,
-		Dto.ConnectionDto? connection)
+		Dto.ConnectionDto? connection,
+		Dto.AppUiOptionsDto? appUi)
 	{
 		var mappedProperties = PropertyMapper.MapMany(properties)
 			.ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase);
@@ -165,9 +169,11 @@ public static class ConfigFacade
 
 		var plcConfiguration = ConnectionMapper.Map(connection);
 
+		var appUiOptions = AppUiOptionsMapper.Map(appUi);
+
 		return Result.Ok(new AppConfiguration(
 			mappedProperties, mappedColumns, mappedGroups,
-			mappedActions, mappedGridStyle, plcConfiguration));
+			mappedActions, mappedGridStyle, plcConfiguration, appUiOptions));
 	}
 
 	private sealed record LoadedSections(
@@ -176,5 +182,6 @@ public static class ConfigFacade
 		Dictionary<string, Dictionary<int, string>> Groups,
 		List<Dto.ActionDto> Actions,
 		Dto.GridStyleOptionsDto? GridStyle,
-		Dto.ConnectionDto? Connection);
+		Dto.ConnectionDto? Connection,
+		Dto.AppUiOptionsDto? AppUi);
 }

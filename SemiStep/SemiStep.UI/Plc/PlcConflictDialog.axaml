@@ -3,10 +3,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:plc="clr-namespace:SemiStep.UI.Plc"
+        xmlns:l="clr-namespace:SemiStep.UI.Localization"
         mc:Ignorable="d"
         x:Class="SemiStep.UI.Plc.PlcConflictDialog"
         x:DataType="plc:PlcConflictDialogViewModel"
-        Title="Recipe Conflict"
+        Title="{x:Static l:Resources.PlcConflictTitle}"
         Width="440"
         Height="200"
         WindowStartupLocation="CenterOwner"
@@ -23,11 +24,11 @@
                     Orientation="Vertical"
                     Spacing="6"
                     VerticalAlignment="Center">
-            <TextBlock Text="The PLC contains a different recipe."
+            <TextBlock Text="{x:Static l:Resources.PlcConflictLine1}"
                        TextWrapping="Wrap" />
-            <TextBlock Text="{Binding LocalStepCount, StringFormat='Local: {0} steps'}" />
-            <TextBlock Text="{Binding PlcStepCount, StringFormat='PLC: {0} steps'}" />
-            <TextBlock Text="Which version do you want to keep?"
+            <TextBlock Text="{Binding LocalStepCountText}" />
+            <TextBlock Text="{Binding PlcStepCountText}" />
+            <TextBlock Text="{x:Static l:Resources.PlcConflictQuestion}"
                        TextWrapping="Wrap"
                        Margin="0,4,0,0" />
         </StackPanel>
@@ -37,10 +38,10 @@
                     HorizontalAlignment="Right"
                     Spacing="10"
                     Margin="0,20,0,0">
-            <Button Content="Keep local"
+            <Button Content="{x:Static l:Resources.PlcConflictKeepLocal}"
                     Classes="primary"
                     Click="OnKeepLocalClick" />
-            <Button Content="Load from PLC"
+            <Button Content="{x:Static l:Resources.PlcConflictLoadFromPlc}"
                     Classes="secondary"
                     Click="OnLoadFromPlcClick" />
         </StackPanel>

@@ -8,6 +8,7 @@ using FluentResults;
 using ReactiveUI;
 
 using SemiStep.Core.Configuration;
+using SemiStep.UI.Localization;
 
 namespace SemiStep.UI.StyleEditor;
 
@@ -272,7 +273,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 	{
 		if (!CanSave)
 		{
-			ErrorMessage = "Cannot save: the current style draft has invalid or out-of-range values.";
+			ErrorMessage = Resources.EditorCannotSave;
 			return false;
 		}
 
@@ -405,7 +406,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 			.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
 			.ToList();
 
-		var families = new List<FontFamilyOption> { new("", "(Default)") };
+		var families = new List<FontFamilyOption> { new("", Resources.EditorDefaultFont) };
 		if (!string.IsNullOrWhiteSpace(seededFamily) && !systemFamilies.Contains(seededFamily))
 		{
 			families.Add(new FontFamilyOption(seededFamily, seededFamily));

@@ -4,6 +4,7 @@ using Avalonia.Media;
 using FluentAssertions;
 
 using SemiStep.Core.Configuration;
+using SemiStep.UI.Localization;
 using SemiStep.UI.StyleEditor;
 
 using Xunit;
@@ -246,7 +247,7 @@ public sealed class GridStyleEditorViewModelTests
 		var viewModel = CreateViewModel(source);
 
 		viewModel.AvailableFontFamilies[0].Value.Should().Be("");
-		viewModel.AvailableFontFamilies[0].Name.Should().Be("(Default)");
+		viewModel.AvailableFontFamilies[0].Name.Should().Be(Resources.EditorDefaultFont);
 		viewModel.AvailableFontFamilies.Should().Contain(option => option.Value == "No Such Installed Font 12345");
 	}
 

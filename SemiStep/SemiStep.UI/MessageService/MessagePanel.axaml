@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:messageService="clr-namespace:SemiStep.UI.MessageService"
+             xmlns:l="clr-namespace:SemiStep.UI.Localization"
              mc:Ignorable="d"
              x:Class="SemiStep.UI.MessageService.MessagePanel"
              x:DataType="messageService:MessagePanelViewModel">
@@ -69,7 +70,7 @@
                     <Button x:Name="CloseButton"
                             Grid.Column="1"
                             Command="{Binding ToggleCommand}"
-                            ToolTip.Tip="Close"
+                            ToolTip.Tip="{x:Static l:Resources.MessagePanelClose}"
                             Background="Transparent"
                             BorderThickness="0"
                             Cursor="Hand"

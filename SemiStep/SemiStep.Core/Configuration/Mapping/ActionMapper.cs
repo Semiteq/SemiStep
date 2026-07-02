@@ -1,6 +1,6 @@
 ﻿using FluentResults;
 
-using NCalc.Domain;
+using NCalc;
 
 using SemiStep.Core.Configuration.Dto;
 using SemiStep.Core.Recipes;

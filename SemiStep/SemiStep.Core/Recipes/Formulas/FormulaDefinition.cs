@@ -1,4 +1,4 @@
-﻿using NCalc.Domain;
+﻿using NCalc;
 
 namespace SemiStep.Core.Recipes.Formulas;
 

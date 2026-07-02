@@ -6,6 +6,8 @@ How a failed operation reaches the user. Read this before adding a new error-sur
 
 `MessagePanelViewModel` holds two independent channels that it merges into one `Entries` list:
 
+![Connection error surfaced in the notification panel](../img/app_net_error_example.png)
+
 - **Transient operation channel** (`_operationEntry`). A single slot for the outcome of the most
   recent user-initiated operation. Written through `ReportError` / `ReportWarning` / `ReportSuccess`
   and cleared on the next successful mutation (`ClearOperation`). One operation entry at a time; a

@@ -1,0 +1,11 @@
+﻿# SEP=";"
+# ROWS="7"
+# X_ExportedAtUtc="2026-07-02T11:20:32.2796746Z"
+action;channel;mode;target_value;dilution;pressure;mixing;transport;step_duration;comment
+1200;1;;;;;;;;
+1000;;;600;;;;;360;
+910;;;15;;;;;60;
+500;7;1;;;;;;;
+100;1;1;10;10;10;;;10;
+210;1;;;;;;;;
+800;1;;0;;;;;0;

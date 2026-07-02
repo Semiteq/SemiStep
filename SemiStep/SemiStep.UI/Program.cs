@@ -81,8 +81,15 @@ public static class Program
 				"Application startup failed: configuration loading produced {ErrorCount} error(s)",
 				errors.Count);
 
+			foreach (var error in errors)
+			{
+				Log.Error("Configuration error: {Error}", error);
+			}
+
 			return StartupOutcome.Failed(errors);
 		}
+
+		Log.Information("Configuration loaded successfully");
 
 		// Override the UI culture from the loaded locale. Only UICulture changes; CurrentCulture
 		// stays invariant so number/date formatting and logs remain English.

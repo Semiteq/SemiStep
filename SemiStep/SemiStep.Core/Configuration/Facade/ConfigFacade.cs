@@ -6,27 +6,21 @@ using SemiStep.Core.Configuration.Validation;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Recipes;
 
-using Serilog;
-
 namespace SemiStep.Core.Configuration.Facade;
 
 public static class ConfigFacade
 {
-	private static readonly ILogger _logger = Log.ForContext(typeof(ConfigFacade));
-
 	public static async Task<Result<AppConfiguration>> LoadAndValidateAsync(string configDirectory)
 	{
 		if (!Directory.Exists(configDirectory))
 		{
-			_logger.Error("Configuration directory not found: {ConfigDirectory}", configDirectory);
-
 			return Result.Fail($"Configuration directory not found: {configDirectory}");
 		}
 
 		var loadResult = await LoadAllSectionsAsync(configDirectory);
 		if (loadResult.IsFailed)
 		{
-			return LogAndPropagate(loadResult);
+			return Propagate(loadResult);
 		}
 
 		var (properties, columns, groups, actions, gridStyle, connection, appUi) = loadResult.Value;
@@ -34,26 +28,26 @@ public static class ConfigFacade
 		var gridStyleResult = GridStyleValidator.Validate(gridStyle);
 		if (gridStyleResult.IsFailed)
 		{
-			return LogAndPropagate(gridStyleResult, loadResult);
+			return Propagate(gridStyleResult, loadResult);
 		}
 
 		var xrefResult = CrossReferenceValidator.Validate(properties, columns, groups, actions);
 		if (xrefResult.IsFailed)
 		{
-			return LogAndPropagate(xrefResult, loadResult);
+			return Propagate(xrefResult, loadResult);
 		}
 
 		var defaultsResult = DefaultValueValidator.Validate(properties, columns, actions);
 		if (defaultsResult.IsFailed)
 		{
-			return LogAndPropagate(defaultsResult, loadResult, xrefResult);
+			return Propagate(defaultsResult, loadResult, xrefResult);
 		}
 
 		var mapResult = MapToDomain(properties, columns, groups, actions, gridStyle, connection, appUi);
 
 		if (mapResult.IsFailed)
 		{
-			return LogAndPropagate(mapResult, loadResult, xrefResult, defaultsResult);
+			return Propagate(mapResult, loadResult, xrefResult, defaultsResult);
 		}
 
 		var config = mapResult.Value;
@@ -61,10 +55,8 @@ public static class ConfigFacade
 		var plcResult = PlcConfigurationValidator.Validate(config.PlcConfiguration);
 		if (plcResult.IsFailed)
 		{
-			return LogAndPropagate(plcResult, loadResult, xrefResult, defaultsResult);
+			return Propagate(plcResult, loadResult, xrefResult, defaultsResult);
 		}
-
-		_logger.Information("Configuration loaded successfully");
 
 		return Result.Ok(config)
 			.WithReasons(loadResult.Reasons)
@@ -72,13 +64,8 @@ public static class ConfigFacade
 			.WithReasons(defaultsResult.Reasons);
 	}
 
-	private static Result<AppConfiguration> LogAndPropagate(ResultBase failedResult, params ResultBase[] priorReasons)
+	private static Result<AppConfiguration> Propagate(ResultBase failedResult, params ResultBase[] priorReasons)
 	{
-		foreach (var error in failedResult.Errors)
-		{
-			_logger.Error("Configuration error: {Error}", error.Message);
-		}
-
 		var propagated = Result.Fail<AppConfiguration>(failedResult.Errors);
 
 		foreach (var prior in priorReasons)

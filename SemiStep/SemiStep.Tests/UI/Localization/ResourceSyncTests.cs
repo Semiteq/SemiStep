@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 using FluentAssertions;
 
@@ -15,6 +17,11 @@ namespace SemiStep.Tests.UI.Localization;
 [Trait("Category", "Unit")]
 public sealed class ResourceSyncTests
 {
+	// tryParents: false reads only the requested culture's own entries, so a key missing
+	// from a satellite is absent here instead of silently falling back to the neutral value.
+	private static readonly Dictionary<string, string> _neutral = ReadOwnResourceSet(CultureInfo.InvariantCulture);
+	private static readonly Dictionary<string, string> _russian = ReadOwnResourceSet(new CultureInfo("ru"));
+
 	public static IEnumerable<object[]> LocalizedKeys()
 	{
 		return typeof(Resources)
@@ -41,36 +48,48 @@ public sealed class ResourceSyncTests
 		}
 	}
 
-	public static IEnumerable<object[]> FormatKeys()
+	[Fact]
+	public void RussianSatellite_ContainsEveryNeutralKey_AndNoOrphans()
 	{
-		var keyNames = new[]
-		{
-			nameof(Resources.LastSyncAgoFormat),
-			nameof(Resources.LastSyncPrefix),
-			nameof(Resources.MessagePanelErrorsFormat),
-			nameof(Resources.MessagePanelWarningsFormat),
-			nameof(Resources.PlcConflictLocalSteps),
-			nameof(Resources.PlcConflictPlcSteps)
-		};
-
-		return keyNames.Select(keyName => new object[] { keyName });
+		// ResourceManager falls back to the neutral value for a missing satellite key, so the
+		// per-key resolution test above cannot catch an untranslated key. Compare the raw key
+		// sets instead: every English key must have a Russian entry, and no orphan ru keys exist.
+		_russian.Keys.Should().BeEquivalentTo(_neutral.Keys,
+			"every neutral (English) resx key must have a matching Russian translation, and vice versa");
 	}
 
-	[Theory]
-	[MemberData(nameof(FormatKeys))]
-	public void FormatKey_ContainsPlaceholder_UnderEnglishAndRussian(string keyName)
+	[Fact]
+	public void EveryValue_IsNonEmpty_InBothSatellites()
 	{
-		var property = typeof(Resources).GetProperty(keyName, BindingFlags.Public | BindingFlags.Static)!;
+		_neutral.Values.Should().NotContain(string.Empty, "no English resx value may be blank");
+		_russian.Values.Should().NotContain(string.Empty, "no Russian resx value may be blank");
+	}
 
-		foreach (var culture in new[] { "en", "ru" })
+	[Fact]
+	public void PlaceholderSets_Match_BetweenEnglishAndRussian()
+	{
+		foreach (var (key, englishValue) in _neutral)
 		{
-			using (ResourcesCultureScope.Use(culture))
-			{
-				var value = (string)property.GetValue(null)!;
+			var englishPlaceholders = Placeholders(englishValue);
+			var russianPlaceholders = Placeholders(_russian.GetValueOrDefault(key, string.Empty));
 
-				value.Should().Contain(
-					"{0}", "format key '{0}' must keep its placeholder under culture '{1}'", keyName, culture);
-			}
+			russianPlaceholders.Should().BeEquivalentTo(englishPlaceholders,
+				"key '{0}' must use the same {{n}} format placeholders in English and Russian", key);
 		}
+	}
+
+	private static ISet<int> Placeholders(string value)
+	{
+		return Regex.Matches(value, @"\{(\d+)")
+			.Select(match => int.Parse(match.Groups[1].Value))
+			.ToHashSet();
+	}
+
+	private static Dictionary<string, string> ReadOwnResourceSet(CultureInfo culture)
+	{
+		var set = Resources.ResourceManager.GetResourceSet(culture, createIfNotExists: true, tryParents: false)!;
+
+		return set.Cast<DictionaryEntry>()
+			.ToDictionary(entry => (string)entry.Key, entry => (string)entry.Value!);
 	}
 }

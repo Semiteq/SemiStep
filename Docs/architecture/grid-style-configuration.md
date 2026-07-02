@@ -196,6 +196,9 @@ GridStyleEditorWindow
   so a hand-edited family or weight round-trips losslessly. `BuildRecord` rebuilds the record
   with `with` over the seeded source, so the mechanism still preserves any field that happened not to
   be surfaced.
+
+![In-app grid style editor](../img/visual_style_window.png)
+
 - **Facade.** `GridStyleEditorFacade` is the only public Core seam for the editor:
   `Load(configDir)` → `Result<GridStyleOptions>`, `Validate(GridStyleOptions)` → `Result`,
   `Save(configDir, GridStyleOptions)` → `Result`. The loader, validator, writer, and the ~12 DTOs stay

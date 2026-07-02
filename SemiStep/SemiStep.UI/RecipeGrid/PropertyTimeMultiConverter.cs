@@ -31,12 +31,22 @@ internal sealed class PropertyTimeMultiConverter : IMultiValueConverter
 			return string.Empty;
 		}
 
-		var rawString = cellValue as string ?? cellValue.ToString();
+		var rawString = cellValue as string ?? FormatNumeric(cellValue);
 		if (string.IsNullOrEmpty(rawString))
 		{
 			return string.Empty;
 		}
 
 		return TimeFormatHelper.FormatValue(rawString, formatKind, units);
+	}
+
+	internal static string FormatNumeric(object cellValue)
+	{
+		if (cellValue is float or double or decimal)
+		{
+			return ((IFormattable)cellValue).ToString("0.###", CultureInfo.InvariantCulture);
+		}
+
+		return cellValue.ToString() ?? string.Empty;
 	}
 }

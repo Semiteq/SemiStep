@@ -1,8 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
 
-using Avalonia.Media;
-
 using FluentAssertions;
 
 using FluentResults;
@@ -157,29 +155,6 @@ public sealed class GridStyleWriterTests
 		var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
 		content.Should().Contain("cell_padding_left: 6.5");
 		content.Should().NotContain("6,5");
-	}
-
-	[Fact]
-	public async Task Save_HexRoundTrip_ParsesToSameColor()
-	{
-		using var tempDir = CopyShippedConfig("MBE");
-		var original = await LoadOptions(tempDir.Path);
-
-		new GridStyleWriter().Save(tempDir.Path, original).IsSuccess.Should().BeTrue();
-
-		var reloaded = await LoadOptions(tempDir.Path);
-
-		AssertColorEqual(original.SelectionBackgroundColor, reloaded.SelectionBackgroundColor);
-		AssertColorEqual(original.ExecutionCurrentStepMarkerColor, reloaded.ExecutionCurrentStepMarkerColor);
-		AssertColorEqual(original.InfoColor, reloaded.InfoColor);
-	}
-
-	private static void AssertColorEqual(string originalHex, string writtenHex)
-	{
-		writtenHex.Should().Be(originalHex);
-		Color.TryParse(writtenHex, out var written).Should().BeTrue();
-		Color.TryParse(originalHex, out var expected).Should().BeTrue();
-		written.Should().Be(expected);
 	}
 
 	private static async Task<GridStyleOptions> LoadOptions(string configDir)

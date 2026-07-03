@@ -27,18 +27,6 @@ public sealed class AppUiOptionsLoaderTests
 	}
 
 	[Fact]
-	public async Task LoadAndMap_PresentRussianLocale_ResolvesRu()
-	{
-		using var tempDir = TestDataCopier.CreateEmptyTempDirectory();
-		TestDataCopier.WriteYaml(tempDir, Path.Combine("ui", "app.yaml"), "locale: ru\n");
-
-		var loadResult = await AppUiOptionsLoader.LoadAsync(tempDir.Path);
-
-		loadResult.IsSuccess.Should().BeTrue();
-		AppUiOptionsMapper.Map(loadResult.Value).Locale.Should().Be("ru");
-	}
-
-	[Fact]
 	public async Task LoadAndMap_AbsentFile_DefaultsToRu()
 	{
 		using var tempDir = TestDataCopier.CreateEmptyTempDirectory();

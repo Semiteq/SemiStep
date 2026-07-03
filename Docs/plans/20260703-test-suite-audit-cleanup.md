@@ -97,31 +97,33 @@ dead helper methods are removed.
 - Modify: `SemiStep/SemiStep.Tests/Core/Configuration/GridStyleLoaderMissingFileTests.cs`
 - Modify: `SemiStep/SemiStep.Tests/Core/Configuration/AppUiOptionsLoaderTests.cs`
 
-- [ ] GridStyleColorsValidationTests.cs: delete theories `Validate_MalformedDisabledHex_FailsNamingKey`
+- [x] GridStyleColorsValidationTests.cs: delete theories `Validate_MalformedDisabledHex_FailsNamingKey`
       and `Validate_MalformedReadOnlyHex_FailsNamingKey` (22 cases riding the single shared
       `ValidateSection`/hex-regex path already covered by `Validate_MalformedHex_FailsNamingKey` for
       format and by the missing-key theories for per-key naming); delete the switch helpers
       `SetDisabledKey`/`SetReadOnlyKey` that become unused
-- [ ] GridStyleColorsValidationTests.cs: delete `Validate_OmittedChromeSection_Succeeds` and
+- [x] GridStyleColorsValidationTests.cs: delete `Validate_OmittedChromeSection_Succeeds` and
       `Validate_OmittedOptionalSections_Succeeds` (both re-run `Validate_ValidDto_Succeeds`);
       delete `Validate_WhitespaceValue_FailsNamingKey` (same `IsNullOrWhiteSpace` branch as
       `Validate_EmptyValue_FailsNamingKey`, keep the Empty one)
-- [ ] ConfigFacadeGridStyleValidationTests.cs: delete
+- [x] ConfigFacadeGridStyleValidationTests.cs: delete
       `LoadAndValidateAsync_GridStyleMalformedDisabledHex_Fails`,
       `LoadAndValidateAsync_GridStyleMalformedDisabledDepth2PastHex_Fails`,
       `LoadAndValidateAsync_GridStyleMalformedReadOnlyDepth2PastHex_Fails`,
       `LoadAndValidateAsync_GridStyleMissingDisabledForegroundKey_Fails`
       (facade pipeline needs one exemplar per failure kind; keep happy path, one missing-key,
       one malformed-hex, missing-file)
-- [ ] GridStyleWriterTests.cs: delete `Save_HexRoundTrip_ParsesToSameColor` and its
+- [x] GridStyleWriterTests.cs: delete `Save_HexRoundTrip_ParsesToSameColor` and its
       `AssertColorEqual` helper (subsumed by `Save_SemanticRoundTrip_PreservesRecord`'s whole-record
       equality; the `Color.TryParse` part tests Avalonia, not project code)
-- [ ] GridStyleLoaderMissingFileTests.cs: delete `LoadAsync_MissingUiDirectory_Fails` (same
+- [x] GridStyleLoaderMissingFileTests.cs: delete `LoadAsync_MissingUiDirectory_Fails` (same
       "config not found" branch as `LoadAsync_MissingGridStyleFile_Fails`, keep the latter)
-- [ ] AppUiOptionsLoaderTests.cs: delete `LoadAndMap_PresentRussianLocale_ResolvesRu` (same
+- [x] AppUiOptionsLoaderTests.cs: delete `LoadAndMap_PresentRussianLocale_ResolvesRu` (same
       pass-through path as the English case, and "ru" equals the default so it cannot distinguish
       pass-through from fallback)
-- [ ] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=Core"` — must pass
+- [x] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=Core"` — must pass
+      (235 passed, 0 failed; the edited files carry Component=Config, so `--filter "Component=Config"`
+      was also run: 223 passed, 0 failed)
 
 ### Task 3: Core area cleanup — session, loops, timing, formulas
 

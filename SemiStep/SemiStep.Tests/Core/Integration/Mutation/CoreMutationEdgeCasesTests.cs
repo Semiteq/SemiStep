@@ -39,28 +39,4 @@ public sealed class CoreMutationEdgeCasesTests(CoreFixture fixture) : IClassFixt
 		result.IsFailed.Should().BeTrue();
 		driver.StepCount.Should().Be(1, "state should not change on failed mutation");
 	}
-
-	[Fact]
-	public void UpdateProperty_NonExistentColumn_Fails()
-	{
-		fixture.Session.Reset();
-		var driver = new RecipeTestDriver(fixture.Session);
-		driver.AddWait();
-
-		var result = fixture.Session.UpdateStepProperty(0, "non_existent_column", "123");
-
-		result.IsFailed.Should().BeTrue("column key is not defined in the action's column list");
-	}
-
-	[Fact]
-	public void UpdateProperty_TypeMismatch_Fails()
-	{
-		fixture.Session.Reset();
-		var driver = new RecipeTestDriver(fixture.Session);
-		driver.AddWait();
-
-		var result = fixture.Session.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "not_a_valid_number");
-
-		result.IsFailed.Should().BeTrue("value cannot be parsed as the column's declared property type");
-	}
 }

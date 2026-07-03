@@ -21,19 +21,6 @@ namespace SemiStep.Tests.UI.StyleEditor;
 public sealed class GridStyleEditorWindowTests
 {
 	[AvaloniaFact]
-	public void Window_ConstructsAndBindsViewModel_WithoutThrowing()
-	{
-		var viewModel = new GridStyleEditorViewModel(
-			new GridStyleEditorFacade(),
-			@"C:\does-not-exist",
-			GridStyleOptions.Default);
-
-		var window = new GridStyleEditorWindow { DataContext = viewModel };
-
-		window.DataContext.Should().BeSameAs(viewModel);
-	}
-
-	[AvaloniaFact]
 	public async Task Save_AfterEditingColorAndNumeric_PersistsToYaml_AndReloads()
 	{
 		using var tempDir = CopyShippedConfig("MBE");

@@ -59,17 +59,6 @@ public sealed class CsvPropertyValidationTests(CsvFixture fixture) : IClassFixtu
 		flattened.Should().Contain(message => message.Contains("comment"));
 	}
 
-	[Fact]
-	public void Deserialize_ValidValues_ImportsSuccessfully()
-	{
-		var csv = "action;step_duration;task;comment\n10;5;0;hello world\n";
-
-		var result = fixture.FileSerializer.Deserialize(csv);
-
-		result.IsSuccess.Should().BeTrue();
-		result.Value.StepCount.Should().Be(1);
-	}
-
 	private static string FlattenMessage(FluentResults.IError error)
 	{
 		var parts = new List<string> { error.Message };

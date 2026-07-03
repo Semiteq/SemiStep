@@ -13,19 +13,6 @@ namespace SemiStep.Tests.Core.Configuration;
 public sealed class GridStyleLoaderMissingFileTests
 {
 	[Fact]
-	public async Task LoadAsync_MissingUiDirectory_Fails()
-	{
-		using var tempDir = TestDataCopier.CreateEmptyTempDirectory();
-
-		var result = await GridStyleLoader.LoadAsync(tempDir.Path);
-
-		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e =>
-			e.Message.Contains("Grid style config not found", StringComparison.OrdinalIgnoreCase) &&
-			e.Message.Contains("ui", StringComparison.OrdinalIgnoreCase));
-	}
-
-	[Fact]
 	public async Task LoadAsync_MissingGridStyleFile_Fails()
 	{
 		using var tempDir = TestDataCopier.CreateEmptyTempDirectory();

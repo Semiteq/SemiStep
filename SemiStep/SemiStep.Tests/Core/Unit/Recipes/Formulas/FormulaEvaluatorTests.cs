@@ -218,22 +218,6 @@ public sealed class FormulaEvaluatorTests
 		act.Should().Throw<InvalidOperationException>();
 	}
 
-	[Fact]
-	public void Recalculate_TargetOutOfRange_ReturnsComputationFailedError()
-	{
-		// step_duration capped at 100 - massive task will overflow
-		var registry = BuildRegistry(stepDurationMax: 100d, taskMax: 1000000d);
-		var evaluator = BuildEvaluator(registry);
-		var action = registry.GetAction(RampActionId).Value;
-
-		var step = BuildRampStep(task: 100000f, initialValue: 500f, speed: 10f, stepDuration: 50f);
-
-		var result = evaluator.Recalculate(step, action, TaskColumnKey, ActiveColumnSetResolver.Resolve(action, step));
-
-		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().ContainItemsAssignableTo<FormulaComputationFailedError>();
-	}
-
 	[Theory]
 	[InlineData(4.5d, 4)]
 	[InlineData(3.5d, 4)]

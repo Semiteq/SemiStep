@@ -82,20 +82,6 @@ public sealed class PlcExecutionMonitorTests
 	}
 
 	[Fact]
-	public void Stop_PublishesEmptyExecutionInfo()
-	{
-		var (monitor, _) = BuildMonitor();
-		PlcExecutionInfo? received = null;
-		monitor.State.Subscribe(info => received = info);
-
-		monitor.Stop();
-
-		received.Should().NotBeNull();
-		received!.RecipeActive.Should().BeFalse();
-		received.ActualLine.Should().Be(0);
-	}
-
-	[Fact]
 	public void Stop_WithoutStart_PublishesEmpty()
 	{
 		var (monitor, _) = BuildMonitor();

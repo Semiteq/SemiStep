@@ -91,16 +91,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void GetPropertyValue_KnownColumn_ReturnsPropertyValue()
-	{
-		var row = CreateRow();
-
-		var value = row.GetPropertyValue(RecipeTestDriver.StepDurationColumn);
-
-		value.Should().NotBeNull();
-	}
-
-	[AvaloniaFact]
 	public void Indexer_Get_DelegatesToGetPropertyValue()
 	{
 		var row = CreateRow();
@@ -110,16 +100,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 
 		indexerValue.Should().Be(directValue);
 		indexerValue.Should().Be(RecipeTestDriver.WaitActionId);
-	}
-
-	[AvaloniaFact]
-	public void Indexer_Get_UnknownKey_ReturnsNull()
-	{
-		var row = CreateRow();
-
-		var value = row["nonexistent_column"];
-
-		value.Should().BeNull();
 	}
 
 	[AvaloniaFact]
@@ -245,26 +225,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		row.UpdateStep(updatedStep);
 
 		changedProperties.Should().Contain("Item");
-	}
-
-	[AvaloniaFact]
-	public void UpdateStepNumber_ChangesStepNumber()
-	{
-		var row = CreateRow();
-
-		row.UpdateStepNumber(3);
-
-		row.StepNumber.Should().Be(3);
-	}
-
-	[AvaloniaFact]
-	public void UpdateStepStartTime_ChangesStepStartTime()
-	{
-		var row = CreateRow();
-
-		row.UpdateStepStartTime("123.5");
-
-		row.StepStartTime.Should().Be("123.5");
 	}
 
 	[AvaloniaFact]

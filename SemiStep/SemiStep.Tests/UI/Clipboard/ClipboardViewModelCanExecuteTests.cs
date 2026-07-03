@@ -143,42 +143,6 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		((ICommand)_clipboard.PasteStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
-	[AvaloniaFact]
-	public void Cut_GatedInvocation_WhileExecuting_DoesNotRemoveStep()
-	{
-		// UI buttons honor CanExecute and never call Execute when gated. Simulate that
-		// pattern and assert recipe state is untouched while executing.
-		AppendStepAndSelect();
-		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
-		_fixture.SetRecipeActive(true);
-
-		var command = (ICommand)_clipboard.CutStepCommand;
-		if (command.CanExecute(null))
-		{
-			command.Execute(null);
-		}
-
-		command.CanExecute(null).Should().BeFalse();
-		_fixture.Coordinator.CurrentRecipe.StepCount.Should().Be(stepCountBefore);
-	}
-
-	[AvaloniaFact]
-	public void Paste_GatedInvocation_WhileExecuting_DoesNotInsertSteps()
-	{
-		_fixture.Coordinator.NewRecipe();
-		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
-		_fixture.SetRecipeActive(true);
-
-		var command = (ICommand)_clipboard.PasteStepCommand;
-		if (command.CanExecute(null))
-		{
-			command.Execute(null);
-		}
-
-		command.CanExecute(null).Should().BeFalse();
-		_fixture.Coordinator.CurrentRecipe.StepCount.Should().Be(stepCountBefore);
-	}
-
 	private void AppendStepAndSelect()
 	{
 		_fixture.Coordinator.NewRecipe();

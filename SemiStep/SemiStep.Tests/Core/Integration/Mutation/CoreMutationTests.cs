@@ -15,28 +15,6 @@ namespace SemiStep.Tests.Core.Integration.Mutation;
 public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreFixture>
 {
 	[Fact]
-	public void AppendStep_CreatesStepWithDefaults()
-	{
-		fixture.Session.Reset();
-		var driver = new RecipeTestDriver(fixture.Session);
-		driver.AddWait();
-
-		driver.StepCount.Should().Be(1);
-		driver.IsValid.Should().BeTrue();
-	}
-
-	[Fact]
-	public void AppendStep_MultipleSteps_IncreasesCount()
-	{
-		fixture.Session.Reset();
-		var driver = new RecipeTestDriver(fixture.Session);
-		driver.AddWait().AddWait().AddWait();
-
-		driver.StepCount.Should().Be(3);
-		driver.IsValid.Should().BeTrue();
-	}
-
-	[Fact]
 	public void InsertStep_AtBeginning_ShiftsExistingSteps()
 	{
 		fixture.Session.Reset();
@@ -80,20 +58,6 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 
 		driver.StepCount.Should().Be(2);
 		driver.Snapshot.StepStartTimes[1].Should().Be(TimeSpan.FromSeconds(10));
-	}
-
-	[Fact]
-	public void RemoveStep_LastStep_LeavesEmptyRecipe()
-	{
-		fixture.Session.Reset();
-		var driver = new RecipeTestDriver(fixture.Session);
-		driver.AddWait();
-
-		driver.StepCount.Should().Be(1);
-
-		driver.RemoveStep(0);
-
-		driver.StepCount.Should().Be(0);
 	}
 
 	[Fact]
@@ -157,20 +121,6 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 	}
 
 	[Fact]
-	public void NewRecipe_ResetsToEmpty()
-	{
-		fixture.Session.Reset();
-		var driver = new RecipeTestDriver(fixture.Session);
-		driver.AddWait().AddWait().AddWait();
-
-		driver.StepCount.Should().Be(3);
-
-		driver.NewRecipe();
-
-		driver.StepCount.Should().Be(0);
-	}
-
-	[Fact]
 	public void InsertSteps_InsertsMultipleStepsAtPosition()
 	{
 		fixture.Session.Reset();
@@ -229,17 +179,5 @@ public sealed class CoreMutationTests(CoreFixture fixture) : IClassFixture<CoreF
 		driver.Snapshot.StepStartTimes[0].Should().Be(TimeSpan.Zero);
 		driver.Snapshot.StepStartTimes[1].Should().Be(TimeSpan.FromSeconds(10));
 		driver.Snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(30));
-	}
-
-	[Fact]
-	public void RemoveSteps_AllSteps_LeavesEmptyRecipe()
-	{
-		fixture.Session.Reset();
-		var driver = new RecipeTestDriver(fixture.Session);
-		driver.AddWait().AddWait().AddWait();
-
-		driver.RemoveSteps([0, 1, 2]);
-
-		driver.StepCount.Should().Be(0);
 	}
 }

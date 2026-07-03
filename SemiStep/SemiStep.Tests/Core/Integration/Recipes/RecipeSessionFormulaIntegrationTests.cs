@@ -62,24 +62,12 @@ public sealed class RecipeSessionFormulaIntegrationTests
 		var result = harness.Session.UpdateStepProperty(0, Task, "800");
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().ContainItemsAssignableTo<FormulaComputationFailedError>();
-
-		harness.Session.Current.Steps[0].Should().Be(stepBefore, "rejected edit must not mutate the recipe");
-		harness.Session.UndoCount.Should().Be(undoBefore, "rejected edit must not push history");
-	}
-
-	[Fact]
-	public void UpdateStepProperty_DivideByZero_ReasonPropagatesAsFormulaComputationFailedError()
-	{
-		var harness = BuildHarness();
-		harness.SeedRampStep(task: 700f, initialValue: 500f, speed: 0f, stepDuration: 600f);
-
-		var result = harness.Session.UpdateStepProperty(0, Task, "800");
-
-		result.IsFailed.Should().BeTrue();
 		var formulaError = result.Errors.OfType<FormulaComputationFailedError>().FirstOrDefault();
 		formulaError.Should().NotBeNull();
 		formulaError!.Target.Should().Be(StepDuration);
+
+		harness.Session.Current.Steps[0].Should().Be(stepBefore, "rejected edit must not mutate the recipe");
+		harness.Session.UndoCount.Should().Be(undoBefore, "rejected edit must not push history");
 	}
 
 	[Fact]

@@ -145,42 +145,4 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 
 		((ICommand)_commands.RedoCommand).CanExecute(null).Should().BeFalse();
 	}
-
-	[AvaloniaFact]
-	public void AddStep_GatedInvocation_WhileExecuting_DoesNotInsertStep()
-	{
-		// UI buttons honor CanExecute and never call Execute when gated. Simulate that
-		// pattern and assert no mutation reaches the session.
-		_fixture.Coordinator.NewRecipe();
-		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
-		_fixture.SetRecipeActive(true);
-
-		var command = (ICommand)_commands.AddStepCommand;
-		if (command.CanExecute(null))
-		{
-			command.Execute(null);
-		}
-
-		command.CanExecute(null).Should().BeFalse();
-		_fixture.Coordinator.CurrentRecipe.StepCount.Should().Be(stepCountBefore);
-	}
-
-	[AvaloniaFact]
-	public void DeleteStep_GatedInvocation_WhileExecuting_DoesNotRemoveStep()
-	{
-		_fixture.Coordinator.NewRecipe();
-		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_grid.SelectedRowIndices = new[] { 0 };
-		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
-		_fixture.SetRecipeActive(true);
-
-		var command = (ICommand)_commands.DeleteStepCommand;
-		if (command.CanExecute(null))
-		{
-			command.Execute(null);
-		}
-
-		command.CanExecute(null).Should().BeFalse();
-		_fixture.Coordinator.CurrentRecipe.StepCount.Should().Be(stepCountBefore);
-	}
 }

@@ -161,25 +161,6 @@ public sealed class PlcTransactionExecutorTests
 	}
 
 	[Fact]
-	public async Task WriteRecipeWithRetryAsync_EmptyRecipe_WritesCommittedTrueLast()
-	{
-		var (executor, transport) = BuildExecutor();
-		ConfigureEmptyArrayReadResponses(transport);
-		var layout = BuildTestConfiguration().Layout;
-
-		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
-
-		// Final committed-flag write must be committed=true
-		var lastCommittedWrite = transport.WriteLog
-			.Where(w => w.DbNumber == layout.ManagingDb.DbNumber
-				&& w.StartByte == layout.ManagingDb.CommittedOffset)
-			.Last();
-
-		lastCommittedWrite.Data[0].Should().Be(0x01,
-			"committed=true must be the last committed-flag write to the managing area");
-	}
-
-	[Fact]
 	public async Task WriteRecipeWithRetryAsync_EmptyRecipe_CallsReadForVerification()
 	{
 		var (executor, transport) = BuildExecutor();

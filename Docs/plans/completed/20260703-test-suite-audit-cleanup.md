@@ -313,8 +313,9 @@ findings, and the area test run at the end of the task is the gate.
 
 ### Task 8: [Final] Update documentation
 
-- [ ] no README/CLAUDE.md changes expected (test-only cleanup); confirm
-- [ ] move this plan to `Docs/plans/completed/` (create the directory if needed)
+- [x] no README/CLAUDE.md changes expected (test-only cleanup); confirmed — README mentions only
+      the test command and CLAUDE.md documents commands/traits/overlay pattern, all still valid
+- [x] move this plan to `Docs/plans/completed/` (create the directory if needed)
 
 ## Post-Completion
 

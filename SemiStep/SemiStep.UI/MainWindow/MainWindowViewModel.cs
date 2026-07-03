@@ -20,7 +20,6 @@ using SemiStep.UI.MessageService;
 using SemiStep.UI.Plc;
 using SemiStep.UI.RecipeFile;
 using SemiStep.UI.RecipeGrid;
-using SemiStep.UI.ShutdownService;
 using SemiStep.UI.StyleEditor;
 
 namespace SemiStep.UI.MainWindow;
@@ -156,9 +155,11 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		RaiseAllStateProperties();
 	}
 
-	private static void ExecuteExit()
+	private void ExecuteExit()
 	{
-		DesktopShutdownService.Shutdown();
+		// Route through the window so MainWindow.OnWindowClosing runs its dirty-close guard.
+		// Under the default OnLastWindowClose mode, closing the main window exits the app.
+		MainWindow?.Close();
 	}
 
 	private void ExecuteToggleToolBar()

@@ -1,4 +1,5 @@
-﻿using System.Reactive.Threading.Tasks;
+﻿using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
 
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -240,5 +241,32 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		pickerGate.SetResult(_tempFilePath);
 		(await inFlightSave).Should().BeTrue("the original in-flight save completes on its own");
 		Dispatcher.UIThread.RunJobs();
+	}
+
+	[AvaloniaFact]
+	public async Task ExitCommand_DirtySession_DoesNotCloseAndShowsConfirmation()
+	{
+		new RecipeTestDriver(_fixture.Session).AddWait(1f);
+
+		await _viewModel.ExitCommand.Execute();
+
+		_window.IsVisible.Should().BeTrue("File > Exit on a dirty session must not close without confirmation");
+		var dialog = _window.OwnedWindows.OfType<ExitConfirmationDialog>()
+			.Should().ContainSingle("the dirty Exit must show the confirmation dialog").Subject;
+
+		dialog.Close(ExitConfirmationResult.Cancel);
+		// Lets the fire-and-forget OnWindowClosing continuation finish and dismisses the dialog
+		// so it does not dangle into teardown.
+		Dispatcher.UIThread.RunJobs();
+
+		_window.IsVisible.Should().BeTrue("Cancel chosen in the dialog must leave the window open");
+	}
+
+	[AvaloniaFact]
+	public async Task ExitCommand_CleanSession_ClosesWindow()
+	{
+		await _viewModel.ExitCommand.Execute();
+
+		_window.IsVisible.Should().BeFalse("File > Exit on a clean session must close the window");
 	}
 }

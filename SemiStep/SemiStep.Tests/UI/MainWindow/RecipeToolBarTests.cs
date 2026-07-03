@@ -1,9 +1,6 @@
 ﻿using System.Linq;
-using System.Reactive.Linq;
 
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Data;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 
@@ -44,17 +41,6 @@ public sealed class RecipeToolBarTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void ToolBar_BuildsAndExposesAllActionButtons()
-	{
-		var toolBar = ShowToolBar();
-
-		foreach (var name in _buttonNames)
-		{
-			toolBar.FindControl<Button>(name).Should().NotBeNull($"button {name} must exist");
-		}
-	}
-
-	[AvaloniaFact]
 	public void ToolBar_Buttons_BindToTheExistingViewModelCommands()
 	{
 		var toolBar = ShowToolBar();
@@ -89,26 +75,6 @@ public sealed class RecipeToolBarTests : IAsyncLifetime
 			image.Should().NotBeNull($"button {name} must contain an Image");
 			image!.Source.Should().NotBeNull($"button {name} icon source must resolve");
 		}
-	}
-
-	[AvaloniaFact]
-	public async Task ToolBar_Visibility_FollowsIsToolBarVisible()
-	{
-		var toolBar = ShowToolBar();
-		toolBar.Bind(
-			Visual.IsVisibleProperty,
-			new Binding(nameof(MainWindowViewModel.IsToolBarVisible)) { Source = _viewModel });
-		Dispatcher.UIThread.RunJobs();
-
-		toolBar.IsVisible.Should().BeTrue();
-
-		await _viewModel.ToggleToolBarCommand.Execute();
-		Dispatcher.UIThread.RunJobs();
-		toolBar.IsVisible.Should().BeFalse();
-
-		await _viewModel.ToggleToolBarCommand.Execute();
-		Dispatcher.UIThread.RunJobs();
-		toolBar.IsVisible.Should().BeTrue();
 	}
 
 	private RecipeToolBar ShowToolBar()

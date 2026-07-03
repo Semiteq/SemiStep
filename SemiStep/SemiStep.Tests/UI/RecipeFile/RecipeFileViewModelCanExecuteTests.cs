@@ -1,13 +1,9 @@
-﻿using System.Reactive;
-using System.Windows.Input;
+﻿using System.Windows.Input;
 
 using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
-using ReactiveUI;
-
-using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.RecipeFile;
@@ -108,49 +104,5 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.SetSyncEnabled(true);
 
 		((ICommand)_recipeFile.SaveAsRecipeCommand).CanExecute(null).Should().BeTrue();
-	}
-
-	[AvaloniaFact]
-	public void NewRecipe_GatedInvocation_WhileExecuting_DoesNotMutateRecipe()
-	{
-		// End-to-end: simulate the binding-time invocation pattern used by the UI
-		// (button click respects CanExecute). While executing the gate refuses
-		// invocation, so no mutation occurs.
-		_fixture.Coordinator.NewRecipe();
-		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		var stepCountBefore = _fixture.Coordinator.CurrentRecipe.StepCount;
-		_fixture.SetRecipeActive(true);
-
-		var command = (ICommand)_recipeFile.NewRecipeCommand;
-		if (command.CanExecute(null))
-		{
-			command.Execute(null);
-		}
-
-		command.CanExecute(null).Should().BeFalse();
-		_fixture.Coordinator.CurrentRecipe.StepCount.Should().Be(stepCountBefore);
-	}
-
-	[AvaloniaFact]
-	public void LoadRecipe_GatedInvocation_WhileExecuting_DoesNotOpenDialog()
-	{
-		// End-to-end: the dialog handler must not be invoked because CanExecute is
-		// false while executing (UI buttons honor CanExecute and never call Execute).
-		var interactionInvoked = false;
-		_recipeFile.OpenFileInteraction.RegisterHandler((IInteractionContext<Unit, string?> ctx) =>
-		{
-			interactionInvoked = true;
-			ctx.SetOutput(null);
-		});
-		_fixture.SetRecipeActive(true);
-
-		var command = (ICommand)_recipeFile.LoadRecipeCommand;
-		if (command.CanExecute(null))
-		{
-			command.Execute(null);
-		}
-
-		command.CanExecute(null).Should().BeFalse();
-		interactionInvoked.Should().BeFalse();
 	}
 }

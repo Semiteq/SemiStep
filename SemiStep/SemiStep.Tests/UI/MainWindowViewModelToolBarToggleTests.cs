@@ -32,12 +32,6 @@ public sealed class MainWindowViewModelToolBarToggleTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void IsToolBarVisible_DefaultsToTrue()
-	{
-		_viewModel.IsToolBarVisible.Should().BeTrue();
-	}
-
-	[AvaloniaFact]
 	public async Task ToggleToolBarCommand_FlipsVisibility()
 	{
 		await _viewModel.ToggleToolBarCommand.Execute();

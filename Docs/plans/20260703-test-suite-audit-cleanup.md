@@ -236,28 +236,29 @@ dead helper methods are removed.
 - Modify: `SemiStep/SemiStep.Tests/UI/MainWindowViewModelToolBarToggleTests.cs`
 - Modify: `SemiStep/SemiStep.Tests/UI/RecipeRowViewModelTests.cs`
 
-- [ ] delete file `ResourceResolutionTests.cs` (all three tests duplicate `ChromeLocalizationTests`
+- [x] delete file `ResourceResolutionTests.cs` (all three tests duplicate `ChromeLocalizationTests`
       key pinning and `ResourceSyncTests` satellite completeness)
-- [ ] delete the six vacuous GatedInvocation tests: `Cut_GatedInvocation_WhileExecuting_DoesNotRemoveStep`
+- [x] delete the six vacuous GatedInvocation tests: `Cut_GatedInvocation_WhileExecuting_DoesNotRemoveStep`
       and `Paste_GatedInvocation_...` (Clipboard), `AddStep_GatedInvocation_...` and
       `DeleteStep_GatedInvocation_...` (RecipeCommands), `NewRecipe_GatedInvocation_...` and
       `LoadRecipe_GatedInvocation_...` (RecipeFile) — the `if (CanExecute) Execute` guard means the
       mutation assertion is vacuously true; the live assertion duplicates each file's
       `*_CanExecuteFalse_WhenRecipeExecuting` sibling
-- [ ] RecipeToolBarTests.cs: delete `ToolBar_Visibility_FollowsIsToolBarVisible` (test wires its own
+- [x] RecipeToolBarTests.cs: delete `ToolBar_Visibility_FollowsIsToolBarVisible` (test wires its own
       binding, so it verifies Avalonia's binding engine, not the production AXAML wiring) and
       `ToolBar_BuildsAndExposesAllActionButtons` (existence already proven by
       `ToolBar_Buttons_BindToTheExistingViewModelCommands`)
-- [ ] GridStyleEditorWindowTests.cs: delete `Window_ConstructsAndBindsViewModel_WithoutThrowing`
+- [x] GridStyleEditorWindowTests.cs: delete `Window_ConstructsAndBindsViewModel_WithoutThrowing`
       (asserts the DataContext the test itself just set)
-- [ ] MainWindowViewModelToolBarToggleTests.cs: delete `IsToolBarVisible_DefaultsToTrue`
+- [x] MainWindowViewModelToolBarToggleTests.cs: delete `IsToolBarVisible_DefaultsToTrue`
       (asserts an auto-property initializer); keep the toggle test
-- [ ] RecipeRowViewModelTests.cs: delete `UpdateStepNumber_ChangesStepNumber`,
+- [x] RecipeRowViewModelTests.cs: delete `UpdateStepNumber_ChangesStepNumber`,
       `UpdateStepStartTime_ChangesStepStartTime` (setter round-trips),
       `GetPropertyValue_KnownColumn_ReturnsPropertyValue` (NotNull-only), and
       `Indexer_Get_UnknownKey_ReturnsNull` (delegation already proven by
       `Indexer_Get_DelegatesToGetPropertyValue` + `GetPropertyValue_UnknownKey_ReturnsNull`)
-- [ ] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=UI"` — must pass
+- [x] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=UI"` — must pass
+      (528 passed, 0 failed)
 
 ### Task 6: UI area cleanup — trims inside kept files
 

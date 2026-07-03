@@ -300,15 +300,16 @@ findings, and the area test run at the end of the task is the gate.
 
 ### Task 7: Verify acceptance criteria
 
-- [ ] run full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — zero failures
-- [ ] run `dotnet build SemiStep/SemiStep.slnx` — zero warnings introduced by the cleanup
-      (no orphaned usings/fields/helpers)
-- [ ] run `dotnet format SemiStep/SemiStep.slnx` — no diff after formatting
-- [ ] grep the test project for the deleted helper names (`EnsureDirectories`, `InsertFor`,
+- [x] run full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — zero failures
+      (1081 passed, 0 failed)
+- [x] run `dotnet build SemiStep/SemiStep.slnx` — zero warnings introduced by the cleanup
+      (no orphaned usings/fields/helpers; 0 warnings, 0 errors)
+- [x] run `dotnet format SemiStep/SemiStep.slnx` — no diff after formatting (working tree clean)
+- [x] grep the test project for the deleted helper names (`EnsureDirectories`, `InsertFor`,
       `InsertEndFor`, `AddStep` on RecipeTestDriver, `SetDisabledKey`, `SetReadOnlyKey`,
       `AssertColorEqual`, `ExpectedWidth`) — zero remaining references
-- [ ] verify no production code changed: `git diff --stat` touches only `SemiStep/SemiStep.Tests/**`,
-      `SemiStep/SemiStep.Tests/YamlConfigs/**`, and this plan file
+- [x] verify no production code changed: `git diff --stat` touches only `SemiStep/SemiStep.Tests/**`,
+      `SemiStep/SemiStep.Tests/YamlConfigs/**`, and this plan file (45 files, all in scope)
 
 ### Task 8: [Final] Update documentation
 

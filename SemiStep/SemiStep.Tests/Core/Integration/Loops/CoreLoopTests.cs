@@ -41,17 +41,6 @@ public sealed class CoreLoopTests(CoreFixture fixture) : IClassFixture<CoreFixtu
 	}
 
 	[Fact]
-	public void UnclosedLoop_ProducesWarning()
-	{
-		fixture.Session.Reset();
-		var driver = new RecipeTestDriver(fixture.Session);
-		driver.AddFor(2).AddWait(5f);
-
-		driver.Warnings.Should().NotBeEmpty();
-		driver.IsValid.Should().BeFalse();
-	}
-
-	[Fact]
 	public void UnmatchedEndFor_ProducesWarning()
 	{
 		fixture.Session.Reset();

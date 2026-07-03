@@ -141,44 +141,45 @@ dead helper methods are removed.
 - Modify: `SemiStep/SemiStep.Tests/Core/Unit/Recipes/RecipeStructuralEqualityTests.cs`
 - Modify: `SemiStep/SemiStep.Tests/Core/Helpers/RecipeTestDriver.cs`
 
-- [ ] delete file `CorePropertyStateTests.cs` (entire theory duplicated branch-for-branch by
+- [x] delete file `CorePropertyStateTests.cs` (entire theory duplicated branch-for-branch by
       `Core/Recipes/Helpers/CellStateResolverTests.cs`)
-- [ ] delete file `CoreTargetsTests.cs` (all three tests assert only NotBeEmpty/IsSuccess on the
+- [x] delete file `CoreTargetsTests.cs` (all three tests assert only NotBeEmpty/IsSuccess on the
       fixture config; `CoreTargetsEdgeCasesTests` and `CoreGroupValidationTests` keep the real coverage).
       Note: after this deletion `RecipeMetadataRegistry.GroupExists` has no direct unit test; its
       success branch stays covered indirectly via `StepInitializer` in
       `CoreGroupValidationTests.UpdateProperty_ValidGroupKey_Succeeds` — accepted trade-off
-- [ ] CoreValidityTests.cs: delete `MaxDepth3Exceeded_RejectsMutation` and
+- [x] CoreValidityTests.cs: delete `MaxDepth3Exceeded_RejectsMutation` and
       `ExceedingMaxDepth_RejectsMutation_AndRecipeRemainsValid` (canonical max-depth test stays in
       `CoreLoopTests.MaxDepthExceeded_RejectsMutation`); delete `RecipeWithClosedLoop_IsValid`
       (duplicate of `CoreLoopTests.ClosedLoop_IsValid`)
-- [ ] CoreLoopTests.cs: delete `UnclosedLoop_ProducesWarning` (weaker twin of
+- [x] CoreLoopTests.cs: delete `UnclosedLoop_ProducesWarning` (weaker twin of
       `CoreValidityTests.UnclosedLoop_BlocksValidity`, which also pins the warning text)
-- [ ] CoreMutationTests.cs: delete `AppendStep_CreatesStepWithDefaults`,
+- [x] CoreMutationTests.cs: delete `AppendStep_CreatesStepWithDefaults`,
       `AppendStep_MultipleSteps_IncreasesCount`, `RemoveStep_LastStep_LeavesEmptyRecipe`,
       `NewRecipe_ResetsToEmpty`, `RemoveSteps_AllSteps_LeavesEmptyRecipe` (all subsumed by
       `RecipeSessionBehaviourCharacterizationTests` counterparts with stronger assertions;
       keep every timing-asserting test in the file)
-- [ ] CoreTimingTests.cs: delete `UpdateDuration_RecalculatesTotal` (same scenario as
+- [x] CoreTimingTests.cs: delete `UpdateDuration_RecalculatesTotal` (same scenario as
       `CoreMutationTests.UpdateProperty_ChangesDuration`), `SingleWaitStep_TotalDurationMatchesStepDuration`
       and `MultipleWaitSteps_TotalDurationIsCumulative` (subsets of `StepStartTimes_AccumulateCorrectly`
       and `MixedActions_OnlyLongLastingContributeToTotalDuration` in the same file)
-- [ ] CoreMutationEdgeCasesTests.cs: delete `UpdateProperty_NonExistentColumn_Fails` and
+- [x] CoreMutationEdgeCasesTests.cs: delete `UpdateProperty_NonExistentColumn_Fails` and
       `UpdateProperty_TypeMismatch_Fails` (assertion-for-assertion duplicates of
       `UpdateStepProperty_UnknownColumn_Fails` / `UpdateStepProperty_NonParsableValue_Fails` in
       RecipeSessionBehaviourCharacterizationTests; keep the RemoveStep index-bounds tests)
-- [ ] FormulaEvaluatorTests.cs: delete `Recalculate_TargetOutOfRange_ReturnsComputationFailedError`
+- [x] FormulaEvaluatorTests.cs: delete `Recalculate_TargetOutOfRange_ReturnsComputationFailedError`
       (strict subset of `Recalculate_TargetOutOfRange_ErrorCarriesTargetAndDescriptiveMessage`)
-- [ ] RecipeSessionFormulaIntegrationTests.cs: move the `formulaError!.Target.Should().Be(...)`
+- [x] RecipeSessionFormulaIntegrationTests.cs: move the `formulaError!.Target.Should().Be(...)`
       assertion from `UpdateStepProperty_DivideByZero_ReasonPropagatesAsFormulaComputationFailedError`
       into `UpdateStepProperty_DivideByZero_RejectsEditAndRecipeUnchanged`, then delete the former
-- [ ] RecipeMetadataRegistryTests.cs: delete `GetAllActions_FirstAction_IsNeverASubaction`
+- [x] RecipeMetadataRegistryTests.cs: delete `GetAllActions_FirstAction_IsNeverASubaction`
       (implied by `Subaction_DoesNotEnterRuntimeActionCollections`'s OnlyContain)
-- [ ] RecipeStructuralEqualityTests.cs: delete `RecipeEquals_FloatAndStringStepWithFreshInstances_AreEqual`
+- [x] RecipeStructuralEqualityTests.cs: delete `RecipeEquals_FloatAndStringStepWithFreshInstances_AreEqual`
       (re-walks `RecipeEquals_ContentEqualStepWithFreshInstances_AreEqual` +
       `StepEquals_IdenticalFloatAndStringContent_AreEqual`; keep the per-type StepEquals variants)
-- [ ] RecipeTestDriver.cs: delete unused methods `InsertFor`, `InsertEndFor`, `AddStep` (zero call sites)
-- [ ] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=Core"` — must pass
+- [x] RecipeTestDriver.cs: delete unused methods `InsertFor`, `InsertEndFor`, `AddStep` (zero call sites)
+- [x] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=Core"` — must pass
+      (209 passed, 0 failed)
 
 ### Task 4: S7 / Domain / Csv cleanup and fixes
 

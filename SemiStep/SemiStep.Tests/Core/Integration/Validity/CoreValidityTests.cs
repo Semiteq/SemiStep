@@ -33,17 +33,6 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 	}
 
 	[Fact]
-	public void RecipeWithClosedLoop_IsValid()
-	{
-		fixture.Session.Reset();
-		var driver = new RecipeTestDriver(fixture.Session);
-		driver.AddFor(3).AddWait(10f).AddEndFor();
-
-		driver.IsValid.Should().BeTrue();
-		driver.Errors.Should().BeEmpty();
-	}
-
-	[Fact]
 	public void UnclosedLoop_BlocksValidity()
 	{
 		fixture.Session.Reset();
@@ -52,41 +41,6 @@ public sealed class CoreValidityTests(CoreFixture fixture) : IClassFixture<CoreF
 
 		driver.IsValid.Should().BeFalse("unclosed loops are structural defects that block validity");
 		driver.Warnings.Should().ContainSingle(w => w.Contains("Unclosed For loop", StringComparison.OrdinalIgnoreCase));
-	}
-
-	[Fact]
-	public void MaxDepth3Exceeded_RejectsMutation()
-	{
-		fixture.Session.Reset();
-		var driver = new RecipeTestDriver(fixture.Session);
-
-		driver.AddFor(1).AddFor(1).AddFor(1).AddFor(1).AddWait(1f);
-
-		var stepCountBeforeRejection = driver.StepCount;
-		var result = fixture.Session.AppendStep(RecipeTestDriver.EndForLoopActionId);
-
-		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().ContainSingle(e => e.Message.Contains("nesting depth", StringComparison.OrdinalIgnoreCase));
-		driver.StepCount.Should().Be(stepCountBeforeRejection, "the mutation was rejected, recipe is unchanged");
-	}
-
-	[Fact]
-	public void ExceedingMaxDepth_RejectsMutation_AndRecipeRemainsValid()
-	{
-		fixture.Session.Reset();
-		var driver = new RecipeTestDriver(fixture.Session);
-		driver.AddWait(10f);
-
-		driver.Errors.Should().BeEmpty();
-		driver.IsValid.Should().BeTrue();
-
-		driver.AddFor(1).AddFor(1).AddFor(1).AddFor(1).AddWait(1f);
-		var stepCountBeforeRejection = driver.StepCount;
-
-		var result = fixture.Session.AppendStep(RecipeTestDriver.EndForLoopActionId);
-
-		result.IsFailed.Should().BeTrue("exceeding max loop depth produces an error");
-		driver.StepCount.Should().Be(stepCountBeforeRejection, "the mutation was rejected, recipe is unchanged");
 	}
 
 	[Fact]

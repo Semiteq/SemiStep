@@ -92,13 +92,6 @@ public sealed class RecipeTestDriver(RecipeSession session)
 		return this;
 	}
 
-	public RecipeTestDriver AddStep(int actionId)
-	{
-		session.AppendStep(actionId);
-
-		return this;
-	}
-
 	#endregion
 
 	#region Insert Steps
@@ -107,21 +100,6 @@ public sealed class RecipeTestDriver(RecipeSession session)
 	{
 		session.InsertStep(index, WaitActionId);
 		session.UpdateStepProperty(index, StepDurationColumn, durationSeconds.ToString(CultureInfo.InvariantCulture));
-
-		return this;
-	}
-
-	public RecipeTestDriver InsertFor(int index, int iterations)
-	{
-		session.InsertStep(index, ForLoopActionId);
-		session.UpdateStepProperty(index, TaskColumn, ((float)iterations).ToString(CultureInfo.InvariantCulture));
-
-		return this;
-	}
-
-	public RecipeTestDriver InsertEndFor(int index)
-	{
-		session.InsertStep(index, EndForLoopActionId);
 
 		return this;
 	}

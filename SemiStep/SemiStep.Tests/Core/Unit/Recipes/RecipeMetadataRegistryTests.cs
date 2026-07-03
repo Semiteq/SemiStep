@@ -107,18 +107,6 @@ public sealed class RecipeMetadataRegistryTests
 	}
 
 	[Fact]
-	public void GetAllActions_FirstAction_IsNeverASubaction()
-	{
-		var registry = BuildNestedRegistry();
-
-		var first = registry.GetAllActions().FirstOrDefault();
-
-		first.Should().NotBeNull();
-		first!.Role.Should().Be(ActionRole.Action);
-		first.Id.Should().Be(300);
-	}
-
-	[Fact]
 	public void GetActionComboBoxItems_BackwardCompat_NoTargetsNoRole_MatchesPlainActions()
 	{
 		var plainActions = new Dictionary<int, ActionDefinition>

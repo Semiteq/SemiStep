@@ -208,22 +208,6 @@ public sealed class RecipeStructuralEqualityTests
 	}
 
 	[Fact]
-	public void RecipeEquals_FloatAndStringStepWithFreshInstances_AreEqual()
-	{
-		var local = new Recipe([
-			BuildStep(
-				1,
-				("rampRate", PropertyValue.FromFloat(1.5f)),
-				("label", PropertyValue.FromString("anneal")))
-		]);
-		var plc = DeepCopy(local);
-
-		plc.Should().NotBeSameAs(local);
-		plc.Steps[0].Properties.Should().NotBeSameAs(local.Steps[0].Properties);
-		local.Equals(plc).Should().BeTrue();
-	}
-
-	[Fact]
 	public void RecipeGetHashCode_EqualRecipes_ProduceEqualHashCodes()
 	{
 		var step = BuildStep(1, ("temperature", PropertyValue.FromInt(200)));

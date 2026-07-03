@@ -27,7 +27,12 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 
 		result.IsSuccess.Should().BeTrue();
 		result.Value.StepCount.Should().Be(1);
-		result.Value.Steps[0].ActionKey.Should().Be(10);
+		var deserializedStep = result.Value.Steps[0];
+		deserializedStep.ActionKey.Should().Be(10);
+		deserializedStep.Properties[new PropertyId("step_duration")]
+			.Should().Be(PropertyValue.FromFloat(5.0f));
+		deserializedStep.Properties[new PropertyId("comment")]
+			.Should().Be(PropertyValue.FromString("test comment"));
 	}
 
 	[Fact]

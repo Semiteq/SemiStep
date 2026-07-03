@@ -69,20 +69,6 @@ public sealed class ManagingAreaCodecTests
 	}
 
 	[Fact]
-	public void EncodePcData_ZeroRecipeLines_Writes4ZeroBytes()
-	{
-		var codec = BuildCodec();
-		var data = new ManagingAreaPcData(Committed: true, RecipeLines: 0);
-
-		var bytes = codec.EncodePcData(data);
-
-		bytes[DefaultLayout.RecipeLinesOffset].Should().Be(0);
-		bytes[DefaultLayout.RecipeLinesOffset + 1].Should().Be(0);
-		bytes[DefaultLayout.RecipeLinesOffset + 2].Should().Be(0);
-		bytes[DefaultLayout.RecipeLinesOffset + 3].Should().Be(0);
-	}
-
-	[Fact]
 	public void Decode_CommittedByte_NonZeroIsTrue()
 	{
 		var codec = BuildCodec();
@@ -123,19 +109,6 @@ public sealed class ManagingAreaCodecTests
 	}
 
 	[Fact]
-	public void Decode_AllZeroBytes_ReturnsCommittedFalseAndZeroLines()
-	{
-		var codec = BuildCodec();
-		var bytes = new byte[DefaultLayout.TotalSize];
-
-		var result = codec.Decode(bytes);
-
-		result.IsSuccess.Should().BeTrue();
-		result.Value.Committed.Should().BeFalse();
-		result.Value.RecipeLines.Should().Be(0);
-	}
-
-	[Fact]
 	public void Decode_TooShortData_ReturnsFailedResult()
 	{
 		var codec = BuildCodec();
@@ -162,35 +135,4 @@ public sealed class ManagingAreaCodecTests
 		result.Value.RecipeLines.Should().Be(Lines);
 	}
 
-	[Fact]
-	public void RoundTrip_CommittedFalseWithLines_PreservesValues()
-	{
-		var codec = BuildCodec();
-		const int Lines = 5;
-		var pcData = new ManagingAreaPcData(Committed: false, RecipeLines: Lines);
-
-		var bytes = codec.EncodePcData(pcData);
-		var result = codec.Decode(bytes);
-
-		result.IsSuccess.Should().BeTrue();
-		result.Value.Committed.Should().BeFalse();
-		result.Value.RecipeLines.Should().Be(Lines);
-	}
-
-	[Fact]
-	public void Constructor_WithInvalidLayout_DoesNotThrow_ValidationIsConfigFacadeResponsibility()
-	{
-		// The codec must not perform layout validation — that responsibility belongs
-		// to ConfigFacade via PlcConfigurationValidator. The codec accepts any layout.
-		var malformedLayout = new ManagingDbLayout(
-			DbNumber: 0,
-			VersionOffset: 0,
-			CommittedOffset: 0,
-			RecipeLinesOffset: 0,
-			TotalSize: 0);
-
-		var act = () => new ManagingAreaCodec(malformedLayout);
-
-		act.Should().NotThrow();
-	}
 }

@@ -98,17 +98,6 @@ public sealed class ImportedRecipeValidatorTests
 	}
 
 	[Fact]
-	public void Validate_InvalidGroupKey_ReturnsFail()
-	{
-		var validator = BuildValidator();
-		var recipe = BuildRecipeWithStep(ValveActionId, TargetColumnKey, PropertyValue.FromInt(InvalidGroupKey));
-
-		var result = validator.Validate(recipe);
-
-		result.IsFailed.Should().BeTrue();
-	}
-
-	[Fact]
 	public void Validate_InvalidGroupKey_ErrorMessageContainsStepNumberAndGroupName()
 	{
 		var validator = BuildValidator();
@@ -305,26 +294,6 @@ public sealed class ImportedRecipeValidatorTests
 			&& error.Message.Contains("exceeds maximum")
 			&& error.Message.Contains("9")
 			&& error.Message.Contains("8"));
-	}
-
-	[Fact]
-	public void Validate_StepWithOutOfRangeInt_IsRejected()
-	{
-		var validator = BuildPropertyAwareValidator();
-		var step = new Step(
-			CommentActionId,
-			ImmutableDictionary<PropertyId, PropertyValue>.Empty
-				.Add(new PropertyId(IntColumnKey), PropertyValue.FromInt(500)));
-		var recipe = new Recipe(ImmutableList.Create(step));
-
-		var result = validator.Validate(recipe);
-
-		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(error =>
-			error.Message.Contains("Step 1")
-			&& error.Message.Contains(IntColumnKey)
-			&& error.Message.Contains("exceeds maximum")
-			&& error.Message.Contains("100"));
 	}
 
 	[Fact]

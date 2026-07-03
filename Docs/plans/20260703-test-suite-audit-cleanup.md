@@ -194,34 +194,35 @@ dead helper methods are removed.
 - Modify: `SemiStep/SemiStep.Tests/Csv/Integration/CsvPropertyValidationTests.cs`
 - Modify: `SemiStep/SemiStep.Tests/Csv/Integration/CsvDeserializationTests.cs`
 
-- [ ] SyncOwnershipEndpointTokenTests.cs: delete `For_SameEndpoint_ProducesIdenticalTokenAcrossCalls`,
+- [x] SyncOwnershipEndpointTokenTests.cs: delete `For_SameEndpoint_ProducesIdenticalTokenAcrossCalls`,
       `For_EqualEndpointInstances_ProduceIdenticalTokens` (determinism of a pure string interpolation),
       and `For_RepresentativeEndpoints_ContainsNoPathInvalidCharacters` (all inputs walk the
       no-sanitization path already proven by the hostile-characters test)
-- [ ] ManagingAreaCodecTests.cs: delete `EncodePcData_ZeroRecipeLines_Writes4ZeroBytes` (passes even
+- [x] ManagingAreaCodecTests.cs: delete `EncodePcData_ZeroRecipeLines_Writes4ZeroBytes` (passes even
       if the encoder never writes the field — buffer is zero-initialized),
       `Decode_AllZeroBytes_ReturnsCommittedFalseAndZeroLines`,
       `RoundTrip_CommittedFalseWithLines_PreservesValues`, and
       `Constructor_WithInvalidLayout_DoesNotThrow_ValidationIsConfigFacadeResponsibility`
-- [ ] ExecutionStateCodecTests.cs: delete `Decode_AllZeroBytes_ReturnsInactiveRecipeAndZeroFields`
+- [x] ExecutionStateCodecTests.cs: delete `Decode_AllZeroBytes_ReturnsInactiveRecipeAndZeroFields`
       and `Constructor_WithInvalidLayout_DoesNotThrow_ValidationIsConfigFacadeResponsibility`
-- [ ] PlcExecutionMonitorTests.cs: delete `Stop_PublishesEmptyExecutionInfo` (subsumed by
+- [x] PlcExecutionMonitorTests.cs: delete `Stop_PublishesEmptyExecutionInfo` (subsumed by
       `Stop_WithoutStart_PublishesEmpty`)
-- [ ] PlcTransactionExecutorTests.cs: delete `WriteRecipeWithRetryAsync_EmptyRecipe_WritesCommittedTrueLast`
+- [x] PlcTransactionExecutorTests.cs: delete `WriteRecipeWithRetryAsync_EmptyRecipe_WritesCommittedTrueLast`
       (subsumed by the `..._CommitsArraysAndLines_AfterUncommittedWrite` ordering test)
-- [ ] ImportedRecipeValidatorTests.cs: delete `Validate_StepWithOutOfRangeInt_IsRejected` (identical
+- [x] ImportedRecipeValidatorTests.cs: delete `Validate_StepWithOutOfRangeInt_IsRejected` (identical
       path to `Validate_NonGroupColumnWithViolatingValue_IsRejected`) and `Validate_InvalidGroupKey_ReturnsFail`
       (subsumed by `Validate_InvalidGroupKey_ErrorMessageContainsStepNumberAndGroupName`)
-- [ ] CsvPropertyValidationTests.cs: delete `Deserialize_ValidValues_ImportsSuccessfully` (duplicates
+- [x] CsvPropertyValidationTests.cs: delete `Deserialize_ValidValues_ImportsSuccessfully` (duplicates
       `CsvAssemblyTests.Deserialize_FullyApplicableRow_NoErrors`)
-- [ ] Fix `CsvDeserializationTests.Deserialize_RoundTrip_PreservesRecipe`: strengthen assertions to
+- [x] Fix `CsvDeserializationTests.Deserialize_RoundTrip_PreservesRecipe`: strengthen assertions to
       verify the deserialized step's property values (at minimum `step_duration` 5.0f and the comment
       string) survive the round trip — currently only StepCount and ActionKey are checked
-- [ ] Fix `PlcSyncCoordinatorTests.HandleConnectionLost_EmitsExactlyOneFault`: relax
+- [x] Fix `PlcSyncCoordinatorTests.HandleConnectionLost_EmitsExactlyOneFault`: relax
       `faults[0].Message.Should().Be("PLC connection lost")` to a case-insensitive
       `Contain("connection")`; keep the exactly-one-fault assertion
-- [ ] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=S7"` and
+- [x] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=S7"` and
       `--filter "Component=Domain"` and `--filter "Component=Csv"` — must pass
+      (S7: 90 passed, Domain: 32 passed, Csv: 16 passed; 0 failed)
 
 ### Task 5: UI area cleanup — straight deletions
 

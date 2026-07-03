@@ -54,9 +54,9 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 	public Interaction<string?, string?> SaveFileInteraction { get; }
 
-	public ReactiveCommand<Unit, Unit> SaveRecipeCommand { get; }
+	public ReactiveCommand<Unit, bool> SaveRecipeCommand { get; }
 
-	public ReactiveCommand<Unit, Unit> SaveAsRecipeCommand { get; }
+	public ReactiveCommand<Unit, bool> SaveAsRecipeCommand { get; }
 
 	public ReactiveCommand<Unit, Unit> LoadRecipeCommand { get; }
 
@@ -70,19 +70,17 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		GC.SuppressFinalize(this);
 	}
 
-	private async Task SaveRecipeAsync()
+	private async Task<bool> SaveRecipeAsync()
 	{
 		if (CurrentFilePath is not null)
 		{
-			await SaveToFileAsync(CurrentFilePath);
-
-			return;
+			return await SaveToFileAsync(CurrentFilePath);
 		}
 
-		await SaveAsRecipeAsync();
+		return await SaveAsRecipeAsync();
 	}
 
-	private async Task SaveAsRecipeAsync()
+	private async Task<bool> SaveAsRecipeAsync()
 	{
 		var suggestedName = CurrentFilePath is not null
 			? Path.GetFileNameWithoutExtension(CurrentFilePath)
@@ -91,13 +89,13 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		var filePath = await SaveFileInteraction.Handle(suggestedName);
 		if (filePath is null)
 		{
-			return;
+			return false;
 		}
 
-		await SaveToFileAsync(filePath);
+		return await SaveToFileAsync(filePath);
 	}
 
-	private async Task SaveToFileAsync(string filePath)
+	private async Task<bool> SaveToFileAsync(string filePath)
 	{
 		var result = await _coordinator.SaveRecipeAsync(filePath);
 
@@ -105,11 +103,13 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		{
 			_messagePanel.ReportFailure(result, "Failed to save recipe");
 
-			return;
+			return false;
 		}
 
 		CurrentFilePath = filePath;
 		_messagePanel.ReportSuccess($"Saved: {Path.GetFileName(filePath)}");
+
+		return true;
 	}
 
 	private async Task LoadRecipeAsync()

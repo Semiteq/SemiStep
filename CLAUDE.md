@@ -29,7 +29,7 @@ Test traits: `[Trait("Component", "Core|Config|UI|Domain|Csv|S7")]`, `[Trait("Ar
 Invalid config test cases use an overlay pattern: copy `SemiStep.Tests/YamlConfigs/Standard/` to a temp
 directory and overlay only the differing files from `SemiStep.Tests/YamlConfigs/Invalid/{CaseName}/`.
 
-**Avalonia headless tests:** UI tests use `[AvaloniaFact]` / `[AvaloniaTheory]` (from `Avalonia.Headless.XUnit`) which wraps the full test lifecycle, including `IAsyncLifetime.InitializeAsync` and `DisposeAsync`, in the headless dispatcher. No manual `Dispatcher.UIThread.RunJobs(...)` or sync-over-async wrappers are needed.
+**Avalonia headless tests:** UI tests use `[AvaloniaFact]` / `[AvaloniaTheory]` (from `Avalonia.Headless.XUnit`) which wraps the full test lifecycle, including `IAsyncLifetime.InitializeAsync` and `DisposeAsync`, in the headless dispatcher. No manual `Dispatcher.UIThread.RunJobs(...)` or sync-over-async wrappers are needed. See `Docs/architecture/headless-ui-testing.md` for the exceptions (unawaited work, LIFO interaction handlers).
 
 ## Code Style
 

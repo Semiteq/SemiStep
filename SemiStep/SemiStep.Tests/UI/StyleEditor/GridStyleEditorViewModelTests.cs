@@ -68,65 +68,6 @@ public sealed class GridStyleEditorViewModelTests
 	}
 
 	[AvaloniaFact]
-	public void Seed_PopulatesLocalMode_FromRecord()
-	{
-		var source = GridStyleOptions.Default with { LocalModeColor = "#6C707E" };
-		var viewModel = CreateViewModel(source);
-
-		viewModel.LocalMode.Should().Be(Color.Parse("#6C707E"));
-	}
-
-	[AvaloniaFact]
-	public void BuildRecord_AfterEditingLocalMode_CarriesItBack()
-	{
-		var source = GridStyleOptions.Default;
-		var viewModel = CreateViewModel(source);
-
-		viewModel.LocalMode = Color.Parse("#123456");
-
-		var record = viewModel.BuildRecord();
-
-		record.Should().Be(source with { LocalModeColor = "#123456" });
-	}
-
-	[AvaloniaFact]
-	public void Seed_PopulatesConnecting_FromRecord()
-	{
-		var source = GridStyleOptions.Default with { ConnectingColor = "#FFAF0F" };
-		var viewModel = CreateViewModel(source);
-
-		viewModel.Connecting.Should().Be(Color.Parse("#FFAF0F"));
-	}
-
-	[AvaloniaFact]
-	public void BuildRecord_AfterEditingConnecting_CarriesItBack()
-	{
-		var source = GridStyleOptions.Default;
-		var viewModel = CreateViewModel(source);
-
-		viewModel.Connecting = Color.Parse("#123456");
-
-		var record = viewModel.BuildRecord();
-
-		record.Should().Be(source with { ConnectingColor = "#123456" });
-	}
-
-	[AvaloniaFact]
-	public void BuildRecord_AfterEditingStatusBarFontSizes_CarriesBothBack()
-	{
-		var source = GridStyleOptions.Default;
-		var viewModel = CreateViewModel(source);
-
-		viewModel.StatusBarFontSize = 15;
-		viewModel.StatusBarTimerValueFontSize = 30;
-
-		var record = viewModel.BuildRecord();
-
-		record.StatusBarFontSize.Should().Be(15);
-		record.StatusBarTimerValueFontSize.Should().Be(30);
-	}
-
-	[AvaloniaFact]
 	public void BuildRecord_RoundsFractionalStatusBarFontSize_ToNearestInt()
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
@@ -211,24 +152,6 @@ public sealed class GridStyleEditorViewModelTests
 		record.HeaderFontWeight.Should().Be(900);
 		record.CellItalic.Should().BeTrue();
 		record.StatusBarTimerValueFontWeight.Should().Be(300);
-	}
-
-	[AvaloniaFact]
-	public void BuildRecord_RoundTripsFamilyAndWeight_NotInOfferedLists()
-	{
-		var source = GridStyleOptions.Default with
-		{
-			FontFamily = "No Such Installed Font 12345",
-			HeaderFontWeight = 333,
-			CellFontWeight = 650
-		};
-		var viewModel = CreateViewModel(source);
-
-		var record = viewModel.BuildRecord();
-
-		record.FontFamily.Should().Be("No Such Installed Font 12345");
-		record.HeaderFontWeight.Should().Be(333);
-		record.CellFontWeight.Should().Be(650);
 	}
 
 	[AvaloniaFact]

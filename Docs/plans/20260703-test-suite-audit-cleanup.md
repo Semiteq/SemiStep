@@ -272,7 +272,7 @@ findings, and the area test run at the end of the task is the gate.
 - Modify: `SemiStep/SemiStep.Tests/UI/StyleEditor/GridStyleEditorViewModelTests.cs`
 - Modify: `SemiStep/SemiStep.Tests/UI/Localization/ViewModelLocalizationTests.cs`
 
-- [ ] ColumnWidthCalculatorTests.cs: remove every exact-width assertion of the form
+- [x] ColumnWidthCalculatorTests.cs: remove every exact-width assertion of the form
       `pixelWidth.Should().Be(expectedWidth)` where `expectedWidth` is computed by the test's own
       mirror of the production formula (`ExpectedWidth()`/`LongestHeaderWordFloor()` helpers and the
       mirrored constants `StringSampleCap`, `ChromeFontMultiple`, `MinColumnWidthEms`,
@@ -280,7 +280,7 @@ findings, and the area test run at the end of the task is the gate.
       combo-vs-content delta, chrome scaling comparisons, bold-header measurement). Delete mirror
       helpers/constants once unused. If removing the mirror assertion leaves a test with no
       meaningful assertion, delete that test.
-- [ ] GridStyleEditorViewModelTests.cs: delete the per-field Seed/BuildRecord clone pairs
+- [x] GridStyleEditorViewModelTests.cs: delete the per-field Seed/BuildRecord clone pairs
       (`Seed_PopulatesLocalMode_FromRecord`, `BuildRecord_AfterEditingLocalMode_CarriesItBack`,
       `Seed_PopulatesConnecting_FromRecord`, `BuildRecord_AfterEditingConnecting_CarriesItBack`,
       `BuildRecord_AfterEditingStatusBarFontSizes_CarriesBothBack`,
@@ -289,13 +289,14 @@ findings, and the area test run at the end of the task is the gate.
       `BuildRecord_AfterEditingColorAndFontSize_ChangesOnlyThoseFields` cover the path; keep one
       color pair and one numeric pair if any listed test uniquely covers a field kind the generic
       tests do not touch
-- [ ] ViewModelLocalizationTests.cs: delete the EN duplicates `MapSyncStatus_UnderEnglishCulture_ReturnsNeutralText`
+- [x] ViewModelLocalizationTests.cs: delete the EN duplicates `MapSyncStatus_UnderEnglishCulture_ReturnsNeutralText`
       and `MapSyncStatus_OutOfSync_ReturnsEmpty` (duplicated by MainWindowViewModelSyncStateTests
       theories) and `FormatErrorCount_UnderEnglishCulture` (duplicated by
       `MessagePanelViewModelTests.ErrorCountText_UsesLabelThenCount`); thin the RU theory matrices
       (`FormatErrorCount`/`FormatWarningCount` 0/1/5, `PlcConflictStepCounts`) to one canary case per
       formatter; keep `FormatLastSyncTime_Elapsed_KeepsNumberInvariant` untouched
-- [ ] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=UI"` — must pass
+- [x] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=UI"` — must pass
+      (511 passed, 0 failed)
 
 ### Task 7: Verify acceptance criteria
 

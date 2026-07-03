@@ -29,22 +29,6 @@ public sealed class ViewModelLocalizationTests
 		WithCulture("ru", () => MainWindowViewModel.MapSyncStatus(status).Should().Be(expected));
 	}
 
-	[Theory]
-	[InlineData(PlcSyncStatus.Idle, "Idle")]
-	[InlineData(PlcSyncStatus.Syncing, "Syncing...")]
-	[InlineData(PlcSyncStatus.Synced, "Synced")]
-	[InlineData(PlcSyncStatus.Failed, "Failed")]
-	public void MapSyncStatus_UnderEnglishCulture_ReturnsNeutralText(PlcSyncStatus status, string expected)
-	{
-		WithCulture("en", () => MainWindowViewModel.MapSyncStatus(status).Should().Be(expected));
-	}
-
-	[Fact]
-	public void MapSyncStatus_OutOfSync_ReturnsEmptyRegardlessOfCulture()
-	{
-		WithCulture("ru", () => MainWindowViewModel.MapSyncStatus(PlcSyncStatus.OutOfSync).Should().BeEmpty());
-	}
-
 	[Fact]
 	public void FormatLastSyncTime_Never_UnderRussianCulture_ReturnsRussianText()
 	{
@@ -82,28 +66,16 @@ public sealed class ViewModelLocalizationTests
 				.Should().Be("12.5 с назад"));
 	}
 
-	[Theory]
-	[InlineData(0, "Ошибок: 0")]
-	[InlineData(1, "Ошибок: 1")]
-	[InlineData(5, "Ошибок: 5")]
-	public void FormatErrorCount_UnderRussianCulture_ReturnsRussianText(int count, string expected)
+	[Fact]
+	public void FormatErrorCount_UnderRussianCulture_ReturnsRussianText()
 	{
-		WithCulture("ru", () => MessagePanelViewModel.FormatErrorCount(count).Should().Be(expected));
-	}
-
-	[Theory]
-	[InlineData(0, "Предупреждений: 0")]
-	[InlineData(1, "Предупреждений: 1")]
-	[InlineData(5, "Предупреждений: 5")]
-	public void FormatWarningCount_UnderRussianCulture_ReturnsRussianText(int count, string expected)
-	{
-		WithCulture("ru", () => MessagePanelViewModel.FormatWarningCount(count).Should().Be(expected));
+		WithCulture("ru", () => MessagePanelViewModel.FormatErrorCount(5).Should().Be("Ошибок: 5"));
 	}
 
 	[Fact]
-	public void FormatErrorCount_UnderEnglishCulture_ReturnsNeutralText()
+	public void FormatWarningCount_UnderRussianCulture_ReturnsRussianText()
 	{
-		WithCulture("en", () => MessagePanelViewModel.FormatErrorCount(2).Should().Be("Errors: 2"));
+		WithCulture("ru", () => MessagePanelViewModel.FormatWarningCount(5).Should().Be("Предупреждений: 5"));
 	}
 
 	[Fact]

@@ -65,27 +65,28 @@ dead helper methods are removed.
 - Modify: `SemiStep/SemiStep.Tests/Config/Helpers/TestDataCopier.cs`
 - Modify: `SemiStep/SemiStep.Tests/YamlConfigs/Invalid/InvalidDeployDuration/actions/service.yaml` (fixture)
 
-- [ ] ConfigLoadingTests.cs: delete `StandardConfig_LoadsSuccessfully`, `StandardConfig_HasProperties`,
+- [x] ConfigLoadingTests.cs: delete `StandardConfig_LoadsSuccessfully`, `StandardConfig_HasProperties`,
       `StandardConfig_HasColumns`, `StandardConfig_HasActions` (subsumed by the `StandardConfig_HasExpected*`
       tests and `StandardConfig_NoErrors` in the same file)
-- [ ] FileSystemErrorTests.cs: delete `ConfigurationNotProducedOnError` (duplicate of
+- [x] FileSystemErrorTests.cs: delete `ConfigurationNotProducedOnError` (duplicate of
       `MissingConfigDirectory_HasError` with weaker assertions)
-- [ ] CrossReferenceTests.cs: delete `ValidCrossReferences_NoErrors` (asserts nothing about
+- [x] CrossReferenceTests.cs: delete `ValidCrossReferences_NoErrors` (asserts nothing about
       cross-references; duplicates ConfigLoadingTests happy path)
-- [ ] ActionErrorTests.cs: merge `DuplicateActionId_IdentifiesDuplicateId` into
+- [x] ActionErrorTests.cs: merge `DuplicateActionId_IdentifiesDuplicateId` into
       `DuplicateActionId_HasError` (single load, error assertion checks both "Duplicate action" wording
       and id "10"), then delete the merged-away test
-- [ ] PropertyErrorTests.cs: merge `DuplicatePropertyId_IdentifiesDuplicateId`,
+- [x] PropertyErrorTests.cs: merge `DuplicatePropertyId_IdentifiesDuplicateId`,
       `InvalidSystemType_ShowsInvalidValue`, `MinGreaterThanMax_ShowsValues` into their `_HasError`
       siblings (one load per case, combined Contains assertions), then delete the merged-away tests
-- [ ] Fix `InvalidDeployDuration_ShowsInvalidValue` in ActionErrorTests.cs: change the fixture value
+- [x] Fix `InvalidDeployDuration_ShowsInvalidValue` in ActionErrorTests.cs: change the fixture value
       `deploy_duration: invalid` to `deploy_duration: bogus_duration` in
       `YamlConfigs/Invalid/InvalidDeployDuration/actions/service.yaml` and assert the error message
       contains `bogus_duration` (currently `Contains("invalid")` matches any generic error wording;
       production `ActionsSectionLoader` echoes the value in the message, so the assertion holds).
       Update the stale line-1 fixture comment mentioning 'invalid' to match the new value
-- [ ] TestDataCopier.cs: delete unused method `EnsureDirectories` (zero call sites)
-- [ ] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=Config"` — must pass
+- [x] TestDataCopier.cs: delete unused method `EnsureDirectories` (zero call sites)
+- [x] run `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "Component=Config"` — must pass
+      (255 passed, 0 failed)
 
 ### Task 2: Core area cleanup — GridStyle and configuration tests
 

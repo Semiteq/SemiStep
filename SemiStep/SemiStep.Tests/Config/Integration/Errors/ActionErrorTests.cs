@@ -18,15 +18,7 @@ public sealed class ActionErrorTests
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
-			e.Message.Contains("Duplicate action Id", StringComparison.OrdinalIgnoreCase));
-	}
-
-	[Fact]
-	public async Task DuplicateActionId_IdentifiesDuplicateId()
-	{
-		var result = await ConfigTestHelper.LoadInvalidCaseAsync("DuplicateActionId");
-
-		result.Errors.Should().Contain(e =>
+				e.Message.Contains("Duplicate action Id", StringComparison.OrdinalIgnoreCase) &&
 				e.Message.Contains("10"),
 			"error should identify '10' as the duplicate action Id");
 	}
@@ -48,8 +40,8 @@ public sealed class ActionErrorTests
 		var result = await ConfigTestHelper.LoadInvalidCaseAsync("InvalidDeployDuration");
 
 		result.Errors.Should().Contain(e =>
-				e.Message.Contains("invalid", StringComparison.OrdinalIgnoreCase),
-			"error should show 'invalid' as the invalid value");
+				e.Message.Contains("bogus_duration", StringComparison.OrdinalIgnoreCase),
+			"error should echo 'bogus_duration' as the invalid value");
 	}
 
 	[Theory]

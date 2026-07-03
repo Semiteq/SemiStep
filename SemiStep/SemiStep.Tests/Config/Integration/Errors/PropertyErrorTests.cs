@@ -18,15 +18,7 @@ public sealed class PropertyErrorTests
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
-			e.Message.Contains("Duplicate PropertyTypeId", StringComparison.OrdinalIgnoreCase));
-	}
-
-	[Fact]
-	public async Task DuplicatePropertyId_IdentifiesDuplicateId()
-	{
-		var result = await ConfigTestHelper.LoadInvalidCaseAsync("DuplicatePropertyId");
-
-		result.Errors.Should().Contain(e =>
+				e.Message.Contains("Duplicate PropertyTypeId", StringComparison.OrdinalIgnoreCase) &&
 				e.Message.Contains("int", StringComparison.OrdinalIgnoreCase),
 			"error should identify 'int' as the duplicate PropertyTypeId");
 	}
@@ -38,15 +30,7 @@ public sealed class PropertyErrorTests
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
-			e.Message.Contains("SystemType must be one of", StringComparison.OrdinalIgnoreCase));
-	}
-
-	[Fact]
-	public async Task InvalidSystemType_ShowsInvalidValue()
-	{
-		var result = await ConfigTestHelper.LoadInvalidCaseAsync("InvalidSystemType");
-
-		result.Errors.Should().Contain(e =>
+				e.Message.Contains("SystemType must be one of", StringComparison.OrdinalIgnoreCase) &&
 				e.Message.Contains("boolean", StringComparison.OrdinalIgnoreCase),
 			"error should show 'boolean' as the invalid value");
 	}
@@ -58,16 +42,8 @@ public sealed class PropertyErrorTests
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
-			e.Message.Contains("Min", StringComparison.OrdinalIgnoreCase) &&
-			e.Message.Contains("Max", StringComparison.OrdinalIgnoreCase));
-	}
-
-	[Fact]
-	public async Task MinGreaterThanMax_ShowsValues()
-	{
-		var result = await ConfigTestHelper.LoadInvalidCaseAsync("MinGreaterThanMax");
-
-		result.Errors.Should().Contain(e =>
+				e.Message.Contains("Min", StringComparison.OrdinalIgnoreCase) &&
+				e.Message.Contains("Max", StringComparison.OrdinalIgnoreCase) &&
 				e.Message.Contains("100") && e.Message.Contains("10"),
 			"error should show the actual Min (100) and Max (10) values");
 	}

@@ -66,15 +66,6 @@ public static class TestDataCopier
 		return new TempDirectory();
 	}
 
-	public static void EnsureDirectories(TempDirectory tempDir, params string[] subdirectories)
-	{
-		foreach (var subdir in subdirectories)
-		{
-			var fullPath = Path.Combine(tempDir.Path, subdir);
-			Directory.CreateDirectory(fullPath);
-		}
-	}
-
 	public static void WriteYaml(TempDirectory tempDir, string relativePath, string content)
 	{
 		var fullPath = Path.Combine(tempDir.Path, relativePath);

@@ -14,41 +14,6 @@ namespace SemiStep.Tests.Config.Integration.Loading;
 public sealed class ConfigLoadingTests
 {
 	[Fact]
-	public async Task StandardConfig_LoadsSuccessfully()
-	{
-		var config = await ConfigTestHelper.LoadValidCaseAsync();
-
-		config.Should().NotBeNull();
-	}
-
-	[Fact]
-	public async Task StandardConfig_HasProperties()
-	{
-		var config = await ConfigTestHelper.LoadValidCaseAsync();
-
-		config.Properties.Should().NotBeNull();
-		config.Properties.Should().NotBeEmpty();
-	}
-
-	[Fact]
-	public async Task StandardConfig_HasColumns()
-	{
-		var config = await ConfigTestHelper.LoadValidCaseAsync();
-
-		config.Columns.Should().NotBeNull();
-		config.Columns.Should().NotBeEmpty();
-	}
-
-	[Fact]
-	public async Task StandardConfig_HasActions()
-	{
-		var config = await ConfigTestHelper.LoadValidCaseAsync();
-
-		config.Actions.Should().NotBeNull();
-		config.Actions.Should().NotBeEmpty();
-	}
-
-	[Fact]
 	public async Task StandardConfig_HasExpectedPropertyTypes()
 	{
 		var expectedPropertyTypeIds = new[] { "int", "float", "string", "enum", "time" };

@@ -30,17 +30,6 @@ public sealed class CrossReferenceTests
 	}
 
 	[Fact]
-	public async Task ValidCrossReferences_NoErrors()
-	{
-		var config = await ConfigTestHelper.LoadValidCaseAsync();
-
-		config.Should().NotBeNull();
-		config.Actions.Should().NotBeEmpty("valid config should have actions");
-		config.Columns.Should().NotBeEmpty("valid config should have columns");
-		config.Properties.Should().NotBeEmpty("valid config should have properties");
-	}
-
-	[Fact]
 	public async Task ErrorLocation_IncludesColumnKey()
 	{
 		var result = await ConfigTestHelper.LoadInvalidCaseAsync("MissingPropertyReference");

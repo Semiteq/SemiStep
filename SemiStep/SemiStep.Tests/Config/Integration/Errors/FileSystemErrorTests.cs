@@ -85,17 +85,6 @@ public sealed class FileSystemErrorTests
 	}
 
 	[Fact]
-	public async Task ConfigurationNotProducedOnError()
-	{
-		var nonExistentPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-		var result = await ConfigFacade.LoadAndValidateAsync(nonExistentPath);
-
-		result.IsFailed.Should().BeTrue(
-			"Configuration should not be produced when errors occur during loading");
-	}
-
-	[Fact]
 	public async Task MultipleErrors_AllReported()
 	{
 		var result = await ConfigTestHelper.LoadStandaloneCaseAsync("MultipleErrors");

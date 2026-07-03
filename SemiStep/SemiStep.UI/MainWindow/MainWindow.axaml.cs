@@ -1,6 +1,7 @@
 ﻿using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
+using System.Reactive.Linq;
 
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -18,6 +19,7 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 {
 	private ColumnBuilder? _columnBuilder;
 	private bool _forceClose;
+	private bool _exitChoiceInProgress;
 	private bool _isEditing;
 	private bool _columnsBuilt;
 	private (RecipeRowViewModel Row, string ColumnKey)? _pendingChangedCell;
@@ -210,6 +212,20 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 			return;
 		}
 
+		// The OS does not honor the cancellation on shutdown; a dialog would only
+		// dangle while the process dies.
+		if (e.CloseReason == WindowCloseReason.OSShutdown)
+		{
+			return;
+		}
+
+		if (_exitChoiceInProgress)
+		{
+			e.Cancel = true;
+
+			return;
+		}
+
 		if (ViewModel is not { IsDirty: true })
 		{
 			return;
@@ -217,28 +233,79 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 
 		e.Cancel = true;
 
-		var dialog = new ExitConfirmationDialog();
-		var result = await dialog.ShowDialog<ExitConfirmationResult>(this);
-
-		switch (result)
+		_exitChoiceInProgress = true;
+		try
 		{
-			case ExitConfirmationResult.Save:
-				ViewModel.RecipeFile.SaveRecipeCommand.Execute().Subscribe(_ =>
-				{
+			var dialog = new ExitConfirmationDialog();
+			var result = await dialog.ShowDialog<ExitConfirmationResult>(this);
+
+			await HandleExitChoiceAsync(result);
+		}
+		finally
+		{
+			_exitChoiceInProgress = false;
+		}
+	}
+
+	internal async Task HandleExitChoiceAsync(ExitConfirmationResult result)
+	{
+		_exitChoiceInProgress = true;
+		try
+		{
+			switch (result)
+			{
+				case ExitConfirmationResult.Save:
+					await SaveAndCloseOnSuccessAsync();
+
+					break;
+
+				case ExitConfirmationResult.DontSave:
 					_forceClose = true;
 					Close();
-				});
 
-				break;
+					break;
 
-			case ExitConfirmationResult.DontSave:
-				_forceClose = true;
-				Close();
+				case ExitConfirmationResult.Cancel:
+					break;
+			}
+		}
+		finally
+		{
+			_exitChoiceInProgress = false;
+		}
+	}
 
-				break;
+	private async Task SaveAndCloseOnSuccessAsync()
+	{
+		if (ViewModel is null)
+		{
+			return;
+		}
 
-			case ExitConfirmationResult.Cancel:
-				break;
+		var saveCommand = ViewModel.RecipeFile.SaveRecipeCommand;
+
+		var saveAlreadyInFlight = await saveCommand.IsExecuting.FirstAsync();
+		if (saveAlreadyInFlight)
+		{
+			return;
+		}
+
+		bool saved;
+		try
+		{
+			saved = await saveCommand.Execute();
+		}
+		catch (Exception)
+		{
+			// The command's ThrownExceptions pipeline already reports the failure
+			// to the message panel; the window must simply stay open.
+			return;
+		}
+
+		if (saved)
+		{
+			_forceClose = true;
+			Close();
 		}
 	}
 

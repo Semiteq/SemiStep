@@ -158,7 +158,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	private void ExecuteExit()
 	{
 		// Route through the window so MainWindow.OnWindowClosing runs its dirty-close guard.
-		// Under the default OnLastWindowClose mode, closing the main window exits the app.
 		MainWindow?.Close();
 	}
 

@@ -1,8 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 
-using SemiStep.UI.ShutdownService;
-
 namespace SemiStep.UI.StyleEditor;
 
 public partial class RestartPromptDialog : Window
@@ -14,12 +12,11 @@ public partial class RestartPromptDialog : Window
 
 	private void OnExitNowClick(object? sender, RoutedEventArgs e)
 	{
-		Close();
-		DesktopShutdownService.Shutdown();
+		Close(true);
 	}
 
 	private void OnRestartLaterClick(object? sender, RoutedEventArgs e)
 	{
-		Close();
+		Close(false);
 	}
 }

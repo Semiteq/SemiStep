@@ -28,10 +28,12 @@
                     HorizontalAlignment="Right"
                     Spacing="10"
                     Margin="0,20,0,0">
-            <Button Content="{x:Static l:Resources.EditorExitNow}"
+            <Button x:Name="ExitNowButton"
+                    Content="{x:Static l:Resources.EditorExitNow}"
                     Classes="secondary"
                     Click="OnExitNowClick" />
-            <Button Content="{x:Static l:Resources.EditorRestartLater}"
+            <Button x:Name="RestartLaterButton"
+                    Content="{x:Static l:Resources.EditorRestartLater}"
                     Classes="primary"
                     Click="OnRestartLaterClick"
                     IsDefault="True"

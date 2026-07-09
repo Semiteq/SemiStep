@@ -4,8 +4,6 @@ using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
-using Microsoft.Extensions.Logging.Abstractions;
-
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
@@ -21,26 +19,21 @@ namespace SemiStep.Tests.UI.RecipeGrid;
 public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 {
 	private readonly UIFixture _fixture = new();
-	private RecipeGridViewModel _grid = null!;
+	private CanonicalRecipeGridSurface _surface = null!;
 	private RecipeCommandsViewModel _commands = null!;
 
 	public async ValueTask InitializeAsync()
 	{
 		await _fixture.InitializeAsync();
-		_grid = new RecipeGridViewModel(
-			_fixture.Coordinator,
-			_fixture.RecipeMetadataRegistry,
-			_fixture.MessagePanel,
-			NullLogger<RecipeGridViewModel>.Instance);
-		_fixture.Coordinator.Mutated += _grid.OnMutation;
-		_grid.Initialize();
-		_commands = new RecipeCommandsViewModel(_fixture.Coordinator, _grid);
+		_surface = _fixture.CreateCanonicalSurface();
+		_surface.Initialize();
+		_commands = new RecipeCommandsViewModel(_fixture.Coordinator, _surface);
 	}
 
 	public async ValueTask DisposeAsync()
 	{
 		_commands.Dispose();
-		_grid.Dispose();
+		_surface.Dispose();
 		await _fixture.DisposeAsync();
 	}
 
@@ -80,7 +73,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_grid.SelectedRowIndices = new[] { 0 };
+		_surface.UpdateSelection(new[] { 0 });
 
 		((ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeTrue();
 	}
@@ -90,7 +83,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_grid.SelectedRowIndices = new[] { 0 };
+		_surface.UpdateSelection(new[] { 0 });
 		_fixture.SetRecipeActive(true);
 
 		((ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeFalse();
@@ -101,9 +94,21 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_grid.SelectedRowIndices = Array.Empty<int>();
+		_surface.UpdateSelection(Array.Empty<int>());
 
 		((ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeFalse();
+	}
+
+	[AvaloniaFact]
+	public void DeleteStep_CanExecuteTrue_WhenSelectionExistsBeforeConstruction()
+	{
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		_surface.UpdateSelection(new[] { 0 });
+
+		using var commands = new RecipeCommandsViewModel(_fixture.Coordinator, _surface);
+
+		((ICommand)commands.DeleteStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]

@@ -10,6 +10,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
+using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
@@ -50,7 +51,7 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 	private RecipeMetadataRegistry _registry = null!;
 	private MessagePanelViewModel _messagePanel = null!;
 	private RecipeCoordinator _coordinator = null!;
-	private RecipeGridViewModel _grid = null!;
+	private CanonicalRecipeGridSurface _surface = null!;
 
 	public async ValueTask InitializeAsync()
 	{
@@ -71,18 +72,18 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 			NullLogger<RecipeCoordinator>.Instance);
 		_coordinator.Initialize();
 
-		_grid = new RecipeGridViewModel(
+		_surface = new CanonicalRecipeGridSurface(
 			_coordinator,
 			_registry,
+			new ColumnBuilder(GridStyleOptions.Default, _registry),
 			_messagePanel,
-			NullLogger<RecipeGridViewModel>.Instance);
-		_coordinator.Mutated += _grid.OnMutation;
-		_grid.Initialize();
+			NullLogger<CanonicalRecipeGridSurface>.Instance);
+		_surface.Initialize();
 	}
 
 	public ValueTask DisposeAsync()
 	{
-		_grid.Dispose();
+		_surface.Dispose();
 		_coordinator.Dispose();
 		_messagePanel.Dispose();
 		return ValueTask.CompletedTask;
@@ -91,7 +92,7 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 	private RecipeRowViewModel AppendBranchingRow()
 	{
 		_coordinator.AppendStep(BranchingActionId);
-		return _grid.RecipeRows.Single();
+		return _surface.RecipeRows.Single();
 	}
 
 	[AvaloniaFact]
@@ -144,7 +145,7 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 
 		_coordinator.Undo();
 
-		var restored = _grid.RecipeRows.Single();
+		var restored = _surface.RecipeRows.Single();
 		restored.GetPropertyValue(SelectorColumn).Should().Be(1);
 		restored.GetPropertyValue(SubColumn).Should().Be(73f);
 	}
@@ -236,7 +237,7 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 		// apply the changed delta (same instance, no new membership).
 		var stubS7 = _services.GetRequiredService<StubS7Service>();
 		stubS7.PushExecutionState(PlcExecutionInfo.Empty with { RecipeActive = true });
-		_grid.IsReadOnly.Should().BeTrue();
+		_surface.IsReadOnly.Should().BeTrue();
 		var afterExecutionStart = row.ChangedColumns;
 
 		row.SetPropertyValue(SelectorColumn, AutoValue);

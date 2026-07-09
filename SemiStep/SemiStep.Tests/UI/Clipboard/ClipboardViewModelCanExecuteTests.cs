@@ -4,8 +4,6 @@ using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
-using Microsoft.Extensions.Logging.Abstractions;
-
 using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
@@ -24,26 +22,21 @@ namespace SemiStep.Tests.UI.Clipboard;
 public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 {
 	private readonly UIFixture _fixture = new();
-	private RecipeGridViewModel _grid = null!;
+	private CanonicalRecipeGridSurface _surface = null!;
 	private ClipboardViewModel _clipboard = null!;
 
 	public async ValueTask InitializeAsync()
 	{
 		await _fixture.InitializeAsync();
-		_grid = new RecipeGridViewModel(
-			_fixture.Coordinator,
-			_fixture.RecipeMetadataRegistry,
-			_fixture.MessagePanel,
-			NullLogger<RecipeGridViewModel>.Instance);
-		_fixture.Coordinator.Mutated += _grid.OnMutation;
-		_grid.Initialize();
+		_surface = _fixture.CreateCanonicalSurface();
+		_surface.Initialize();
 
 		var clipboardSerializer = new ClipboardSerializer(_fixture.RecipeMetadataRegistry);
 		var importedRecipeValidator = new ImportedRecipeValidator(_fixture.RecipeMetadataRegistry);
 
 		_clipboard = new ClipboardViewModel(
 			_fixture.Coordinator,
-			_grid,
+			_surface,
 			clipboardSerializer,
 			importedRecipeValidator,
 			_fixture.MessagePanel);
@@ -52,7 +45,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	public async ValueTask DisposeAsync()
 	{
 		_clipboard.Dispose();
-		_grid.Dispose();
+		_surface.Dispose();
 		await _fixture.DisposeAsync();
 	}
 
@@ -95,7 +88,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_grid.SelectedRowIndices = Array.Empty<int>();
+		_surface.UpdateSelection(Array.Empty<int>());
 
 		((ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeFalse();
 	}
@@ -108,6 +101,21 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.SetRecipeActive(false);
 
 		((ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void Cut_CanExecuteTrue_WhenSelectionExistsBeforeConstruction()
+	{
+		AppendStepAndSelect();
+
+		using var clipboard = new ClipboardViewModel(
+			_fixture.Coordinator,
+			_surface,
+			new ClipboardSerializer(_fixture.RecipeMetadataRegistry),
+			new ImportedRecipeValidator(_fixture.RecipeMetadataRegistry),
+			_fixture.MessagePanel);
+
+		((ICommand)clipboard.CutStepCommand).CanExecute(null).Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -147,6 +155,6 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_grid.SelectedRowIndices = new[] { 0 };
+		_surface.UpdateSelection(new[] { 0 });
 	}
 }

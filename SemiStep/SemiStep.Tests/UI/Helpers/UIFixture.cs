@@ -1,6 +1,7 @@
 ﻿using System.Reactive.Concurrency;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
@@ -37,6 +38,7 @@ public sealed class UIFixture : IAsyncLifetime
 	public MessagePanelViewModel MessagePanel { get; private set; } = null!;
 	public RecipeCoordinator Coordinator { get; private set; } = null!;
 	public StubS7Service StubS7 { get; private set; } = null!;
+	public ColumnBuilder ColumnBuilder { get; private set; } = null!;
 
 	public async ValueTask InitializeAsync()
 	{
@@ -61,6 +63,7 @@ public sealed class UIFixture : IAsyncLifetime
 			MessagePanel,
 			NullLogger<RecipeCoordinator>.Instance);
 		Coordinator.Initialize();
+		ColumnBuilder = new ColumnBuilder(AppConfiguration.GridStyle, RecipeMetadataRegistry);
 	}
 
 	public ValueTask DisposeAsync()
@@ -70,14 +73,30 @@ public sealed class UIFixture : IAsyncLifetime
 		return ValueTask.CompletedTask;
 	}
 
+	public CanonicalRecipeGridSurface CreateCanonicalSurface(
+		ILogger<CanonicalRecipeGridSurface>? logger = null)
+	{
+		return new CanonicalRecipeGridSurface(
+			Coordinator,
+			RecipeMetadataRegistry,
+			ColumnBuilder,
+			MessagePanel,
+			logger ?? NullLogger<CanonicalRecipeGridSurface>.Instance);
+	}
+
+	public void SeedRecipe(int stepCount)
+	{
+		Coordinator.NewRecipe();
+		for (var i = 0; i < stepCount; i++)
+		{
+			Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		}
+	}
+
 	public MainWindowViewModel CreateMainWindowViewModel(
 		Func<GridStyleEditorViewModel>? styleEditorFactory = null)
 	{
-		var grid = new RecipeGridViewModel(
-			Coordinator,
-			RecipeMetadataRegistry,
-			MessagePanel,
-			NullLogger<RecipeGridViewModel>.Instance);
+		var grid = CreateCanonicalSurface();
 
 		var commands = new RecipeCommandsViewModel(Coordinator, grid);
 
@@ -91,8 +110,6 @@ public sealed class UIFixture : IAsyncLifetime
 			MessagePanel);
 
 		var recipeFile = new RecipeFileViewModel(Coordinator, MessagePanel);
-
-		var columnBuilder = new ColumnBuilder(AppConfiguration.GridStyle, RecipeMetadataRegistry);
 
 		var plcMonitor = new PlcMonitorViewModel(
 			Coordinator,
@@ -112,7 +129,6 @@ public sealed class UIFixture : IAsyncLifetime
 			clipboard,
 			recipeFile,
 			MessagePanel,
-			columnBuilder,
 			plcMonitor,
 			gridStyleEditorViewModelFactory,
 			NullLogger<MainWindowViewModel>.Instance);

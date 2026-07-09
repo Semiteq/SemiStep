@@ -2,8 +2,6 @@
 
 using FluentAssertions;
 
-using Microsoft.Extensions.Logging.Abstractions;
-
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
@@ -19,23 +17,18 @@ namespace SemiStep.Tests.UI.RecipeGrid;
 public sealed class RecipeRowForDepthPropagationTests : IAsyncLifetime
 {
 	private readonly UIFixture _fixture = new();
-	private RecipeGridViewModel _grid = null!;
+	private CanonicalRecipeGridSurface _surface = null!;
 
 	public async ValueTask InitializeAsync()
 	{
 		await _fixture.InitializeAsync();
-		_grid = new RecipeGridViewModel(
-			_fixture.Coordinator,
-			_fixture.RecipeMetadataRegistry,
-			_fixture.MessagePanel,
-			NullLogger<RecipeGridViewModel>.Instance);
-		_fixture.Coordinator.Mutated += _grid.OnMutation;
-		_grid.Initialize();
+		_surface = _fixture.CreateCanonicalSurface();
+		_surface.Initialize();
 	}
 
 	public async ValueTask DisposeAsync()
 	{
-		_grid.Dispose();
+		_surface.Dispose();
 		await _fixture.DisposeAsync();
 	}
 
@@ -50,7 +43,7 @@ public sealed class RecipeRowForDepthPropagationTests : IAsyncLifetime
 		AppendEndFor();
 		AppendEndFor();
 
-		_grid.RecipeRows.Should().HaveCount(6);
+		_surface.RecipeRows.Should().HaveCount(6);
 
 		AssertForDepth(0, 1);
 		AssertForDepth(1, 1);
@@ -68,7 +61,7 @@ public sealed class RecipeRowForDepthPropagationTests : IAsyncLifetime
 		AppendWait();
 		AppendWait();
 
-		foreach (var row in _grid.RecipeRows)
+		foreach (var row in _surface.RecipeRows)
 		{
 			row.ForDepth.Should().Be(0);
 			row.IsForDepth1.Should().BeFalse();
@@ -94,7 +87,7 @@ public sealed class RecipeRowForDepthPropagationTests : IAsyncLifetime
 		AppendEndFor();
 		AppendEndFor();
 
-		var innermostWait = _grid.RecipeRows[3];
+		var innermostWait = _surface.RecipeRows[3];
 		innermostWait.ForDepth.Should().Be(3);
 		innermostWait.IsForDepth1.Should().BeFalse();
 		innermostWait.IsForDepth2.Should().BeFalse();
@@ -107,7 +100,7 @@ public sealed class RecipeRowForDepthPropagationTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		AppendWait();
 
-		var row = _grid.RecipeRows[0];
+		var row = _surface.RecipeRows[0];
 		var changedProperties = new List<string?>();
 		row.PropertyChanged += (_, e) => changedProperties.Add(e.PropertyName);
 
@@ -137,7 +130,7 @@ public sealed class RecipeRowForDepthPropagationTests : IAsyncLifetime
 
 	private void AssertForDepth(int rowIndex, int expectedDepth)
 	{
-		var row = _grid.RecipeRows[rowIndex];
+		var row = _surface.RecipeRows[rowIndex];
 		row.ForDepth.Should().Be(expectedDepth);
 		row.IsForDepth1.Should().Be(expectedDepth == 1);
 		row.IsForDepth2.Should().Be(expectedDepth == 2);

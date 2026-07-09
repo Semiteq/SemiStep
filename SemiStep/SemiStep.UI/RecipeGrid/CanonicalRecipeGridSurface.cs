@@ -5,6 +5,7 @@ using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 using Avalonia.Threading;
 
@@ -19,43 +20,43 @@ using SemiStep.UI.MessageService;
 
 namespace SemiStep.UI.RecipeGrid;
 
-public class RecipeGridViewModel : ReactiveObject, IDisposable
+public class CanonicalRecipeGridSurface : ReactiveObject, IRecipeGridSurface
 {
-	private readonly ObservableAsPropertyHelper<bool> _canDeleteStep;
 	private readonly ObservableAsPropertyHelper<bool> _isReadOnly;
-	private readonly ObservableAsPropertyHelper<int> _selectedRowIndex;
+	private readonly ObservableAsPropertyHelper<int> _selectedStepIndex;
 	private readonly RecipeCoordinator _coordinator;
 	private readonly CompositeDisposable _disposables = new();
 	private readonly ExecutionHighlightTracker _executionHighlightTracker;
-	private readonly ILogger<RecipeGridViewModel> _logger;
+	private readonly ILogger<CanonicalRecipeGridSurface> _logger;
 	private readonly MessagePanelViewModel _messagePanel;
+	private readonly Subject<int?> _selectionRequests = new();
 
-	private IReadOnlyList<int> _selectedRowIndices = [];
+	private IReadOnlyList<int> _selectedStepIndices = [];
 
-	public RecipeGridViewModel(
+	public CanonicalRecipeGridSurface(
 		RecipeCoordinator coordinator,
 		RecipeMetadataRegistry recipeMetadataRegistry,
+		ColumnBuilder columnBuilder,
 		MessagePanelViewModel messagePanel,
-		ILogger<RecipeGridViewModel> logger)
+		ILogger<CanonicalRecipeGridSurface> logger)
 	{
 		_coordinator = coordinator;
 		RecipeMetadataRegistry = recipeMetadataRegistry;
+		ColumnBuilder = columnBuilder;
 		_messagePanel = messagePanel;
 		_logger = logger;
 
 		RecipeRows = new ObservableCollection<RecipeRowViewModel>();
 		_executionHighlightTracker = new ExecutionHighlightTracker(RecipeRows);
 
-		_canDeleteStep = this
-			.WhenAnyValue(x => x.SelectedRowIndices)
-			.Select(indices => indices.Count > 0)
-			.ToProperty(this, x => x.CanDeleteStep)
-			.DisposeWith(_disposables);
+		CanDeleteStep = this
+			.WhenAnyValue(x => x.SelectedStepIndices)
+			.Select(indices => indices.Count > 0);
 
-		_selectedRowIndex = this
-			.WhenAnyValue(x => x.SelectedRowIndices)
+		_selectedStepIndex = this
+			.WhenAnyValue(x => x.SelectedStepIndices)
 			.Select(indices => indices.Count > 0 ? indices[0] : -1)
-			.ToProperty(this, x => x.SelectedRowIndex)
+			.ToProperty(this, x => x.SelectedStepIndex)
 			.DisposeWith(_disposables);
 
 		_isReadOnly = coordinator.CanEditRecipe
@@ -72,27 +73,40 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		coordinator.ExecutionState
 			.Subscribe(_executionHighlightTracker.OnExecutionStateChanged)
 			.DisposeWith(_disposables);
+
+		coordinator.Mutated += OnMutation;
+		Disposable.Create(() => coordinator.Mutated -= OnMutation)
+			.DisposeWith(_disposables);
 	}
 
 	public IObservable<Unit> EditorMustClose { get; }
 
 	internal RecipeMetadataRegistry RecipeMetadataRegistry { get; }
 
+	public ColumnBuilder ColumnBuilder { get; }
+
 	public ObservableCollection<RecipeRowViewModel> RecipeRows { get; }
 
-	public bool CanDeleteStep => _canDeleteStep.Value;
+	public IObservable<bool> CanDeleteStep { get; }
 
 	public bool IsReadOnly => _isReadOnly.Value;
 
-	public int SelectedRowIndex => _selectedRowIndex.Value;
+	public int SelectedStepIndex => _selectedStepIndex.Value;
 
-	public IReadOnlyList<int> SelectedRowIndices
+	public IReadOnlyList<int> SelectedStepIndices
 	{
-		get => _selectedRowIndices;
-		set => this.RaiseAndSetIfChanged(ref _selectedRowIndices, value);
+		get => _selectedStepIndices;
+		private set => this.RaiseAndSetIfChanged(ref _selectedStepIndices, value);
 	}
 
-	public event Action<int?>? SelectionRequested;
+	public int StepCount => RecipeRows.Count;
+
+	public IObservable<int?> SelectionRequests => _selectionRequests.AsObservable();
+
+	public void UpdateSelection(IReadOnlyList<int> stepIndices)
+	{
+		SelectedStepIndices = stepIndices;
+	}
 
 	public void Dispose()
 	{
@@ -158,7 +172,7 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 
 	private void ReconcileSelectionWithRows()
 	{
-		var currentSelection = SelectedRowIndices;
+		var currentSelection = SelectedStepIndices;
 		if (currentSelection.Count == 0)
 		{
 			return;
@@ -170,12 +184,17 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
-		SelectedRowIndices = currentSelection.Where(index => index < rowCount).ToList();
+		SelectedStepIndices = currentSelection.Where(index => index < rowCount).ToList();
 	}
 
-	public void RequestSelection(int? suggestedIndex)
+	public void RequestSelection(int? stepIndex)
 	{
-		SelectionRequested?.Invoke(suggestedIndex);
+		if (_disposables.IsDisposed)
+		{
+			return;
+		}
+
+		_selectionRequests.OnNext(stepIndex);
 	}
 
 	private void OnCellValueChanged(RecipeRowViewModel row, string columnKey, string? value)
@@ -457,11 +476,11 @@ public class RecipeGridViewModel : ReactiveObject, IDisposable
 		}
 	}
 
-	public List<Step> CollectSelectedSteps()
+	public IReadOnlyList<Step> CollectSelectedSteps()
 	{
 		var recipe = _coordinator.CurrentRecipe;
 
-		return _selectedRowIndices
+		return _selectedStepIndices
 			.OrderBy(i => i)
 			.Select(i => recipe.Steps[i])
 			.ToList();

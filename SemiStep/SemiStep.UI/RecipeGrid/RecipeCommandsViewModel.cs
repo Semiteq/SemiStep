@@ -16,11 +16,11 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 	private readonly CompositeDisposable _disposables = new();
 	private readonly BehaviorSubject<bool> _canUndo = new(false);
 	private readonly BehaviorSubject<bool> _canRedo = new(false);
-	private readonly RecipeGridViewModel _recipeGrid;
+	private readonly IRecipeGridSurface _recipeGrid;
 
 	public RecipeCommandsViewModel(
 		RecipeCoordinator coordinator,
-		RecipeGridViewModel recipeGrid)
+		IRecipeGridSurface recipeGrid)
 	{
 		_coordinator = coordinator;
 		_recipeGrid = recipeGrid;
@@ -30,8 +30,7 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 		_disposables.Add(_canUndo);
 		_disposables.Add(_canRedo);
 
-		var canDelete = _recipeGrid
-			.WhenAnyValue(x => x.CanDeleteStep);
+		var canDelete = _recipeGrid.CanDeleteStep;
 
 		var canEdit = _coordinator.CanEditRecipe;
 
@@ -71,8 +70,8 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 	{
 		var firstActionId = _coordinator.GetDefaultActionId();
 
-		var result = _recipeGrid.SelectedRowIndex >= 0
-			? _coordinator.InsertStep(_recipeGrid.SelectedRowIndex + 1, firstActionId)
+		var result = _recipeGrid.SelectedStepIndex >= 0
+			? _coordinator.InsertStep(_recipeGrid.SelectedStepIndex + 1, firstActionId)
 			: _coordinator.AppendStep(firstActionId);
 
 		if (result.IsSuccess)
@@ -83,7 +82,7 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 
 	private void DeleteStep()
 	{
-		var indices = _recipeGrid.SelectedRowIndices;
+		var indices = _recipeGrid.SelectedStepIndices;
 		if (indices.Count == 0)
 		{
 			return;

@@ -26,7 +26,9 @@ public static class UiDi
 		services.AddSingleton<IScheduler>(_ => RxSchedulers.MainThreadScheduler);
 		services.AddSingleton<MessagePanelViewModel>();
 		services.AddSingleton<RecipeCoordinator>();
-		services.AddSingleton<RecipeGridViewModel>();
+		services.AddSingleton<CanonicalRecipeGridSurface>();
+		services.AddSingleton<IRecipeGridSurface>(
+			provider => provider.GetRequiredService<CanonicalRecipeGridSurface>());
 		services.AddSingleton<RecipeCommandsViewModel>();
 		services.AddSingleton<ClipboardViewModel>();
 		services.AddSingleton<RecipeFileViewModel>();

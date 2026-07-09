@@ -51,7 +51,8 @@ public class CanonicalRecipeGridSurface : ReactiveObject, IRecipeGridSurface
 
 		CanDeleteStep = this
 			.WhenAnyValue(x => x.SelectedStepIndices)
-			.Select(indices => indices.Count > 0);
+			.Select(indices => indices.Count > 0)
+			.DistinctUntilChanged();
 
 		_selectedStepIndex = this
 			.WhenAnyValue(x => x.SelectedStepIndices)

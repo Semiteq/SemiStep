@@ -150,6 +150,20 @@ public abstract class RecipeGridSurfaceContractTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	public void CanDeleteStep_UnchangedValue_DoesNotReEmit()
+	{
+		var emissionCount = 0;
+		using var subscription = Surface.CanDeleteStep.Subscribe(_ => emissionCount++);
+		emissionCount.Should().Be(1);
+
+		Surface.UpdateSelection([0]);
+		emissionCount.Should().Be(2);
+
+		Surface.UpdateSelection([1]);
+		emissionCount.Should().Be(2);
+	}
+
+	[AvaloniaFact]
 	public void CollectSelectedSteps_ReturnsStepsInAscendingIndexOrder()
 	{
 		Surface.UpdateSelection([2, 0]);

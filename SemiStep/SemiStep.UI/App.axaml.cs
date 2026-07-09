@@ -12,7 +12,6 @@ using SemiStep.UI.Coordinator;
 using SemiStep.UI.Dialogs;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.MessageService;
-using SemiStep.UI.RecipeGrid;
 using SemiStep.UI.Styles;
 
 using Serilog;
@@ -105,9 +104,6 @@ public class App : Application
 
 		var coordinator = provider.GetRequiredService<RecipeCoordinator>();
 		coordinator.Initialize();
-
-		var gridViewModel = provider.GetRequiredService<RecipeGridViewModel>();
-		coordinator.Mutated += gridViewModel.OnMutation;
 	}
 
 	public static void RunErrorWindow(IReadOnlyList<string> errors)

@@ -30,24 +30,8 @@
         <local:RecipeToolBar Grid.Row="1"
                              IsVisible="{Binding IsToolBarVisible}" />
 
-        <DataGrid Grid.Row="2"
-                  x:Name="RecipeGrid"
-                  ItemsSource="{Binding RecipeGrid.RecipeRows}"
-                  AutoGenerateColumns="False"
-                  CanUserReorderColumns="False"
-                  CanUserResizeColumns="True"
-                  IsReadOnly="{Binding RecipeGrid.IsReadOnly}"
-                  Classes.read-only="{Binding RecipeGrid.IsReadOnly}"
-                  recipeGrid:DataGridEditorCloseBehavior.Trigger="{Binding RecipeGrid.EditorMustClose}"
-                  GridLinesVisibility="All"
-                  HeadersVisibility="Column"
-                  BorderThickness="1"
-                  BorderBrush="{DynamicResource GridBorderBrush}"
-                  Background="{DynamicResource GridBackgroundBrush}"
-                  SelectionMode="Extended"
-                  ClipboardCopyMode="None"
-                  LoadingRow="OnDataGridLoadingRow">
-            <DataGrid.ContextMenu>
+        <Panel Grid.Row="2">
+            <Panel.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="{x:Static l:Resources.ContextAddStep}"
                               Command="{Binding RecipeCommands.AddStepCommand}" />
@@ -61,8 +45,10 @@
                     <MenuItem Header="{x:Static l:Resources.ContextPasteStep}"
                               Command="{Binding Clipboard.PasteStepCommand}" />
                 </ContextMenu>
-            </DataGrid.ContextMenu>
-        </DataGrid>
+            </Panel.ContextMenu>
+            <recipeGrid:RecipeGridHost x:Name="RecipeGridHost"
+                                       DataContext="{Binding RecipeGrid}" />
+        </Panel>
 
         <messageService:MessagePanel Grid.Row="3"
                                      x:Name="LogPanel"

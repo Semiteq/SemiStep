@@ -100,7 +100,7 @@
     <!-- Grid-level read-only state (PLC sync active).  -->
     <!-- DataGrid.read-only class is toggled from XAML  -->
     <!-- via Classes.read-only binding to               -->
-    <!-- RecipeGridViewModel.IsReadOnly. ComboBox cells -->
+    <!-- CanonicalRecipeGridSurface.IsReadOnly. ComboBox cells -->
     <!-- live in CellTemplate (never CellEditingTemplate -->
     <!-- per Avalonia 12 DataGrid issue #236), so       -->
     <!-- DataGrid.IsReadOnly does not propagate to them -->

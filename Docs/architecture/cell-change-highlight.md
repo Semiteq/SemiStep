@@ -43,7 +43,7 @@ view-model:
 
 ## When cells are marked
 
-Marking happens in `SemiStep.UI/RecipeGrid/RecipeGridViewModel.cs`:
+Marking happens in `SemiStep.UI/RecipeGrid/CanonicalRecipeGridSurface.cs`:
 
 - **Action change** — `RebuildRow` marks the replacement row's `ChangedColumns` to the new
   step's property keys projected to strings (`step.Properties.Keys.Select(id => id.Value)`).
@@ -58,10 +58,12 @@ Marking happens in `SemiStep.UI/RecipeGrid/RecipeGridViewModel.cs`:
 - **Edit** — a new value entered into the cell. `OnCellValueChanged` calls
   `ClearChanged(columnKey)` on the row after a successful update.
 - **Click-away** — the cell is clicked, then any other cell is clicked.
-  `SemiStep.UI/MainWindow/MainWindow.axaml.cs` tracks a pending `(RecipeRowViewModel, columnKey)`.
-  On `CellPointerPressed`, if a pending cell is set and the pressed cell differs, it clears the
-  pending cell's orange, then re-arms pending to the pressed cell iff that cell `IsChanged`.
-  There is no `IsReadOnly` guard, so click-away still clears while PLC sync is active.
+  `SemiStep.UI/RecipeGrid/CanonicalRecipeGridView.axaml.cs` tracks a pending
+  `(RecipeRowViewModel, columnKey)`; the pending-vs-pressed decision itself lives in
+  `ChangedCellClickResolver`. On `CellPointerPressed`, if a pending cell is set and the pressed
+  cell differs, it clears the pending cell's orange, then re-arms pending to the pressed cell iff
+  that cell `IsChanged`. There is no `IsReadOnly` guard, so click-away still clears while PLC
+  sync is active.
 - **Execution start** — `SemiStep.UI/RecipeGrid/ExecutionHighlightTracker.cs` clears every row's
   set (`ClearAllChanged`) on the inactive→active edge only; an already-active line change does
   not re-clear.

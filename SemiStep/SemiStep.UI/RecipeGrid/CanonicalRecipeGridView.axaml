@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:recipeGrid="clr-namespace:SemiStep.UI.RecipeGrid"
+             mc:Ignorable="d"
+             d:DesignWidth="1600"
+             d:DesignHeight="600"
+             x:Class="SemiStep.UI.RecipeGrid.CanonicalRecipeGridView"
+             x:DataType="recipeGrid:CanonicalRecipeGridSurface">
+
+    <DataGrid x:Name="RecipeGrid"
+              ItemsSource="{Binding RecipeRows}"
+              AutoGenerateColumns="False"
+              CanUserReorderColumns="False"
+              CanUserResizeColumns="True"
+              IsReadOnly="{Binding IsReadOnly}"
+              Classes.read-only="{Binding IsReadOnly}"
+              recipeGrid:DataGridEditorCloseBehavior.Trigger="{Binding EditorMustClose}"
+              GridLinesVisibility="All"
+              HeadersVisibility="Column"
+              BorderThickness="1"
+              BorderBrush="{DynamicResource GridBorderBrush}"
+              Background="{DynamicResource GridBackgroundBrush}"
+              SelectionMode="Extended"
+              ClipboardCopyMode="None"
+              LoadingRow="OnDataGridLoadingRow" />
+
+</UserControl>

@@ -28,12 +28,12 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 	private readonly CompositeDisposable _disposables = new();
 	private readonly ImportedRecipeValidator _importedRecipeValidator;
 	private readonly MessagePanelViewModel _messagePanel;
-	private readonly RecipeGridViewModel _recipeGrid;
+	private readonly IRecipeGridSurface _recipeGrid;
 	private IClipboard? _clipboard;
 
 	public ClipboardViewModel(
 		RecipeCoordinator coordinator,
-		RecipeGridViewModel recipeGrid,
+		IRecipeGridSurface recipeGrid,
 		ClipboardSerializer clipboardSerializer,
 		ImportedRecipeValidator importedRecipeValidator,
 		MessagePanelViewModel messagePanel)
@@ -44,7 +44,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		_importedRecipeValidator = importedRecipeValidator;
 		_messagePanel = messagePanel;
 
-		var canCopyOrCut = _recipeGrid.WhenAnyValue(x => x.CanDeleteStep);
+		var canCopyOrCut = _recipeGrid.CanDeleteStep;
 		var canEdit = _coordinator.CanEditRecipe;
 
 		CopyStepCommand = ReactiveCommand.CreateFromTask(CopyStepsAsync, canCopyOrCut);
@@ -88,7 +88,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 
 	private async Task CopyStepsAsync()
 	{
-		if (_clipboard is null || _recipeGrid.SelectedRowIndices.Count == 0)
+		if (_clipboard is null || _recipeGrid.SelectedStepIndices.Count == 0)
 		{
 			return;
 		}
@@ -100,7 +100,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 
 	private async Task CutStepsAsync()
 	{
-		if (_clipboard is null || _recipeGrid.SelectedRowIndices.Count == 0)
+		if (_clipboard is null || _recipeGrid.SelectedStepIndices.Count == 0)
 		{
 			return;
 		}
@@ -109,7 +109,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		var csvText = SerializeStepsForClipboard(steps);
 		await _clipboard.SetTextAsync(csvText);
 
-		var result = _coordinator.RemoveSteps(_recipeGrid.SelectedRowIndices);
+		var result = _coordinator.RemoveSteps(_recipeGrid.SelectedStepIndices);
 		if (result.IsFailed)
 		{
 			_messagePanel.ReportFailure(result);
@@ -144,9 +144,9 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
-		var rowCount = _recipeGrid.RecipeRows.Count;
-		var insertIndex = _recipeGrid.SelectedRowIndices.Count > 0
-			? Math.Min(_recipeGrid.SelectedRowIndices.Max() + 1, rowCount)
+		var rowCount = _recipeGrid.StepCount;
+		var insertIndex = _recipeGrid.SelectedStepIndices.Count > 0
+			? Math.Min(_recipeGrid.SelectedStepIndices.Max() + 1, rowCount)
 			: rowCount;
 
 		var insertResult = _coordinator.InsertSteps(insertIndex, recipeResult.Value.Steps);

@@ -2,8 +2,6 @@
 
 using FluentAssertions;
 
-using Microsoft.Extensions.Logging.Abstractions;
-
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
@@ -16,33 +14,28 @@ namespace SemiStep.Tests.UI.RecipeGrid;
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
 [Trait("Category", "Integration")]
-public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
+public sealed class CanonicalRecipeGridSurfaceReadOnlyTests : IAsyncLifetime
 {
 	private readonly UIFixture _fixture = new();
-	private RecipeGridViewModel _grid = null!;
+	private CanonicalRecipeGridSurface _surface = null!;
 
 	public async ValueTask InitializeAsync()
 	{
 		await _fixture.InitializeAsync();
-		_grid = new RecipeGridViewModel(
-			_fixture.Coordinator,
-			_fixture.RecipeMetadataRegistry,
-			_fixture.MessagePanel,
-			NullLogger<RecipeGridViewModel>.Instance);
-		_fixture.Coordinator.Mutated += _grid.OnMutation;
-		_grid.Initialize();
+		_surface = _fixture.CreateCanonicalSurface();
+		_surface.Initialize();
 	}
 
 	public async ValueTask DisposeAsync()
 	{
-		_grid.Dispose();
+		_surface.Dispose();
 		await _fixture.DisposeAsync();
 	}
 
 	[AvaloniaFact]
 	public void IsReadOnly_False_Initially_WhenNoExecution()
 	{
-		_grid.IsReadOnly.Should().BeFalse();
+		_surface.IsReadOnly.Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -51,7 +44,7 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 		// §2.7: execution being active locks editing.
 		_fixture.SetRecipeActive(true);
 
-		_grid.IsReadOnly.Should().BeTrue();
+		_surface.IsReadOnly.Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -60,7 +53,7 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 		_fixture.SetRecipeActive(true);
 		_fixture.SetRecipeActive(false);
 
-		_grid.IsReadOnly.Should().BeFalse();
+		_surface.IsReadOnly.Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -69,7 +62,7 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 		// Connected-but-idle is editable: sync enabled without execution does not lock editing.
 		_fixture.SetSyncEnabled(true);
 
-		_grid.IsReadOnly.Should().BeFalse();
+		_surface.IsReadOnly.Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -81,9 +74,9 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.SetRecipeActive(true);
-		_grid.IsReadOnly.Should().BeTrue();
+		_surface.IsReadOnly.Should().BeTrue();
 
-		var row = _grid.RecipeRows[0];
+		var row = _surface.RecipeRows[0];
 		var originalRecipe = _fixture.Coordinator.CurrentRecipe;
 		var wasDirtyBefore = _fixture.Coordinator.IsDirty;
 
@@ -97,7 +90,7 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 	public void EditorMustClose_Emits_WhenRecipeBecomesActive()
 	{
 		var emissionCount = 0;
-		using var subscription = _grid.EditorMustClose.Subscribe(_ => emissionCount++);
+		using var subscription = _surface.EditorMustClose.Subscribe(_ => emissionCount++);
 
 		_fixture.SetRecipeActive(true);
 
@@ -108,7 +101,7 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 	public void EditorMustClose_DoesNotEmit_WhenNoExecution()
 	{
 		var emissionCount = 0;
-		using var subscription = _grid.EditorMustClose.Subscribe(_ => emissionCount++);
+		using var subscription = _surface.EditorMustClose.Subscribe(_ => emissionCount++);
 
 		_fixture.SetRecipeActive(false);
 
@@ -121,7 +114,7 @@ public sealed class RecipeGridViewModelReadOnlyTests : IAsyncLifetime
 		_fixture.SetRecipeActive(true);
 
 		var emissionCount = 0;
-		using var subscription = _grid.EditorMustClose.Subscribe(_ => emissionCount++);
+		using var subscription = _surface.EditorMustClose.Subscribe(_ => emissionCount++);
 
 		emissionCount.Should().Be(0);
 	}

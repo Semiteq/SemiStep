@@ -35,12 +35,11 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public MainWindowViewModel(
 		RecipeCoordinator coordinator,
-		RecipeGridViewModel recipeGrid,
+		IRecipeGridSurface recipeGrid,
 		RecipeCommandsViewModel recipeCommands,
 		ClipboardViewModel clipboard,
 		RecipeFileViewModel recipeFile,
 		MessagePanelViewModel messagePanel,
-		ColumnBuilder columnBuilder,
 		PlcMonitorViewModel plcMonitor,
 		Func<GridStyleEditorViewModel> gridStyleEditorViewModelFactory,
 		ILogger<MainWindowViewModel> logger)
@@ -53,7 +52,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		Clipboard = clipboard;
 		RecipeFile = recipeFile;
 		MessagePanel = messagePanel;
-		ColumnBuilder = columnBuilder;
 		PlcMonitor = plcMonitor;
 
 		ExitCommand = ReactiveCommand.Create(ExecuteExit);
@@ -90,7 +88,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public Window? MainWindow { get; set; }
 
-	public RecipeGridViewModel RecipeGrid { get; }
+	public IRecipeGridSurface RecipeGrid { get; }
 
 	public RecipeCommandsViewModel RecipeCommands { get; }
 
@@ -99,8 +97,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	public RecipeFileViewModel RecipeFile { get; }
 
 	public MessagePanelViewModel MessagePanel { get; }
-
-	public ColumnBuilder ColumnBuilder { get; }
 
 	public PlcMonitorViewModel PlcMonitor { get; }
 

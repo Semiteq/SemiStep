@@ -7,8 +7,6 @@ using Avalonia.Threading;
 
 using FluentAssertions;
 
-using Microsoft.Extensions.Logging.Abstractions;
-
 using ReactiveUI;
 
 using SemiStep.Core.Recipes.Clipboard;
@@ -31,23 +29,18 @@ namespace SemiStep.Tests.UI;
 public sealed class MessagePanelReportingTests : IAsyncLifetime
 {
 	private readonly UIFixture _fixture = new();
-	private RecipeGridViewModel _grid = null!;
+	private CanonicalRecipeGridSurface _surface = null!;
 
 	public async ValueTask InitializeAsync()
 	{
 		await _fixture.InitializeAsync();
-		_grid = new RecipeGridViewModel(
-			_fixture.Coordinator,
-			_fixture.RecipeMetadataRegistry,
-			_fixture.MessagePanel,
-			NullLogger<RecipeGridViewModel>.Instance);
-		_fixture.Coordinator.Mutated += _grid.OnMutation;
-		_grid.Initialize();
+		_surface = _fixture.CreateCanonicalSurface();
+		_surface.Initialize();
 	}
 
 	public async ValueTask DisposeAsync()
 	{
-		_grid.Dispose();
+		_surface.Dispose();
 		await _fixture.DisposeAsync();
 	}
 
@@ -124,7 +117,7 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		_grid.RecipeRows[0].SetPropertyValue(RecipeTestDriver.StepDurationColumn, "not_a_valid_number");
+		_surface.RecipeRows[0].SetPropertyValue(RecipeTestDriver.StepDurationColumn, "not_a_valid_number");
 
 		var operationEntry = _fixture.MessagePanel.Entries.Should().ContainSingle(entry => entry.IsError).Subject;
 		operationEntry.Message.Should().StartWith("Step 1:");
@@ -138,7 +131,7 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		_grid.RecipeRows[0].SetPropertyValue("action", "999999");
+		_surface.RecipeRows[0].SetPropertyValue("action", "999999");
 
 		var operationEntry = _fixture.MessagePanel.Entries.Should().ContainSingle(entry => entry.IsError).Subject;
 		operationEntry.Message.Should().StartWith("Step 1: Failed to change action");
@@ -153,7 +146,7 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 		var importedRecipeValidator = new ImportedRecipeValidator(_fixture.RecipeMetadataRegistry);
 		var clipboardViewModel = new ClipboardViewModel(
 			_fixture.Coordinator,
-			_grid,
+			_surface,
 			clipboardSerializer,
 			importedRecipeValidator,
 			_fixture.MessagePanel);
@@ -191,7 +184,7 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 		var importedRecipeValidator = new ImportedRecipeValidator(_fixture.RecipeMetadataRegistry);
 		var clipboardViewModel = new ClipboardViewModel(
 			_fixture.Coordinator,
-			_grid,
+			_surface,
 			clipboardSerializer,
 			importedRecipeValidator,
 			_fixture.MessagePanel);
@@ -205,12 +198,12 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 
 		try
 		{
-			_grid.SelectedRowIndices = [0];
+			_surface.UpdateSelection([0]);
 			await clipboardViewModel.CopyStepCommand.Execute();
 
 			await clipboardViewModel.PasteStepCommand.Execute();
 
-			_grid.RecipeRows.Count.Should().Be(2,
+			_surface.RecipeRows.Count.Should().Be(2,
 				"the valid copied step is pasted, doubling the single-step recipe");
 			_fixture.MessagePanel.Entries.Should().NotContain(entry => entry.IsError,
 				"a successful paste is a successful mutation that clears the operation slot");

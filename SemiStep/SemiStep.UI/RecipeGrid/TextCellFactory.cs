@@ -21,7 +21,7 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 			Width = width,
 			IsReadOnly = true,
 			CanUserSort = false,
-			CellTemplate = columnDef.ColumnType == ColumnTypes.StepStartTimeField
+			CellTemplate = ColumnTypes.IsStepStartTimeColumn(columnDef.ColumnType)
 				? CreateStepStartTimeTemplate()
 				: CreateMultiBindingTemplate(columnDef.Key),
 		};
@@ -36,7 +36,7 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 			Width = width,
 			IsReadOnly = false,
 			CanUserSort = false,
-			CellTemplate = columnDef.ColumnType == ColumnTypes.StepStartTimeField
+			CellTemplate = ColumnTypes.IsStepStartTimeColumn(columnDef.ColumnType)
 				? CreateStepStartTimeTemplate()
 				: CreateMultiBindingTemplate(columnDef.Key),
 			CellEditingTemplate = CreateEditingTemplate(columnDef.Key, maxLength),

@@ -21,6 +21,7 @@ using SemiStep.UI.MessageService;
 using SemiStep.UI.Plc;
 using SemiStep.UI.RecipeFile;
 using SemiStep.UI.RecipeGrid;
+using SemiStep.UI.RecipeGrid.Transposed;
 using SemiStep.UI.StyleEditor;
 
 using Xunit;
@@ -29,6 +30,8 @@ namespace SemiStep.Tests.UI.Helpers;
 
 public sealed class UIFixture : IAsyncLifetime
 {
+	private readonly List<IDisposable> _createdSurfaces = new();
+
 	public RecipeSession Session { get; private set; } = null!;
 	public PlcLifecycleManager Plc { get; private set; } = null!;
 	public StubPlcSyncService PlcSyncService { get; private set; } = null!;
@@ -39,6 +42,10 @@ public sealed class UIFixture : IAsyncLifetime
 	public RecipeCoordinator Coordinator { get; private set; } = null!;
 	public StubS7Service StubS7 { get; private set; } = null!;
 	public ColumnBuilder ColumnBuilder { get; private set; } = null!;
+
+	// Shared across every surface the fixture creates, mirroring the DI singleton: the
+	// click-away clear must reach sibling surfaces built from the same fixture.
+	public ChangedCellClickAwayBroadcaster ClickAwayBroadcaster { get; } = new();
 
 	public async ValueTask InitializeAsync()
 	{
@@ -66,8 +73,15 @@ public sealed class UIFixture : IAsyncLifetime
 		ColumnBuilder = new ColumnBuilder(AppConfiguration.GridStyle, RecipeMetadataRegistry);
 	}
 
+	// Surface disposal is idempotent, so suites that dispose their surfaces explicitly and
+	// suites that rely on this teardown (e.g. via CreateMainWindowViewModel) both stay clean.
 	public ValueTask DisposeAsync()
 	{
+		foreach (var surface in _createdSurfaces)
+		{
+			surface.Dispose();
+		}
+
 		Coordinator.Dispose();
 		MessagePanel.Dispose();
 		return ValueTask.CompletedTask;
@@ -76,12 +90,39 @@ public sealed class UIFixture : IAsyncLifetime
 	public CanonicalRecipeGridSurface CreateCanonicalSurface(
 		ILogger<CanonicalRecipeGridSurface>? logger = null)
 	{
-		return new CanonicalRecipeGridSurface(
+		var surface = new CanonicalRecipeGridSurface(
 			Coordinator,
 			RecipeMetadataRegistry,
 			ColumnBuilder,
 			MessagePanel,
+			ClickAwayBroadcaster,
 			logger ?? NullLogger<CanonicalRecipeGridSurface>.Instance);
+		_createdSurfaces.Add(surface);
+
+		return surface;
+	}
+
+	public TransposedRecipeGridSurface CreateTransposedSurface(
+		ILogger<TransposedRecipeGridSurface>? logger = null)
+	{
+		var surface = new TransposedRecipeGridSurface(
+			Coordinator,
+			RecipeMetadataRegistry,
+			AppConfiguration.GridStyle,
+			MessagePanel,
+			ClickAwayBroadcaster,
+			logger ?? NullLogger<TransposedRecipeGridSurface>.Instance);
+		_createdSurfaces.Add(surface);
+
+		return surface;
+	}
+
+	public ActiveRecipeGridSurface CreateActiveSurface(GridStyleOptions? gridStyle = null)
+	{
+		return new ActiveRecipeGridSurface(
+			CreateCanonicalSurface(),
+			CreateTransposedSurface(),
+			gridStyle ?? AppConfiguration.GridStyle);
 	}
 
 	public void SeedRecipe(int stepCount)
@@ -96,7 +137,7 @@ public sealed class UIFixture : IAsyncLifetime
 	public MainWindowViewModel CreateMainWindowViewModel(
 		Func<GridStyleEditorViewModel>? styleEditorFactory = null)
 	{
-		var grid = CreateCanonicalSurface();
+		var grid = CreateActiveSurface();
 
 		var commands = new RecipeCommandsViewModel(Coordinator, grid);
 

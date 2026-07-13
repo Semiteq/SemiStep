@@ -117,7 +117,8 @@ internal static class GridStyleDtoMapper
 				GridBorder = options.GridBorderColor,
 				GridBackground = options.GridBackgroundColor,
 				HeaderForeground = options.HeaderForegroundColor
-			}
+			},
+			Orientation = GridOrientationValues.Serialize(options.Orientation)
 		};
 	}
 }

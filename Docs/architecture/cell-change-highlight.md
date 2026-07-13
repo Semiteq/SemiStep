@@ -63,7 +63,10 @@ Marking happens in `SemiStep.UI/RecipeGrid/CanonicalRecipeGridSurface.cs`:
   `ChangedCellClickResolver`. On `CellPointerPressed`, if a pending cell is set and the pressed
   cell differs, it clears the pending cell's orange, then re-arms pending to the pressed cell iff
   that cell `IsChanged`. There is no `IsReadOnly` guard, so click-away still clears while PLC
-  sync is active.
+  sync is active. The view does not clear the row directly: it calls the surface's
+  `ClearChangedByClickAway`, which maps the row to its step index (rows that left the projection
+  are skipped) and publishes through `ChangedCellClickAwayBroadcaster` so both orientation
+  surfaces clear their own row for that step.
 - **Execution start** — `SemiStep.UI/RecipeGrid/ExecutionHighlightTracker.cs` clears every row's
   set (`ClearAllChanged`) on the inactive→active edge only; an already-active line change does
   not re-clear.
@@ -81,3 +84,34 @@ past/current tints never coexist with orange because execution start clears it.
 The highlight persists across PLC sync because `RecipeRowViewModel.UpdateStep` only swaps the
 backing `_step` and raises the indexer; it never touches `ChangedColumns`, and the same row VM
 instance is reused.
+
+## Transposed parity
+
+The transposed view implements every mark and clear path with its own peers — the state still
+lives in `RecipeRowViewModel.ChangedColumns`, but each surface owns its **own** row instances:
+
+- Mark: `TransposedRecipeGridSurface.RebuildColumn` (action change) and
+  `OnSelectorValueChanged` (selector delta) mirror the canonical mark points.
+- Clear on edit: `TransposedRecipeGridSurface.OnCellValueChanged`.
+- Clear on click-away: `TransposedRecipeGridView` resolves cell presses through the shared
+  `ChangedCellClickResolver` (same no-`IsReadOnly`-guard rule) and routes the clear through
+  `TransposedRecipeGridSurface.ClearChangedByClickAway`.
+- Clear on execution start: `TransposedExecutionHighlightTracker`.
+- Painting: the `changed` style class on the cell border, rules in
+  `Styles/TransposedGridStyles.axaml`.
+
+Because both surfaces are live simultaneously and hold separate row VMs, the changed sets
+would diverge (edit clears on one surface only; selector deltas apply on one surface only).
+`RecipeRowUpdateSynchronizer` keeps them aligned: on every `PropertyUpdated` it diffs the old
+step against the new one and applies the equivalent adjustments — a changed value is a
+successful edit of that cell (clear), an added key is a selector-seeded column (mark), a
+removed key is a selector-dropped column (unmark) — alongside an applicability recompute.
+This also makes the "edit clears" rule hold for the selector cell itself and for
+formula-coupled cells, which receive real new values inside the same mutation.
+
+The click-away clear fires no mutation, so the synchronizer never sees it. It has its own
+cross-surface channel instead: `ChangedCellClickAwayBroadcaster` (a DI singleton both surfaces
+subscribe to). The acknowledging view calls its surface's `ClearChangedByClickAway(row,
+columnKey)`; the surface maps the row to a step index and publishes, and every subscribed
+surface — the originator included — clears its own row at that index. The execution-start clear
+needs no channel because each surface's highlight tracker observes the coordinator directly.

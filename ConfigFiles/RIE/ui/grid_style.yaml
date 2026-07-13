@@ -91,3 +91,5 @@ chrome:
   grid_border: "#808080"
   grid_background: "#FFFFFF"
   header_foreground: "#000000"
+
+orientation: columns_as_steps

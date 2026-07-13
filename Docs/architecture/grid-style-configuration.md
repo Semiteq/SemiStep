@@ -4,8 +4,8 @@
 
 Every recipe-grid and app-chrome style flows from one YAML file per equipment config:
 `{configDir}/ui/grid_style.yaml`. No style is hardcoded in the UI — fonts, paddings, row height,
-cell/execution/selection palettes, status-bar and validation-panel chrome, and the main-window
-border/background/header colors all come from that file. An in-app editor edits the same file; the
+cell/execution/selection palettes, status-bar and validation-panel chrome, the main-window
+border/background/header colors, and the grid's default orientation all come from that file. An in-app editor edits the same file; the
 operator does not hand-edit YAML. Changes apply on the next restart.
 
 This file is the styling counterpart of `recipe-grid-column-sizing.md`: the sizing doc explains how a
@@ -96,6 +96,34 @@ consumes directly: `StatusBarPadding` (a `Thickness`), `StatusBarItemSpacing` (a
 from config without a code-side calculation. The status-bar **font** resources are described in the
 font-model section below.
 
+## Grid orientation
+
+A top-level key selects the recipe grid's startup orientation:
+
+```yaml
+orientation: rows_as_steps   # canonical (rows = steps); or columns_as_steps (transposed)
+```
+
+- **Values.** `rows_as_steps` (canonical) or `columns_as_steps` (transposed). An absent key
+  defaults to `rows_as_steps`, so existing files load unchanged. `GridStyleValidator` rejects
+  any other string with a config error naming both accepted values.
+- **Typed model.** The record carries a Core enum, `GridStyleOptions.Orientation`
+  (`GridOrientation.RowsAsSteps | ColumnsAsSteps`), not the raw string. Parsing and
+  serialization go through `GridOrientationValues` (`Configuration/Dto/`); an absent DTO value
+  parses to `RowsAsSteps`.
+- **Consumer.** `ActiveRecipeGridSurface` reads the record value once at construction as the
+  startup default (see `recipe-grid-surface.md`). The in-app toggle (View menu / `Ctrl+Shift+T`)
+  is per-session; the config default applies again on the next launch — consistent with the
+  restart-to-apply model of every other field in this file.
+- **Writer round-trip.** `GridStyleDtoMapper` serializes from the enum, so it always emits a
+  valid value: a style-editor save preserves the field, and a save over a file that never had
+  it writes the explicit `orientation: rows_as_steps`. The editor does not surface orientation
+  as a control; `BuildRecord`'s `with`-rebuild over the seeded record carries it through. The
+  DTO property is declared last so serialized output keeps `fonts:` as the first key (pinned
+  by test).
+- **Shipped configs.** RIE ships `orientation: columns_as_steps` (transposed by default);
+  MOCVD and MBE omit the key and start canonical.
+
 ## The font model
 
 Fonts span every text role the palette drives. The model is one **global font family** plus
@@ -144,7 +172,8 @@ roles set directly on the four timer `TextBlock`s):
 | `StatusBarTimerValueFontStyle` | `FontStyle` | `status_bar.timer_value_italic` |
 
 The grid roles are **code-assigned**, not resources: `GridFontApplier` (used by `ColumnBuilder`,
-`TextCellFactory`, and `ComboBoxCellFactory`) sets `FontFamily` / `FontWeight` / `FontStyle` /
+`TextCellFactory`, and `ComboBoxCellFactory` in the canonical view, and by
+`TransposedRecipeGridView` / `TransposedCellTemplateFactory` in the transposed view) sets `FontFamily` / `FontWeight` / `FontStyle` /
 `FontSize` directly from the injected `GridStyleOptions` (the header's old hard-coded `FontWeight.Bold`
 is now `HeaderFontWeight`) and also sets `TextElement.FontFeaturesProperty` to `GridFonts.TabularFigures`.
 `ColumnBuilder` additionally sets that feature grid-wide so it reaches the `DataGridTextColumn`

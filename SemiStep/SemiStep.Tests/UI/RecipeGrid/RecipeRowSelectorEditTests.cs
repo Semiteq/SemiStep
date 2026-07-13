@@ -77,6 +77,7 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 			_registry,
 			new ColumnBuilder(GridStyleOptions.Default, _registry),
 			_messagePanel,
+			new ChangedCellClickAwayBroadcaster(),
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 		_surface.Initialize();
 	}
@@ -153,10 +154,10 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void OrdinaryEdit_DoesNotRecomputeApplicability_ReferenceUnchanged()
 	{
-		// An edit on a non-selector column must route through the plain PropertyUpdated path
-		// (UpdateStepProperty -> UpdateSingleRowInPlace -> UpdateStep) and must NOT trigger an
-		// applicability recompute: InapplicableColumns keeps the same instance and raises no
-		// PropertyChanged for itself.
+		// An edit on a non-selector column routes through the plain PropertyUpdated path
+		// (UpdateStepProperty -> UpdateSingleRowInPlace). The recompute it triggers must detect
+		// the unchanged applicability set: InapplicableColumns keeps the same instance and
+		// raises no PropertyChanged for itself.
 		var row = AppendBranchingRow();
 		var before = row.InapplicableColumns;
 		var changed = new List<string>();

@@ -163,12 +163,28 @@ internal static class GridStyleValidator
 				},
 			errors);
 
+		ValidateOrientation(dto.Orientation, errors);
+
 		if (errors.Count > 0)
 		{
 			return Result.Fail(errors);
 		}
 
 		return Result.Ok();
+	}
+
+	private static void ValidateOrientation(string? orientation, List<IError> errors)
+	{
+		if (orientation is null
+			|| orientation == GridOrientationValues.RowsAsSteps
+			|| orientation == GridOrientationValues.ColumnsAsSteps)
+		{
+			return;
+		}
+
+		errors.Add(new Error(
+			$"Grid style 'orientation' has unknown value: '{orientation}'. " +
+			$"Expected '{GridOrientationValues.RowsAsSteps}' or '{GridOrientationValues.ColumnsAsSteps}'."));
 	}
 
 	private static void ValidateSection(

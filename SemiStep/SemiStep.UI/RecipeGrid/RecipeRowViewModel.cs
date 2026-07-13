@@ -25,6 +25,8 @@ public sealed class RecipeRowViewModel(
 
 	private Step _step = step;
 
+	internal Step CurrentStep => _step;
+
 	public int StepNumber
 	{
 		get;
@@ -187,13 +189,21 @@ public sealed class RecipeRowViewModel(
 	}
 
 	/// <summary>
-	/// Recomputes <see cref="InapplicableColumns"/> from the row's current step and assigns a NEW
-	/// set instance. The OneWay cell binding only re-fires on a PropertyChanged that also carries a
-	/// reference change, so the value is always replaced rather than mutated in place.
+	/// Recomputes <see cref="InapplicableColumns"/> from the row's current step. When the result
+	/// differs it assigns a NEW set instance — the OneWay cell binding only re-fires on a
+	/// PropertyChanged that also carries a reference change, so the value is replaced rather than
+	/// mutated in place. An unchanged result keeps the current instance and raises nothing, so
+	/// callers may recompute freely on every property update.
 	/// </summary>
 	public void RecomputeInapplicableColumns()
 	{
-		InapplicableColumns = BuildInapplicableColumns(action, _step, recipeMetadataRegistry);
+		var recomputed = BuildInapplicableColumns(action, _step, recipeMetadataRegistry);
+		if (InapplicableColumns.SetEquals(recomputed))
+		{
+			return;
+		}
+
+		InapplicableColumns = recomputed;
 	}
 
 	/// <summary>

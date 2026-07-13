@@ -32,3 +32,21 @@ opens a file picker) has to be registered **after** `window.Show()`; otherwise t
 Because `WhenActivated` registration is driven by dispatched activation work, follow
 `window.Show()` with a `Dispatcher.UIThread.RunJobs()` in the test setup so the window's handlers
 are deterministically in place before the test registers its overriding handler.
+
+## Pointer tests need hit-testable backgrounds
+
+Headless pointer tests hit-test the real visual tree. A `Border` (or panel) with a null
+`Background` is not hit-testable, so synthesized presses fall through it to whatever sits
+underneath. Production installs the palette resources at startup; a test window must do the
+same (e.g. `CellPaletteInstaller.Install(window.Resources, gridStyle)`) before clicking cells,
+or presses over disabled editors miss their cell border.
+
+## `WhenActivated` fires after the first layout pass
+
+ReactiveUI activation is driven by `Loaded`, which fires **after** the first layout pass has
+already realized item containers. Two consequences for view wiring:
+
+- container-prepared handlers attached inside `WhenActivated` must also stamp the
+  already-realized containers retroactively (`GetRealizedContainers()`);
+- code-built `DataTemplates` and layout-driving resources must be installed from the
+  constructor (keyed off the `ViewModel` property), or the first layout runs without them.

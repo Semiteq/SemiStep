@@ -109,6 +109,9 @@
   <data name="MenuViewNotificationLog" xml:space="preserve">
     <value>_Журнал уведомлений</value>
   </data>
+  <data name="MenuViewTransposedGrid" xml:space="preserve">
+    <value>Транс_понированная таблица</value>
+  </data>
   <data name="MenuViewGridStyleSettings" xml:space="preserve">
     <value>Настройки _стиля таблицы…</value>
   </data>

@@ -1,0 +1,100 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:transposed="clr-namespace:SemiStep.UI.RecipeGrid.Transposed"
+             mc:Ignorable="d"
+             d:DesignWidth="1600"
+             d:DesignHeight="600"
+             x:Class="SemiStep.UI.RecipeGrid.Transposed.TransposedRecipeGridView"
+             x:DataType="transposed:TransposedRecipeGridSurface">
+
+    <UserControl.Styles>
+        <StyleInclude Source="avares://Semistep/Styles/TransposedGridStyles.axaml" />
+    </UserControl.Styles>
+
+    <Border BorderBrush="{DynamicResource GridBorderBrush}"
+            BorderThickness="1"
+            Background="{DynamicResource GridBackgroundBrush}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <DockPanel>
+
+                <!-- Frozen-by-construction parameter-name column: mirrors canonical column headers.
+                     The header/marker split mirrors the step-column template so the header underline
+                     and the marker strip stay continuous across the frozen seam. -->
+                <StackPanel DockPanel.Dock="Left">
+                    <Border Classes="transposed-header-spacer"
+                            Height="{DynamicResource TransposedCellHeight}" />
+                    <Border Classes="transposed-marker-slot"
+                            Height="{DynamicResource TransposedMarkerSlotHeight}" />
+                    <ItemsControl x:Name="ParameterNameColumn"
+                                  ItemsSource="{Binding ParameterDescriptors}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="transposed:ParameterDescriptor">
+                                <Border Classes="transposed-name-cell"
+                                        Height="{DynamicResource TransposedCellHeight}">
+                                    <TextBlock Text="{Binding ParameterDisplayName}"
+                                               VerticalAlignment="Center"
+                                               Margin="8,0" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <ListBox x:Name="StepListBox"
+                         Classes="transposed-grid"
+                         ItemsSource="{Binding StepColumns}"
+                         SelectionMode="Multiple"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="transposed:StepColumnViewModel">
+                            <StackPanel Width="{DynamicResource TransposedStepColumnWidth}">
+                                <Border Classes="transposed-step-header"
+                                        Height="{DynamicResource TransposedCellHeight}">
+                                    <TextBlock Text="{Binding Row.StepNumber}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Border>
+                                <!-- Marker slot keeps a constant height so the current column's cells
+                                     stay row-aligned with every other column. -->
+                                <Border Classes="transposed-marker-slot"
+                        Height="{DynamicResource TransposedMarkerSlotHeight}">
+                                    <Border Classes="transposed-current-marker"
+                                            Background="{DynamicResource CurrentStepMarkerBrush}"
+                                            IsVisible="{Binding Row.IsCurrentStep}" />
+                                </Border>
+                                <ItemsControl ItemsSource="{Binding Cells}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="transposed:ParameterCellViewModel">
+                                            <Border Classes="transposed-cell"
+                                                    Classes.read-only-cell="{Binding Descriptor.IsReadOnlyParameter}"
+                                                    Classes.inapplicable="{Binding !IsApplicable}"
+                                                    Classes.changed="{Binding IsChanged}"
+                                                    Height="{DynamicResource TransposedCellHeight}">
+                                                <!-- Editor template resolved from the view's DataTemplates
+                                                     (TransposedCellTemplateFactory) by cell-VM kind. -->
+                                                <ContentControl Content="{Binding}"
+                                                                HorizontalContentAlignment="Stretch"
+                                                                VerticalContentAlignment="Center" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+            </DockPanel>
+        </ScrollViewer>
+    </Border>
+
+</UserControl>

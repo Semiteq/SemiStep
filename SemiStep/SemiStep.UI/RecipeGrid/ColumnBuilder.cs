@@ -106,7 +106,7 @@ public sealed class ColumnBuilder(
 
 	private DataGridColumn CreateColumnInner(GridColumnDefinition columnDef, DataGridLength width)
 	{
-		if (columnDef.ColumnType == ColumnTypes.ActionComboBox)
+		if (ColumnTypes.IsActionComboBoxColumn(columnDef.ColumnType))
 		{
 			return _comboBoxCellFactory.CreateActionColumn(columnDef, width);
 		}

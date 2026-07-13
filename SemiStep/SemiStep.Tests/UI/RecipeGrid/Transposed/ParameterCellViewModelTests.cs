@@ -40,8 +40,15 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 		var factory = CreateFactory();
 
-		factory.Create(row, FindDescriptor(ActionColumn)).Should().BeOfType<ActionComboBoxCellViewModel>();
-		factory.Create(row, FindDescriptor(RecipeTestDriver.TargetColumn)).Should().BeOfType<TargetComboBoxCellViewModel>();
+		// Both combo branches yield the same type since the VM collapse, so the items source is
+		// what distinguishes an action combo (registry action list) from a group-bound combo
+		// (the row's group items — empty for a wait step).
+		var actionCell = factory.Create(row, FindDescriptor(ActionColumn))
+			.Should().BeOfType<ComboBoxCellViewModel>().Subject;
+		actionCell.Items.Should().BeEquivalentTo(_fixture.RecipeMetadataRegistry.GetActionComboBoxItems());
+		var targetCell = factory.Create(row, FindDescriptor(RecipeTestDriver.TargetColumn))
+			.Should().BeOfType<ComboBoxCellViewModel>().Subject;
+		targetCell.Items.Should().BeEquivalentTo(row.GroupItemsByColumn[RecipeTestDriver.TargetColumn]);
 		factory.Create(row, FindDescriptor(RecipeTestDriver.StepDurationColumn)).Should().BeOfType<PropertyTextCellViewModel>();
 		factory.Create(row, FindDescriptor(RecipeTestDriver.TaskColumn)).Should().BeOfType<PropertyTextCellViewModel>();
 		factory.Create(row, FindDescriptor(RecipeTestDriver.CommentColumn)).Should().BeOfType<PropertyTextCellViewModel>();
@@ -65,7 +72,7 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 	public void ActionCell_ExposesRegistryItems_AndActionIdValue()
 	{
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
-		var cell = (ActionComboBoxCellViewModel)CreateFactory().Create(row, FindDescriptor(ActionColumn));
+		var cell = (ComboBoxCellViewModel)CreateFactory().Create(row, FindDescriptor(ActionColumn));
 
 		cell.Items.Should().BeEquivalentTo(_fixture.RecipeMetadataRegistry.GetActionComboBoxItems());
 		cell.Value.Should().Be(RecipeTestDriver.WaitActionId);
@@ -108,8 +115,8 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 		var factory = CreateFactory();
 		var descriptor = FindDescriptor(RecipeTestDriver.TargetColumn);
 
-		var valveCell = (TargetComboBoxCellViewModel)factory.Create(valveRow, descriptor);
-		var waitCell = (TargetComboBoxCellViewModel)factory.Create(waitRow, descriptor);
+		var valveCell = (ComboBoxCellViewModel)factory.Create(valveRow, descriptor);
+		var waitCell = (ComboBoxCellViewModel)factory.Create(waitRow, descriptor);
 
 		valveCell.Items.Should().HaveCount(2);
 		valveCell.Items.Select(item => item.DisplayText).Should().BeEquivalentTo("Open", "Close");

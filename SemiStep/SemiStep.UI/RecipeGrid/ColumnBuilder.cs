@@ -27,6 +27,9 @@ public sealed class ColumnBuilder(
 	private readonly TextCellFactory _textCellFactory = new(gridStyle);
 	private readonly ColumnWidthCalculator _widthCalculator = new(recipeMetadataRegistry, gridStyle);
 
+	private readonly IReadOnlyDictionary<string, int?> _maxLengthByColumn =
+		StringColumnMaxLengths.Build(recipeMetadataRegistry);
+
 	public void BuildColumns(DataGrid grid)
 	{
 		grid.RowHeight = gridStyle.RowHeight;
@@ -121,15 +124,7 @@ public sealed class ColumnBuilder(
 			return _textCellFactory.CreateReadOnlyColumn(columnDef, width);
 		}
 
-		var maxLength = ResolveMaxLength(columnDef);
+		var maxLength = _maxLengthByColumn.GetValueOrDefault(columnDef.Key);
 		return _textCellFactory.CreateEditableColumn(columnDef, width, maxLength);
-	}
-
-	private int? ResolveMaxLength(GridColumnDefinition columnDef)
-	{
-		var propertyDef = recipeMetadataRegistry.GetProperty(columnDef.PropertyTypeId).Value;
-		var isStringTyped = SystemTypes.Comparer.Equals(propertyDef.SystemType, SystemTypes.String);
-
-		return isStringTyped ? recipeMetadataRegistry.GetStringMaxLength() : null;
 	}
 }

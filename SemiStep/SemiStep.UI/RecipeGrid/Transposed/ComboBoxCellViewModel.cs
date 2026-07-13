@@ -2,11 +2,11 @@
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-public sealed class ActionComboBoxCellViewModel(
+public sealed class ComboBoxCellViewModel(
 	RecipeRowViewModel recipeRowViewModel,
 	ParameterDescriptor parameterDescriptor,
-	IReadOnlyList<ComboBoxItemViewModel> actionItems)
+	Func<IReadOnlyList<ComboBoxItemViewModel>> itemsProvider)
 	: ParameterCellViewModel(recipeRowViewModel, parameterDescriptor)
 {
-	public IReadOnlyList<ComboBoxItemViewModel> Items { get; } = actionItems;
+	public IReadOnlyList<ComboBoxItemViewModel> Items => itemsProvider();
 }

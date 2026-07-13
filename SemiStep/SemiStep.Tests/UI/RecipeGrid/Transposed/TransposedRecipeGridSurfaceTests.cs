@@ -262,6 +262,36 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	public void ExecutionBackwardJump_ClearsStalePastFlags()
+	{
+		_fixture.Coordinator.NewRecipe();
+		for (var i = 0; i < 10; i++)
+		{
+			_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		}
+
+		_fixture.S7Service.PushExecutionState(
+			PlcExecutionInfo.Empty with { RecipeActive = true, ActualLine = 7 });
+		_fixture.S7Service.PushExecutionState(
+			PlcExecutionInfo.Empty with { RecipeActive = true, ActualLine = 3 });
+
+		for (var i = 0; i < 3; i++)
+		{
+			_surface.StepColumns[i].Row.IsPastStep.Should().BeTrue($"step {i} should be past");
+			_surface.StepColumns[i].Row.IsCurrentStep.Should().BeFalse();
+		}
+
+		_surface.StepColumns[3].Row.IsCurrentStep.Should().BeTrue();
+		_surface.StepColumns[3].Row.IsPastStep.Should().BeFalse();
+
+		for (var i = 4; i <= 7; i++)
+		{
+			_surface.StepColumns[i].Row.IsPastStep.Should().BeFalse($"step {i} stale past flag must be cleared");
+			_surface.StepColumns[i].Row.IsCurrentStep.Should().BeFalse();
+		}
+	}
+
+	[AvaloniaFact]
 	public void ExecutionStop_ClearsStepHighlights()
 	{
 		_fixture.Coordinator.NewRecipe();

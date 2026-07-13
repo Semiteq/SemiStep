@@ -6,6 +6,7 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Logging;
 
+using SemiStep.Core.Plc.State;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
@@ -479,5 +480,35 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		row.SetPropertyValue(RecipeTestDriver.StepDurationColumn, "999999");
 
 		row.ChangedColumns.Should().Contain(RecipeTestDriver.StepDurationColumn);
+	}
+
+	[AvaloniaFact]
+	public void ExecutionBackwardJump_ClearsStalePastFlags()
+	{
+		_fixture.Coordinator.NewRecipe();
+		for (var i = 0; i < 10; i++)
+		{
+			_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		}
+
+		_fixture.S7Service.PushExecutionState(
+			PlcExecutionInfo.Empty with { RecipeActive = true, ActualLine = 7 });
+		_fixture.S7Service.PushExecutionState(
+			PlcExecutionInfo.Empty with { RecipeActive = true, ActualLine = 3 });
+
+		for (var i = 0; i < 3; i++)
+		{
+			_surface.RecipeRows[i].IsPastStep.Should().BeTrue($"step {i} should be past");
+			_surface.RecipeRows[i].IsCurrentStep.Should().BeFalse();
+		}
+
+		_surface.RecipeRows[3].IsCurrentStep.Should().BeTrue();
+		_surface.RecipeRows[3].IsPastStep.Should().BeFalse();
+
+		for (var i = 4; i <= 7; i++)
+		{
+			_surface.RecipeRows[i].IsPastStep.Should().BeFalse($"step {i} stale past flag must be cleared");
+			_surface.RecipeRows[i].IsCurrentStep.Should().BeFalse();
+		}
 	}
 }

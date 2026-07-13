@@ -1,19 +1,19 @@
-﻿using System.Collections.ObjectModel;
-
-using SemiStep.Core.Plc.State;
+﻿using SemiStep.Core.Plc.State;
 
 namespace SemiStep.UI.RecipeGrid;
 
 internal sealed class ExecutionHighlightTracker
 {
-	private readonly ObservableCollection<RecipeRowViewModel> _rows;
+	private readonly Func<int> _rowCount;
+	private readonly Func<int, RecipeRowViewModel> _rowAt;
 
 	private bool _lastRecipeActive;
 	private int _lastActualLine = -1;
 
-	public ExecutionHighlightTracker(ObservableCollection<RecipeRowViewModel> rows)
+	public ExecutionHighlightTracker(Func<int> rowCount, Func<int, RecipeRowViewModel> rowAt)
 	{
-		_rows = rows;
+		_rowCount = rowCount;
+		_rowAt = rowAt;
 	}
 
 	public void OnExecutionStateChanged(PlcExecutionInfo info)
@@ -47,10 +47,12 @@ internal sealed class ExecutionHighlightTracker
 		_lastRecipeActive = true;
 		_lastActualLine = info.ActualLine;
 
-		for (var i = 0; i < _rows.Count; i++)
+		var rowCount = _rowCount();
+		for (var i = 0; i < rowCount; i++)
 		{
-			_rows[i].IsCurrentStep = i == info.ActualLine;
-			_rows[i].IsPastStep = i < info.ActualLine;
+			var row = _rowAt(i);
+			row.IsCurrentStep = i == info.ActualLine;
+			row.IsPastStep = i < info.ActualLine;
 		}
 	}
 
@@ -62,8 +64,10 @@ internal sealed class ExecutionHighlightTracker
 
 	private void ClearAllStepHighlights()
 	{
-		foreach (var row in _rows)
+		var rowCount = _rowCount();
+		for (var i = 0; i < rowCount; i++)
 		{
+			var row = _rowAt(i);
 			row.IsCurrentStep = false;
 			row.IsPastStep = false;
 		}
@@ -71,9 +75,10 @@ internal sealed class ExecutionHighlightTracker
 
 	private void ClearAllChangedHighlights()
 	{
-		foreach (var row in _rows)
+		var rowCount = _rowCount();
+		for (var i = 0; i < rowCount; i++)
 		{
-			row.ClearAllChanged();
+			_rowAt(i).ClearAllChanged();
 		}
 	}
 }

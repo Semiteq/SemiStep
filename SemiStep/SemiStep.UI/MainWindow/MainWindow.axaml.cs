@@ -53,6 +53,17 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 			return;
 		}
 
+		// The orientation toggle does not interact with editor semantics, and in the transposed
+		// view a plain click can leave an always-live editor focused — so the hotkey stays
+		// outside the IsEditing gate.
+		if (e.Key == Key.T && e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
+		{
+			ViewModel.ToggleOrientationCommand.Execute().Subscribe();
+			e.Handled = true;
+
+			return;
+		}
+
 		if (!RecipeGridHost.IsEditing)
 		{
 			switch (e.Key)

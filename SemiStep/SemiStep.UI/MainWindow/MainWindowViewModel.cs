@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 
 using ReactiveUI;
 
+using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 
@@ -30,12 +31,13 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	private readonly CompositeDisposable _disposables = new();
 	private readonly ILogger<MainWindowViewModel> _logger;
 	private readonly Func<GridStyleEditorViewModel> _gridStyleEditorViewModelFactory;
+	private readonly ObservableAsPropertyHelper<bool> _isTransposedOrientation;
 
 	private bool _isToolBarVisible = true;
 
 	public MainWindowViewModel(
 		RecipeCoordinator coordinator,
-		IRecipeGridSurface recipeGrid,
+		ActiveRecipeGridSurface recipeGrid,
 		RecipeCommandsViewModel recipeCommands,
 		ClipboardViewModel clipboard,
 		RecipeFileViewModel recipeFile,
@@ -58,6 +60,13 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		ToggleSyncCommand = ReactiveCommand.CreateFromTask(ExecuteToggleSyncAsync);
 		OpenStyleEditorCommand = ReactiveCommand.CreateFromTask(ExecuteOpenStyleEditorAsync);
 		ToggleToolBarCommand = ReactiveCommand.Create(ExecuteToggleToolBar);
+		ToggleOrientationCommand = ReactiveCommand.Create(recipeGrid.ToggleOrientation);
+
+		_isTransposedOrientation = recipeGrid
+			.WhenAnyValue(x => x.Orientation)
+			.Select(orientation => orientation == GridOrientation.ColumnsAsSteps)
+			.ToProperty(this, x => x.IsTransposedOrientation)
+			.DisposeWith(_disposables);
 
 		ToggleSyncCommand.ThrownExceptions
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
@@ -107,6 +116,10 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	public ReactiveCommand<Unit, Unit> OpenStyleEditorCommand { get; }
 
 	public ReactiveCommand<Unit, Unit> ToggleToolBarCommand { get; }
+
+	public ReactiveCommand<Unit, Unit> ToggleOrientationCommand { get; }
+
+	public bool IsTransposedOrientation => _isTransposedOrientation.Value;
 
 	public bool IsToolBarVisible
 	{

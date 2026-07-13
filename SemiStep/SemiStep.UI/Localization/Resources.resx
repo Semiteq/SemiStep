@@ -109,6 +109,9 @@
   <data name="MenuViewNotificationLog" xml:space="preserve">
     <value>_Notification Log</value>
   </data>
+  <data name="MenuViewTransposedGrid" xml:space="preserve">
+    <value>Trans_posed Grid</value>
+  </data>
   <data name="MenuViewGridStyleSettings" xml:space="preserve">
     <value>Grid _Style Settings...</value>
   </data>

@@ -1,5 +1,8 @@
 # Recipe Grid Column Sizing (issue #66)
 
+> Scope: the canonical (rows-as-steps) `DataGrid` only. The transposed view uses one fixed
+> uniform step-column width and `layout.row_height` cell heights — see `recipe-grid-surface.md`.
+
 ## Overview
 
 The recipe `DataGrid` must fit a FullHD (1920px) screen without horizontal scroll, keep headers

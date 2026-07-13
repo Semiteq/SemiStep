@@ -77,7 +77,8 @@ public sealed record GridStyleOptions(
 	string SecondaryForegroundColor,
 	string GridBorderColor,
 	string GridBackgroundColor,
-	string HeaderForegroundColor)
+	string HeaderForegroundColor,
+	GridOrientation Orientation)
 {
 	// Test-only fallback; the #000000 cell palettes are placeholders, never rendered in production.
 	public static GridStyleOptions Default { get; } = new(
@@ -157,5 +158,6 @@ public sealed record GridStyleOptions(
 		SecondaryForegroundColor: "#888888",
 		GridBorderColor: "#808080",
 		GridBackgroundColor: "#FFFFFF",
-		HeaderForegroundColor: "#000000");
+		HeaderForegroundColor: "#000000",
+		Orientation: GridOrientation.RowsAsSteps);
 }

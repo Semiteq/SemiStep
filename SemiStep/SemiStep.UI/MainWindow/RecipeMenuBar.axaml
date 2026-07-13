@@ -61,6 +61,11 @@
                       Command="{Binding MessagePanel.ToggleCommand}"
                       ToggleType="CheckBox"
                       IsChecked="{Binding MessagePanel.ShowPanel, Mode=OneWay}" />
+            <MenuItem Header="{x:Static l:Resources.MenuViewTransposedGrid}"
+                      Command="{Binding ToggleOrientationCommand}"
+                      ToggleType="CheckBox"
+                      IsChecked="{Binding IsTransposedOrientation, Mode=OneWay}"
+                      InputGesture="Ctrl+Shift+T" />
             <Separator />
             <MenuItem Header="{x:Static l:Resources.MenuViewGridStyleSettings}"
                       Command="{Binding OpenStyleEditorCommand}" />

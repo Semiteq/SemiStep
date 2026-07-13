@@ -11,6 +11,7 @@ namespace SemiStep.UI.RecipeGrid;
 public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalRecipeGridSurface>
 {
 	private bool _columnsBuilt;
+	private bool _syncingSelectionFromSurface;
 	private (RecipeRowViewModel Row, string ColumnKey)? _pendingChangedCell;
 
 	public CanonicalRecipeGridView()
@@ -77,7 +78,8 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 	}
 
 	// Click-away rule: a changed (orange) cell clears the moment any OTHER cell is pressed. This is
-	// not an edit, so it must run even while the grid is read-only during PLC sync — no IsReadOnly guard.
+	// not an edit, so it must run even while the grid is read-only during PLC sync — no IsReadOnly
+	// guard. The clear routes through the surface so the sibling orientation surface clears too.
 	private void OnCellPointerPressed(object? sender, DataGridCellPointerPressedEventArgs e)
 	{
 		var pressedRow = e.Row.DataContext as RecipeRowViewModel;
@@ -88,10 +90,9 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 			pressedRow,
 			pressedColumnKey);
 
-		if (cellToClear is { } toClear
-			&& (ViewModel is null || ViewModel.RecipeRows.Contains(toClear.Row)))
+		if (cellToClear is { } toClear)
 		{
-			toClear.Row.ClearChanged(toClear.ColumnKey);
+			ViewModel?.ClearChangedByClickAway(toClear.Row, toClear.ColumnKey);
 		}
 
 		_pendingChangedCell = newPending;
@@ -102,9 +103,37 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 		RecipeRowExecutionClassBinder.BindAll(e.Row);
 	}
 
-	private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+	// Re-applies the surface's selection to the DataGrid. The host calls this when the view
+	// becomes active after an orientation flip: the surface received the carried-over selection
+	// while the view was flipped away, so the visual selection is stale by then.
+	internal void SyncSelectionFromSurface()
 	{
 		if (ViewModel is null)
+		{
+			return;
+		}
+
+		_syncingSelectionFromSurface = true;
+		try
+		{
+			RecipeGrid.SelectedItems.Clear();
+			foreach (var index in ViewModel.SelectedStepIndices)
+			{
+				if (index >= 0 && index < ViewModel.RecipeRows.Count)
+				{
+					RecipeGrid.SelectedItems.Add(ViewModel.RecipeRows[index]);
+				}
+			}
+		}
+		finally
+		{
+			_syncingSelectionFromSurface = false;
+		}
+	}
+
+	private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+	{
+		if (_syncingSelectionFromSurface || ViewModel is null)
 		{
 			return;
 		}

@@ -235,8 +235,10 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		row.IsApplicable("action").Should().BeTrue();
 	}
 
+	// The real-change contract (new instance + PropertyChanged on an applicability flip) is
+	// pinned by RecipeRowSelectorEditTests.SelectorReassignment_FlipsInapplicableColumns.
 	[AvaloniaFact]
-	public void RecomputeInapplicableColumns_ReassignsNewInstance_AndRaisesPropertyChanged()
+	public void RecomputeInapplicableColumns_UnchangedResult_KeepsInstanceAndRaisesNothing()
 	{
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 		var before = row.InapplicableColumns;
@@ -251,8 +253,8 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 
 		row.RecomputeInapplicableColumns();
 
-		raised.Should().BeTrue();
-		row.InapplicableColumns.Should().NotBeSameAs(before);
+		raised.Should().BeFalse();
+		row.InapplicableColumns.Should().BeSameAs(before);
 	}
 
 	[AvaloniaFact]

@@ -68,6 +68,8 @@ public class Resources
 
 	public static string MenuViewNotificationLog => ResourceManager.GetString("MenuViewNotificationLog", resourceCulture) ?? string.Empty;
 
+	public static string MenuViewTransposedGrid => ResourceManager.GetString("MenuViewTransposedGrid", resourceCulture) ?? string.Empty;
+
 	public static string MenuViewGridStyleSettings => ResourceManager.GetString("MenuViewGridStyleSettings", resourceCulture) ?? string.Empty;
 
 	public static string MenuHelp => ResourceManager.GetString("MenuHelp", resourceCulture) ?? string.Empty;

@@ -94,6 +94,7 @@ internal static class GridStyleMapper
 			SecondaryForegroundColor: dto.Chrome?.SecondaryForeground ?? defaults.SecondaryForegroundColor,
 			GridBorderColor: dto.Chrome?.GridBorder ?? defaults.GridBorderColor,
 			GridBackgroundColor: dto.Chrome?.GridBackground ?? defaults.GridBackgroundColor,
-			HeaderForegroundColor: dto.Chrome?.HeaderForeground ?? defaults.HeaderForegroundColor);
+			HeaderForegroundColor: dto.Chrome?.HeaderForeground ?? defaults.HeaderForegroundColor,
+			Orientation: GridOrientationValues.Parse(dto.Orientation));
 	}
 }

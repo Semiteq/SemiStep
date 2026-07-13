@@ -14,6 +14,16 @@ internal static class ColumnTypes
 		return string.Equals(columnType, ActionTargetComboBox, StringComparison.OrdinalIgnoreCase);
 	}
 
+	public static bool IsActionComboBoxColumn(string columnType)
+	{
+		return string.Equals(columnType, ActionComboBox, StringComparison.OrdinalIgnoreCase);
+	}
+
+	public static bool IsStepStartTimeColumn(string columnType)
+	{
+		return string.Equals(columnType, StepStartTimeField, StringComparison.OrdinalIgnoreCase);
+	}
+
 	public static string IndexerPath(string columnKey)
 	{
 		return $"[{columnKey}]";

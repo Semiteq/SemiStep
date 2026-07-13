@@ -13,9 +13,10 @@ concrete surfaces know nothing about switching.
 The pieces:
 
 - `IRecipeGridSurface` — the view-facing API. Selection is expressed in step indices only.
-- `CanonicalRecipeGridSurface` — the concrete surface for the canonical orientation. Owns row
-  projection (`RecipeRows`), mutation handling, execution highlighting, and the canonical-only
-  members (`ColumnBuilder`, internal `RecipeMetadataRegistry`). `ColumnBuilder` is
+- `CanonicalRecipeGridSurface` — the canonical-orientation surface, a thin derivation of
+  `RecipeGridSurfaceBase<RecipeRowViewModel>` (see "Shared surface base class" below). It keeps
+  the projection alias (`RecipeRows`), the two item hooks, and the canonical-only member
+  (`ColumnBuilder`). `ColumnBuilder` is
   constructor-injected into the surface solely so the view can reach it through `DataContext` —
   a trade-off originally recorded as "revisit when the transposed view lands"; the transposed
   view landed and adopted the same idiom (`TransposedRecipeGridSurface` carries
@@ -25,14 +26,13 @@ The pieces:
 - `CanonicalRecipeGridView` (`ReactiveUserControl<CanonicalRecipeGridSurface>`) — wraps the
   `DataGrid`, owns its event handlers (`BeginningEdit`, `CellEditEnded`, `SelectionChanged`,
   `CellPointerPressed`, `LoadingRow`), column building, and the changed-cell click-away state.
-- `TransposedRecipeGridSurface` (`RecipeGrid/Transposed/`) — the transposed peer. Owns the
-  column projection (`StepColumns`, an `ObservableCollection<StepColumnViewModel>`, one item
-  per step), `ParameterDescriptors` (the frozen name-column rows, built in canonical registry
-  order), surgical `MutationSignal` dispatch mirroring canonical's post-mutation tail
-  (renumber, selection reconcile, step start times, loop depths), and
-  `TransposedExecutionHighlightTracker`. Each step-column wraps a reused, orientation-agnostic
-  `RecipeRowViewModel`; cells are thin `ParameterCellViewModel` adapters over it, so changed-cell
-  state, applicability, and the three write events have exactly one home.
+- `TransposedRecipeGridSurface` (`RecipeGrid/Transposed/`) — the transposed peer, an equally
+  thin derivation of `RecipeGridSurfaceBase<StepColumnViewModel>`. It keeps the projection
+  alias (`StepColumns`, one item per step), `ParameterDescriptors` (the frozen name-column
+  rows, built in canonical registry order), and `GridStyle`. Each step-column wraps a reused,
+  orientation-agnostic `RecipeRowViewModel`; cells are thin `ParameterCellViewModel` adapters
+  over it, so changed-cell state, applicability, and the three write events have exactly one
+  home.
 - `TransposedRecipeGridView` (`ReactiveUserControl<TransposedRecipeGridSurface>`) — a `ListBox`
   of step-columns over a horizontal `VirtualizingStackPanel` (no DataGrid): realized element
   count is viewport-bound regardless of recipe length, and whole-column selection comes from
@@ -53,6 +53,63 @@ The pieces:
   eagerly, keeps them alive across flips, and swaps its `Content` on orientation changes.
   Its `Surface` property (`DataContext as IRecipeGridSurface`) has no production consumer —
   `MainWindow` reads only `IsEditing`; `Surface` is pinned by tests.
+
+## Shared surface base class
+
+`RecipeGridSurfaceBase<TItem>` (`SemiStep.UI/RecipeGrid/RecipeGridSurfaceBase.cs`,
+`TItem : class, IDisposable`) owns everything the two orientations have in common — which is
+everything except item construction:
+
+- the `Items` projection (`ObservableCollection<TItem>`) that each derived class re-exposes
+  under its XAML-bound alias (`RecipeRows` / `StepColumns`);
+- `MutationSignal` dispatch (`OnMutation`): the structural handlers (append, insert, remove,
+  bulk remove, action-change rebuild, full rebuild — the inserting and removing ones renumber
+  the items they shift), the one non-structural in-place property update, the stale-signal
+  guards (log-and-return — they protect against signal-vs-projection races, not against bad
+  data), and the post-mutation tail (selection reconcile, step start times, loop depths);
+- the reactive contract members (`CanDeleteStep`, `IsReadOnly`, `EditorMustClose`,
+  `SelectedStepIndex`/`SelectedStepIndices`, `SelectionRequests`) and the selection plumbing
+  (`UpdateSelection`, `RequestSelection`, `CollectSelectedSteps`);
+- the three write paths raised by `RecipeRowViewModel` (`OnCellValueChanged`,
+  `OnSelectorValueChanged`, `OnActionChanged`) and their event wiring around item creation;
+- the changed-highlight paths: `ClearChangedByClickAway` as a single linear scan over
+  `RowOf(Items[i])`, plus the `ChangedCellClickAwayBroadcaster` subscription;
+- the `RecipeCoordinator.Mutated` subscription and `Dispose` (items dispose themselves —
+  hence the `IDisposable` constraint);
+- the `RecipeMetadataRegistry` reference, exposed to the derived item factories as a
+  `protected` property;
+- one `ExecutionHighlightTracker` per surface, constructed over `Items.Count` /
+  `RowOf(Items[i])`.
+
+Two abstract hooks carry all the orientation-specific knowledge:
+
+- `RowOf(TItem)` — maps an item to its `RecipeRowViewModel` (identity for canonical, `.Row`
+  for transposed);
+- `CreateItem(stepNumber, step, action)` — builds the item (canonical computes
+  `BuildInapplicableColumns` and news up a `RecipeRowViewModel`; transposed news up a
+  `StepColumnViewModel` with `ParameterDescriptors` and its cell factory delegate).
+
+The derived classes are ~50 lines each: the constructor (public signature unchanged), the two
+hooks, and the view-facing extras listed in their bullets above.
+
+**Unified execution tracker.** `ExecutionHighlightTracker` consumes a
+`(Func<int> rowCount, Func<int, RecipeRowViewModel> rowAt)` pair instead of a concrete
+collection, so one type serves both orientations.
+
+**Fail-loud item creation.** `CreateItemChecked` resolves the step's action key against
+`RecipeMetadataRegistry` and throws `UnknownActionKeyException` (an
+`InvalidOperationException`, `"Step {n}: unknown action key '{key}'"`) on lookup failure,
+instead of the former log-report-and-skip. A skipped item would leave
+`Items.Count < recipe.StepCount` and silently desync every index-based dispatch and
+`CollectSelectedSteps`. Honest scoping of "loud": the throw crashes the app only on the
+`Initialize()` path (startup projection and the router's `Initialize` fan-out). On the
+`Mutated` dispatch path, `OnMutation` catches this specific exception, error-logs it, reports
+it to the message panel, and leaves the projection as-is — matching the old skip's
+user-visible outcome without the silent desync. Catching inside the handler (rather than
+letting the throw escape to `RecipeCoordinator.RaiseMutatedSafely`, which wraps the whole
+multicast `Mutated?.Invoke`) keeps signal delivery intact for the sibling surface and every
+later-subscribed handler. The branch is defensive-only: config loading validates action keys,
+and CSV import / clipboard paste run `ImportedRecipeValidator`.
 
 ## Interface member inventory
 
@@ -145,8 +202,8 @@ teardown is harmless.
 
 ## Mutation subscription ownership
 
-Each concrete surface subscribes itself to `RecipeCoordinator.Mutated` in its constructor and
-unsubscribes in `Dispose` — there is no external wiring and no "refresh me" method on the
+Each surface subscribes itself to `RecipeCoordinator.Mutated` in the base-class constructor
+and unsubscribes in `Dispose` — there is no external wiring and no "refresh me" method on the
 interface. Both surfaces stay subscribed regardless of which one is active; that is what keeps
 the inactive surface current for the next flip. Subscription order relative to the other
 `Mutated` handlers (`PlcMonitorViewModel`, `MainWindowViewModel`, `RecipeCommandsViewModel`)

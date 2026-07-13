@@ -43,9 +43,10 @@ view-model:
 
 ## When cells are marked
 
-Marking happens in `SemiStep.UI/RecipeGrid/CanonicalRecipeGridSurface.cs`:
+Marking happens in `SemiStep.UI/RecipeGrid/RecipeGridSurfaceBase.cs`, the base class both
+orientation surfaces derive from (see `recipe-grid-surface.md`):
 
-- **Action change** — `RebuildRow` marks the replacement row's `ChangedColumns` to the new
+- **Action change** — `RebuildItem` marks the replacement row's `ChangedColumns` to the new
   step's property keys projected to strings (`step.Properties.Keys.Select(id => id.Value)`).
   Only the action-change path marks; append / insert / full-rebuild do not.
 - **Selector change** (#71 nested actions) — `OnSelectorValueChanged`, on the success branch
@@ -87,16 +88,15 @@ instance is reused.
 
 ## Transposed parity
 
-The transposed view implements every mark and clear path with its own peers — the state still
-lives in `RecipeRowViewModel.ChangedColumns`, but each surface owns its **own** row instances:
+Both orientation surfaces derive from `RecipeGridSurfaceBase<TItem>`, so every mark and clear
+path above is implemented once in the base and applies to the transposed surface identically —
+including the execution-start clear (each surface constructs its own `ExecutionHighlightTracker`
+over its items). The state still lives in `RecipeRowViewModel.ChangedColumns`, but each surface
+owns its **own** row instances. The transposed-specific pieces are on the view side only:
 
-- Mark: `TransposedRecipeGridSurface.RebuildColumn` (action change) and
-  `OnSelectorValueChanged` (selector delta) mirror the canonical mark points.
-- Clear on edit: `TransposedRecipeGridSurface.OnCellValueChanged`.
-- Clear on click-away: `TransposedRecipeGridView` resolves cell presses through the shared
+- Click-away: `TransposedRecipeGridView` resolves cell presses through the shared
   `ChangedCellClickResolver` (same no-`IsReadOnly`-guard rule) and routes the clear through
-  `TransposedRecipeGridSurface.ClearChangedByClickAway`.
-- Clear on execution start: `TransposedExecutionHighlightTracker`.
+  the surface's `ClearChangedByClickAway`.
 - Painting: the `changed` style class on the cell border, rules in
   `Styles/TransposedGridStyles.axaml`.
 

@@ -31,8 +31,7 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 	{
 		return
 		[
-			CreateComboBoxTemplate<ActionComboBoxCellViewModel>(nameof(ActionComboBoxCellViewModel.Items)),
-			CreateComboBoxTemplate<TargetComboBoxCellViewModel>(nameof(TargetComboBoxCellViewModel.Items)),
+			CreateComboBoxTemplate(),
 			CreatePropertyTextTemplate(),
 			CreateReadOnlyTemplate(),
 		];
@@ -48,17 +47,17 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		TopLevel.GetTopLevel(editor)?.FocusManager?.Focus(null);
 	}
 
-	private IDataTemplate CreateComboBoxTemplate<TCell>(string itemsPath)
-		where TCell : ParameterCellViewModel
+	private IDataTemplate CreateComboBoxTemplate()
 	{
-		return new FuncDataTemplate<TCell>((_, _) => CreateComboBox(itemsPath), supportsRecycling: true);
+		return new FuncDataTemplate<ComboBoxCellViewModel>((_, _) => CreateComboBox(), supportsRecycling: true);
 	}
 
 	// FontSize explicit: the Semi ComboBox selection box does not inherit the grid font (parity
 	// with the canonical ComboBoxCellFactory). SelectedItem resolves via a OneWay MultiBinding;
 	// writeback is owned by SelectionChanged, which no-ops when the value is unchanged.
-	private ComboBox CreateComboBox(string itemsPath)
+	private ComboBox CreateComboBox()
 	{
+		var itemsPath = nameof(ComboBoxCellViewModel.Items);
 		var comboBox = new ComboBox
 		{
 			DisplayMemberBinding = new Binding(nameof(ComboBoxItemViewModel.DisplayText)),

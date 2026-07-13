@@ -38,7 +38,7 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 	public void InitialActualLine_MarksPastAndCurrent()
 	{
 		var rows = BuildRows(10);
-		var tracker = new ExecutionHighlightTracker(rows);
+		var tracker = new ExecutionHighlightTracker(() => rows.Count, i => rows[i]);
 
 		tracker.OnExecutionStateChanged(new PlcExecutionInfo(RecipeActive: true, ActualLine: 5, StepCurrentTime: 0f, ForLoopCount1: 0, ForLoopCount2: 0, ForLoopCount3: 0));
 
@@ -62,7 +62,7 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 	public void ForwardJump_AdvancesPastAndCurrentFlags()
 	{
 		var rows = BuildRows(10);
-		var tracker = new ExecutionHighlightTracker(rows);
+		var tracker = new ExecutionHighlightTracker(() => rows.Count, i => rows[i]);
 
 		tracker.OnExecutionStateChanged(BuildActive(2));
 		tracker.OnExecutionStateChanged(BuildActive(7));
@@ -87,7 +87,7 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 	public void BackwardJump_ClearsStalePastFlags()
 	{
 		var rows = BuildRows(10);
-		var tracker = new ExecutionHighlightTracker(rows);
+		var tracker = new ExecutionHighlightTracker(() => rows.Count, i => rows[i]);
 
 		tracker.OnExecutionStateChanged(BuildActive(7));
 		tracker.OnExecutionStateChanged(BuildActive(3));
@@ -112,7 +112,7 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 	public void RecipeActiveTransitionsToFalse_ClearsAllFlags()
 	{
 		var rows = BuildRows(10);
-		var tracker = new ExecutionHighlightTracker(rows);
+		var tracker = new ExecutionHighlightTracker(() => rows.Count, i => rows[i]);
 
 		tracker.OnExecutionStateChanged(BuildActive(5));
 		tracker.OnExecutionStateChanged(new PlcExecutionInfo(RecipeActive: false, ActualLine: 0, StepCurrentTime: 0f, ForLoopCount1: 0, ForLoopCount2: 0, ForLoopCount3: 0));
@@ -128,7 +128,7 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 	public void NoOpEvent_DoesNotRewriteProperties()
 	{
 		var rows = BuildRows(10);
-		var tracker = new ExecutionHighlightTracker(rows);
+		var tracker = new ExecutionHighlightTracker(() => rows.Count, i => rows[i]);
 
 		tracker.OnExecutionStateChanged(BuildActive(5));
 
@@ -155,7 +155,7 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 		var rows = BuildRows(10);
 		rows[2].MarkChanged(new[] { "Temperature" });
 		rows[5].MarkChanged(new[] { "Pressure", "Duration" });
-		var tracker = new ExecutionHighlightTracker(rows);
+		var tracker = new ExecutionHighlightTracker(() => rows.Count, i => rows[i]);
 
 		tracker.OnExecutionStateChanged(BuildActive(0));
 
@@ -169,7 +169,7 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 	public void AlreadyActiveLineChange_DoesNotReClearChangedColumns()
 	{
 		var rows = BuildRows(10);
-		var tracker = new ExecutionHighlightTracker(rows);
+		var tracker = new ExecutionHighlightTracker(() => rows.Count, i => rows[i]);
 
 		tracker.OnExecutionStateChanged(BuildActive(0));
 

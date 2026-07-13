@@ -10,4 +10,9 @@ public sealed class CanonicalRecipeGridSurfaceContractTests : RecipeGridSurfaceC
 	{
 		return fixture.CreateCanonicalSurface();
 	}
+
+	protected override RecipeRowViewModel RowAt(int index)
+	{
+		return ((CanonicalRecipeGridSurface)Surface).RecipeRows[index];
+	}
 }

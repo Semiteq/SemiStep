@@ -81,6 +81,23 @@ everything except item construction:
 - one `ExecutionHighlightTracker` per surface, constructed over `Items.Count` /
   `RowOf(Items[i])`.
 
+**Post-mutation tail refresh.** The tail treats its two projections differently:
+
+- **Start-times refresh incrementally**, from a `refreshFrom` index derived from the
+  `MutationSignal` down to `Items.Count`. `start-time[i]` is forward-prefix-determined — it depends
+  only on steps `0..i-1` — so a mutation at index `k` cannot change any start-time before `k`.
+  Refreshing only from `refreshFrom` is behavior-preserving and makes an append `O(1)` instead of
+  `O(rows)`, which removes the per-append string-formatting churn that previously scaled with recipe
+  length.
+- **Loop-depths refresh with a full `0..Count` scan** on every mutation. Loop-depth is a
+  matched-bracket property, so a committed marker mutation (e.g. deleting an `EndForLoop`) can change
+  the depth of rows **above** the mutation index; an incremental depth refresh would leave those rows
+  stale. The scan allocates nothing (a `Math.Min` and a guarded `int` setter), so the full pass is
+  free.
+- **`Initialize()` seeds the baseline** by running the tail from index 0 after `FullRebuild`, so the
+  first post-init mutation's incremental start-time refresh has a correct starting point (rows before
+  `refreshFrom` are already populated rather than left `null`).
+
 Two abstract hooks carry all the orientation-specific knowledge:
 
 - `RowOf(TItem)` — maps an item to its `RecipeRowViewModel` (identity for canonical, `.Row`

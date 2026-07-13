@@ -103,6 +103,36 @@ public sealed class TransposedNavigationTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	public void Down_FromColumnContainer_EntersFirstFocusableCell()
+	{
+		// Reproduce the container fallback: Right from step 0's target combo lands on step 1's
+		// container because the neighbour row's combo is not focusable there.
+		_fixture.Coordinator.ChangeStepAction(0, RecipeTestDriver.WithGroupActionId);
+		var stepListBox = ShowView();
+		FindComboBox(stepListBox, 0, RecipeTestDriver.TargetColumn).Focus();
+		PressKey(PhysicalKey.ArrowRight);
+		FocusedElement().Should().BeSameAs(stepListBox.ContainerFromIndex(1));
+
+		PressKey(PhysicalKey.ArrowDown);
+
+		FocusedElement().Should().BeSameAs(
+			FindComboBox(stepListBox, 1, ActionColumnKey),
+			"Down from a focused column container must enter the column's first focusable cell");
+	}
+
+	[AvaloniaFact]
+	public void Right_FromColumnContainer_MovesToNextColumn()
+	{
+		var stepListBox = ShowView();
+		((ListBoxItem)stepListBox.ContainerFromIndex(0)!).Focus();
+
+		PressKey(PhysicalKey.ArrowRight);
+
+		_surface.SelectedStepIndex.Should().Be(1);
+		FocusedElement().Should().BeSameAs(FindComboBox(stepListBox, 1, ActionColumnKey));
+	}
+
+	[AvaloniaFact]
 	public void Down_FocusesNextParameterCell_InSameColumn()
 	{
 		var stepListBox = ShowView();

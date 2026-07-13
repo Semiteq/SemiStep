@@ -39,6 +39,7 @@ internal sealed class TransposedGridNavigator(ListBox stepListBox)
 		if (TransposedGridCellLocator.ResolveCell(focused, stepListBox) is not { } cell
 			|| LocateCell(surface, cell) is not { } position)
 		{
+			HandleContainerNavigation(surface, focused, e);
 			return;
 		}
 
@@ -53,6 +54,37 @@ internal sealed class TransposedGridNavigator(ListBox stepListBox)
 		else
 		{
 			MoveWithinColumn(surface, position, e.Key == Key.Down ? 1 : -1);
+		}
+	}
+
+	// A column container holds focus after a horizontal move whose target row had no focusable
+	// editor; arrows must not dead-end there.
+	private void HandleContainerNavigation(TransposedRecipeGridSurface surface, Control focused, KeyEventArgs e)
+	{
+		if (focused.FindAncestorOfType<ListBoxItem>(includeSelf: true) is not { } container)
+		{
+			return;
+		}
+
+		var columnIndex = stepListBox.IndexFromContainer(container);
+		if (columnIndex < 0)
+		{
+			return;
+		}
+
+		e.Handled = true;
+
+		switch (e.Key)
+		{
+			case Key.Left or Key.Right:
+				MoveToNeighborColumn(surface, (columnIndex, 0), e.Key == Key.Right ? 1 : -1);
+				break;
+			case Key.Down:
+				MoveWithinColumn(surface, (columnIndex, -1), 1);
+				break;
+			case Key.Up:
+				MoveWithinColumn(surface, (columnIndex, surface.StepColumns[columnIndex].Cells.Count), -1);
+				break;
 		}
 	}
 

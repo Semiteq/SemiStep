@@ -18,7 +18,6 @@ namespace SemiStep.UI.RecipeGrid.Transposed;
 public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRecipeGridSurface>
 {
 	internal const string CellHeightResourceKey = "TransposedCellHeight";
-	internal const string HeaderSpacerHeightResourceKey = "TransposedHeaderSpacerHeight";
 	internal const string StepColumnWidthResourceKey = "TransposedStepColumnWidth";
 	internal const string MarkerSlotHeightResourceKey = "TransposedMarkerSlotHeight";
 
@@ -310,7 +309,6 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 	{
 		Resources[CellHeightResourceKey] = gridStyle.RowHeight;
 		Resources[MarkerSlotHeightResourceKey] = CurrentStepMarkerHeight;
-		Resources[HeaderSpacerHeightResourceKey] = gridStyle.RowHeight + CurrentStepMarkerHeight;
 		Resources[StepColumnWidthResourceKey] =
 			Math.Max(MinimumStepColumnWidth, gridStyle.CellFontSize * FontSizeToColumnWidthFactor);
 

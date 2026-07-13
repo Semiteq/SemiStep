@@ -20,10 +20,14 @@
                       VerticalScrollBarVisibility="Auto">
             <DockPanel>
 
-                <!-- Frozen-by-construction parameter-name column: mirrors canonical column headers. -->
+                <!-- Frozen-by-construction parameter-name column: mirrors canonical column headers.
+                     The header/marker split mirrors the step-column template so the header underline
+                     and the marker strip stay continuous across the frozen seam. -->
                 <StackPanel DockPanel.Dock="Left">
                     <Border Classes="transposed-header-spacer"
-                            Height="{DynamicResource TransposedHeaderSpacerHeight}" />
+                            Height="{DynamicResource TransposedCellHeight}" />
+                    <Border Classes="transposed-marker-slot"
+                            Height="{DynamicResource TransposedMarkerSlotHeight}" />
                     <ItemsControl x:Name="ParameterNameColumn"
                                   ItemsSource="{Binding ParameterDescriptors}">
                         <ItemsControl.ItemTemplate>

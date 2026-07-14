@@ -127,6 +127,12 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	public void Initialize()
 	{
 		FullRebuild(_coordinator.CurrentRecipe);
+
+		// FullRebuild installs fresh rows carrying StepStartTime=null and ForDepth=0. Run the tail
+		// once from index 0 to establish the incremental start-time baseline; otherwise the first
+		// post-init mutation would refresh only from its own index and leave earlier rows blank.
+		RefreshStepStartTimes(0);
+		RefreshLoopDepths();
 	}
 
 	public void OnMutation(MutationSignal signal)
@@ -190,8 +196,30 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		}
 
 		ReconcileSelectionWithItems();
-		RefreshStepStartTimes();
+		RefreshStepStartTimes(RefreshStartIndexFor(signal));
 		RefreshLoopDepths();
+	}
+
+	// Drives the incremental start-time refresh only. start-time[i] is forward-prefix-determined
+	// (computed from steps 0..i-1), so a mutation at index k cannot change any start-time before k;
+	// refreshing from this index down is behavior-preserving. Loop-depth is a matched-bracket
+	// property that a committed marker mutation can change for rows before k (deleting an EndForLoop
+	// unnests its opening marker above it), so RefreshLoopDepths stays a full 0..Count scan and is
+	// never driven by this index.
+	private static int RefreshStartIndexFor(MutationSignal signal)
+	{
+		var fromIndex = signal switch
+		{
+			MutationSignal.PropertyUpdated(var stepIndex) => stepIndex,
+			MutationSignal.StepAppended(var index) => index,
+			MutationSignal.StepsInserted(var startIndex, _) => startIndex,
+			MutationSignal.StepRemoved(var removedIndex) => removedIndex,
+			MutationSignal.StepsRemoved(var removedIndices) => removedIndices.Length > 0 ? removedIndices.Min() : 0,
+			MutationSignal.StepActionChanged(var stepIndex) => stepIndex,
+			_ => 0
+		};
+
+		return Math.Max(fromIndex, 0);
 	}
 
 	private void ReconcileSelectionWithItems()
@@ -483,10 +511,10 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		}
 	}
 
-	private void RefreshStepStartTimes()
+	private void RefreshStepStartTimes(int fromIndex)
 	{
 		var stepStartTimes = _coordinator.Snapshot.StepStartTimes;
-		for (var i = 0; i < Items.Count; i++)
+		for (var i = fromIndex; i < Items.Count; i++)
 		{
 			string formattedTime;
 			if (stepStartTimes.TryGetValue(i, out var time))

@@ -74,7 +74,7 @@ public sealed class RecipeRowViewModel(
 
 	public bool IsForDepth2 => ForDepth == 2;
 
-	// `>= 3` is defense-in-depth: ForDepth is capped at 3 upstream in RefreshRowLoopDepths,
+	// `>= 3` is defense-in-depth: ForDepth is capped at 3 upstream in RefreshLoopDepths,
 	// but using `>=` guards against future UI cap drift so deeper nestings still render.
 	public bool IsForDepth3 => ForDepth >= 3;
 

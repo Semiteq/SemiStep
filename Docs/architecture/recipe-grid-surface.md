@@ -36,14 +36,17 @@ The pieces:
 - `TransposedRecipeGridView` (`ReactiveUserControl<TransposedRecipeGridSurface>`) — a `ListBox`
   of step-columns over a horizontal `VirtualizingStackPanel` (no DataGrid): realized element
   count is viewport-bound regardless of recipe length, and whole-column selection comes from
-  `SelectionMode="Multiple"` natively. Cell templates are built in code by
-  `TransposedCellTemplateFactory` (a per-cell format kind is baked into each editing converter);
+  `SelectionMode="Multiple"` natively. Realized columns do not render cells through a
+  `FuncDataTemplate`; a view-owned pool hands each realized container a
+  `TransposedColumnCellsPresenter` whose fixed per-descriptor slots rebind on recycle, and
+  `TransposedCellTemplateFactory.CreateEditor` builds each slot's lazy display/editor cell (see
+  "Allocation characteristics" for the pool, the rebind-on-recycle reuse, and the lazy editor swap);
   `TransposedStepColumnClassBinder` stamps execution classes on item containers via
   `ContainerPrepared`/`ContainerClearing`. A tunnel pointer-pressed hook implements the
   select-then-edit press model (editors would otherwise swallow the bubbling press): a plain
   left click on a not-yet-selected column selects it and focuses the item container — keeping
-  Delete/Ctrl+C live — while a second click on the selected column falls through to the
-  always-live editor; Ctrl/Shift clicks toggle/extend the multi-selection; right/middle clicks
+  Delete/Ctrl+C live — while a second click on the selected column enters edit, building the
+  lazy editor for that cell; Ctrl/Shift clicks toggle/extend the multi-selection; right/middle clicks
   never change selection. A tunnel key-down handler implements the transposed arrow-key
   semantic (Right = next step, Down = next parameter), Enter commits by defocusing, and Escape
   reverts the pending text before defocusing.
@@ -234,8 +237,9 @@ Editing state is a view concern and is not on the interface. The chain:
 
 1. `CanonicalRecipeGridView.IsEditing` — set true in `BeginningEdit` (unless cancelled for an
    inapplicable column), false in `CellEditEnded`, reset to false on view deactivation.
-   `TransposedRecipeGridView.IsEditing` — true while an always-live cell editor holds keyboard
-   focus (the transposed view has no DataGrid edit lifecycle; focus is the editing signal).
+   `TransposedRecipeGridView.IsEditing` — true while the `TransposedTextEditCoordinator` holds an
+   active edit (its lazily-built editor focused). The transposed view has no DataGrid edit lifecycle;
+   the coordinator's single active edit is the editing signal.
 2. `RecipeGridHost.IsEditing` — forwards to whichever view is currently hosted as `Content`.
 3. `MainWindow.OnKeyDown` — suppresses the Delete/Ctrl+C/X/V global shortcuts while
    `RecipeGridHost.IsEditing` is true, so typing inside a cell editor never deletes or
@@ -263,14 +267,68 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   the per-cell style-activator / dynamic-resource machinery those rules multiplied. The
   `TextElement.Foreground` setters stay as style setters (background stripped out), so foreground
   precedence is unchanged.
-- **Lighter cell VMs and recyclable templates.** Transposed cell view models are plain
-  `INotifyPropertyChanged`, not `ReactiveObject` (nothing observes a cell VM reactively);
-  `StepColumnViewModel.Cells` materialize lazily, so a column never scrolled to or keyboard-traversed
-  never builds its cell VMs; and the per-action metadata dictionaries (Units / FormatKinds /
-  GroupItems) are cached per `ActionDefinition` instead of rebuilt per row. The text and read-only
-  cell templates are `supportsRecycling: true`: the text editor displays through a OneWay converter
-  binding and commits in the focus/key handlers to a cell reference captured on `GotFocus` (a
-  stale-guard), so a still-focused recycled `TextBox` cannot write into the cell it was rebound onto.
+- **Lighter cell VMs.** Transposed cell view models are plain `INotifyPropertyChanged`, not
+  `ReactiveObject` (nothing observes a cell VM reactively); `StepColumnViewModel.Cells` materialize
+  lazily, so a column never scrolled to or keyboard-traversed never builds its cell VMs; and the
+  per-action metadata dictionaries (Units / FormatKinds / GroupItems) are cached per
+  `ActionDefinition` instead of rebuilt per row.
+
+- **Container recycling reuse (the source of canonical parity).** The dominant transient cost is
+  per-realized-column, not retained heap (six gcdumps confirmed the heap plateaus). The canonical
+  `DataGrid` is cheap on scroll not because its editors are lazy — its combo cells are always live —
+  but because it RECYCLES realized rows: a recycled row rebinds its subtree to the new data instead of
+  rebuilding it. The transposed grid previously defeated its own `supportsRecycling:true`: the inner
+  per-column `ItemsControl ItemsSource="{Binding Cells}"` received a fresh `Cells` list on every
+  container recycle and rebuilt every cell subtree from scratch, so a viewport jump that recycled
+  ~20-25 columns paid ~20-25 full column builds in one dispatcher frame. The fix rebinds instead of
+  rebuilds, mirroring the DataGrid.
+
+  A fixed-slot-in-`ItemTemplate` design (bind slot `i` to `Cells[i]` inside the container template)
+  cannot achieve this in Avalonia: `VirtualizingStackPanel` detaches a recycled container
+  (`RemoveInternalChild`), and on reattach `ContentPresenter` resets its recycling key, which forces a
+  full `ItemTemplate` rebuild (verified by decompiling `Avalonia.Base`/`Avalonia.Controls`). Reuse is
+  instead achieved with a **view-owned pool of direct-editor presenters** that live outside the
+  virtualization lifecycle: `TransposedColumnCellsPool` hands a `TransposedColumnCellsPresenter` (a
+  `StackPanel` subclass building one cell `Border` slot per `ParameterDescriptor`, no per-cell
+  `ContentControl`) to each realized container through `TransposedColumnCellsHost` (a `Decorator` in
+  the `ItemTemplate`). Because the presenters are pooled by the view and only injected into containers,
+  they survive detach/reattach; the `ListBox` still virtualizes. Each slot binds its `DataContext` to
+  `Cells[i]` via `CellSlotConverter` (index passed as `ConverterParameter`), so a container recycle
+  rebinds every slot from `columnA.Cells[i]` to `columnB.Cells[i]` and the subtree persists. Cell
+  height and the frozen left name-column alignment are unchanged; the execution-class binder and
+  current-step marker still operate at `ListBoxItem`/row level. Slots are only built for
+  actually-realized columns, so the never-realized-column `Lazy<>` optimization stays intact.
+
+- **Lazy display/editor swap for both cell kinds.** With reuse in place, live editors also leave the
+  jump hot path, and the remaining fresh-container weight is cut by rendering a display `TextBlock` by
+  default and building the `TextBox`/`ComboBox` editor only on edit entry. `TransposedLazyCellPresenter`
+  is the shared base; `TransposedTextCellPresenter` (display via `PropertyTextEditingMultiConverter`)
+  and `TransposedComboCellPresenter` (display via `ComboBoxDisplayTextConverter`, showing the selected
+  item's text) each build their editor lazily and swap back to the display on commit/blur. A single
+  view-level `TransposedTextEditCoordinator` owns the one active edit across both kinds — the
+  display→editor swap, focus, commit, and revert — so `IsEditing`/`GetActiveEditor`/`CloseActiveEditor`
+  and exit gating have one definition and one reset point on recycle. Read-only and inapplicable cells
+  stay display-only. The select-then-edit gesture is preserved: the first press selects the column
+  without editing, and a second press on the sole selected column (or F2 / a printable keystroke on a
+  focused display visual) enters edit; `FindFocusableEditor` targets the display presenters so arrow
+  navigation traverses cells and enters edit on demand. When no cell is in edit a realized column holds
+  only display `TextBlock`s — zero live `TextBox`/`ComboBox`.
+
+- **Commit-before-rebind hook.** Once editors persist across a rebind, the old commit path (editor
+  destroyed → `LostFocus` → commit) no longer fires reliably: a focused persistent editor whose
+  container rebinds in place raises no `LostFocus`, and the OneWay display binding would overwrite the
+  pending text — silent edit loss. An explicit commit runs before the slots rebind:
+  `TransposedColumnCellsPresenter.CommitActiveEditor` (invoked from its `OnDataContextBeginUpdate`,
+  which Avalonia calls top-down and stops at children whose `DataContext` is locally set, so it fires
+  while the editor still holds its pending text and captured cell) and from the host on recycle-out.
+  The `_editingCellProperty`/captured-cell stale-guard remains the backstop so a still-focused editor
+  cannot write into the cell it was rebound onto.
+
+- **Measured result.** On the viewport-jump metric (one `ScrollIntoView(last)` frame after a
+  round-trip, so it exercises container recycling), transposed bytes per realized column dropped from
+  ~14.5x the canonical recycled-row cost to ~1.03x (WideParams, 36 cells/column) and from ~2.3x to
+  ~0.69x (WithGroups, 5 cells/column); gen0/add fell from ~2.58 to ~0.17-0.25 (WideParams) and from
+  ~0.42 to ~0.00-0.08 (WithGroups). With no cell in edit the live-editor census is 0.
 
 ## Context menu placement
 

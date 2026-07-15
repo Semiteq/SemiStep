@@ -71,39 +71,11 @@
                                             Background="{DynamicResource CurrentStepMarkerBrush}"
                                             IsVisible="{Binding Row.IsCurrentStep}" />
                                 </Border>
-                                <ItemsControl ItemsSource="{Binding Cells}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="transposed:ParameterCellViewModel">
-                                            <Border Classes="transposed-cell"
-                                                    Classes.read-only-cell="{Binding Descriptor.IsReadOnlyParameter}"
-                                                    Classes.inapplicable="{Binding !IsApplicable}"
-                                                    Classes.changed="{Binding IsChanged}"
-                                                    Height="{DynamicResource TransposedCellHeight}">
-                                                <!-- Full cell-background state matrix (depth / past /
-                                                     read-only / inapplicable / changed / selection)
-                                                     resolved in one converter; a local Background value
-                                                     that outranks any style setter. -->
-                                                <Border.Background>
-                                                    <MultiBinding Converter="{x:Static transposed:TransposedCellBackgroundConverter.Instance}">
-                                                        <Binding RelativeSource="{RelativeSource Self}" />
-                                                        <Binding Path="Row.ForDepth" />
-                                                        <Binding Path="Row.IsPastStep" />
-                                                        <Binding Path="Descriptor.IsReadOnlyParameter" />
-                                                        <Binding Path="IsApplicable" />
-                                                        <Binding Path="IsChanged" />
-                                                        <Binding Path="IsSelected"
-                                                                 RelativeSource="{RelativeSource AncestorType=ListBoxItem}" />
-                                                    </MultiBinding>
-                                                </Border.Background>
-                                                <!-- Editor template resolved from the view's DataTemplates
-                                                     (TransposedCellTemplateFactory) by cell-VM kind. -->
-                                                <ContentControl Content="{Binding}"
-                                                                HorizontalContentAlignment="Stretch"
-                                                                VerticalContentAlignment="Center" />
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <!-- Hosts a pooled cell presenter (built once, rebound on recycle) so a
+                                     recycled column reuses its cell subtrees instead of rebuilding them.
+                                     The heavy cells live in the view-owned pool, outside this
+                                     rebuilt-on-recycle content (see TransposedColumnCellsHost). -->
+                                <transposed:TransposedColumnCellsHost />
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>

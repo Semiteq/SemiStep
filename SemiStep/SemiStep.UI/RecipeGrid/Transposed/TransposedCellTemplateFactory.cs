@@ -3,7 +3,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
 using Avalonia.Input;
@@ -16,15 +15,11 @@ using SemiStep.Core.Recipes;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-/// <summary>
-/// Builds the per-kind cell editor templates for the transposed grid, mirroring the canonical
-/// TextCellFactory / ComboBoxCellFactory: always-live editors dispatched over the cell-VM type,
-/// display and parse-back through the shared time/unit converters, input gated on applicability,
-/// column-level read-only, and the surface read-only state.
-/// </summary>
-internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface surface)
+internal sealed class TransposedCellTemplateFactory(
+	TransposedRecipeGridSurface surface,
+	TransposedTextEditCoordinator editCoordinator)
 {
-	private static readonly FuncValueConverter<bool, bool> _negateConverter = new(value => !value);
+	internal static readonly FuncValueConverter<bool, bool> NegateConverter = new(value => !value);
 	private static readonly FuncValueConverter<int?, int> _maxLengthConverter = new(maxLength => maxLength ?? 0);
 	private static readonly PropertyTimeMultiConverter _displayConverter = new();
 
@@ -35,14 +30,97 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		AvaloniaProperty.RegisterAttached<TransposedCellTemplateFactory, TextBox, PropertyTextCellViewModel?>(
 			"EditingCell");
 
-	public IReadOnlyList<IDataTemplate> CreateTemplates()
+	public Control CreateEditor(ParameterCellViewModel cell)
 	{
-		return
-		[
-			CreateComboBoxTemplate(),
-			CreatePropertyTextTemplate(),
-			CreateReadOnlyTemplate(),
-		];
+		return cell switch
+		{
+			ComboBoxCellViewModel => CreateComboCellPresenter(),
+			ReadOnlyCellViewModel readOnlyCell => CreateReadOnlyTextBlock(readOnlyCell),
+			_ => CreateTextCellPresenter(),
+		};
+	}
+
+	private Control CreateComboCellPresenter()
+	{
+		var presenter = new TransposedComboCellPresenter(
+			editCoordinator,
+			CreateComboDisplay(),
+			CreateComboBox);
+		presenter.Bind(InputElement.IsHitTestVisibleProperty, CreateInteractiveBinding());
+		presenter.Bind(InputElement.FocusableProperty, CreateInteractiveBinding());
+		presenter.Bind(InputElement.IsEnabledProperty, CreateEditableBinding());
+
+		return presenter;
+	}
+
+	private Control CreateComboDisplay()
+	{
+		var textBlock = CreateDisplayTextBlock(stretch: true);
+
+		textBlock.Bind(TextBlock.TextProperty, new MultiBinding
+		{
+			Mode = BindingMode.OneWay,
+			Converter = ComboBoxDisplayTextConverter.Instance,
+			Bindings =
+			{
+				new Binding(nameof(ParameterCellViewModel.Value)) { Mode = BindingMode.OneWay },
+				new Binding(nameof(ComboBoxCellViewModel.Items)) { Mode = BindingMode.OneWay },
+			},
+		});
+
+		return textBlock;
+	}
+
+	private Control CreateTextCellPresenter()
+	{
+		var presenter = new TransposedTextCellPresenter(
+			editCoordinator,
+			CreateTextDisplay(),
+			CreateTextBoxEditor);
+		presenter.Bind(InputElement.IsEnabledProperty, CreateTextBoxEditableBinding());
+
+		return presenter;
+	}
+
+	private Control CreateTextDisplay()
+	{
+		var textBlock = CreateDisplayTextBlock(stretch: true);
+
+		textBlock.Bind(TextBlock.TextProperty, new MultiBinding
+		{
+			Mode = BindingMode.OneWay,
+			Converter = PropertyTextEditingMultiConverter.Instance,
+			Bindings =
+			{
+				new Binding(nameof(ParameterCellViewModel.Value)) { Mode = BindingMode.OneWay },
+				new Binding(nameof(ParameterCellViewModel.FormatKind)) { Mode = BindingMode.OneWay },
+			},
+		});
+
+		return textBlock;
+	}
+
+	private TextBlock CreateDisplayTextBlock(bool stretch)
+	{
+		var gridStyle = surface.GridStyle;
+		var textBlock = new TextBlock
+		{
+			VerticalAlignment = VerticalAlignment.Center,
+			Padding = new Thickness(
+				gridStyle.CellPaddingLeft,
+				gridStyle.CellPaddingTop,
+				gridStyle.CellPaddingRight,
+				gridStyle.CellPaddingBottom),
+			TextAlignment = TextAlignment.Center,
+		};
+		if (stretch)
+		{
+			textBlock.HorizontalAlignment = HorizontalAlignment.Stretch;
+		}
+
+		GridFontApplier.ApplyCellFont(textBlock, gridStyle);
+
+		return textBlock;
 	}
 
 	internal static void CommitByDefocusing(Control editor)
@@ -55,14 +133,7 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		TopLevel.GetTopLevel(editor)?.FocusManager?.Focus(null);
 	}
 
-	private IDataTemplate CreateComboBoxTemplate()
-	{
-		return new FuncDataTemplate<ComboBoxCellViewModel>((_, _) => CreateComboBox(), supportsRecycling: true);
-	}
-
-	// FontSize explicit: the Semi ComboBox selection box does not inherit the grid font (parity
-	// with the canonical ComboBoxCellFactory). SelectedItem resolves via a OneWay MultiBinding;
-	// writeback is owned by SelectionChanged, which no-ops when the value is unchanged.
+	// Semi ComboBox selection box does not inherit the grid font, so ApplyCellFont is applied explicitly.
 	private ComboBox CreateComboBox()
 	{
 		var itemsPath = nameof(ComboBoxCellViewModel.Items);
@@ -97,6 +168,8 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		return comboBox;
 	}
 
+	// The initial SelectionChanged on a lazy-built combo assigns the value it already holds; Value's setter
+	// ignores an unchanged value (RecipeRowViewModel.SetPropertyValue no-ops), so it does not dirty the recipe.
 	private static void OnComboBoxSelectionChanged(object? sender, SelectionChangedEventArgs e)
 	{
 		if (sender is not ComboBox comboBox
@@ -107,17 +180,6 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		}
 
 		cell.Value = selected.Id.ToString(CultureInfo.InvariantCulture);
-	}
-
-	// supportsRecycling:true — the TextBox carries no per-cell baked state: display is a OneWay
-	// MultiBinding through a shared stateless converter, MaxLength is bound, and the edit commit reads
-	// its target from the cell captured on GotFocus (not a closure), so a recycled container safely
-	// rebinds onto the next cell instead of rebuilding the whole subtree.
-	private IDataTemplate CreatePropertyTextTemplate()
-	{
-		return new FuncDataTemplate<PropertyTextCellViewModel>(
-			(cell, _) => cell is null ? new TextBlock() : CreateTextBoxEditor(),
-			supportsRecycling: true);
 	}
 
 	private Control CreateTextBoxEditor()
@@ -142,16 +204,14 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		};
 		GridFontApplier.ApplyCellFont(textBox, gridStyle);
 
-		// Bound, not baked: a null MaxLength maps to 0 (Semi's "unlimited"), matching the old
-		// leave-MaxLength-unset behavior while still tracking the recycled cell's descriptor.
+		// null MaxLength maps to 0 (Semi's "unlimited").
 		textBox.Bind(TextBox.MaxLengthProperty, new Binding(nameof(PropertyTextCellViewModel.MaxLength))
 		{
 			Mode = BindingMode.OneWay,
 			Converter = _maxLengthConverter,
 		});
 
-		// OneWay display only (a MultiBinding cannot ConvertBack). FormatKind is bound so the shared
-		// converter formats each recycled cell correctly; the commit is owned by the handlers below.
+		// OneWay only — a MultiBinding cannot ConvertBack; commit is owned by the handlers below.
 		textBox.Bind(TextBox.TextProperty, new MultiBinding
 		{
 			Mode = BindingMode.OneWay,
@@ -163,9 +223,7 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 			},
 		});
 
-		// No read-only-parameter leg here: the cell factory routes read-only descriptors to
-		// ReadOnlyCellViewModel before the property-text kind, so a TextBox cell is never
-		// column-level read-only.
+		// A TextBox cell is never column-level read-only (read-only descriptors route to ReadOnlyCellViewModel), so no read-only leg.
 		textBox.Bind(InputElement.IsEnabledProperty, CreateTextBoxEditableBinding());
 
 		textBox.GotFocus += (sender, _) => OnEditorGotFocus(sender);
@@ -197,10 +255,7 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		}
 	}
 
-	// Enter commits an always-live editor by moving focus off it; the LostFocus handler parses and
-	// pushes the pending text (canonical parity: Enter ends the cell edit). Escape overwrites the
-	// typed-but-uncommitted text with the captured cell's value before defocusing (canonical parity:
-	// Escape cancels the cell edit) — the ensuing commit re-parses that reverted text to a no-op write.
+	// Enter commits by defocusing; Escape reverts the TextBox to the captured value first so the ensuing commit re-parses to a no-op.
 	private static void OnEditorKeyDown(object? sender, KeyEventArgs e)
 	{
 		if (sender is not TextBox textBox || e.Key is not (Key.Enter or Key.Escape))
@@ -218,14 +273,8 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		e.Handled = true;
 	}
 
-	// Commit writes ONLY to the cell captured on GotFocus, never the current DataContext, so a
-	// recycled-out editor commits its edit to the cell the user was editing and a recycled-in editor
-	// never receives a stale write. The display is snapped back to the model value only while the
-	// editor still shows the captured cell — a rejected, read-only-dropped, or unchanged write leaves
-	// the source untouched, so the OneWay binding would otherwise keep showing the never-committed
-	// text; if the editor was recycled onto another cell, its binding already shows that cell and must
-	// not be overwritten.
-	private static void CommitEditor(TextBox textBox)
+	// Commit writes only to the captured cell; snap the display back only while the editor still shows it, else it was recycled onto another cell.
+	internal static void CommitEditor(TextBox textBox)
 	{
 		if (textBox.GetValue(_editingCellProperty) is not { } cell)
 		{
@@ -244,35 +293,11 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		}
 	}
 
-	// supportsRecycling:true — the read-only TextBlock holds no per-cell baked state: both the
-	// step-start-time and the display-converter legs are OneWay bindings. The step-start-time vs
-	// display split keys off the descriptor's ColumnType, which is invariant per recycled position
-	// (every column's cell at a given row shares one parameter descriptor), so the chosen leg stays
-	// correct across recycling.
-	private IDataTemplate CreateReadOnlyTemplate()
-	{
-		return new FuncDataTemplate<ReadOnlyCellViewModel>(
-			(cell, _) => cell is null ? new TextBlock() : CreateReadOnlyTextBlock(cell),
-			supportsRecycling: true);
-	}
-
 	private Control CreateReadOnlyTextBlock(ReadOnlyCellViewModel cell)
 	{
-		var gridStyle = surface.GridStyle;
-		var textBlock = new TextBlock
-		{
-			VerticalAlignment = VerticalAlignment.Center,
-			Padding = new Thickness(
-				gridStyle.CellPaddingLeft,
-				gridStyle.CellPaddingTop,
-				gridStyle.CellPaddingRight,
-				gridStyle.CellPaddingBottom),
-			TextAlignment = TextAlignment.Center,
-		};
-		GridFontApplier.ApplyCellFont(textBlock, gridStyle);
+		var textBlock = CreateDisplayTextBlock(stretch: false);
 
-		// Step start time arrives pre-formatted (HH:MM:SS + units) from the surface refresh tail,
-		// so it binds directly; other read-only cells format through the shared display converter.
+		// Step start time arrives pre-formatted from the surface refresh, so it binds directly.
 		if (ColumnTypes.IsStepStartTimeColumn(cell.Descriptor.ColumnType))
 		{
 			textBlock.Bind(TextBlock.TextProperty, new Binding(nameof(ParameterCellViewModel.Value))
@@ -297,9 +322,6 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		return textBlock;
 	}
 
-	// Canonical ApplyInputBlocking parity: a column-level read-only combo is permanently
-	// non-hit-testable and non-focusable; otherwise both follow per-cell applicability.
-	// IsEnabled additionally tracks the surface read-only state.
 	private void ApplyInputBlocking(ComboBox comboBox)
 	{
 		comboBox.Bind(InputElement.IsHitTestVisibleProperty, CreateInteractiveBinding());
@@ -352,7 +374,7 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		return new Binding(nameof(TransposedRecipeGridSurface.IsReadOnly))
 		{
 			Source = surface,
-			Converter = _negateConverter,
+			Converter = NegateConverter,
 		};
 	}
 
@@ -361,6 +383,6 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		var descriptorReadOnlyPath =
 			$"{nameof(ParameterCellViewModel.Descriptor)}.{nameof(ParameterDescriptor.IsReadOnlyParameter)}";
 
-		return new Binding(descriptorReadOnlyPath) { Converter = _negateConverter };
+		return new Binding(descriptorReadOnlyPath) { Converter = NegateConverter };
 	}
 }

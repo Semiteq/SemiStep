@@ -150,12 +150,16 @@ public sealed class RecipeGridHostTests : IAsyncLifetime
 
 		host.IsEditing.Should().BeFalse();
 
+		// Property-text cells are lazy: focus the display presenter and press F2 so the coordinator builds
+		// and focuses the editor. Host IsEditing forwards the view's coordinator-driven active-edit state.
 		var stepListBox = host.GetVisualDescendants().OfType<ListBox>().Single();
-		var editor = stepListBox.GetVisualDescendants().OfType<TextBox>().First(textBox =>
-			textBox.DataContext is ParameterCellViewModel cell
+		var presenter = stepListBox.GetVisualDescendants().OfType<TransposedTextCellPresenter>().First(candidate =>
+			candidate.DataContext is ParameterCellViewModel cell
 			&& cell.Descriptor.ParameterKey == RecipeTestDriver.StepDurationColumn
-			&& textBox.IsEnabled);
-		editor.Focus().Should().BeTrue();
+			&& candidate.IsEnabled);
+		presenter.Focus();
+		_window!.KeyPressQwerty(PhysicalKey.F2, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
 
 		host.IsEditing.Should().BeTrue();
 	}

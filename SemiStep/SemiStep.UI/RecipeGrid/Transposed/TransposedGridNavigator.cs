@@ -5,9 +5,6 @@ using Avalonia.VisualTree;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-// Operator mental model: Right = next step (column), Down = next parameter (cell below).
-// Keys inside an open ComboBox dropdown and caret movement inside a focused TextBox keep
-// their native meaning.
 internal sealed class TransposedGridNavigator(ListBox stepListBox)
 {
 	public void HandleTunnelKeyDown(TransposedRecipeGridSurface? surface, KeyEventArgs e)
@@ -125,7 +122,7 @@ internal sealed class TransposedGridNavigator(ListBox stepListBox)
 		stepListBox.ScrollIntoView(targetColumnIndex);
 		stepListBox.UpdateLayout();
 
-		var focusTarget = FindFocusableEditor(surface, targetColumnIndex, position.ParameterIndex)
+		var focusTarget = FindFocusableCellPresenter(surface, targetColumnIndex, position.ParameterIndex)
 			?? stepListBox.ContainerFromIndex(targetColumnIndex);
 		focusTarget?.Focus();
 	}
@@ -141,15 +138,19 @@ internal sealed class TransposedGridNavigator(ListBox stepListBox)
 			parameterIndex >= 0 && parameterIndex < cellCount;
 			parameterIndex += direction)
 		{
-			if (FindFocusableEditor(surface, position.ColumnIndex, parameterIndex) is { } editor)
+			if (FindFocusableCellPresenter(surface, position.ColumnIndex, parameterIndex) is { } presenter)
 			{
-				editor.Focus();
+				presenter.Focus();
 				return;
 			}
 		}
 	}
 
-	private Control? FindFocusableEditor(TransposedRecipeGridSurface surface, int columnIndex, int parameterIndex)
+	// Navigation focuses the lazy display presenter, not the editor (editor built only on edit entry).
+	private Control? FindFocusableCellPresenter(
+		TransposedRecipeGridSurface surface,
+		int columnIndex,
+		int parameterIndex)
 	{
 		if (stepListBox.ContainerFromIndex(columnIndex) is not ListBoxItem container)
 		{
@@ -159,10 +160,9 @@ internal sealed class TransposedGridNavigator(ListBox stepListBox)
 		var cell = surface.StepColumns[columnIndex].Cells[parameterIndex];
 
 		return container.GetVisualDescendants()
-			.OfType<Control>()
-			.FirstOrDefault(control => control is TextBox or ComboBox
-				&& ReferenceEquals(control.DataContext, cell)
-				&& control.Focusable
-				&& control.IsEffectivelyEnabled);
+			.OfType<TransposedLazyCellPresenter>()
+			.FirstOrDefault(presenter => ReferenceEquals(presenter.DataContext, cell)
+				&& presenter.Focusable
+				&& presenter.IsEffectivelyEnabled);
 	}
 }

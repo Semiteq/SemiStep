@@ -6,8 +6,6 @@ namespace SemiStep.UI.RecipeGrid.Transposed;
 
 internal static class TransposedGridCellLocator
 {
-	// Walks the visual tree upward from the press/focus source until a cell's DataContext is
-	// found or the step ListBox itself is reached (header/marker presses resolve no cell).
 	public static ParameterCellViewModel? ResolveCell(Visual source, ListBox stepListBox)
 	{
 		var current = source;

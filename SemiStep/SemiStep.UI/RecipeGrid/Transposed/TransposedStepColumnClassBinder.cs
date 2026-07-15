@@ -4,10 +4,7 @@ using Avalonia.Data;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-// Peer of RecipeRowExecutionClassBinder for ListBoxItem step-column containers. Unlike DataGrid
-// rows (whose value store owns the BindClass lifecycle), ListBox containers are recycled through
-// ContainerPrepared/ContainerClearing, so bindings are tracked per container and torn down on
-// clearing to avoid stacking duplicate class bindings on a recycled container.
+// ListBox containers are recycled, so class bindings are tracked per container and torn down on clearing to avoid stacking duplicates.
 internal sealed class TransposedStepColumnClassBinder
 {
 	private static readonly IReadOnlyList<(string ClassName, string BindingPath)> _classBindings =

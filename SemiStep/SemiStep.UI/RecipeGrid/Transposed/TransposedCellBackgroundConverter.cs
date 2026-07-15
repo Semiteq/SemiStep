@@ -9,16 +9,12 @@ using SemiStep.UI.Styles;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-// Collapses the transposed cell's background state matrix into one binding, replacing the 29
-// background setter rules that previously lived in TransposedGridStyles.axaml. The
-// winning brush reproduces those rules' document-order, last-match-wins precedence exactly:
+// Last-match-wins precedence decoding ResolveBrushKey:
 //   selected            -> changed > inapplicable > read-only > plain selection tint
 //   else changed        -> the changed highlight (beats depth/read-only/inapplicable, loses to selection)
 //   else inapplicable   -> disabled palette, per loop depth + past-step
 //   else read-only      -> read-only palette, per loop depth + past-step
 //   else                -> execution depth/past tint (depth-0 idle is the plain grid background)
-// Brushes resolve through the target Border as a resource host, so the same visual-tree + application
-// lookup {DynamicResource} used still applies (works for both app- and window-scoped palette installs).
 internal sealed class TransposedCellBackgroundConverter : IMultiValueConverter
 {
 	public static readonly TransposedCellBackgroundConverter Instance = new();

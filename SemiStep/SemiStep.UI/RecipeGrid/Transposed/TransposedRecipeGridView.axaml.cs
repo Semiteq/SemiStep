@@ -5,7 +5,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 
 using ReactiveUI;
@@ -26,6 +25,7 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 	private const double FontSizeToColumnWidthFactor = 8;
 
 	private readonly TransposedStepColumnClassBinder _stepColumnClassBinder = new();
+	private readonly TransposedTextEditCoordinator _editCoordinator = new();
 	private readonly TransposedGridNavigator _gridNavigator;
 	private readonly TransposedGridSelectionController _gridSelectionController;
 	private (RecipeRowViewModel Row, string ColumnKey)? _pendingChangedCell;
@@ -37,18 +37,19 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 		_gridNavigator = new TransposedGridNavigator(StepListBox);
 		_gridSelectionController = new TransposedGridSelectionController(StepListBox);
 
-		// Cell templates and style resources must be in place before the first layout pass
-		// realizes containers, and WhenActivated only fires on Loaded (after that pass) — so
-		// this subscription lives on the constructor, keyed off the DataContext-driven
-		// ViewModel property.
+		// The cell-presenter pool and style resources must be in place before the first layout pass
+		// realizes containers (each container's host borrows a presenter from the pool), and
+		// WhenActivated only fires on Loaded (after that pass) — so this subscription lives on the
+		// constructor, keyed off the DataContext-driven ViewModel property.
 		this.WhenAnyValue(x => x.ViewModel)
 			.Subscribe(surface =>
 			{
-				InstallCellTemplates(surface);
 				if (surface is not null)
 				{
 					ApplyGridStyle(surface.GridStyle);
 				}
+
+				BuildColumnCellsPool(surface);
 			});
 
 		this.WhenActivated(disposables =>
@@ -108,6 +109,8 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 	}
 
 	public bool IsEditing => GetActiveEditor() is not null;
+
+	internal TransposedColumnCellsPool? ColumnCellsPool { get; private set; }
 
 	private void OnContainerPrepared(object? sender, ContainerPreparedEventArgs e)
 	{
@@ -220,10 +223,49 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 		// canonical's CellPointerPressed.
 		if (e.GetCurrentPoint(StepListBox).Properties.IsLeftButtonPressed)
 		{
-			_gridSelectionController.HandleCellSelectionPress(ViewModel, pressedCell, e);
+			if (_gridSelectionController.HandleCellSelectionPress(ViewModel, pressedCell, e))
+			{
+				TryEnterEditFromPointer(source, pressedCell, e);
+			}
+		}
+		else
+		{
+			// A right/middle press over a cell must not reach the ListBoxItem's native selection (which
+			// would collapse a multi-selection). The lazy display TextBlock does not swallow it the way the
+			// always-live editor once did, so consume it here. The context menu opens off ContextRequested,
+			// which is independent of the handled state of this press.
+			e.Handled = true;
 		}
 
 		ResolveChangedCellClickAway(pressedCell);
+	}
+
+	// Select-then-edit under the lazy display: the selection controller reports a fall-through only on a
+	// second press of the already-single-selected column. That press builds and focuses the cell's editor
+	// (a TextBox for property-text, a ComboBox with its dropdown opened for a combo). A read-only /
+	// inapplicable cell's display is non-hit-testable, so the press never resolves to its presenter and
+	// falls through to plain column selection.
+	private void TryEnterEditFromPointer(
+		Visual source,
+		ParameterCellViewModel pressedCell,
+		PointerPressedEventArgs e)
+	{
+		if (source.FindAncestorOfType<TransposedLazyCellPresenter>(includeSelf: true) is not { } presenter
+			|| !ReferenceEquals(presenter.DataContext, pressedCell))
+		{
+			return;
+		}
+
+		// A press inside the already-open editor must reach the live TextBox to reposition the caret, so
+		// leave it unhandled: only the entry press (a display not yet editing) is consumed. This is the
+		// tunnel phase, so a handled press never reaches the editor.
+		if (presenter.IsEditing)
+		{
+			return;
+		}
+
+		_editCoordinator.BeginEdit(presenter, initialText: null);
+		e.Handled = true;
 	}
 
 	// Click-away rule: a changed (orange) cell clears the moment any OTHER cell is pressed. This
@@ -265,41 +307,30 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 		TransposedCellTemplateFactory.CommitByDefocusing(editor);
 	}
 
-	// An always-live editor holding keyboard focus counts as editing (there is no DataGrid edit
-	// lifecycle). ComboBox is resolved through the logical tree so an open dropdown (focus inside
-	// the popup's own visual root) still counts.
+	// Editing is defined off the coordinator, which owns the one active lazy edit for both cell kinds (the
+	// heavy editor exists only while editing). A focused display visual is NOT editing, so arrow-navigating
+	// onto a cell leaves IsEditing false and the step-level hotkeys stay live. A combo whose dropdown is
+	// open still counts (the coordinator holds it as editing until the dropdown closes and focus leaves).
 	private Control? GetActiveEditor()
 	{
-		if (TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is not Control focused)
-		{
-			return null;
-		}
-
-		var editor = focused.FindAncestorOfType<TextBox>(includeSelf: true) as Control
-			?? focused.FindLogicalAncestorOfType<ComboBox>(includeSelf: true);
-		if (editor is null)
-		{
-			return null;
-		}
-
-		return ReferenceEquals(editor.FindLogicalAncestorOfType<TransposedRecipeGridView>(), this)
-			? editor
-			: null;
+		return _editCoordinator.ActiveEditor;
 	}
 
-	private void InstallCellTemplates(TransposedRecipeGridSurface? surface)
+	// A fresh pool per surface: the singleton view is rebound to a new surface on a config swap, whose
+	// descriptor set (and thus the built cell subtrees) differ, so presenters must not carry across.
+	// Hosts return their borrowed presenter to the pool that lent it, so the stale pool drains to GC.
+	private void BuildColumnCellsPool(TransposedRecipeGridSurface? surface)
 	{
-		DataTemplates.Clear();
+		// The prior surface's pooled presenters (and their editors) are discarded with the pool, so the
+		// coordinator must forget any edit it was tracking before the new pool's slots come alive.
+		_editCoordinator.Reset();
 
-		if (surface is null)
-		{
-			return;
-		}
-
-		foreach (var template in new TransposedCellTemplateFactory(surface).CreateTemplates())
-		{
-			DataTemplates.Add(template);
-		}
+		ColumnCellsPool = surface is null
+			? null
+			: new TransposedColumnCellsPool(
+				surface.ParameterDescriptors,
+				new TransposedCellTemplateFactory(surface, _editCoordinator),
+				surface.GridStyle.RowHeight);
 	}
 
 	// The step-number header cell is the transposed analog of canonical's step-number cells (cell

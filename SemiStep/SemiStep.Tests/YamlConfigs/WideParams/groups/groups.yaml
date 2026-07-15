@@ -1,0 +1,9 @@
+# Groups for the wide-config target combos.
+valve:
+  1: "Open"
+  2: "Close"
+
+heater:
+  1: "On"
+  2: "Off"
+  3: "Auto"

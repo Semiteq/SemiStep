@@ -1,0 +1,328 @@
+# Wide column set approximating a real PLC recipe scale (~36 parameters) for allocation probing.
+# Several combo columns (one action_combo_box + three group-bound target combos) and many
+# property_field / text_field columns so a realized transposed column instantiates several
+# ComboBox editors and many TextBox editors.
+
+action:
+  column_type: action_combo_box
+  ui:
+    ui_name: "Action"
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+
+target_a:
+  column_type: action_target_combo_box
+  ui:
+    ui_name: "Target A"
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+
+target_b:
+  column_type: action_target_combo_box
+  ui:
+    ui_name: "Target B"
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+
+target_c:
+  column_type: action_target_combo_box
+  ui:
+    ui_name: "Target C"
+  business_logic:
+    property_type_id: enum
+    read_only: false
+    save_to_csv: true
+
+step_duration:
+  column_type: property_field
+  ui:
+    ui_name: "Duration"
+  business_logic:
+    property_type_id: time
+    read_only: false
+    save_to_csv: true
+
+param_01:
+  column_type: property_field
+  ui:
+    ui_name: "P01"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+param_02:
+  column_type: property_field
+  ui:
+    ui_name: "P02"
+  business_logic:
+    property_type_id: int
+    read_only: false
+    save_to_csv: true
+
+param_03:
+  column_type: property_field
+  ui:
+    ui_name: "P03"
+  business_logic:
+    property_type_id: time
+    read_only: false
+    save_to_csv: true
+
+param_04:
+  column_type: property_field
+  ui:
+    ui_name: "P04"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+param_05:
+  column_type: property_field
+  ui:
+    ui_name: "P05"
+  business_logic:
+    property_type_id: int
+    read_only: true
+    save_to_csv: true
+
+param_06:
+  column_type: property_field
+  ui:
+    ui_name: "P06"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+param_07:
+  column_type: property_field
+  ui:
+    ui_name: "P07"
+  business_logic:
+    property_type_id: time
+    read_only: false
+    save_to_csv: true
+
+param_08:
+  column_type: property_field
+  ui:
+    ui_name: "P08"
+  business_logic:
+    property_type_id: int
+    read_only: false
+    save_to_csv: true
+
+param_09:
+  column_type: property_field
+  ui:
+    ui_name: "P09"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+param_10:
+  column_type: property_field
+  ui:
+    ui_name: "P10"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+param_11:
+  column_type: property_field
+  ui:
+    ui_name: "P11"
+  business_logic:
+    property_type_id: int
+    read_only: false
+    save_to_csv: true
+
+param_12:
+  column_type: property_field
+  ui:
+    ui_name: "P12"
+  business_logic:
+    property_type_id: time
+    read_only: false
+    save_to_csv: true
+
+param_13:
+  column_type: property_field
+  ui:
+    ui_name: "P13"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+param_14:
+  column_type: property_field
+  ui:
+    ui_name: "P14"
+  business_logic:
+    property_type_id: int
+    read_only: false
+    save_to_csv: true
+
+param_15:
+  column_type: property_field
+  ui:
+    ui_name: "P15"
+  business_logic:
+    property_type_id: float
+    read_only: true
+    save_to_csv: true
+
+param_16:
+  column_type: property_field
+  ui:
+    ui_name: "P16"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+param_17:
+  column_type: property_field
+  ui:
+    ui_name: "P17"
+  business_logic:
+    property_type_id: int
+    read_only: false
+    save_to_csv: true
+
+param_18:
+  column_type: property_field
+  ui:
+    ui_name: "P18"
+  business_logic:
+    property_type_id: time
+    read_only: false
+    save_to_csv: true
+
+param_19:
+  column_type: property_field
+  ui:
+    ui_name: "P19"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+param_20:
+  column_type: property_field
+  ui:
+    ui_name: "P20"
+  business_logic:
+    property_type_id: int
+    read_only: false
+    save_to_csv: true
+
+param_21:
+  column_type: property_field
+  ui:
+    ui_name: "P21"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+param_22:
+  column_type: property_field
+  ui:
+    ui_name: "P22"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+param_23:
+  column_type: property_field
+  ui:
+    ui_name: "P23"
+  business_logic:
+    property_type_id: int
+    read_only: false
+    save_to_csv: true
+
+param_24:
+  column_type: property_field
+  ui:
+    ui_name: "P24"
+  business_logic:
+    property_type_id: time
+    read_only: false
+    save_to_csv: true
+
+param_25:
+  column_type: property_field
+  ui:
+    ui_name: "P25"
+  business_logic:
+    property_type_id: float
+    read_only: false
+    save_to_csv: true
+
+text_01:
+  column_type: text_field
+  ui:
+    ui_name: "T01"
+  business_logic:
+    property_type_id: string
+    read_only: false
+    save_to_csv: true
+
+text_02:
+  column_type: text_field
+  ui:
+    ui_name: "T02"
+  business_logic:
+    property_type_id: string
+    read_only: false
+    save_to_csv: true
+
+text_03:
+  column_type: text_field
+  ui:
+    ui_name: "T03"
+  business_logic:
+    property_type_id: string
+    read_only: false
+    save_to_csv: true
+
+text_04:
+  column_type: text_field
+  ui:
+    ui_name: "T04"
+  business_logic:
+    property_type_id: string
+    read_only: false
+    save_to_csv: true
+
+text_05:
+  column_type: text_field
+  ui:
+    ui_name: "T05"
+  business_logic:
+    property_type_id: string
+    read_only: false
+    save_to_csv: true
+
+comment:
+  column_type: text_field
+  ui:
+    ui_name: "Comment"
+  business_logic:
+    property_type_id: string
+    read_only: false
+    save_to_csv: true

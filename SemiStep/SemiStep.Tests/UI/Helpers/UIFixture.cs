@@ -47,9 +47,14 @@ public sealed class UIFixture : IAsyncLifetime
 	// click-away clear must reach sibling surfaces built from the same fixture.
 	public ChangedCellClickAwayBroadcaster ClickAwayBroadcaster { get; } = new();
 
-	public async ValueTask InitializeAsync()
+	public ValueTask InitializeAsync()
 	{
-		var (services, session, plc) = await CoreTestHelper.BuildAsync("WithGroups");
+		return InitializeAsync("WithGroups");
+	}
+
+	public async ValueTask InitializeAsync(string configName)
+	{
+		var (services, session, plc) = await CoreTestHelper.BuildAsync(configName);
 		Session = session;
 		Plc = plc;
 		PlcSyncService = (StubPlcSyncService)services.GetRequiredService<IPlcSyncService>();

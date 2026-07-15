@@ -125,7 +125,7 @@ internal sealed class TransposedGridNavigator(ListBox stepListBox)
 		stepListBox.ScrollIntoView(targetColumnIndex);
 		stepListBox.UpdateLayout();
 
-		var focusTarget = FindFocusableEditor(surface, targetColumnIndex, position.ParameterIndex)
+		var focusTarget = FindFocusableCellPresenter(surface, targetColumnIndex, position.ParameterIndex)
 			?? stepListBox.ContainerFromIndex(targetColumnIndex);
 		focusTarget?.Focus();
 	}
@@ -141,15 +141,21 @@ internal sealed class TransposedGridNavigator(ListBox stepListBox)
 			parameterIndex >= 0 && parameterIndex < cellCount;
 			parameterIndex += direction)
 		{
-			if (FindFocusableEditor(surface, position.ColumnIndex, parameterIndex) is { } editor)
+			if (FindFocusableCellPresenter(surface, position.ColumnIndex, parameterIndex) is { } presenter)
 			{
-				editor.Focus();
+				presenter.Focus();
 				return;
 			}
 		}
 	}
 
-	private Control? FindFocusableEditor(TransposedRecipeGridSurface surface, int columnIndex, int parameterIndex)
+	// Arrow navigation traverses cells by focusing the lazy display presenters (property-text and combo
+	// alike): the heavy editor is built only on edit entry, so navigation targets the display visual and a
+	// focused display then enters edit on F2 (text also on a printable keystroke).
+	private Control? FindFocusableCellPresenter(
+		TransposedRecipeGridSurface surface,
+		int columnIndex,
+		int parameterIndex)
 	{
 		if (stepListBox.ContainerFromIndex(columnIndex) is not ListBoxItem container)
 		{
@@ -159,10 +165,9 @@ internal sealed class TransposedGridNavigator(ListBox stepListBox)
 		var cell = surface.StepColumns[columnIndex].Cells[parameterIndex];
 
 		return container.GetVisualDescendants()
-			.OfType<Control>()
-			.FirstOrDefault(control => control is TextBox or ComboBox
-				&& ReferenceEquals(control.DataContext, cell)
-				&& control.Focusable
-				&& control.IsEffectivelyEnabled);
+			.OfType<TransposedLazyCellPresenter>()
+			.FirstOrDefault(presenter => ReferenceEquals(presenter.DataContext, cell)
+				&& presenter.Focusable
+				&& presenter.IsEffectivelyEnabled);
 	}
 }

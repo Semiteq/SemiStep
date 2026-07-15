@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
@@ -49,9 +50,8 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 	public void TypeAndCommitWithEnter_UpdatesCoordinator()
 	{
 		var (_, stepListBox) = ShowView();
-		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 
-		editor.Focus();
 		editor.Text = "45";
 		_window!.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
 		Dispatcher.UIThread.RunJobs();
@@ -69,17 +69,16 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 			.IsSuccess.Should().BeTrue();
 
 		var (_, stepListBox) = ShowView();
-		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 
-		editor.Text.Should().Be("00:01:40");
+		DisplayText(stepListBox, 0, RecipeTestDriver.StepDurationColumn).Should().Be("00:01:40");
 
-		editor.Focus();
+		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 		editor.Text = "0:2:5";
 		_window!.FocusManager!.Focus(null);
 		Dispatcher.UIThread.RunJobs();
 
 		_surface.StepColumns[0].Row[RecipeTestDriver.StepDurationColumn].Should().Be(125f);
-		editor.Text.Should().Be("00:02:05");
+		DisplayText(stepListBox, 0, RecipeTestDriver.StepDurationColumn).Should().Be("00:02:05");
 	}
 
 	[AvaloniaFact]
@@ -89,16 +88,15 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 			.IsSuccess.Should().BeTrue();
 
 		var (_, stepListBox) = ShowView();
-		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 
-		editor.Focus();
 		editor.Text = "99:99:99";
 		_window!.FocusManager!.Focus(null);
 		Dispatcher.UIThread.RunJobs();
 
 		_surface.StepColumns[0].Row[RecipeTestDriver.StepDurationColumn].Should().Be(100f);
-		editor.Text.Should().Be(
-			"00:01:40", "a rejected edit must snap the editor back to the model's formatted value");
+		DisplayText(stepListBox, 0, RecipeTestDriver.StepDurationColumn).Should().Be(
+			"00:01:40", "a rejected edit must snap the display back to the model's formatted value");
 	}
 
 	[AvaloniaFact]
@@ -106,45 +104,44 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 	{
 		var (_, stepListBox) = ShowView();
 
-		FindTextBox(stepListBox, 0, RecipeTestDriver.TaskColumn).IsEnabled.Should().BeFalse();
-		FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn).IsEnabled.Should().BeTrue();
+		FindTextPresenter(stepListBox, 0, RecipeTestDriver.TaskColumn).IsEnabled.Should().BeFalse();
+		FindTextPresenter(stepListBox, 0, RecipeTestDriver.StepDurationColumn).IsEnabled.Should().BeTrue();
 	}
 
 	[AvaloniaFact]
 	public void ReadOnlyMode_DisablesEditors_AndEditorMustCloseDefocusesActiveOne()
 	{
 		var (view, stepListBox) = ShowView();
-		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 
-		editor.Focus();
 		view.IsEditing.Should().BeTrue();
 
 		_fixture.SetRecipeActive(true);
 		Dispatcher.UIThread.RunJobs();
 
-		editor.IsEnabled.Should().BeFalse();
-		FindComboBox(stepListBox, 0, "action").IsEnabled.Should().BeFalse();
+		FindTextPresenter(stepListBox, 0, RecipeTestDriver.StepDurationColumn).IsEnabled.Should().BeFalse();
+		FindComboPresenter(stepListBox, 0, "action").IsEnabled.Should().BeFalse();
 		view.IsEditing.Should().BeFalse();
 		_window!.FocusManager!.GetFocusedElement().Should().NotBeSameAs(editor);
 
 		_fixture.SetRecipeActive(false);
 		Dispatcher.UIThread.RunJobs();
 
-		editor.IsEnabled.Should().BeTrue();
+		FindTextPresenter(stepListBox, 0, RecipeTestDriver.StepDurationColumn).IsEnabled.Should().BeTrue();
 	}
 
 	[AvaloniaFact]
 	public void IsEditing_TracksEditorFocus()
 	{
 		var (view, stepListBox) = ShowView();
-		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 
 		view.IsEditing.Should().BeFalse();
 
-		editor.Focus();
+		EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 		view.IsEditing.Should().BeTrue();
 
 		_window!.FocusManager!.Focus(null);
+		Dispatcher.UIThread.RunJobs();
 		view.IsEditing.Should().BeFalse();
 	}
 
@@ -232,15 +229,10 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 		ClickCell(stepListBox, 1, RecipeTestDriver.StepDurationColumn);
 		view.IsEditing.Should().BeFalse();
 
-		var editor = FindTextBox(stepListBox, 1, RecipeTestDriver.StepDurationColumn);
-		var clickPoint = editor.TranslatePoint(
-			new Point(editor.Bounds.Width / 2, editor.Bounds.Height / 2), _window!);
-		clickPoint.Should().NotBeNull();
-		_window!.MouseDown(clickPoint!.Value, MouseButton.Left);
-		_window!.MouseUp(clickPoint.Value, MouseButton.Left);
-		Dispatcher.UIThread.RunJobs();
+		ClickCell(stepListBox, 1, RecipeTestDriver.StepDurationColumn);
 
-		view.IsEditing.Should().BeTrue("the second click on the selected column reaches the editor");
+		view.IsEditing.Should().BeTrue("the second click on the selected column enters edit");
+		var editor = FindTextBox(stepListBox, 1, RecipeTestDriver.StepDurationColumn);
 		_window!.FocusManager!.GetFocusedElement().Should().BeSameAs(editor);
 	}
 
@@ -284,8 +276,7 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 	public void ClickOnOtherColumn_CommitsPendingEditByDefocusing()
 	{
 		var (_, stepListBox) = ShowView();
-		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
-		editor.Focus();
+		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 		editor.Text = "45";
 
 		ClickCell(stepListBox, 1, RecipeTestDriver.StepDurationColumn);
@@ -299,15 +290,18 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "100")
 			.IsSuccess.Should().BeTrue();
-		var (_, stepListBox) = ShowView();
-		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
-		editor.Focus();
+		var (view, stepListBox) = ShowView();
+		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 		editor.Text = "0:2:5";
 
 		_window!.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
 		Dispatcher.UIThread.RunJobs();
 
-		editor.Text.Should().Be("00:01:40", "Escape must revert the typed-but-uncommitted text");
+		// Escape reverts the typed-but-uncommitted text and exits edit (canonical parity), so the value is
+		// held by the display, not the discarded editor, and the model is untouched.
+		view.IsEditing.Should().BeFalse("Escape cancels the cell edit");
+		DisplayText(stepListBox, 0, RecipeTestDriver.StepDurationColumn).Should().Be(
+			"00:01:40", "Escape must revert the display to the model's formatted value");
 		_surface.StepColumns[0].Row[RecipeTestDriver.StepDurationColumn].Should().Be(100f);
 	}
 
@@ -324,13 +318,10 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 			.IsSuccess.Should().BeTrue();
 		var (_, stepListBox) = ShowView();
 
-		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 		var capturedCell = (PropertyTextCellViewModel)editor.DataContext!;
-		var rebindCell = (PropertyTextCellViewModel)FindTextBox(
+		var rebindCell = (PropertyTextCellViewModel)FindTextPresenter(
 			stepListBox, 1, RecipeTestDriver.StepDurationColumn).DataContext!;
-
-		editor.Focus();
-		Dispatcher.UIThread.RunJobs();
 
 		editor.DataContext = rebindCell;
 		Dispatcher.UIThread.RunJobs();
@@ -352,8 +343,7 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 		_fixture.Coordinator.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "100")
 			.IsSuccess.Should().BeTrue();
 		var (_, stepListBox) = ShowView();
-		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
-		editor.Focus();
+		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 		editor.Text = "45";
 
 		_fixture.SetRecipeActive(true);
@@ -361,16 +351,15 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 
 		_surface.StepColumns[0].Row[RecipeTestDriver.StepDurationColumn].Should().Be(
 			100f, "the pending edit must be dropped by the read-only guard, not committed");
-		editor.Text.Should().Be(
-			"00:01:40", "the editor must not keep displaying the never-committed text");
+		DisplayText(stepListBox, 0, RecipeTestDriver.StepDurationColumn).Should().Be(
+			"00:01:40", "the display must not keep showing the never-committed text");
 	}
 
 	[AvaloniaFact]
 	public void EditorMustClose_ClosesOpenComboBoxDropdown()
 	{
 		var (_, stepListBox) = ShowView();
-		var comboBox = FindComboBox(stepListBox, 0, "action");
-		comboBox.Focus();
+		var comboBox = EnterComboEdit(stepListBox, 0, "action");
 		comboBox.IsDropDownOpen = true;
 		Dispatcher.UIThread.RunJobs();
 
@@ -385,7 +374,7 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 	{
 		var (_, stepListBox) = ShowView();
 
-		FindTextBox(stepListBox, 0, RecipeTestDriver.CommentColumn).MaxLength
+		EnterTextEdit(stepListBox, 0, RecipeTestDriver.CommentColumn).MaxLength
 			.Should().Be(_fixture.RecipeMetadataRegistry.GetStringMaxLength());
 	}
 
@@ -413,7 +402,7 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 	public void ActionCombo_SelectionChange_ChangesStepAction_AndMarksCells()
 	{
 		var (_, stepListBox) = ShowView();
-		var comboBox = FindComboBox(stepListBox, 0, "action");
+		var comboBox = EnterComboEdit(stepListBox, 0, "action");
 		var forLoopItem = _fixture.RecipeMetadataRegistry.GetActionComboBoxItems()
 			.Single(item => item.Id == RecipeTestDriver.ForLoopActionId);
 
@@ -423,6 +412,203 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 		_fixture.Coordinator.CurrentRecipe.Steps[0].ActionKey.Should().Be(RecipeTestDriver.ForLoopActionId);
 		_surface.StepColumns[0].Row.ChangedColumns.Should().NotBeEmpty(
 			"the rebuilt column's seeded cells must carry the changed highlight");
+	}
+
+	// First-keystroke fidelity, KeyDown route: a printable KeyDown on a focused display presenter enters
+	// edit and clears the cell; the paired TextInput (a separate raw event) lands on the now-focused editor.
+	// Exactly one character survives — neither dropped by the swap nor doubled by both handlers firing.
+	[AvaloniaFact]
+	public void PrintableKeyThenTextInput_EntersEdit_KeepsExactlyOneCharacter()
+	{
+		var (view, stepListBox) = ShowView();
+		FindTextPresenter(stepListBox, 0, RecipeTestDriver.CommentColumn).Focus();
+
+		_window!.KeyPressQwerty(PhysicalKey.Digit5, RawInputModifiers.None);
+		_window!.KeyTextInput("5");
+		Dispatcher.UIThread.RunJobs();
+
+		view.IsEditing.Should().BeTrue("a printable keystroke on a focused display enters edit");
+		FindTextBox(stepListBox, 0, RecipeTestDriver.CommentColumn).Text
+			.Should().Be("5", "the first character is typed exactly once");
+	}
+
+	// First-keystroke fidelity, pure TextInput route (IME / paste-like, no preceding printable KeyDown):
+	// the display seeds the editor directly with the character it carries.
+	[AvaloniaFact]
+	public void TextInputWithoutKeyDown_EntersEdit_KeepsExactlyOneCharacter()
+	{
+		var (view, stepListBox) = ShowView();
+		FindTextPresenter(stepListBox, 0, RecipeTestDriver.CommentColumn).Focus();
+
+		_window!.KeyTextInput("7");
+		Dispatcher.UIThread.RunJobs();
+
+		view.IsEditing.Should().BeTrue();
+		FindTextBox(stepListBox, 0, RecipeTestDriver.CommentColumn).Text.Should().Be("7");
+	}
+
+	// A rapid two-character burst over the KeyDown route must land both characters on the editor in order,
+	// with no drop and no double.
+	[AvaloniaFact]
+	public void RapidTwoCharacterBurst_TypesBothInOrder()
+	{
+		var (_, stepListBox) = ShowView();
+		FindTextPresenter(stepListBox, 0, RecipeTestDriver.CommentColumn).Focus();
+
+		_window!.KeyPressQwerty(PhysicalKey.Digit5, RawInputModifiers.None);
+		_window!.KeyTextInput("5");
+		_window!.KeyPressQwerty(PhysicalKey.Digit7, RawInputModifiers.None);
+		_window!.KeyTextInput("7");
+		Dispatcher.UIThread.RunJobs();
+
+		FindTextBox(stepListBox, 0, RecipeTestDriver.CommentColumn).Text
+			.Should().Be("57", "both characters land on the editor in order with no drop or double");
+	}
+
+	// Keyboard traversal focuses the display presenter (its editor is not built); F2 on that focused display
+	// is what opens the editor.
+	[AvaloniaFact]
+	public void KeyboardTraversal_FocusesDisplayPresenter_ThenF2EntersEdit()
+	{
+		var (view, stepListBox) = ShowView();
+		FindComboPresenter(stepListBox, 0, "action").Focus();
+
+		_window!.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
+
+		var presenter = FindTextPresenter(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+		_window!.FocusManager!.GetFocusedElement().Should().BeSameAs(
+			presenter, "arrow traversal focuses the display presenter, not a built editor");
+		view.IsEditing.Should().BeFalse("a focused display is not an active edit");
+		presenter.GetVisualDescendants().OfType<TextBox>()
+			.Should().BeEmpty("no editor exists until edit entry");
+
+		_window!.KeyPressQwerty(PhysicalKey.F2, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
+
+		view.IsEditing.Should().BeTrue("F2 on the focused display opens the editor");
+	}
+
+	// An inapplicable text cell is non-focusable and blocks edit entry: F2 must not build an editor.
+	[AvaloniaFact]
+	public void InapplicableTextCell_DoesNotEnterEdit()
+	{
+		var (view, stepListBox) = ShowView();
+		var presenter = FindTextPresenter(stepListBox, 0, RecipeTestDriver.TaskColumn);
+		presenter.IsEnabled.Should().BeFalse("the task cell is inapplicable for a wait step");
+
+		presenter.Focus();
+		_window!.KeyPressQwerty(PhysicalKey.F2, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
+
+		view.IsEditing.Should().BeFalse("an inapplicable cell must not enter edit");
+		presenter.GetVisualDescendants().OfType<TextBox>()
+			.Should().BeEmpty("no editor is built for a blocked cell");
+	}
+
+	// A read-only surface (PLC sync) blocks text edit entry: the presenter is disabled and F2 does nothing.
+	[AvaloniaFact]
+	public void SurfaceReadOnly_TextCell_DoesNotEnterEdit()
+	{
+		var (view, stepListBox) = ShowView();
+		_fixture.SetRecipeActive(true);
+		Dispatcher.UIThread.RunJobs();
+
+		var presenter = FindTextPresenter(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+		presenter.IsEnabled.Should().BeFalse("a read-only surface disables text cells");
+
+		presenter.Focus();
+		_window!.KeyPressQwerty(PhysicalKey.F2, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
+
+		view.IsEditing.Should().BeFalse("a read-only surface must block text edit entry");
+	}
+
+	// Regression: a press inside an already-open text editor must reach the live TextBox so the caret can be
+	// repositioned. The tunnel entry handler consumes only the entry press (a not-yet-editing display); once
+	// editing, it must leave the press unhandled so the TextBox receives it (a handled tunnel press never
+	// reaches the editor).
+	[AvaloniaFact]
+	public void ClickInsideOpenEditor_ReachesLiveTextBox_ForCaretReposition()
+	{
+		var (view, stepListBox) = ShowView();
+
+		// Enter edit via the production gesture (first click selects the column, second click opens the
+		// editor) so the column is selected AND editing — the state in which a further press must reach the
+		// live TextBox to reposition the caret rather than being swallowed by the tunnel entry handler.
+		ClickCell(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+		ClickCell(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+		view.IsEditing.Should().BeTrue("the second click opens the editor");
+
+		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+		var reachedEditor = false;
+		editor.AddHandler(
+			InputElement.PointerPressedEvent,
+			(_, _) => reachedEditor = true,
+			RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
+
+		ClickCell(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+
+		reachedEditor.Should().BeTrue(
+			"a press inside the open editor must not be swallowed by the tunnel entry handler");
+		view.IsEditing.Should().BeTrue("clicking inside the open editor keeps it in edit");
+	}
+
+	// First-keystroke replace semantics on a NON-empty cell: a printable KeyDown on a focused display enters
+	// edit and clears the seeded value, so the paired TextInput types fresh (replace, not append).
+	[AvaloniaFact]
+	public void FirstPrintableKey_OnNonEmptyCell_ReplacesValue()
+	{
+		_fixture.Coordinator.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "100")
+			.IsSuccess.Should().BeTrue();
+		var (view, stepListBox) = ShowView();
+		DisplayText(stepListBox, 0, RecipeTestDriver.StepDurationColumn).Should().Be(
+			"00:01:40", "precondition: the target cell holds a non-empty value");
+
+		FindTextPresenter(stepListBox, 0, RecipeTestDriver.StepDurationColumn).Focus();
+		_window!.KeyPressQwerty(PhysicalKey.Digit5, RawInputModifiers.None);
+		_window!.KeyTextInput("5");
+		Dispatcher.UIThread.RunJobs();
+
+		view.IsEditing.Should().BeTrue("a printable keystroke on a focused display enters edit");
+		FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn).Text.Should().Be(
+			"5", "the first printable keystroke replaces the seeded value, it does not append to it");
+	}
+
+	// After an Enter commit the editor is released back to the display within the still-realized container:
+	// zero live TextBox remains and the display TextBlock shows the committed value.
+	[AvaloniaFact]
+	public void EnterCommit_ReleasesEditorToDisplay_WithinRealizedContainer()
+	{
+		var (view, stepListBox) = ShowView();
+		var container = (ListBoxItem)stepListBox.ContainerFromIndex(0)!;
+		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+		editor.Text = "45";
+
+		_window!.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
+
+		view.IsEditing.Should().BeFalse("Enter commits and ends the edit");
+		container.GetVisualDescendants().OfType<TextBox>().Should().BeEmpty(
+			"the committed editor is released back to the display, leaving no live TextBox in the container");
+		DisplayText(stepListBox, 0, RecipeTestDriver.StepDurationColumn).Should().Be(
+			"00:00:45", "the restored display shows the committed value");
+	}
+
+	// A rapid two-character burst over the pure TextInput route (no preceding printable KeyDown): the first
+	// TextInput seeds the editor via OnDisplayTextInputCore, the second lands on the now-focused editor.
+	[AvaloniaFact]
+	public void RapidTwoCharacterBurst_PureTextInputRoute_TypesBothInOrder()
+	{
+		var (_, stepListBox) = ShowView();
+		FindTextPresenter(stepListBox, 0, RecipeTestDriver.CommentColumn).Focus();
+
+		_window!.KeyTextInput("5");
+		_window!.KeyTextInput("7");
+		Dispatcher.UIThread.RunJobs();
+
+		FindTextBox(stepListBox, 0, RecipeTestDriver.CommentColumn).Text.Should().Be(
+			"57", "the pure-TextInput route seeds the first char, then the focused editor takes the second");
 	}
 
 	private void ClickCell(
@@ -462,6 +648,37 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 				&& cell.Descriptor.ParameterKey == parameterKey);
 	}
 
+	private static TransposedTextCellPresenter FindTextPresenter(
+		ListBox stepListBox, int columnIndex, string parameterKey)
+	{
+		var container = (ListBoxItem)stepListBox.ContainerFromIndex(columnIndex)!;
+
+		return container.GetVisualDescendants()
+			.OfType<TransposedTextCellPresenter>()
+			.Single(presenter => presenter.DataContext is ParameterCellViewModel cell
+				&& cell.Descriptor.ParameterKey == parameterKey);
+	}
+
+	private static string? DisplayText(ListBox stepListBox, int columnIndex, string parameterKey)
+	{
+		return FindTextPresenter(stepListBox, columnIndex, parameterKey)
+			.GetVisualDescendants()
+			.OfType<TextBlock>()
+			.First()
+			.Text;
+	}
+
+	// Enters edit on a lazy property-text cell through the real focus + F2 gesture, then returns the
+	// now-built editor. The editor exists only while editing, so tests grab it through this.
+	private TextBox EnterTextEdit(ListBox stepListBox, int columnIndex, string parameterKey)
+	{
+		FindTextPresenter(stepListBox, columnIndex, parameterKey).Focus();
+		_window!.KeyPressQwerty(PhysicalKey.F2, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
+
+		return FindTextBox(stepListBox, columnIndex, parameterKey);
+	}
+
 	private static ComboBox FindComboBox(ListBox stepListBox, int columnIndex, string parameterKey)
 	{
 		var container = (ListBoxItem)stepListBox.ContainerFromIndex(columnIndex)!;
@@ -470,6 +687,28 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 			.OfType<ComboBox>()
 			.Single(comboBox => comboBox.DataContext is ParameterCellViewModel cell
 				&& cell.Descriptor.ParameterKey == parameterKey);
+	}
+
+	private static TransposedComboCellPresenter FindComboPresenter(
+		ListBox stepListBox, int columnIndex, string parameterKey)
+	{
+		var container = (ListBoxItem)stepListBox.ContainerFromIndex(columnIndex)!;
+
+		return container.GetVisualDescendants()
+			.OfType<TransposedComboCellPresenter>()
+			.Single(presenter => presenter.DataContext is ParameterCellViewModel cell
+				&& cell.Descriptor.ParameterKey == parameterKey);
+	}
+
+	// Enters edit on a lazy combo cell through the real focus + F2 gesture (which opens the dropdown), then
+	// returns the now-built ComboBox. The ComboBox exists only while editing, so tests grab it through this.
+	private ComboBox EnterComboEdit(ListBox stepListBox, int columnIndex, string parameterKey)
+	{
+		FindComboPresenter(stepListBox, columnIndex, parameterKey).Focus();
+		_window!.KeyPressQwerty(PhysicalKey.F2, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
+
+		return FindComboBox(stepListBox, columnIndex, parameterKey);
 	}
 
 	private (TransposedRecipeGridView View, ListBox StepListBox) ShowView()

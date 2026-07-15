@@ -1,0 +1,52 @@
+# Wide-config service actions. Action 10 (Wait) is what the allocation probe seeds, so it
+# references a representative spread of columns (a group-bound combo plus several params).
+
+# Wait by time
+10:
+  ui_name: "Wait"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: target_a
+      group_name: valve
+      property_type_id: enum
+    - key: param_01
+      default_value: "1"
+      property_type_id: float
+    - key: param_02
+      default_value: "2"
+      property_type_id: int
+    - key: param_03
+      default_value: "3"
+      property_type_id: time
+    - key: text_01
+      property_type_id: string
+    - key: comment
+      property_type_id: string
+
+# Valve control (exercises the remaining group-bound target combos)
+50:
+  ui_name: "Valve"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: target_b
+      group_name: valve
+      property_type_id: enum
+    - key: target_c
+      group_name: heater
+      property_type_id: enum
+    - key: comment
+      property_type_id: string
+
+# Pause
+40:
+  ui_name: "Pause"
+  deploy_duration: immediate
+  columns:
+    - key: comment
+      property_type_id: string

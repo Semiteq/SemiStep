@@ -128,9 +128,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	{
 		FullRebuild(_coordinator.CurrentRecipe);
 
-		// FullRebuild installs fresh rows carrying StepStartTime=null and ForDepth=0. Run the tail
-		// once from index 0 to establish the incremental start-time baseline; otherwise the first
-		// post-init mutation would refresh only from its own index and leave earlier rows blank.
+		// Run the start-time tail from 0 to seed the baseline; a later mutation refreshes only from its own index.
 		RefreshStepStartTimes(0);
 		RefreshLoopDepths();
 	}
@@ -146,9 +144,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 			signal.GetType().Name,
 			recipe.StepCount);
 
-		// Catching here (not letting the throw escape to RecipeCoordinator.RaiseMutatedSafely)
-		// keeps the multicast Mutated invocation intact: the sibling surface and the other
-		// subscribers still receive the signal, and the failure stays user-visible.
+		// Catch here so the throw doesn't break the multicast Mutated to the sibling surface.
 		try
 		{
 			switch (signal)
@@ -200,12 +196,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		RefreshLoopDepths();
 	}
 
-	// Drives the incremental start-time refresh only. start-time[i] is forward-prefix-determined
-	// (computed from steps 0..i-1), so a mutation at index k cannot change any start-time before k;
-	// refreshing from this index down is behavior-preserving. Loop-depth is a matched-bracket
-	// property that a committed marker mutation can change for rows before k (deleting an EndForLoop
-	// unnests its opening marker above it), so RefreshLoopDepths stays a full 0..Count scan and is
-	// never driven by this index.
+	// start-time[i] depends only on steps 0..i-1, so refreshing from the mutation index is safe; loop-depth can change earlier rows, so it stays a full scan.
 	private static int RefreshStartIndexFor(MutationSignal signal)
 	{
 		var fromIndex = signal switch
@@ -249,10 +240,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		_selectionRequests.OnNext(stepIndex);
 	}
 
-	// A click-away acknowledgement must land on both orientation surfaces (each holds its own
-	// row view model for the step), so the clear round-trips through the shared broadcaster
-	// instead of touching this surface's row directly. Rows no longer in the projection are
-	// skipped (the view arms the pending cell before mutations can replace its row).
+	// Clear round-trips through the shared broadcaster so both orientation surfaces clear.
 	public void ClearChangedByClickAway(RecipeRowViewModel row, string columnKey)
 	{
 		for (var i = 0; i < Items.Count; i++)
@@ -553,11 +541,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 			.ToList();
 	}
 
-	// Throws instead of skipping: a skipped step would leave Items.Count < recipe.StepCount and
-	// silently desync every index-based dispatch. Config loading and import validation make the
-	// branch unreachable; if the invariant is ever breached, Initialize() crashes, while
-	// OnMutation catches this specific exception, error-logs it, reports it to the message
-	// panel, and leaves the projection as-is.
+	// Throws rather than skips: a skipped step desyncs Items.Count from StepCount and breaks index-based dispatch.
 	private TItem CreateItemChecked(Step step, int stepNumber)
 	{
 		if (!RecipeMetadataRegistry.TryGetAction(step.ActionKey, out var action))

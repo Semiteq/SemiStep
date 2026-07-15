@@ -18,11 +18,7 @@ public sealed class RecipeRowViewModel(
 {
 	private const string IndexerName = "Item";
 
-	// The Units/FormatKinds/GroupItems dictionaries depend only on (ActionDefinition, registry) and
-	// are immutable once built, so they are cached per action instead of rebuilt for every row. The
-	// registry hands out a stable ActionDefinition instance per action id, so the reference key is
-	// safe; the weak table lets an entry fall away when its action is collected (e.g. a discarded
-	// registry in a test).
+	// Cached per action (stable ActionDefinition instance makes the reference key safe); weak table drops entries when an action is collected.
 	private static readonly ConditionalWeakTable<ActionDefinition, ActionColumnMetadata> _actionMetadataCache = new();
 
 	private readonly ActionColumnMetadata _actionMetadata = GetActionMetadata(action, recipeMetadataRegistry);
@@ -257,12 +253,7 @@ public sealed class RecipeRowViewModel(
 	}
 
 	/// <summary>
-	/// Detects a selector-column edit and computes the columns the new selection deactivates (drop)
-	/// and activates (seed with their default values). A column is a selector when some union column
-	/// carries an <see cref="ActivationCondition"/> keyed on it (the resolver strips per-column
-	/// <c>Targets</c> from the resolved action and records the dependency as activation conditions
-	/// instead). Returns false for ordinary edits, non-selector columns, or values that do not parse
-	/// to a selector id.
+	/// A column is a selector when a union column carries an ActivationCondition keyed on it.
 	/// </summary>
 	private bool TryBuildSelectorEdit(string columnKey, string? value, out SelectorEdit selectorEdit)
 	{
@@ -376,10 +367,7 @@ public sealed class RecipeRowViewModel(
 		ActionDefinition actionDefinition,
 		RecipeMetadataRegistry recipeMetadataRegistry)
 	{
-		// Pre-populate every group-bound column with an empty items list, regardless of whether
-		// the current action defines that property. When a cell is recycled onto a row whose
-		// action lacks the property, the binding still resolves to an empty list instead of
-		// throwing KeyNotFoundException and logging a binding error on every recycle.
+		// Pre-populate group-bound columns with empty lists so a recycle onto an action lacking the property doesn't throw KeyNotFoundException.
 		var result = new Dictionary<string, IReadOnlyList<ComboBoxItemViewModel>>(StringComparer.OrdinalIgnoreCase);
 
 		foreach (var column in recipeMetadataRegistry.GetAllColumns())
@@ -397,10 +385,7 @@ public sealed class RecipeRowViewModel(
 				continue;
 			}
 
-			// Only overlay onto columns that were pre-populated above (group-bound columns).
-			// Cross-reference validation rejects actions that reference non-existent column keys
-			// at startup, but this guard keeps the dictionary's documented invariant explicit
-			// and protects against future config-validator drift.
+			// Validation already rejects unknown keys; this guard confines the overlay to pre-populated columns.
 			if (!result.ContainsKey(actionProperty.Key))
 			{
 				continue;

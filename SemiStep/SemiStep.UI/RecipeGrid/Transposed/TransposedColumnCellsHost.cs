@@ -4,16 +4,13 @@ using Avalonia.VisualTree;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-// Lightweight seam between the recycled ListBox container and a pooled column-cells presenter. It sits
-// in the ItemTemplate (so it IS rebuilt on every recycle, but it carries no cell subtree of its own), and
-// on realize it borrows a presenter from the view's pool, binds it to the column, and hosts it; on
-// recycle-out it commits any active edit and returns the presenter. This keeps the heavy cell subtrees
-// out of the rebuilt-on-recycle content while the ListBox still virtualizes the columns.
 internal sealed class TransposedColumnCellsHost : Decorator
 {
 	private TransposedRecipeGridView? _view;
 	private TransposedColumnCellsPool? _acquiredPool;
 	private TransposedColumnCellsPresenter? _presenter;
+	private ListBoxItem? _containerItem;
+	private IDisposable? _selectionSubscription;
 
 	protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
 	{
@@ -36,8 +33,7 @@ internal sealed class TransposedColumnCellsHost : Decorator
 
 	private void AcquireAndBind()
 	{
-		// The surface (and its pool) can change under the singleton view on a config swap; always take
-		// the current pool and remember which one lent the presenter so it is returned to its origin.
+		// Pool can change on config swap; take the current pool and remember which one lent the presenter.
 		if (_view?.ColumnCellsPool is not { } pool || DataContext is not StepColumnViewModel column)
 		{
 			return;
@@ -55,16 +51,63 @@ internal sealed class TransposedColumnCellsHost : Decorator
 		{
 			Child = _presenter;
 		}
+
+		SyncSelectionFromContainer();
 	}
 
-	private void ReleasePresenter()
+	// Container can be null before attach so re-resolve each bind; it's stable across in-place
+	// recycle, so only resubscribe when it changes.
+	private void SyncSelectionFromContainer()
 	{
 		if (_presenter is null)
 		{
 			return;
 		}
 
+		var container = this.FindAncestorOfType<ListBoxItem>();
+		if (!ReferenceEquals(container, _containerItem))
+		{
+			_selectionSubscription?.Dispose();
+			_selectionSubscription = null;
+			_containerItem = container;
+
+			if (container is not null)
+			{
+				// GetObservable pushes the current IsSelected synchronously on Subscribe, seeding IsColumnSelected.
+				_selectionSubscription = container
+					.GetObservable(ListBoxItem.IsSelectedProperty)
+					.Subscribe(isSelected =>
+					{
+						if (_presenter is not null)
+						{
+							_presenter.IsColumnSelected = isSelected;
+						}
+					});
+			}
+			else
+			{
+				_presenter.IsColumnSelected = false;
+			}
+
+			return;
+		}
+
+		_presenter.IsColumnSelected = container?.IsSelected ?? false;
+	}
+
+	private void ReleasePresenter()
+	{
+		_selectionSubscription?.Dispose();
+		_selectionSubscription = null;
+		_containerItem = null;
+
+		if (_presenter is null)
+		{
+			return;
+		}
+
 		_presenter.CommitActiveEditor();
+		_presenter.IsColumnSelected = false;
 		Child = null;
 		_acquiredPool?.Return(_presenter);
 		_presenter = null;

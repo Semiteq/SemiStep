@@ -3,11 +3,6 @@ using Avalonia.Input;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-// Lazy display/editor slot for a property-text cell. Renders a lightweight display TextBlock by default
-// and builds the full TextBox editor only when the edit coordinator enters edit here, releasing it back
-// to the display on blur/commit/recycle. This removes the always-live TextBox weight (~34 per wide
-// column) from the fresh-container build and the resident visual tree while preserving click-and-type and
-// keyboard-driven edit entry. See TransposedLazyCellPresenter for the shared machinery.
 internal sealed class TransposedTextCellPresenter : TransposedLazyCellPresenter
 {
 	public TransposedTextCellPresenter(
@@ -46,9 +41,7 @@ internal sealed class TransposedTextCellPresenter : TransposedLazyCellPresenter
 		}
 	}
 
-	// Enter edit and clear the cell so the character delivered by the paired TextInput (a separate raw
-	// event that lands on the now-focused editor) types fresh — replace semantics, matching the canonical
-	// grid. No seed here, so the char is neither dropped nor doubled.
+	// Seed '' so the paired TextInput types fresh (replace semantics); char neither dropped nor doubled.
 	protected override void OnPrintableKeyDown(KeyEventArgs e)
 	{
 		if (IsPrintable(e.KeySymbol, e.KeyModifiers))

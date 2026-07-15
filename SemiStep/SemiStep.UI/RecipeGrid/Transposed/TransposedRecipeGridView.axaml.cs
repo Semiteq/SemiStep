@@ -37,10 +37,7 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 		_gridNavigator = new TransposedGridNavigator(StepListBox);
 		_gridSelectionController = new TransposedGridSelectionController(StepListBox);
 
-		// The cell-presenter pool and style resources must be in place before the first layout pass
-		// realizes containers (each container's host borrows a presenter from the pool), and
-		// WhenActivated only fires on Loaded (after that pass) — so this subscription lives on the
-		// constructor, keyed off the DataContext-driven ViewModel property.
+		// Pool and style resources must exist before the first layout pass; WhenActivated fires only on Loaded, so this lives in the constructor.
 		this.WhenAnyValue(x => x.ViewModel)
 			.Subscribe(surface =>
 			{
@@ -57,12 +54,9 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 			StepListBox.ContainerPrepared += OnContainerPrepared;
 			StepListBox.ContainerClearing += OnContainerClearing;
 			StepListBox.SelectionChanged += OnSelectionChanged;
-			// Tunnel: a press inside a TextBox/ComboBox cell never bubbles to the ListBoxItem
-			// (the editor swallows it), so column selection and changed-cell click-away hook in
-			// before the editor sees the press.
+			// Tunnel: a press inside a cell editor never bubbles to the ListBoxItem, so selection/click-away must hook first.
 			StepListBox.AddHandler(PointerPressedEvent, OnGridPointerPressed, RoutingStrategies.Tunnel);
-			// Tunnel: arrow keys must not fall through to the always-live editors (a closed
-			// ComboBox cycles its value on arrows), so grid navigation intercepts first.
+			// Tunnel: arrow keys must not reach a closed ComboBox (it cycles its value on arrows).
 			AddHandler(KeyDownEvent, OnTunnelKeyDown, RoutingStrategies.Tunnel);
 
 			// Activation fires on Loaded, after the first layout pass has already realized
@@ -122,9 +116,7 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 		_stepColumnClassBinder.OnContainerClearing(e.Container);
 	}
 
-	// Re-applies the surface's selection to the ListBox. The host calls this when the view
-	// becomes active after an orientation flip: the surface received the carried-over selection
-	// while the view was flipped away, so the visual selection is stale by then.
+	// Re-applies selection after an orientation flip: the surface got the selection while the view was flipped away.
 	internal void SyncSelectionFromSurface()
 	{
 		if (ViewModel is null || StepListBox.SelectedItems is not { } selectedItems)
@@ -211,16 +203,13 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 			return;
 		}
 
-		// Header/marker presses resolve no cell: native ListBoxItem selection handles them and
-		// the pending changed cell stays armed (canonical parity: only cell presses resolve).
+		// Header/marker presses resolve no cell; the pending changed cell stays armed.
 		if (TransposedGridCellLocator.ResolveCell(source, StepListBox) is not { } pressedCell)
 		{
 			return;
 		}
 
-		// Selection is a left-button gesture (canonical parity: right/middle clicks never
-		// collapse a multi-selection); click-away resolution runs for any button, matching
-		// canonical's CellPointerPressed.
+		// Selection is left-button only; click-away resolution runs for any button.
 		if (e.GetCurrentPoint(StepListBox).Properties.IsLeftButtonPressed)
 		{
 			if (_gridSelectionController.HandleCellSelectionPress(ViewModel, pressedCell, e))
@@ -230,21 +219,13 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 		}
 		else
 		{
-			// A right/middle press over a cell must not reach the ListBoxItem's native selection (which
-			// would collapse a multi-selection). The lazy display TextBlock does not swallow it the way the
-			// always-live editor once did, so consume it here. The context menu opens off ContextRequested,
-			// which is independent of the handled state of this press.
+			// Consume a right/middle press so native ListBoxItem selection doesn't collapse the multi-selection.
 			e.Handled = true;
 		}
 
 		ResolveChangedCellClickAway(pressedCell);
 	}
 
-	// Select-then-edit under the lazy display: the selection controller reports a fall-through only on a
-	// second press of the already-single-selected column. That press builds and focuses the cell's editor
-	// (a TextBox for property-text, a ComboBox with its dropdown opened for a combo). A read-only /
-	// inapplicable cell's display is non-hit-testable, so the press never resolves to its presenter and
-	// falls through to plain column selection.
 	private void TryEnterEditFromPointer(
 		Visual source,
 		ParameterCellViewModel pressedCell,
@@ -256,9 +237,7 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 			return;
 		}
 
-		// A press inside the already-open editor must reach the live TextBox to reposition the caret, so
-		// leave it unhandled: only the entry press (a display not yet editing) is consumed. This is the
-		// tunnel phase, so a handled press never reaches the editor.
+		// A press inside the open editor must reach the TextBox to reposition the caret; only the entry press is consumed.
 		if (presenter.IsEditing)
 		{
 			return;
@@ -268,10 +247,7 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 		e.Handled = true;
 	}
 
-	// Click-away rule: a changed (orange) cell clears the moment any OTHER cell is pressed. This
-	// is not an edit, so it must run even while the surface is read-only during PLC sync — no
-	// IsReadOnly guard (mirror of CanonicalRecipeGridView.OnCellPointerPressed). The clear routes
-	// through the surface so the sibling orientation surface clears too.
+	// No IsReadOnly guard: click-away is not an edit, so it must run during PLC-sync read-only.
 	private void ResolveChangedCellClickAway(ParameterCellViewModel pressedCell)
 	{
 		var (cellToClear, newPending) = ChangedCellClickResolver.Resolve(
@@ -307,18 +283,12 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 		TransposedCellTemplateFactory.CommitByDefocusing(editor);
 	}
 
-	// Editing is defined off the coordinator, which owns the one active lazy edit for both cell kinds (the
-	// heavy editor exists only while editing). A focused display visual is NOT editing, so arrow-navigating
-	// onto a cell leaves IsEditing false and the step-level hotkeys stay live. A combo whose dropdown is
-	// open still counts (the coordinator holds it as editing until the dropdown closes and focus leaves).
+	// A focused display is NOT editing, so arrow-navigating onto a cell keeps step-level hotkeys live.
 	private Control? GetActiveEditor()
 	{
 		return _editCoordinator.ActiveEditor;
 	}
 
-	// A fresh pool per surface: the singleton view is rebound to a new surface on a config swap, whose
-	// descriptor set (and thus the built cell subtrees) differ, so presenters must not carry across.
-	// Hosts return their borrowed presenter to the pool that lent it, so the stale pool drains to GC.
 	private void BuildColumnCellsPool(TransposedRecipeGridSurface? surface)
 	{
 		// The prior surface's pooled presenters (and their editors) are discarded with the pool, so the
@@ -333,9 +303,6 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 				surface.GridStyle.RowHeight);
 	}
 
-	// The step-number header cell is the transposed analog of canonical's step-number cells (cell
-	// font, per ColumnBuilder.AddNumberingColumn); the parameter-name column is the analog of
-	// canonical's column headers (header font). Both inherit through TextElement attached values.
 	private void ApplyGridStyle(GridStyleOptions gridStyle)
 	{
 		Resources[CellHeightResourceKey] = gridStyle.RowHeight;

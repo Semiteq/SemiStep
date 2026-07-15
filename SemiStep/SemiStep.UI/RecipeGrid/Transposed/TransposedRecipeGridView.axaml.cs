@@ -1,4 +1,5 @@
-﻿using System.Reactive.Disposables;
+﻿using System.Linq;
+using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 
 using Avalonia;
@@ -149,27 +150,14 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 
 	private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
 	{
-		if (_syncingSelectionFromSurface
-			|| ViewModel is null
-			|| StepListBox.SelectedItems is not { } selectedItems)
+		if (_syncingSelectionFromSurface || ViewModel is null)
 		{
 			return;
 		}
 
-		var indices = new List<int>();
-		foreach (var item in selectedItems)
-		{
-			if (item is StepColumnViewModel stepColumn)
-			{
-				var index = ViewModel.StepColumns.IndexOf(stepColumn);
-				if (index >= 0)
-				{
-					indices.Add(index);
-				}
-			}
-		}
-
-		indices.Sort();
+		// SelectedIndexes is a live, ascending view over the selection model's ranges; materialize it
+		// before handing it to the surface. It is index-aligned with StepColumns (the same ItemsSource).
+		var indices = StepListBox.Selection.SelectedIndexes.ToList();
 		ViewModel.UpdateSelection(indices);
 	}
 

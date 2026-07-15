@@ -90,7 +90,7 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 		var cells = column.Cells;
 		for (var slotIndex = 0; slotIndex < _descriptors.Count; slotIndex++)
 		{
-			var slot = BuildCellSlot(_cellFactory.CreateEditor(cells[slotIndex]));
+			var slot = BuildCellSlot(_cellFactory.CreateEditor(cells[slotIndex]), slotIndex);
 			slot.Bind(DataContextProperty, new Binding(nameof(StepColumnViewModel.Cells))
 			{
 				Converter = CellSlotConverter.Instance,
@@ -103,7 +103,7 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 		_slotsBuilt = true;
 	}
 
-	private Border BuildCellSlot(Control editor)
+	private Border BuildCellSlot(Control editor, int slotIndex)
 	{
 		var border = new Border
 		{
@@ -113,10 +113,12 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 
 		border.Classes.Add("transposed-cell");
 
-		var readOnlyParameterPath =
-			$"{nameof(ParameterCellViewModel.Descriptor)}.{nameof(ParameterDescriptor.IsReadOnlyParameter)}";
+		var isReadOnlyParameter = _descriptors[slotIndex].IsReadOnlyParameter;
+		if (isReadOnlyParameter)
+		{
+			border.Classes.Add("read-only-cell");
+		}
 
-		border.BindClass("read-only-cell", new Binding(readOnlyParameterPath), border);
 		border.BindClass(
 			"inapplicable",
 			new Binding(nameof(ParameterCellViewModel.IsApplicable))
@@ -129,12 +131,12 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 		border.Bind(Border.BackgroundProperty, new MultiBinding
 		{
 			Converter = TransposedCellBackgroundConverter.Instance,
+			ConverterParameter = isReadOnlyParameter,
 			Bindings =
 			{
 				new Binding { RelativeSource = new RelativeSource(RelativeSourceMode.Self) },
 				new Binding($"{nameof(ParameterCellViewModel.Row)}.{nameof(RecipeRowViewModel.ForDepth)}"),
 				new Binding($"{nameof(ParameterCellViewModel.Row)}.{nameof(RecipeRowViewModel.IsPastStep)}"),
-				new Binding(readOnlyParameterPath),
 				new Binding(nameof(ParameterCellViewModel.IsApplicable)),
 				new Binding(nameof(ParameterCellViewModel.IsChanged)),
 				new Binding(nameof(IsColumnSelected)) { Source = this },

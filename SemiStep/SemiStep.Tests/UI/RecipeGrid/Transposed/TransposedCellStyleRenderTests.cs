@@ -154,15 +154,67 @@ public sealed class TransposedCellStyleRenderTests : IAsyncLifetime
 			.Should().BeSameAs(Resource(CellPaletteInstaller.SelectionForegroundBrushKey));
 	}
 
-	private IBrush Resource(string key)
+	// A config-driven read-only column (comment, applicable under the seeded Wait action) proves the
+	// static read-only-cell class and the per-slot ConverterParameter still drive the read-only palette
+	// after the two reactive IsReadOnlyParameter legs were removed from BuildCellSlot; a normal applicable
+	// cell in the same render must not pick up the class.
+	[AvaloniaFact]
+	public async Task ReadOnlyCell_CarriesReadOnlyClass_AndUsesReadOnlyBackground()
 	{
-		_window!.TryFindResource(key, out var value).Should().BeTrue($"resource '{key}' must be installed");
-		return value.Should().BeAssignableTo<IBrush>().Subject;
+		var readOnlyFixture = new UIFixture();
+		await readOnlyFixture.InitializeAsync("WithReadOnlyColumn");
+		try
+		{
+			readOnlyFixture.SeedRecipe(SeededStepCount);
+			var surface = readOnlyFixture.CreateTransposedSurface();
+			surface.Initialize();
+
+			var view = new TransposedRecipeGridView { DataContext = surface };
+			var window = new Window
+			{
+				Width = 1200,
+				Height = 800,
+				Content = view,
+			};
+			CellPaletteInstaller.Install(window.Resources, readOnlyFixture.AppConfiguration.GridStyle);
+			ExecutionPaletteInstaller.Install(window.Resources, readOnlyFixture.AppConfiguration.GridStyle);
+			window.Show();
+			Dispatcher.UIThread.RunJobs();
+
+			var stepListBox = view.FindControl<ListBox>("StepListBox");
+			stepListBox.Should().NotBeNull();
+
+			var row = surface.StepColumns[0].Row;
+			var descriptors = surface.ParameterDescriptors;
+			var readOnlyIndex = IndexOfDescriptorIn(
+				descriptors,
+				descriptor => descriptor.IsReadOnlyParameter && row.IsApplicable(descriptor.ParameterKey));
+			var normalIndex = IndexOfDescriptorIn(
+				descriptors,
+				descriptor => !descriptor.IsReadOnlyParameter && row.IsApplicable(descriptor.ParameterKey));
+
+			var cells = FindCellBorders(stepListBox!, 0);
+
+			cells[readOnlyIndex].Classes.Should().Contain(
+				"read-only-cell", "the read-only descriptor still tags its slot statically");
+			cells[readOnlyIndex].Background.Should().BeSameAs(
+				ResourceFrom(window, CellPaletteInstaller.CellReadOnlyDepth0BrushKey),
+				"the ConverterParameter feeds the read-only palette in place of the removed bound leg");
+			cells[normalIndex].Classes.Should().NotContain(
+				"read-only-cell", "a non-read-only descriptor must not carry the read-only class");
+
+			window.Close();
+			surface.Dispose();
+		}
+		finally
+		{
+			await readOnlyFixture.DisposeAsync();
+		}
 	}
 
-	private int IndexOfDescriptor(Func<ParameterDescriptor, bool> predicate)
+	private static int IndexOfDescriptorIn(
+		IReadOnlyList<ParameterDescriptor> descriptors, Func<ParameterDescriptor, bool> predicate)
 	{
-		var descriptors = _surface.ParameterDescriptors;
 		for (var i = 0; i < descriptors.Count; i++)
 		{
 			if (predicate(descriptors[i]))
@@ -172,6 +224,22 @@ public sealed class TransposedCellStyleRenderTests : IAsyncLifetime
 		}
 
 		throw new InvalidOperationException("No parameter descriptor matches the test predicate.");
+	}
+
+	private static IBrush ResourceFrom(Window window, string key)
+	{
+		window.TryFindResource(key, out var value).Should().BeTrue($"resource '{key}' must be installed");
+		return value.Should().BeAssignableTo<IBrush>().Subject;
+	}
+
+	private IBrush Resource(string key)
+	{
+		return ResourceFrom(_window!, key);
+	}
+
+	private int IndexOfDescriptor(Func<ParameterDescriptor, bool> predicate)
+	{
+		return IndexOfDescriptorIn(_surface.ParameterDescriptors, predicate);
 	}
 
 	private static List<Border> FindCellBorders(ListBox stepListBox, int columnIndex)

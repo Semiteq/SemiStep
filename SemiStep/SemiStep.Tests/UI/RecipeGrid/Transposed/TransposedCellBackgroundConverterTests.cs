@@ -44,9 +44,9 @@ public sealed class TransposedCellBackgroundConverterTests
 								var expectedBrush = resources[expectedKey];
 
 								var actual = converter.Convert(
-									[host, depth, past, readOnly, applicable, changed, selected],
+									[host, depth, past, applicable, changed, selected],
 									typeof(IBrush),
-									null,
+									readOnly,
 									CultureInfo.InvariantCulture);
 
 								Assert.True(
@@ -68,9 +68,9 @@ public sealed class TransposedCellBackgroundConverterTests
 		var converter = TransposedCellBackgroundConverter.Instance;
 
 		var depthFive = converter.Convert(
-			[host, 5, false, false, true, false, false],
+			[host, 5, false, true, false, false],
 			typeof(IBrush),
-			null,
+			false,
 			CultureInfo.InvariantCulture);
 
 		Assert.Same(resources[ExecutionPaletteInstaller.ExecRowDepth3BrushKey], depthFive);
@@ -84,9 +84,9 @@ public sealed class TransposedCellBackgroundConverterTests
 
 		// depth<=0, not past, editable, applicable, not changed, not selected -> plain grid background.
 		var negative = converter.Convert(
-			[host, -1, false, false, true, false, false],
+			[host, -1, false, true, false, false],
 			typeof(IBrush),
-			null,
+			false,
 			CultureInfo.InvariantCulture);
 
 		Assert.Same(resources[CellPaletteInstaller.GridBackgroundBrushKey], negative);

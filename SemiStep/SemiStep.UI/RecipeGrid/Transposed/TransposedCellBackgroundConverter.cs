@@ -21,17 +21,17 @@ internal sealed class TransposedCellBackgroundConverter : IMultiValueConverter
 
 	public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
 	{
-		if (values.Count < 7 || values[0] is not Control host)
+		if (values.Count < 6 || values[0] is not Control host)
 		{
 			return AvaloniaProperty.UnsetValue;
 		}
 
 		var depth = values[1] as int? ?? 0;
 		var isPastStep = values[2] as bool? ?? false;
-		var isReadOnly = values[3] as bool? ?? false;
-		var isApplicable = values[4] as bool? ?? true;
-		var isChanged = values[5] as bool? ?? false;
-		var isSelected = values[6] as bool? ?? false;
+		var isApplicable = values[3] as bool? ?? true;
+		var isChanged = values[4] as bool? ?? false;
+		var isSelected = values[5] as bool? ?? false;
+		var isReadOnly = parameter as bool? ?? false;
 
 		var key = ResolveBrushKey(depth, isPastStep, isReadOnly, !isApplicable, isChanged, isSelected);
 

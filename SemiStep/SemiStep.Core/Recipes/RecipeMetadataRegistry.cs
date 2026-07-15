@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 using FluentResults;
 
@@ -111,6 +112,11 @@ public sealed class RecipeMetadataRegistry
 	public Result<ActionDefinition> GetAction(int id)
 	{
 		return TryGetOrFail(_actionsById, id, $"Action with id {id} not found");
+	}
+
+	public bool TryGetAction(int id, [MaybeNullWhen(false)] out ActionDefinition action)
+	{
+		return _actionsById.TryGetValue(id, out action);
 	}
 
 	public Result<ActionDefinition> GetActionByName(string name)

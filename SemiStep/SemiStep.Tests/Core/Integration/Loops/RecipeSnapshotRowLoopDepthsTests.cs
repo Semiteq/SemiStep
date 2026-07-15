@@ -101,7 +101,7 @@ public sealed class RecipeSnapshotRowLoopDepthsTests
 		return RecipeSnapshot.Create(
 			recipe,
 			TimeSpan.Zero,
-			new Dictionary<int, TimeSpan>(),
+			[],
 			loops,
 			new Dictionary<int, TimeSpan>());
 	}

@@ -177,6 +177,24 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	public void Cell_IsPlainInpc_AndRaisesForValueAndChanged()
+	{
+		var row = CreateRow(RecipeTestDriver.WaitActionId);
+		var cell = CreateFactory().Create(row, FindDescriptor(RecipeTestDriver.StepDurationColumn));
+		cell.Should().BeAssignableTo<System.ComponentModel.INotifyPropertyChanged>();
+		cell.Should().NotBeAssignableTo<ReactiveUI.IReactiveObject>();
+		var changedProperties = new List<string?>();
+		cell.PropertyChanged += (_, e) => changedProperties.Add(e.PropertyName);
+
+		row.UpdateStep(_fixture.Coordinator.CurrentRecipe.Steps[0]);
+		row.MarkChanged([RecipeTestDriver.StepDurationColumn]);
+		row.RecomputeInapplicableColumns();
+
+		changedProperties.Should().Contain(nameof(ParameterCellViewModel.Value));
+		changedProperties.Should().Contain(nameof(ParameterCellViewModel.IsChanged));
+	}
+
+	[AvaloniaFact]
 	public void Cell_IsChanged_TracksRowChangedColumns()
 	{
 		var row = CreateRow(RecipeTestDriver.WaitActionId);

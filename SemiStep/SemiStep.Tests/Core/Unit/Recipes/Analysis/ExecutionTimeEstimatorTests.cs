@@ -113,6 +113,35 @@ public sealed class ExecutionTimeEstimatorTests
 	}
 
 	[Fact]
+	public void TimeLeftInRecipe_ActualLineBeyondStartTimes_ReturnsZeroLikeMissingKey()
+	{
+		var registry = BuildRegistry();
+		var recipe = new Recipe(ImmutableList.Create(
+			BuildStep(LongLastingActionId, 10f)));
+		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
+
+		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(5, 0f));
+
+		result.Should().Be(TimeSpan.Zero,
+			"an out-of-range step index yields the same zero the missing dictionary key gave");
+	}
+
+	[Fact]
+	public void TimeLeftInRecipe_NegativeActualLine_ReturnsZeroLikeMissingKey()
+	{
+		var registry = BuildRegistry();
+		var recipe = new Recipe(ImmutableList.Create(
+			BuildStep(LongLastingActionId, 10f)));
+		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
+
+		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(-1, 0f));
+
+		result.Should().Be(TimeSpan.Zero,
+			"a negative step index must not index the start-time array; it yields the same zero the "
+			+ "missing dictionary key gave");
+	}
+
+	[Fact]
 	public void TimeLeftInRecipe_LinearRecipeAtLastStepFinished_IsZero()
 	{
 		var registry = BuildRegistry();

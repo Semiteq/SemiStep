@@ -82,6 +82,46 @@ public sealed class StepColumnViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	public void Dispose_WithoutAccessingCells_DoesNotMaterialize()
+	{
+		var built = 0;
+		var column = CreateColumn(
+			out _,
+			(row, descriptor) =>
+			{
+				built++;
+				return new TestParameterCellViewModel(row, descriptor);
+			});
+
+		var dispose = column.Dispose;
+
+		dispose.Should().NotThrow();
+		built.Should().Be(0, "a column never asked for its cells must not build any cell view-models");
+	}
+
+	[AvaloniaFact]
+	public void Cells_AreMaterializedLazily_AndCachedAcrossAccess()
+	{
+		var built = 0;
+		var column = CreateColumn(
+			out var descriptors,
+			(row, descriptor) =>
+			{
+				built++;
+				return new TestParameterCellViewModel(row, descriptor);
+			});
+
+		built.Should().Be(0, "constructing the column must not build cells");
+
+		var firstAccess = column.Cells;
+
+		built.Should().Be(descriptors.Count);
+		firstAccess.Select(cell => cell.Descriptor).Should().Equal(descriptors);
+		column.Cells.Should().BeSameAs(firstAccess, "repeated access must reuse the materialized cell set");
+		built.Should().Be(descriptors.Count, "a second access must not rebuild the cells");
+	}
+
+	[AvaloniaFact]
 	public void Dispose_CascadesToWrappedRowViewModel()
 	{
 		var column = CreateColumn(out _);
@@ -94,7 +134,9 @@ public sealed class StepColumnViewModelTests : IAsyncLifetime
 		propertyWrites.Should().BeEmpty();
 	}
 
-	private StepColumnViewModel CreateColumn(out IReadOnlyList<ParameterDescriptor> descriptors)
+	private StepColumnViewModel CreateColumn(
+		out IReadOnlyList<ParameterDescriptor> descriptors,
+		Func<RecipeRowViewModel, ParameterDescriptor, ParameterCellViewModel>? cellFactory = null)
 	{
 		_fixture.SeedRecipe(1);
 		var step = _fixture.Coordinator.CurrentRecipe.Steps[0];
@@ -107,7 +149,7 @@ public sealed class StepColumnViewModelTests : IAsyncLifetime
 			action,
 			_fixture.RecipeMetadataRegistry,
 			descriptors,
-			(row, descriptor) => new TestParameterCellViewModel(row, descriptor));
+			cellFactory ?? ((row, descriptor) => new TestParameterCellViewModel(row, descriptor)));
 	}
 
 	private sealed class TestParameterCellViewModel(

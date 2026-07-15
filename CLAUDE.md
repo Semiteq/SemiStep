@@ -24,7 +24,7 @@ dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj --filter "FullyQualifi
 ```
 
 Test traits: `[Trait("Component", "Core|Config|UI|Domain|Csv|S7")]`, `[Trait("Area", "<AreaName>")]`,
-`[Trait("Category", "Unit|Integration")]`.
+`[Trait("Category", "Unit|Integration|Performance")]` (Performance = env-gated measurement probes, skipped by default).
 
 Invalid config test cases use an overlay pattern: copy `SemiStep.Tests/YamlConfigs/Standard/` to a temp
 directory and overlay only the differing files from `SemiStep.Tests/YamlConfigs/Invalid/{CaseName}/`.

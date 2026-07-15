@@ -33,10 +33,12 @@ public static class ExecutionTimeEstimator
 			return TimeSpan.Zero;
 		}
 
-		if (!snapshot.StepStartTimes.TryGetValue(info.ActualLine, out var stepStart))
+		if (info.ActualLine >= snapshot.StepStartTimes.Count)
 		{
 			return TimeSpan.Zero;
 		}
+
+		var stepStart = snapshot.StepStartTimes[info.ActualLine];
 
 		var loopOffset = ComputeLoopOffset(snapshot, info);
 		var elapsed = TimeSpan.FromSeconds(info.StepCurrentTime);

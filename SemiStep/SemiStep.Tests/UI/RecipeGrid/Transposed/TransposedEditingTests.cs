@@ -97,6 +97,8 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 		Dispatcher.UIThread.RunJobs();
 
 		_surface.StepColumns[0].Row[RecipeTestDriver.StepDurationColumn].Should().Be(100f);
+		editor.Text.Should().Be(
+			"00:01:40", "a rejected edit must snap the editor back to the model's formatted value");
 	}
 
 	[AvaloniaFact]
@@ -307,6 +309,41 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 
 		editor.Text.Should().Be("00:01:40", "Escape must revert the typed-but-uncommitted text");
 		_surface.StepColumns[0].Row[RecipeTestDriver.StepDurationColumn].Should().Be(100f);
+	}
+
+	// Stale-guard: a recyclable TextBox pins its edit target on focus and must write ONLY to that
+	// captured cell, even after recycling rebinds it onto a different cell mid-edit. Rebinding the
+	// editor's DataContext to another column's cell simulates that recycle; the pending text must
+	// land on the captured cell, never leak into the rebind target.
+	[AvaloniaFact]
+	public void RecycledEditor_CommitsToCapturedCell_NotTheRebindTarget()
+	{
+		_fixture.Coordinator.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "10")
+			.IsSuccess.Should().BeTrue();
+		_fixture.Coordinator.UpdateStepProperty(1, RecipeTestDriver.StepDurationColumn, "20")
+			.IsSuccess.Should().BeTrue();
+		var (_, stepListBox) = ShowView();
+
+		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+		var capturedCell = (PropertyTextCellViewModel)editor.DataContext!;
+		var rebindCell = (PropertyTextCellViewModel)FindTextBox(
+			stepListBox, 1, RecipeTestDriver.StepDurationColumn).DataContext!;
+
+		editor.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		editor.DataContext = rebindCell;
+		Dispatcher.UIThread.RunJobs();
+		editor.DataContext.Should().BeSameAs(rebindCell, "the recycle simulation must actually rebind the editor");
+
+		editor.Text = "777";
+		_window!.FocusManager!.Focus(null);
+		Dispatcher.UIThread.RunJobs();
+
+		_surface.StepColumns[1].Row[RecipeTestDriver.StepDurationColumn].Should().Be(
+			20f, "a recycled editor must never write its pending text into the rebind-target cell");
+		_surface.StepColumns[0].Row[RecipeTestDriver.StepDurationColumn].Should().Be(
+			777f, "the commit must land on the cell captured when the editor was focused");
 	}
 
 	[AvaloniaFact]

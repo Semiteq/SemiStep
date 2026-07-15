@@ -5,14 +5,14 @@ internal static class TimingCalculator
 	private static readonly PropertyId _durationProperty = new("step_duration");
 
 	public static (
-		IReadOnlyDictionary<int, TimeSpan> StepStartTimes,
+		IReadOnlyList<TimeSpan> StepStartTimes,
 		TimeSpan TotalDuration,
 		IReadOnlyDictionary<int, TimeSpan> SingleIterationDurations) Calculate(
 		Recipe recipe,
 		IReadOnlyList<LoopInfo> loops,
 		RecipeMetadataRegistry registry)
 	{
-		var startTimes = new Dictionary<int, TimeSpan>(recipe.Steps.Count);
+		var startTimes = new TimeSpan[recipe.Steps.Count];
 		var singleIterations = new Dictionary<int, TimeSpan>();
 		var accumulated = TimeSpan.Zero;
 
@@ -49,14 +49,13 @@ internal static class TimingCalculator
 
 	internal static TimeSpan ExtractStepDuration(Step step, RecipeMetadataRegistry registry)
 	{
-		var actionResult = registry.GetAction(step.ActionKey);
-		if (actionResult.IsFailed)
+		if (!registry.TryGetAction(step.ActionKey, out var action))
 		{
 			throw new InvalidOperationException(
 				$"Step references unknown action id {step.ActionKey}");
 		}
 
-		if (actionResult.Value.DeployDuration == DeployDuration.Immediate)
+		if (action.DeployDuration == DeployDuration.Immediate)
 		{
 			return TimeSpan.Zero;
 		}

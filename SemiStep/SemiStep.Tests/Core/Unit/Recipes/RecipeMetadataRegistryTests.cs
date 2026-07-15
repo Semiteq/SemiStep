@@ -98,6 +98,30 @@ public sealed class RecipeMetadataRegistryTests
 	}
 
 	[Fact]
+	public void TryGetAction_KnownId_ReturnsTrueAndAction()
+	{
+		var registry = BuildNestedRegistry();
+
+		var found = registry.TryGetAction(300, out var action);
+
+		found.Should().BeTrue();
+		action.Should().NotBeNull();
+		action!.Id.Should().Be(300);
+		action.Should().BeSameAs(registry.GetAction(300).Value);
+	}
+
+	[Fact]
+	public void TryGetAction_UnknownId_ReturnsFalseAndDefault_WithoutThrowing()
+	{
+		var registry = BuildNestedRegistry();
+
+		var found = registry.TryGetAction(999, out var action);
+
+		found.Should().BeFalse();
+		action.Should().BeNull();
+	}
+
+	[Fact]
 	public void Subaction_DoesNotEnterRuntimeActionCollections()
 	{
 		var registry = BuildNestedRegistry();

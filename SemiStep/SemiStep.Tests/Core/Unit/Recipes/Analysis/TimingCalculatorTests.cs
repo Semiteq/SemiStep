@@ -152,4 +152,25 @@ public sealed class TimingCalculatorTests
 		singleIterations[0].Should().Be(outerSingle);
 		totalDuration.Should().Be(outerSingle * OuterIterations);
 	}
+
+	[Fact]
+	public void Calculate_ReturnsDenseStartTimesIndexedByStepIndex()
+	{
+		var registry = BuildRegistry();
+		var recipe = new Recipe(ImmutableList.Create(
+			BuildStep(LongLastingActionId, 10f),
+			BuildStep(LongLastingActionId, 20f),
+			BuildStep(LongLastingActionId, 30f)));
+
+		var (startTimes, _, _) = TimingCalculator.Calculate(
+			recipe,
+			Array.Empty<LoopInfo>(),
+			registry);
+
+		startTimes.Should().HaveCount(recipe.Steps.Count,
+			"start-times are a dense list with one slot per step");
+		startTimes[0].Should().Be(TimeSpan.Zero);
+		startTimes[1].Should().Be(TimeSpan.FromSeconds(10));
+		startTimes[2].Should().Be(TimeSpan.FromSeconds(30));
+	}
 }

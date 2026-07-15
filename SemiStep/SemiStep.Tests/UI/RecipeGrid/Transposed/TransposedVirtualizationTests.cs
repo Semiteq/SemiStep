@@ -98,6 +98,55 @@ public sealed class TransposedVirtualizationTests : IAsyncLifetime
 			"a container recycled from the current column must not leak its class");
 	}
 
+	// A focused editor holding uncommitted text that gets recycled across a scroll must never leak
+	// that text into any other column's cell. The recycle-out commit may write column 0 (asserted
+	// separately); every other column must keep its own value.
+	[AvaloniaFact]
+	public void FocusedEditorWithPendingText_RecycledAcrossScroll_DoesNotCorruptOtherCells()
+	{
+		var stepListBox = ShowView();
+		var editor = FindTextBox(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+
+		var before = new object?[SeededStepCount];
+		for (var i = 0; i < SeededStepCount; i++)
+		{
+			before[i] = _surface.StepColumns[i].Row[RecipeTestDriver.StepDurationColumn];
+		}
+
+		editor.Focus();
+		editor.Text = "777";
+
+		ScrollToHorizontalEnd(stepListBox);
+		ScrollToHorizontalStart(stepListBox);
+
+		for (var i = 1; i < SeededStepCount; i++)
+		{
+			_surface.StepColumns[i].Row[RecipeTestDriver.StepDurationColumn].Should().Be(
+				before[i], $"recycling a focused editor must not write stale text into column {i}");
+		}
+	}
+
+	// After a recycled container is reused for a far column, its editor must show that column's own
+	// value (the OneWay display binding rebinds), never a stale value from the column it was built on.
+	[AvaloniaFact]
+	public void RecycledTextEditor_ShowsRebindTargetCellValue_AfterScroll()
+	{
+		var lastIndex = SeededStepCount - 1;
+		_fixture.Coordinator.UpdateStepProperty(lastIndex, RecipeTestDriver.StepDurationColumn, "125")
+			.IsSuccess.Should().BeTrue();
+		var stepListBox = ShowView();
+
+		ScrollToHorizontalEnd(stepListBox);
+
+		var editor = FindTextBox(stepListBox, lastIndex, RecipeTestDriver.StepDurationColumn);
+		var expected = PropertyTimeEditingConverter.FormatForDisplay(
+			_surface.StepColumns[lastIndex].Row[RecipeTestDriver.StepDurationColumn],
+			TimeFormatHelper.TimeHmsFormat);
+
+		editor.Text.Should().Be(expected);
+		editor.Text.Should().Be("00:02:05", "the recycled editor shows the rebind-target cell's formatted value");
+	}
+
 	private static int RealizedContainerCount(ListBox stepListBox)
 	{
 		return stepListBox.GetRealizedContainers().Count();

@@ -25,7 +25,15 @@ namespace SemiStep.UI.RecipeGrid.Transposed;
 internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface surface)
 {
 	private static readonly FuncValueConverter<bool, bool> _negateConverter = new(value => !value);
+	private static readonly FuncValueConverter<int?, int> _maxLengthConverter = new(maxLength => maxLength ?? 0);
 	private static readonly PropertyTimeMultiConverter _displayConverter = new();
+
+	// Per-editor edit target captured on GotFocus. The commit writes ONLY to this cell, so a
+	// still-focused TextBox recycled onto a different cell cannot push its pending text into the new
+	// cell; the OneWay display binding meanwhile keeps the new cell's rendered text intact.
+	private static readonly AttachedProperty<PropertyTextCellViewModel?> _editingCellProperty =
+		AvaloniaProperty.RegisterAttached<TransposedCellTemplateFactory, TextBox, PropertyTextCellViewModel?>(
+			"EditingCell");
 
 	public IReadOnlyList<IDataTemplate> CreateTemplates()
 	{
@@ -101,17 +109,20 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		cell.Value = selected.Id.ToString(CultureInfo.InvariantCulture);
 	}
 
+	// supportsRecycling:true — the TextBox carries no per-cell baked state: display is a OneWay
+	// MultiBinding through a shared stateless converter, MaxLength is bound, and the edit commit reads
+	// its target from the cell captured on GotFocus (not a closure), so a recycled container safely
+	// rebinds onto the next cell instead of rebuilding the whole subtree.
 	private IDataTemplate CreatePropertyTextTemplate()
 	{
 		return new FuncDataTemplate<PropertyTextCellViewModel>(
-			(cell, _) => cell is null ? new TextBlock() : CreateTextBoxEditor(cell),
-			supportsRecycling: false);
+			(cell, _) => cell is null ? new TextBlock() : CreateTextBoxEditor(),
+			supportsRecycling: true);
 	}
 
-	private Control CreateTextBoxEditor(PropertyTextCellViewModel cell)
+	private Control CreateTextBoxEditor()
 	{
 		var gridStyle = surface.GridStyle;
-		var editingConverter = new PropertyTimeEditingConverter(cell.FormatKind, allowsEmpty: cell.MaxLength.HasValue);
 
 		var textBox = new TextBox
 		{
@@ -131,55 +142,66 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 		};
 		GridFontApplier.ApplyCellFont(textBox, gridStyle);
 
-		if (cell.MaxLength.HasValue)
+		// Bound, not baked: a null MaxLength maps to 0 (Semi's "unlimited"), matching the old
+		// leave-MaxLength-unset behavior while still tracking the recycled cell's descriptor.
+		textBox.Bind(TextBox.MaxLengthProperty, new Binding(nameof(PropertyTextCellViewModel.MaxLength))
 		{
-			textBox.MaxLength = cell.MaxLength.Value;
-		}
-
-		textBox.Bind(TextBox.TextProperty, new Binding(nameof(ParameterCellViewModel.Value))
-		{
-			Mode = BindingMode.TwoWay,
-			UpdateSourceTrigger = UpdateSourceTrigger.LostFocus,
-			Converter = editingConverter,
+			Mode = BindingMode.OneWay,
+			Converter = _maxLengthConverter,
 		});
 
-		// Subscribed after Bind so it runs once the LostFocus push has resolved: snap the display
-		// back to the view model. A rejected, read-only-dropped, or unparseable write leaves the
-		// source unchanged, and the binding's publish cache skips re-publishing an identical
-		// value, so the editor would otherwise keep showing the never-committed text.
-		textBox.LostFocus += (sender, _) =>
+		// OneWay display only (a MultiBinding cannot ConvertBack). FormatKind is bound so the shared
+		// converter formats each recycled cell correctly; the commit is owned by the handlers below.
+		textBox.Bind(TextBox.TextProperty, new MultiBinding
 		{
-			if (sender is TextBox senderTextBox)
+			Mode = BindingMode.OneWay,
+			Converter = PropertyTextEditingMultiConverter.Instance,
+			Bindings =
 			{
-				senderTextBox.Text = editingConverter.Convert(
-					cell.Value, typeof(string), null, CultureInfo.CurrentCulture) as string;
-			}
-		};
+				new Binding(nameof(ParameterCellViewModel.Value)) { Mode = BindingMode.OneWay },
+				new Binding(nameof(ParameterCellViewModel.FormatKind)) { Mode = BindingMode.OneWay },
+			},
+		});
 
 		// No read-only-parameter leg here: the cell factory routes read-only descriptors to
 		// ReadOnlyCellViewModel before the property-text kind, so a TextBox cell is never
 		// column-level read-only.
 		textBox.Bind(InputElement.IsEnabledProperty, CreateTextBoxEditableBinding());
 
+		textBox.GotFocus += (sender, _) => OnEditorGotFocus(sender);
+		textBox.LostFocus += (sender, _) => OnEditorLostFocus(sender);
 		textBox.AddHandler(
 			InputElement.KeyDownEvent,
-			(sender, e) => OnEditorKeyDown(sender, e, cell, editingConverter),
+			OnEditorKeyDown,
 			RoutingStrategies.Bubble,
 			handledEventsToo: true);
 
 		return textBox;
 	}
 
-	// Enter commits an always-live editor by moving focus off it; the LostFocus trigger pushes
-	// the pending text through the editing converter (canonical parity: Enter ends the cell
-	// edit). Escape overwrites the typed-but-uncommitted text with the view-model value before
-	// defocusing (canonical parity: Escape cancels the cell edit) — written directly to Text
-	// because the two-way binding withholds source-to-target updates while an edit is pending.
-	private static void OnEditorKeyDown(
-		object? sender,
-		KeyEventArgs e,
-		PropertyTextCellViewModel cell,
-		PropertyTimeEditingConverter editingConverter)
+	// Stale-guard capture: the cell being edited is pinned when the TextBox gains focus, so the
+	// commit targets it even if recycling later rebinds the control onto a different cell.
+	private static void OnEditorGotFocus(object? sender)
+	{
+		if (sender is TextBox textBox)
+		{
+			textBox.SetValue(_editingCellProperty, textBox.DataContext as PropertyTextCellViewModel);
+		}
+	}
+
+	private static void OnEditorLostFocus(object? sender)
+	{
+		if (sender is TextBox textBox)
+		{
+			CommitEditor(textBox);
+		}
+	}
+
+	// Enter commits an always-live editor by moving focus off it; the LostFocus handler parses and
+	// pushes the pending text (canonical parity: Enter ends the cell edit). Escape overwrites the
+	// typed-but-uncommitted text with the captured cell's value before defocusing (canonical parity:
+	// Escape cancels the cell edit) — the ensuing commit re-parses that reverted text to a no-op write.
+	private static void OnEditorKeyDown(object? sender, KeyEventArgs e)
 	{
 		if (sender is not TextBox textBox || e.Key is not (Key.Enter or Key.Escape))
 		{
@@ -188,19 +210,50 @@ internal sealed class TransposedCellTemplateFactory(TransposedRecipeGridSurface 
 
 		if (e.Key == Key.Escape)
 		{
-			textBox.Text = editingConverter.Convert(
-				cell.Value, typeof(string), null, CultureInfo.CurrentCulture) as string;
+			var cell = textBox.GetValue(_editingCellProperty);
+			textBox.Text = PropertyTimeEditingConverter.FormatForDisplay(cell?.Value, cell?.FormatKind);
 		}
 
 		CommitByDefocusing(textBox);
 		e.Handled = true;
 	}
 
+	// Commit writes ONLY to the cell captured on GotFocus, never the current DataContext, so a
+	// recycled-out editor commits its edit to the cell the user was editing and a recycled-in editor
+	// never receives a stale write. The display is snapped back to the model value only while the
+	// editor still shows the captured cell — a rejected, read-only-dropped, or unchanged write leaves
+	// the source untouched, so the OneWay binding would otherwise keep showing the never-committed
+	// text; if the editor was recycled onto another cell, its binding already shows that cell and must
+	// not be overwritten.
+	private static void CommitEditor(TextBox textBox)
+	{
+		if (textBox.GetValue(_editingCellProperty) is not { } cell)
+		{
+			return;
+		}
+
+		var parsed = PropertyTimeEditingConverter.ParseForCommit(textBox.Text, cell.MaxLength.HasValue);
+		if (!ReferenceEquals(parsed, BindingOperations.DoNothing))
+		{
+			cell.Value = parsed;
+		}
+
+		if (ReferenceEquals(textBox.DataContext, cell))
+		{
+			textBox.Text = PropertyTimeEditingConverter.FormatForDisplay(cell.Value, cell.FormatKind);
+		}
+	}
+
+	// supportsRecycling:true — the read-only TextBlock holds no per-cell baked state: both the
+	// step-start-time and the display-converter legs are OneWay bindings. The step-start-time vs
+	// display split keys off the descriptor's ColumnType, which is invariant per recycled position
+	// (every column's cell at a given row shares one parameter descriptor), so the chosen leg stays
+	// correct across recycling.
 	private IDataTemplate CreateReadOnlyTemplate()
 	{
 		return new FuncDataTemplate<ReadOnlyCellViewModel>(
 			(cell, _) => cell is null ? new TextBlock() : CreateReadOnlyTextBlock(cell),
-			supportsRecycling: false);
+			supportsRecycling: true);
 	}
 
 	private Control CreateReadOnlyTextBlock(ReadOnlyCellViewModel cell)

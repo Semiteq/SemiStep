@@ -155,8 +155,15 @@ and every dead member would have to be implemented and contract-tested by each f
 
 - **View to surface:** the view translates its native selection into step indices and calls
   `UpdateSelection`. Canonical walks `DataGrid.SelectedItems`, maps rows through
-  `RecipeRows.IndexOf`, and sorts ascending. Transposed maps the `ListBox`'s selected
-  step-column items to indices and sorts ascending — same contract, different native control.
+  `RecipeRows.IndexOf`, and sorts ascending. Transposed reads
+  `StepListBox.Selection.SelectedIndexes` — the index set the `SelectionModel` already
+  maintains, pre-sorted and O(S) — rather than scanning each selected item back to its position
+  through `StepColumns.IndexOf`. The step-column list is the model's `ItemsSource` with no
+  collection-view wrapping, so those indices map 1:1 onto `StepColumns` and need no re-sort. The
+  earlier item→index scan was O(S·N): on a 2100-step recipe with a large live selection it
+  measured 2808 ms / 18.7 % of UI-thread CPU in a weighted `dotnet-trace` sample, the single
+  biggest active cost, since it re-scanned the full step-column list per selected item on every
+  membership change.
 - **Consumer to surface to view:** consumers push a post-mutation reposition through
   `RequestSelection(int?)`; the surface forwards it into `SelectionRequests`; the view
   subscribes and sets its native selection (`null` clears). `RequestSelection` is a safe no-op
@@ -260,9 +267,12 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   `ExtractStepDuration`, so it inherits the same win.
 - **Cell background via a converter, not a style matrix.** The transposed cell background is
   resolved by a single `IMultiValueConverter`
-  (`TransposedCellBackgroundConverter`) over the full state set
-  `(ForDepth, IsPastStep, IsReadOnly, IsApplicable, IsChanged, IsSelected)` and applied as a local
+  (`TransposedCellBackgroundConverter`) over five reactive state legs
+  `(ForDepth, IsPastStep, IsApplicable, IsChanged, IsSelected)` plus the Self host, applied as a local
   `Border.Background` MultiBinding, reproducing the old document-order last-match-wins precedence.
+  `IsReadOnly` is column-invariant, so it is not a reactive leg: it arrives through the per-slot
+  `ConverterParameter` as a build-time constant, and the `read-only-cell` class is added statically in
+  `BuildCellSlot` rather than via a `BindClass`.
   This replaces the descendant-selector background rules in `TransposedGridStyles.axaml`, avoiding
   the per-cell style-activator / dynamic-resource machinery those rules multiplied. The
   `TextElement.Foreground` setters stay as style setters (background stripped out), so foreground
@@ -337,6 +347,28 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   ~14.5x the canonical recycled-row cost to ~1.03x (WideParams, 36 cells/column) and from ~2.3x to
   ~0.69x (WithGroups, 5 cells/column); gen0/add fell from ~2.58 to ~0.17-0.25 (WideParams) and from
   ~0.42 to ~0.00-0.08 (WithGroups). With no cell in edit the live-editor census is 0.
+
+## Performance measurement discipline
+
+Each transposed-grid performance round is gated on measurement, not on felt lag or code review.
+The rules:
+
+- **Open with a weighted trace.** Before touching code, capture a weighted CPU trace
+  (`dotnet-trace`, viewed in Speedscope) plus GC counters (`dotnet-counters` on
+  `System.Runtime[time-in-gc,gen-0-gc-count]`) on the scripted 2100-step scroll+add scenario. The
+  round targets whatever the trace names as the dominant active cost, not a suspected hotspot. The
+  `IndexOf`-in-N selection scan was found this way; three prior rounds that measured allocation and
+  binding errors never surfaced it because it was CPU self-time, not heap.
+- **Pre-commit the exit number.** Write the exit criterion as a concrete number before the code
+  (for the selection fix: per-selection-event cost must not scale with N). Ship the after-trace
+  with the change so the collapse is documented, not asserted.
+- **Keep a checked-in regression instrument.** `TransposedSelectionCostProbe`
+  (`SemiStep.Tests/Performance/`, env-gated `SEMISTEP_PROBE=1`, `Category=Performance`, skipped in
+  CI) holds selection size constant at S=200 while N grows (300 / 1200 / 4800) and asserts the
+  per-event cost at N=4800 stays within 3× of N=300. The fixed-S design isolates the `IndexOf`-in-N
+  regression: select-all would make S=N and force O(N) even with the fix. Restoring the `IndexOf`
+  scan makes the ratio return at ~7×–16× (linear in N at fixed S); the fix stays flat. This is the
+  guard that catches the class of regression by instrument rather than by manual complaint.
 
 ## Context menu placement
 

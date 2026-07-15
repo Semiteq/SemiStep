@@ -79,6 +79,22 @@
                                                     Classes.inapplicable="{Binding !IsApplicable}"
                                                     Classes.changed="{Binding IsChanged}"
                                                     Height="{DynamicResource TransposedCellHeight}">
+                                                <!-- Full cell-background state matrix (depth / past /
+                                                     read-only / inapplicable / changed / selection)
+                                                     resolved in one converter; a local Background value
+                                                     that outranks any style setter. -->
+                                                <Border.Background>
+                                                    <MultiBinding Converter="{x:Static transposed:TransposedCellBackgroundConverter.Instance}">
+                                                        <Binding RelativeSource="{RelativeSource Self}" />
+                                                        <Binding Path="Row.ForDepth" />
+                                                        <Binding Path="Row.IsPastStep" />
+                                                        <Binding Path="Descriptor.IsReadOnlyParameter" />
+                                                        <Binding Path="IsApplicable" />
+                                                        <Binding Path="IsChanged" />
+                                                        <Binding Path="IsSelected"
+                                                                 RelativeSource="{RelativeSource AncestorType=ListBoxItem}" />
+                                                    </MultiBinding>
+                                                </Border.Background>
                                                 <!-- Editor template resolved from the view's DataTemplates
                                                      (TransposedCellTemplateFactory) by cell-VM kind. -->
                                                 <ContentControl Content="{Binding}"

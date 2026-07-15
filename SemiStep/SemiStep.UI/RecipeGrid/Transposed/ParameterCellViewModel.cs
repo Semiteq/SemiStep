@@ -1,10 +1,8 @@
 ﻿using System.ComponentModel;
 
-using ReactiveUI;
-
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-public abstract class ParameterCellViewModel : ReactiveObject, IDisposable
+public abstract class ParameterCellViewModel : INotifyPropertyChanged, IDisposable
 {
 	private const string RowIndexerName = "Item";
 
@@ -14,6 +12,8 @@ public abstract class ParameterCellViewModel : ReactiveObject, IDisposable
 		Descriptor = parameterDescriptor;
 		Row.PropertyChanged += OnRowPropertyChanged;
 	}
+
+	public event PropertyChangedEventHandler? PropertyChanged;
 
 	public RecipeRowViewModel Row { get; }
 
@@ -45,22 +45,27 @@ public abstract class ParameterCellViewModel : ReactiveObject, IDisposable
 		Row[Descriptor.ParameterKey] = value;
 	}
 
+	protected void RaisePropertyChanged(string propertyName)
+	{
+		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+	}
+
 	private void OnRowPropertyChanged(object? sender, PropertyChangedEventArgs e)
 	{
 		switch (e.PropertyName)
 		{
 			case RowIndexerName:
-				this.RaisePropertyChanged(nameof(Value));
+				RaisePropertyChanged(nameof(Value));
 				break;
 			case nameof(RecipeRowViewModel.StepStartTime)
 				when IsStepStartTimeParameter():
-				this.RaisePropertyChanged(nameof(Value));
+				RaisePropertyChanged(nameof(Value));
 				break;
 			case nameof(RecipeRowViewModel.InapplicableColumns):
-				this.RaisePropertyChanged(nameof(IsApplicable));
+				RaisePropertyChanged(nameof(IsApplicable));
 				break;
 			case nameof(RecipeRowViewModel.ChangedColumns):
-				this.RaisePropertyChanged(nameof(IsChanged));
+				RaisePropertyChanged(nameof(IsChanged));
 				break;
 		}
 	}

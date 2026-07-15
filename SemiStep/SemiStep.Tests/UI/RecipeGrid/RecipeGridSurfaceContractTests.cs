@@ -549,12 +549,12 @@ public abstract class RecipeGridSurfaceContractTests : IAsyncLifetime
 	private string ExpectedStartTime(int index)
 	{
 		var stepStartTimes = Fixture.Coordinator.Snapshot.StepStartTimes;
-		if (!stepStartTimes.TryGetValue(index, out var time))
+		if (index >= stepStartTimes.Count)
 		{
 			return string.Empty;
 		}
 
-		var rawSeconds = time.TotalSeconds.ToString(CultureInfo.InvariantCulture);
+		var rawSeconds = stepStartTimes[index].TotalSeconds.ToString(CultureInfo.InvariantCulture);
 		return TimeFormatHelper.FormatValue(
 			rawSeconds,
 			TimeFormatHelper.TimeHmsFormat,

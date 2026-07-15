@@ -3,7 +3,7 @@
 public record struct RecipeSnapshot(
 	Recipe Recipe,
 	TimeSpan TotalDuration,
-	IReadOnlyDictionary<int, TimeSpan> StepStartTimes,
+	IReadOnlyList<TimeSpan> StepStartTimes,
 	IReadOnlyList<LoopInfo> Loops,
 	IReadOnlyDictionary<int, LoopInfo> LoopByStart,
 	IReadOnlyDictionary<int, LoopInfo> LoopByEnd,
@@ -14,7 +14,7 @@ public record struct RecipeSnapshot(
 	public static readonly RecipeSnapshot Empty = new(
 		Recipe.Empty,
 		TimeSpan.Zero,
-		new Dictionary<int, TimeSpan>(),
+		[],
 		[],
 		new Dictionary<int, LoopInfo>(),
 		new Dictionary<int, LoopInfo>(),
@@ -25,7 +25,7 @@ public record struct RecipeSnapshot(
 	public static RecipeSnapshot Create(
 		Recipe recipe,
 		TimeSpan totalDuration,
-		IReadOnlyDictionary<int, TimeSpan> stepStartTimes,
+		IReadOnlyList<TimeSpan> stepStartTimes,
 		IReadOnlyList<LoopInfo> loops,
 		IReadOnlyDictionary<int, TimeSpan> singleIterationDurations)
 	{
@@ -67,26 +67,30 @@ public record struct RecipeSnapshot(
 
 	private static Dictionary<int, IReadOnlyList<LoopInfo>> BuildEnclosingMap(IReadOnlyList<LoopInfo> loops)
 	{
-		var builder = new Dictionary<int, List<LoopInfo>>();
+		var builder = new Dictionary<int, IReadOnlyList<LoopInfo>>();
 
 		foreach (var loop in loops)
 		{
 			for (var i = loop.StartIndex + 1; i < loop.EndIndex; i++)
 			{
-				if (!builder.TryGetValue(i, out var list))
+				if (builder.TryGetValue(i, out var existing))
 				{
-					list = [];
-					builder[i] = list;
+					((List<LoopInfo>)existing).Add(loop);
 				}
-
-				list.Add(loop);
+				else
+				{
+					builder[i] = new List<LoopInfo> { loop };
+				}
 			}
 		}
 
-		return builder.ToDictionary(
-			kvp => kvp.Key, IReadOnlyList<LoopInfo> (kvp) => kvp.Value
-				.OrderBy(l => l.Depth)
-				.ToList()
-				.AsReadOnly());
+		// In-place unstable sort is safe: loops enclosing a given row are strictly nested,
+		// so their depths are distinct and no tie can reorder equal keys.
+		foreach (var list in builder.Values)
+		{
+			((List<LoopInfo>)list).Sort(static (left, right) => left.Depth.CompareTo(right.Depth));
+		}
+
+		return builder;
 	}
 }

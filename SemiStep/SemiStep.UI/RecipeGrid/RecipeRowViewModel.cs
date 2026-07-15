@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Runtime.CompilerServices;
 
 using ReactiveUI;
 
@@ -17,11 +18,14 @@ public sealed class RecipeRowViewModel(
 {
 	private const string IndexerName = "Item";
 
-	private readonly (IReadOnlyDictionary<string, string?> Units, IReadOnlyDictionary<string, string> FormatKinds) _columnMetadata
-		= BuildColumnMetadata(action, recipeMetadataRegistry);
+	// The Units/FormatKinds/GroupItems dictionaries depend only on (ActionDefinition, registry) and
+	// are immutable once built, so they are cached per action instead of rebuilt for every row. The
+	// registry hands out a stable ActionDefinition instance per action id, so the reference key is
+	// safe; the weak table lets an entry fall away when its action is collected (e.g. a discarded
+	// registry in a test).
+	private static readonly ConditionalWeakTable<ActionDefinition, ActionColumnMetadata> _actionMetadataCache = new();
 
-	private readonly IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> _groupItemsByColumn
-		= BuildGroupItemsByColumn(action, recipeMetadataRegistry);
+	private readonly ActionColumnMetadata _actionMetadata = GetActionMetadata(action, recipeMetadataRegistry);
 
 	private Step _step = step;
 
@@ -90,11 +94,12 @@ public sealed class RecipeRowViewModel(
 		private set => this.RaiseAndSetIfChanged(ref field, value);
 	} = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-	public IReadOnlyDictionary<string, string?> ColumnUnits => _columnMetadata.Units;
+	public IReadOnlyDictionary<string, string?> ColumnUnits => _actionMetadata.Units;
 
-	public IReadOnlyDictionary<string, string> ColumnFormatKinds => _columnMetadata.FormatKinds;
+	public IReadOnlyDictionary<string, string> ColumnFormatKinds => _actionMetadata.FormatKinds;
 
-	public IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> GroupItemsByColumn => _groupItemsByColumn;
+	public IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> GroupItemsByColumn =>
+		_actionMetadata.GroupItemsByColumn;
 
 	public object? this[string columnKey]
 	{
@@ -351,6 +356,22 @@ public sealed class RecipeRowViewModel(
 		return propertyResult.IsSuccess ? propertyResult.Value : null;
 	}
 
+	private static ActionColumnMetadata GetActionMetadata(
+		ActionDefinition action,
+		RecipeMetadataRegistry recipeMetadataRegistry)
+	{
+		return _actionMetadataCache.GetValue(
+			action,
+			resolvedAction =>
+			{
+				var (units, formatKinds) = BuildColumnMetadata(resolvedAction, recipeMetadataRegistry);
+				return new ActionColumnMetadata(
+					units,
+					formatKinds,
+					BuildGroupItemsByColumn(resolvedAction, recipeMetadataRegistry));
+			});
+	}
+
 	private static IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> BuildGroupItemsByColumn(
 		ActionDefinition actionDefinition,
 		RecipeMetadataRegistry recipeMetadataRegistry)
@@ -410,4 +431,9 @@ public sealed class RecipeRowViewModel(
 
 		return (units, formatKinds);
 	}
+
+	private sealed record ActionColumnMetadata(
+		IReadOnlyDictionary<string, string?> Units,
+		IReadOnlyDictionary<string, string> FormatKinds,
+		IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> GroupItemsByColumn);
 }

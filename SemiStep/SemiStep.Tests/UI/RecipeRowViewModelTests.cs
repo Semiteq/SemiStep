@@ -61,6 +61,42 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	public void ActionMetadata_TwoRowsSameAction_ShareCachedDictionaries()
+	{
+		_session.AppendStep(RecipeTestDriver.WaitActionId);
+		var step = _session.Current.Steps[0];
+		var action = _recipeMetadataRegistry.GetAction(step.ActionKey).Value;
+		var inapplicable = BuildInapplicableColumns(action, step);
+
+		var first = new RecipeRowViewModel(1, step, action, _recipeMetadataRegistry, inapplicable);
+		var second = new RecipeRowViewModel(2, step, action, _recipeMetadataRegistry, inapplicable);
+
+		second.ColumnUnits.Should().BeSameAs(first.ColumnUnits);
+		second.ColumnFormatKinds.Should().BeSameAs(first.ColumnFormatKinds);
+		second.GroupItemsByColumn.Should().BeSameAs(first.GroupItemsByColumn);
+	}
+
+	[AvaloniaFact]
+	public void ActionMetadata_TwoRowsDifferentActions_GetDistinctDictionaries()
+	{
+		var waitAction = _recipeMetadataRegistry.GetAction(RecipeTestDriver.WaitActionId).Value;
+		var withGroupAction = _recipeMetadataRegistry.GetAction(RecipeTestDriver.WithGroupActionId).Value;
+		_session.AppendStep(RecipeTestDriver.WaitActionId);
+		_session.AppendStep(RecipeTestDriver.WithGroupActionId);
+		var waitStep = _session.Current.Steps[0];
+		var withGroupStep = _session.Current.Steps[1];
+
+		var waitRow = new RecipeRowViewModel(
+			1, waitStep, waitAction, _recipeMetadataRegistry, BuildInapplicableColumns(waitAction, waitStep));
+		var withGroupRow = new RecipeRowViewModel(
+			2, withGroupStep, withGroupAction, _recipeMetadataRegistry, BuildInapplicableColumns(withGroupAction, withGroupStep));
+
+		withGroupRow.ColumnUnits.Should().NotBeSameAs(waitRow.ColumnUnits);
+		withGroupRow.ColumnFormatKinds.Should().NotBeSameAs(waitRow.ColumnFormatKinds);
+		withGroupRow.GroupItemsByColumn.Should().NotBeSameAs(waitRow.GroupItemsByColumn);
+	}
+
+	[AvaloniaFact]
 	public void GetPropertyValue_Action_ReturnsActionId()
 	{
 		var row = CreateRow();

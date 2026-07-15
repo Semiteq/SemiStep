@@ -5,13 +5,16 @@
     <!-- Transposed recipe grid (ListBox of step-       -->
     <!-- columns). All brushes come from the existing   -->
     <!-- CellPaletteInstaller / ExecutionPaletteInstaller -->
-    <!-- resources. Ordering discipline matches         -->
-    <!-- DataGridStyles.axaml: Avalonia applies matching -->
-    <!-- styles in document order and the LAST match    -->
-    <!-- wins, so chains go bare past-step first, then  -->
-    <!-- depth-N, then depth-N past, then changed, then -->
-    <!-- selection, with the current-step header rule   -->
-    <!-- last.                                          -->
+    <!-- resources. The per-cell BACKGROUND state matrix -->
+    <!-- (depth / past / read-only / inapplicable /     -->
+    <!-- changed / selection) is resolved by a single   -->
+    <!-- TransposedCellBackgroundConverter MultiBinding -->
+    <!-- on Border.transposed-cell.Background (see       -->
+    <!-- TransposedRecipeGridView.axaml); that local     -->
+    <!-- value outranks style setters, so no background -->
+    <!-- setters live here. Only FOREGROUND state and   -->
+    <!-- the current-step header tint remain as style   -->
+    <!-- setters, in document order (last match wins).  -->
     <!-- ============================================== -->
 
     <!-- Container reset: the grid paints its own cell chrome, so the ListBox and its item
@@ -53,117 +56,28 @@
         <Setter Property="BorderThickness" Value="0,0,1,0" />
     </Style>
 
-    <!-- Base cell. -->
+    <!-- Base cell chrome. Background is the TransposedCellBackgroundConverter MultiBinding set in
+         the view; only the grid-line border lives here. -->
     <Style Selector="Border.transposed-cell">
-        <Setter Property="Background" Value="{DynamicResource GridBackgroundBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource GridLineBrush}" />
         <Setter Property="BorderThickness" Value="0,0,1,1" />
     </Style>
 
-    <!-- Read-only and inapplicable cells: two disjoint signals with their own palettes,
-         same as canonical (read-only from the column flag, inapplicable per cell). -->
+    <!-- Read-only and inapplicable foreground: two disjoint signals, inapplicable last so it wins
+         when a cell is both (parity with the background converter's precedence). Their backgrounds
+         are folded into the converter; only the text foreground remains as a style setter. -->
     <Style Selector="Border.transposed-cell.read-only-cell">
-        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth0Brush}" />
         <Setter Property="TextElement.Foreground" Value="{DynamicResource CellReadOnlyForegroundBrush}" />
     </Style>
     <Style Selector="Border.transposed-cell.inapplicable">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth0Brush}" />
         <Setter Property="TextElement.Foreground" Value="{DynamicResource CellDisabledForegroundBrush}" />
     </Style>
 
-    <!-- Execution state: past and loop-depth column tints (classes stamped on the ListBoxItem
-         by TransposedStepColumnClassBinder). Bare .past-step before .for-depth-N.past-step so
-         the depth-specific past tints win. -->
-    <Style Selector="ListBoxItem.past-step Border.transposed-cell">
-        <Setter Property="Background" Value="{DynamicResource ExecRowDepth0PastBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-1 Border.transposed-cell">
-        <Setter Property="Background" Value="{DynamicResource ExecRowDepth1Brush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-1.past-step Border.transposed-cell">
-        <Setter Property="Background" Value="{DynamicResource ExecRowDepth1PastBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-2 Border.transposed-cell">
-        <Setter Property="Background" Value="{DynamicResource ExecRowDepth2Brush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-2.past-step Border.transposed-cell">
-        <Setter Property="Background" Value="{DynamicResource ExecRowDepth2PastBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-3 Border.transposed-cell">
-        <Setter Property="Background" Value="{DynamicResource ExecRowDepth3Brush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-3.past-step Border.transposed-cell">
-        <Setter Property="Background" Value="{DynamicResource ExecRowDepth3PastBrush}" />
-    </Style>
-
-    <!-- Read-only per-depth chain. -->
-    <Style Selector="ListBoxItem.past-step Border.transposed-cell.read-only-cell">
-        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth0PastBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-1 Border.transposed-cell.read-only-cell">
-        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth1Brush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-1.past-step Border.transposed-cell.read-only-cell">
-        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth1PastBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-2 Border.transposed-cell.read-only-cell">
-        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth2Brush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-2.past-step Border.transposed-cell.read-only-cell">
-        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth2PastBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-3 Border.transposed-cell.read-only-cell">
-        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth3Brush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-3.past-step Border.transposed-cell.read-only-cell">
-        <Setter Property="Background" Value="{DynamicResource CellReadOnlyDepth3PastBrush}" />
-    </Style>
-
-    <!-- Inapplicable per-depth chain. -->
-    <Style Selector="ListBoxItem.past-step Border.transposed-cell.inapplicable">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth0PastBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-1 Border.transposed-cell.inapplicable">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth1Brush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-1.past-step Border.transposed-cell.inapplicable">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth1PastBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-2 Border.transposed-cell.inapplicable">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth2Brush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-2.past-step Border.transposed-cell.inapplicable">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth2PastBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-3 Border.transposed-cell.inapplicable">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth3Brush}" />
-    </Style>
-    <Style Selector="ListBoxItem.for-depth-3.past-step Border.transposed-cell.inapplicable">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledDepth3PastBrush}" />
-    </Style>
-
-    <!-- Changed-cell highlight: after the depth chains, before selection, so orange beats the
-         idle/depth tints and loses to selection. -->
-    <Style Selector="Border.transposed-cell.changed">
-        <Setter Property="Background" Value="{DynamicResource CellChangedBrush}" />
-    </Style>
-
-    <!-- Selection tint wins on every cell of the selected column; read-only / inapplicable /
-         changed selected variants keep both signals readable, mirroring canonical. -->
+    <!-- Selection foreground wins on every cell of the selected column. All four old selected
+         variants set the identical SelectionForegroundBrush, so one base rule covers them; the
+         selection BACKGROUND (including the read-only / inapplicable / changed variants) is folded
+         into the converter. -->
     <Style Selector="ListBoxItem:selected Border.transposed-cell">
-        <Setter Property="Background" Value="{DynamicResource SelectionBackgroundBrush}" />
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem:selected Border.transposed-cell.read-only-cell">
-        <Setter Property="Background" Value="{DynamicResource CellReadOnlySelectedBackgroundBrush}" />
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem:selected Border.transposed-cell.inapplicable">
-        <Setter Property="Background" Value="{DynamicResource CellDisabledSelectedBackgroundBrush}" />
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />
-    </Style>
-    <Style Selector="ListBoxItem:selected Border.transposed-cell.changed">
-        <Setter Property="Background" Value="{DynamicResource CellChangedSelectedBackgroundBrush}" />
         <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />
     </Style>
 

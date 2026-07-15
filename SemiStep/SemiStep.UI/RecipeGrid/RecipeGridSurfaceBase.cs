@@ -517,9 +517,9 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		for (var i = fromIndex; i < Items.Count; i++)
 		{
 			string formattedTime;
-			if (stepStartTimes.TryGetValue(i, out var time))
+			if (i < stepStartTimes.Count)
 			{
-				var rawSeconds = time.TotalSeconds.ToString(CultureInfo.InvariantCulture);
+				var rawSeconds = stepStartTimes[i].TotalSeconds.ToString(CultureInfo.InvariantCulture);
 				formattedTime = TimeFormatHelper.FormatValue(
 					rawSeconds,
 					TimeFormatHelper.TimeHmsFormat,
@@ -560,14 +560,13 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	// panel, and leaves the projection as-is.
 	private TItem CreateItemChecked(Step step, int stepNumber)
 	{
-		var actionResult = RecipeMetadataRegistry.GetAction(step.ActionKey);
-		if (actionResult.IsFailed)
+		if (!RecipeMetadataRegistry.TryGetAction(step.ActionKey, out var action))
 		{
 			throw new UnknownActionKeyException(
 				$"Step {stepNumber}: unknown action key '{step.ActionKey}'");
 		}
 
-		var item = CreateItem(stepNumber, step, actionResult.Value);
+		var item = CreateItem(stepNumber, step, action);
 
 		var row = RowOf(item);
 		row.PropertyValueChanged += (columnKey, value) => OnCellValueChanged(item, columnKey, value);

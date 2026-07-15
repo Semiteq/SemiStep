@@ -241,6 +241,37 @@ Editing state is a view concern and is not on the interface. The chain:
    `RecipeGridHost.IsEditing` is true, so typing inside a cell editor never deletes or
    cut/pastes steps.
 
+## Allocation characteristics
+
+The transposed surface previously retained ~3x the managed heap of the canonical surface for the
+same recipe and churned gen0 on every mutation. The reductions land in three places:
+
+- **Core analysis cost per mutation.** Every mutation re-analyzes the whole recipe
+  (`RecipeSession.Apply → RecipeAnalyzer.Analyze`), so the analyze path is O(N) per mutation and is
+  kept allocation-lean. `TimingCalculator` resolves each step's action through
+  `RecipeMetadataRegistry.TryGetAction` (a non-allocating `out`-parameter lookup) instead of the
+  `Result<>`-returning `GetAction`, and the snapshot's `StepStartTimes` is a dense `TimeSpan[]`
+  indexed by step position rather than a `Dictionary<int,TimeSpan>`. Readers bounds-check the index
+  and fall back to the old empty/missing behavior. The per-PLC-tick timing path shares
+  `ExtractStepDuration`, so it inherits the same win.
+- **Cell background via a converter, not a style matrix.** The transposed cell background is
+  resolved by a single `IMultiValueConverter`
+  (`TransposedCellBackgroundConverter`) over the full state set
+  `(ForDepth, IsPastStep, IsReadOnly, IsApplicable, IsChanged, IsSelected)` and applied as a local
+  `Border.Background` MultiBinding, reproducing the old document-order last-match-wins precedence.
+  This replaces the descendant-selector background rules in `TransposedGridStyles.axaml`, avoiding
+  the per-cell style-activator / dynamic-resource machinery those rules multiplied. The
+  `TextElement.Foreground` setters stay as style setters (background stripped out), so foreground
+  precedence is unchanged.
+- **Lighter cell VMs and recyclable templates.** Transposed cell view models are plain
+  `INotifyPropertyChanged`, not `ReactiveObject` (nothing observes a cell VM reactively);
+  `StepColumnViewModel.Cells` materialize lazily, so a column never scrolled to or keyboard-traversed
+  never builds its cell VMs; and the per-action metadata dictionaries (Units / FormatKinds /
+  GroupItems) are cached per `ActionDefinition` instead of rebuilt per row. The text and read-only
+  cell templates are `supportsRecycling: true`: the text editor displays through a OneWay converter
+  binding and commits in the focus/key handlers to a cell reference captured on `GotFocus` (a
+  stale-guard), so a still-focused recycled `TextBox` cannot write into the cell it was rebound onto.
+
 ## Context menu placement
 
 The grid's context menu lives on the `Panel` wrapping `RecipeGridHost` in `MainWindow.axaml`

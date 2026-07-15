@@ -266,7 +266,15 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   This replaces the descendant-selector background rules in `TransposedGridStyles.axaml`, avoiding
   the per-cell style-activator / dynamic-resource machinery those rules multiplied. The
   `TextElement.Foreground` setters stay as style setters (background stripped out), so foreground
-  precedence is unchanged.
+  precedence is unchanged. The `IsSelected` leg is sourced from the presenter's own
+  `TransposedColumnCellsPresenter.IsColumnSelected` (a `DirectProperty`, bound `Source = this`),
+  which `TransposedColumnCellsHost` keeps in sync with the container `ListBoxItem.IsSelected`
+  imperatively (one held subscription, resolved on attach, disposed-before-resubscribe on recycle,
+  reset to `false` on release). It is deliberately NOT a `RelativeSource FindAncestor ListBoxItem`
+  lookup: a pooled presenter is transiently off-tree (detached from any `ListBoxItem`), so that
+  ancestor leg logged ~1155 "Ancestor not found" binding errors on a short scroll. The presenter
+  re-announces the leg in `OnAttachedToVisualTree` so the background converter re-evaluates once the
+  slot `Border` can reach the palette resources.
 - **Lighter cell VMs.** Transposed cell view models are plain `INotifyPropertyChanged`, not
   `ReactiveObject` (nothing observes a cell VM reactively); `StepColumnViewModel.Cells` materialize
   lazily, so a column never scrolled to or keyboard-traversed never builds its cell VMs; and the
@@ -336,3 +344,26 @@ The grid's context menu lives on the `Panel` wrapping `RecipeGridHost` in `MainW
 because its commands bind to `MainWindowViewModel`. Right-clicks over grid rows bubble
 `ContextRequested` out of the DataGrid unhandled; a headless test in `RecipeGridHostTests`
 pins this.
+
+## Framework diagnostics logging
+
+Avalonia framework diagnostics (binding errors, layout warnings, and the rest) are forwarded into
+the app's Serilog pipeline by a custom `Avalonia.Logging.ILogSink`, `AvaloniaSerilogSink`, installed
+via `LogToSerilog()` in `BuildAvaloniaApp` (`App.axaml.cs`) in place of `LogToTrace`. `LogToTrace`
+routed diagnostics to `System.Diagnostics.Trace`, where under a debugger each write is a synchronous
+`OutputDebugString`; a binding-error storm on the UI thread then froze the grid under F5 while
+Release stayed smooth. The Serilog sink neutralizes that freeze mechanism and unifies the two log
+channels.
+
+The sink runs at minimum `Warning`, across all `LogArea`s, with a per-`(area + template)` throttle
+(first 20 in full, then every 500th carrying the running count) so a repeating template cannot flood
+the file. It forwards the template and args structured (not pre-formatted) under a
+`SourceContext` of `"Avalonia.<area>"`, mapping the Avalonia log level to the Serilog level by an
+explicit switch.
+
+A healthy build logs zero binding errors. That invariant is enforced in headless tests by
+`BindingErrorGuard` (`SemiStep.Tests/UI/Helpers/BindingErrorGuard.cs`), an `IDisposable` that
+installs a collecting `ILogSink` for the duration of a test, records `LogArea.Binding` events, and
+restores the previous sink on dispose. `TransposedSelectionBindingTests.ScrollSweepAndSelect_LogsZeroBindingErrors`
+wraps a transposed scroll start→end→start plus a column select in the guard and asserts zero binding
+errors (down from ~1155 before the presenter-sourced selection fix above).

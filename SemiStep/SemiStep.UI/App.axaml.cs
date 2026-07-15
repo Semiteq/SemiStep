@@ -10,6 +10,7 @@ using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.Dialogs;
+using SemiStep.UI.Logging;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.Styles;
@@ -70,7 +71,7 @@ public class App : Application
 			.UseSkia()
 			.UseHarfBuzz()
 			.UseReactiveUI(_ => { })
-			.LogToTrace();
+			.LogToSerilog();
 	}
 
 	public static void Run(IServiceProvider serviceProvider)

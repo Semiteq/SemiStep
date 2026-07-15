@@ -3,16 +3,9 @@ using Avalonia.Input;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-// Cell presses drive the canonical select-then-edit model. A plain press on a not-yet
-// selected column selects it WITHOUT focusing the editor (focus goes to the container, so
-// Delete/Ctrl+C stay live); a second plain press on the already selected column falls
-// through to the editor (a live ComboBox, or edit entry for a lazy text cell — the caller
-// decides on the reported fall-through). Ctrl/Shift presses toggle/extend the multi-selection
-// (the editor would otherwise swallow them — spike finding) and never enter an editor.
 internal sealed class TransposedGridSelectionController(ListBox stepListBox)
 {
-	// Returns true when the press was NOT consumed for selection — a second press on the already
-	// single-selected column — so the caller can route it to edit entry (or leave it to a live editor).
+	// Returns true when NOT consumed (second press on the already-selected column) so the caller routes to edit.
 	public bool HandleCellSelectionPress(
 		TransposedRecipeGridSurface? surface,
 		ParameterCellViewModel pressedCell,

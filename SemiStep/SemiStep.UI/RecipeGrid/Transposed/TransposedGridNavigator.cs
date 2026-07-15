@@ -5,9 +5,6 @@ using Avalonia.VisualTree;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-// Operator mental model: Right = next step (column), Down = next parameter (cell below).
-// Keys inside an open ComboBox dropdown and caret movement inside a focused TextBox keep
-// their native meaning.
 internal sealed class TransposedGridNavigator(ListBox stepListBox)
 {
 	public void HandleTunnelKeyDown(TransposedRecipeGridSurface? surface, KeyEventArgs e)
@@ -149,9 +146,7 @@ internal sealed class TransposedGridNavigator(ListBox stepListBox)
 		}
 	}
 
-	// Arrow navigation traverses cells by focusing the lazy display presenters (property-text and combo
-	// alike): the heavy editor is built only on edit entry, so navigation targets the display visual and a
-	// focused display then enters edit on F2 (text also on a printable keystroke).
+	// Navigation focuses the lazy display presenter, not the editor (editor built only on edit entry).
 	private Control? FindFocusableCellPresenter(
 		TransposedRecipeGridSurface surface,
 		int columnIndex,

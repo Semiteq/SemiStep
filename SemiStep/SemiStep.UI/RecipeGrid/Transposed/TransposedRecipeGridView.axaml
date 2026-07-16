@@ -72,10 +72,9 @@
                                             Background="{DynamicResource CurrentStepMarkerBrush}"
                                             IsVisible="{Binding Row.IsCurrentStep}" />
                                 </Border>
-                                <!-- Hosts a pooled cell presenter (built once, rebound on recycle) so a
-                                     recycled column reuses its cell subtrees instead of rebuilding them.
-                                     The heavy cells live in the view-owned pool, outside this
-                                     rebuilt-on-recycle content (see TransposedColumnCellsHost). -->
+                                <!-- Hosts a pooled cell presenter that rebinds when the container re-points
+                                     to a different column. The heavy cell subtrees live in the view-owned
+                                     pool (see TransposedColumnCellsHost). -->
                                 <transposed:TransposedColumnCellsHost />
                             </StackPanel>
                         </DataTemplate>

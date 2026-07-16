@@ -137,10 +137,10 @@
 - [x] The gc-verbose before/after allocation gate is a MANUAL step (needs the live app) — see Post-Completion; mark `[x]` with that note. (manual (skipped - needs live Release app, see Post-Completion))
 
 ### Task 7: Documentation and cleanup
-- [ ] Update `Docs/architecture/recipe-grid-surface.md`: document the recycle-in-place `TransposedColumnsPanel`, why it replaced `VirtualizingStackPanel` (per-recycle detach/re-attach allocation), and that the pool is now a per-surface factory. Record the allocation-gate result.
-- [ ] Retire dead pool-cycling comments in the host/template that no longer describe scroll-time behavior.
-- [ ] No `CLAUDE.md` change expected (project footer forbids specifics).
-- [ ] Move this plan to `Docs/plans/completed/`.
+- [x] Update `Docs/architecture/recipe-grid-surface.md`: document the recycle-in-place `TransposedColumnsPanel`, why it replaced `VirtualizingStackPanel` (per-recycle detach/re-attach allocation), and that the pool is now a per-surface factory. Record the allocation-gate result. (allocation gate recorded as pending live-app measurement — headless contract tests pin keep-attached; byte-level gc-verbose collapse still manual.)
+- [x] Retire dead pool-cycling comments in the host/template that no longer describe scroll-time behavior. (Fixed the `.axaml` ItemTemplate "rebuilt-on-recycle content" comment; host + `.axaml.cs` comments were already updated to keep-attached wording in Task 5. Test injector `UseTransposedColumnsPanel()` is still called by 15 test files, so kept, not deleted.)
+- [x] No `CLAUDE.md` change expected (project footer forbids specifics). (confirmed — no edit.)
+- [x] Move this plan to `Docs/plans/completed/`. (harness moves the plan post-run)
 
 *(The class-binder "bind once" optimization is deliberately NOT in this plan — no existing test pins idle-container class state, so the suite could stay green while hidden containers silently carry stale-row class bindings. It is recorded as a Post-Completion follow-up.)*
 

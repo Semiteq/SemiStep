@@ -324,13 +324,54 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   the editor (not its container) becomes the `TabOnceActiveElement`; that container is unrealized
   normally and commits through the `ContainerClearing` hook (see the commit-before-rebind hook below).
 
-  **Allocation gate (pending live-app measurement).** The before/after gc-verbose gate —
-  realization-subtree allocation share must drop from ~41–56% to <20%, with `Dictionary.Resize`,
-  `CreateCompositionVisual`, and `StyleBase.Attach` / `Setter.Instance` absent from the scroll path —
-  is a manual step on the Release build against a ~2100-step recipe, and is not yet run. Headless
-  tests pin the keep-attached contract (container reuse across scroll, no `DetachedFromVisualTree` on
-  scroll, bounded `Children.Count`, focus-anchor deferral, selection round-trip); the byte-level
-  collapse still needs the live app.
+  **Allocation gate.** The keep-attached panel is only half the recycle fix; the child-recycle half
+  below ("Child recycled in place") lands the other half and carries the chain's first attached
+  after-trace. The live-app gc-verbose byte gate — realization-subtree allocation share must drop from
+  ~41–56% to <20%, with `Dictionary.Resize`, `CreateCompositionVisual`, and `StyleBase.Attach` /
+  `Setter.Instance` absent from the scroll path — is a manual step on the Release build against a
+  ~2100-step recipe and stays with the user (`CreateCompositionVisual` / `CreateSKFont` are
+  composition/Skia costs headless cannot see). Headless tests pin the keep-attached contract
+  (container reuse across scroll, no `DetachedFromVisualTree` on scroll, bounded `Children.Count`,
+  focus-anchor deferral, selection round-trip).
+
+- **Child recycled in place (`TransposedStepListBox`).** The panel keeping the container attached was
+  only half the recycle fix. On every recycle the generator's
+  `ItemContainerGenerator.ClearItemContainer` clears the container's `Content` AND `ContentTemplate`;
+  the item `DataTemplate` is typed (`x:DataType="StepColumnViewModel"`) and cannot match the
+  intermediate `null`, so `FindDataTemplate` falls to `FuncDataTemplate.Default`, which flips
+  `ContentPresenter._recyclingDataTemplate` and DISCARDS the recyclable child. `PrepareItemContainer`
+  then restored `Content` and rebuilt the whole ~115-element column subtree from scratch (plus two
+  throwaway default-template `TextBlock`s per cycle), re-attaching it to the visual tree and re-running
+  `ApplyStyling` / `StyleBase.Attach` / `CreateCompositionVisual` and re-acquiring the pooled presenter
+  — the exact cascade `VirtualizingStackPanel.RecycleElement` pays, reproduced inside the keep-attached
+  panel. `TransposedStepListBox : ListBox` closes the gap with three overrides:
+  `ClearContainerForItemOverride` skips base (clears only `IsSelected`, so the child survives),
+  `PrepareContainerForItemOverride` re-points `Content` explicitly on a recycled container (base
+  `SetIfUnset` skips an already-set `Content` and would leave the stale column), and
+  `StyleKeyOverride => typeof(ListBox)` keeps the Semi.Avalonia control template and the type-scoped
+  selectors resolving. Both prepares now resolve the SAME `IRecyclingDataTemplate`, so
+  `ContentPresenter` recycles the existing child in place: a scroll reuse touches nothing but a
+  `DataContext` re-point — the panel kept the container attached, this keeps the child attached, and
+  together the two land the full recycle-in-place win. The overrides are pinned to Avalonia 12.0.5
+  `SetIfUnset` / `IsSet` / ClearContainer semantics.
+
+  **Acceptance — first round shipped WITH its after-measurement.** Every prior perf round in this
+  chain deferred the after-trace and reopened as "no perceptible change". This one carries an
+  agent-run headless trace gate: a fixed scripted workload (300 viewport round-trips, add/remove 50
+  steps, a 200-step execution-tick sweep) captured before and after under `dotnet-trace`, compared
+  against pre-committed numbers. Results — attach/styling frame sum
+  (`OnAttachedToVisualTreeCore` + `StyleBase.Attach` + `ApplyStyling`) collapsed **131 587 → 1 181 ms**
+  (0.9% of baseline; `OnAttachedToVisualTreeCore` ABSENT under scroll-phase `Realize`);
+  `MeasureOverride` inclusive **129 354 → 24 529 ms** (−81%); host re-attaches **36 → 0** per
+  round-trip; viewport-jump allocation **1 008 701 → 235 399 B/realized column** (4.3× lower,
+  WideParams). One honest caveat: the `MeasureOverride` absolute bar (Gate #2) missed its target by
+  445 ms / 1.8%. The bar was derived as `baseline − 0.8 × attach_sum`, but the baseline attach sum
+  (131 587) exceeds baseline `MeasureOverride` (129 354) because `StyleBase.Attach` nests inside the
+  `OnAttachedToVisualTreeCore` cascade and part of the attach work runs outside `MeasureOverride`
+  (initial window attach, add-step `AddInternalChild`), so the bar mis-assumed the whole attach cost
+  lived inside `MeasureOverride`. The fix's success rests on Gate #1 (attach provably gone) and Gate #3
+  (host re-attach 0) plus the 81% `MeasureOverride` drop; the 1.8% miss is the documented frame-overlap
+  artifact, accepted, not a root-cause failure.
 
 - **Pooled cell presenter, now a per-surface factory (the source of canonical parity).** The dominant
   transient cost is per-realized-column, not retained heap (six gcdumps confirmed the heap plateaus).
@@ -385,6 +426,14 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   from ~14.5x the canonical recycled-row cost to ~1.03x (WideParams, 36 cells/column) and from ~2.3x to
   ~0.69x (WithGroups, 5 cells/column); gen0/add fell from ~2.58 to ~0.17-0.25 (WideParams) and from
   ~0.42 to ~0.00-0.08 (WithGroups). With no cell in edit the live-editor census is 0.
+
+- **Known follow-ups (separate PRs, not this change).** Two items are recorded, not done. First, the
+  `TransposedColumnCellsHost` + `TransposedColumnCellsPool` indirection is now dead weight: post-fix the
+  host never detaches on scroll, so its acquire/release cycling is gone and one presenter can be inlined
+  per physical container — a deliberate follow-up touching surface-swap teardown, `CommitActiveEditor`
+  ordering, and `_editCoordinator.Reset`. Second, the residual render-thread `CreateSKFont` text-shaping
+  cost is headless-invisible (no Skia in the trace); if the live re-trace still shows it hot, add a
+  display-text `TextLayout` cache keyed by (string, typeface, size), since grid values repeat heavily.
 
 ## Performance measurement discipline
 

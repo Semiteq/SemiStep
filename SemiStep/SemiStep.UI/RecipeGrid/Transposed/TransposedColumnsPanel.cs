@@ -566,25 +566,30 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 	{
 		var generator = ItemContainerGenerator;
 
-		// Clear the still-mapped containers (realized + deferred). Idle containers were already cleared
-		// when they were unrealized, so clearing them again would double-fire ContainerClearing.
-		if (generator is not null)
+		// Snapshot the still-mapped containers (realized + deferred), then unmap them from _realized /
+		// _deferredElement BEFORE clearing. TransposedStepListBox clears IsSelected unguarded on clear and
+		// relies on IndexFromContainer returning -1 (container unmapped) so SelectingItemsControl's
+		// ContainerSelectionChanged no-ops; clearing while still mapped would fire a spurious
+		// Selection.Deselect on an old-collection index. Idle containers were already cleared when they were
+		// unrealized, so clearing them again would double-fire ContainerClearing.
+		var containersToClear = new List<Control>(_realized.Values);
+		if (_deferredElement is { } deferred)
 		{
-			foreach (var container in _realized.Values)
-			{
-				generator.ClearItemContainer(container);
-			}
-
-			if (_deferredElement is { } deferred)
-			{
-				generator.ClearItemContainer(deferred);
-			}
+			containersToClear.Add(deferred);
 		}
 
 		_realized.Clear();
 		_deferredElement = null;
 		_deferredIndex = -1;
 		_maxRealizedChildHeight = 0;
+
+		if (generator is not null)
+		{
+			foreach (var container in containersToClear)
+			{
+				generator.ClearItemContainer(container);
+			}
+		}
 
 		// Physically detach every child (realized + idle) so each host leaves the visual tree and
 		// releases its pooled presenter — the surface-swap teardown the pool lifecycle depends on.

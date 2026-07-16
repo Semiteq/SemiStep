@@ -124,6 +124,15 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 		{
 			presenter.CommitActiveEditor();
 		}
+
+		// The panel hides this container (IsVisible=false) with its subtree still alive next. An open editor
+		// is the TabOnceActiveElement (the editor, not the container), so the panel recycles rather than
+		// defers this container, and its focused editor would otherwise stay parked in an invisible subtree.
+		// Relocate focus onto the ListBox before the hide.
+		if (e.Container.IsKeyboardFocusWithin)
+		{
+			StepListBox.Focus();
+		}
 	}
 
 	// Re-applies selection after an orientation flip: the surface got the selection while the view was flipped away.

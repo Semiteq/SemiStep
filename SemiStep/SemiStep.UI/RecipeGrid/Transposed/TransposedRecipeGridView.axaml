@@ -43,7 +43,7 @@
                     </ItemsControl>
                 </StackPanel>
 
-                <ListBox x:Name="StepListBox"
+                <transposed:TransposedStepListBox x:Name="StepListBox"
                          Classes="transposed-grid"
                          ItemsSource="{Binding StepColumns}"
                          SelectionMode="Multiple"
@@ -79,7 +79,7 @@
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
-                </ListBox>
+                </transposed:TransposedStepListBox>
 
             </DockPanel>
         </ScrollViewer>

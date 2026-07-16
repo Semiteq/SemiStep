@@ -6,6 +6,8 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
+using FluentAssertions;
+
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
@@ -55,6 +57,14 @@ public sealed class TransposedViewAllocationProbe
 {
 	private const int WarmupAppends = 6;
 	private const int MeasuredAppends = 12;
+
+	// Host-reattach probe: enough columns to scroll ~200 apart in a 1400px window.
+	private const string HostReattachConfig = "WideParams";
+	private const int HostReattachWindowWidth = 1400;
+	private const int HostReattachColumns = 420;
+	private const int HostReattachLowColumn = 20;
+	private const int HostReattachHighColumn = 220;
+	private const int HostReattachRoundTrips = 20;
 
 	private static readonly int[] _seedSizes = { 20, 60, 120 };
 
@@ -114,6 +124,96 @@ public sealed class TransposedViewAllocationProbe
 		var report = string.Join(Environment.NewLine, lines);
 		_output.WriteLine(report);
 		File.WriteAllText(Path.Combine(Path.GetTempPath(), "semistep_ui_probe.txt"), report);
+	}
+
+	// Host re-attach gate: during a scripted ~200-column scroll after warmup, counts how many FRESH
+	// TransposedColumnCellsHost instances get built. Pre-fix each recycle discards and rebuilds the host
+	// subtree, so ~36 new hosts appear per round-trip (see TransposedScrollTraceScenario.Report_HostReattachBaseline).
+	// Post-fix the child is recycled in place, hosts persist, and steady-state scroll builds zero new hosts.
+	//
+	// Discriminating metric = new host instances after warmup, NOT AttachedToVisualTree on pre-realized
+	// hosts: pre-fix the host instance is REPLACED (not re-attached), so subscribing AttachedToVisualTree on
+	// the warmed-up hosts fires 0 either way. attachFirings is reported for context only. The public
+	// AttachedToVisualTree subscription (same technique the contract test uses for DetachedFromVisualTree)
+	// still catches any re-attach of a persisted host, which post-fix must also be 0.
+	[AvaloniaFact]
+	public async Task Report_HostReattach_IsZeroAfterFix()
+	{
+		Assert.SkipUnless(
+			Environment.GetEnvironmentVariable("SEMISTEP_PROBE") == "1",
+			"Measurement probe: set SEMISTEP_PROBE=1 to run.");
+
+		var fixture = new UIFixture();
+		await fixture.InitializeAsync(HostReattachConfig);
+		try
+		{
+			fixture.SeedRecipe(HostReattachColumns);
+			var surface = fixture.CreateTransposedSurface();
+			surface.Initialize();
+			var view = new TransposedRecipeGridView { DataContext = surface };
+			var window = new Window { Width = HostReattachWindowWidth, Height = 800, Content = view };
+			window.Show();
+			Dispatcher.UIThread.RunJobs();
+
+			var listBox = view.FindControl<ListBox>("StepListBox")!;
+
+			// Warm one round-trip so both scroll endpoints have realized before the seen-set snapshot.
+			listBox.ScrollIntoView(HostReattachHighColumn);
+			Dispatcher.UIThread.RunJobs();
+			listBox.ScrollIntoView(HostReattachLowColumn);
+			Dispatcher.UIThread.RunJobs();
+
+			var seenHosts = new HashSet<TransposedColumnCellsHost>(ReferenceEqualityComparer.Instance);
+			var attachFirings = 0;
+			var newHostInstances = 0;
+
+			void Discover()
+			{
+				foreach (var host in listBox.GetVisualDescendants().OfType<TransposedColumnCellsHost>())
+				{
+					if (seenHosts.Add(host))
+					{
+						newHostInstances++;
+						host.AttachedToVisualTree += (_, _) => attachFirings++;
+					}
+				}
+			}
+
+			// Seed the seen-set with warmed-up hosts; these are not scroll-driven rebuilds.
+			Discover();
+			newHostInstances = 0;
+
+			for (var i = 0; i < HostReattachRoundTrips; i++)
+			{
+				listBox.ScrollIntoView(HostReattachHighColumn);
+				Dispatcher.UIThread.RunJobs();
+				Discover();
+
+				listBox.ScrollIntoView(HostReattachLowColumn);
+				Dispatcher.UIThread.RunJobs();
+				Discover();
+			}
+
+			window.Close();
+
+			var report =
+				$"host-reattach after-fix: newHostInstances = {newHostInstances}  " +
+				$"attachFirings(tracked) = {attachFirings}  roundTrips = {HostReattachRoundTrips}  " +
+				$"new-hosts/roundtrip = {(double)newHostInstances / HostReattachRoundTrips:F1}";
+			_output.WriteLine(report);
+			File.WriteAllText(Path.Combine(Path.GetTempPath(), "semistep_host_reattach_after.txt"), report);
+
+			newHostInstances.Should().Be(
+				0,
+				"the recycle-in-place fix reuses host instances, so steady-state scroll builds no fresh hosts");
+			attachFirings.Should().Be(
+				0,
+				"persisted hosts stay attached across scroll, so AttachedToVisualTree must not re-fire");
+		}
+		finally
+		{
+			await fixture.DisposeAsync();
+		}
 	}
 
 	// Counts the live editor controls a single realized transposed column instantiates, to size the

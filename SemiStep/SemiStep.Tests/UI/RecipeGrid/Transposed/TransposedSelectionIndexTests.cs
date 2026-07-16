@@ -169,12 +169,14 @@ public sealed class TransposedSelectionIndexTests : IAsyncLifetime
 			Content = view,
 		};
 
-		_window.Show();
-		Dispatcher.UIThread.RunJobs();
-
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
 		stepListBox!.DataContext = _surface;
+		// Exercise the recycle-in-place panel (the production template swap lands in Task 5).
+		stepListBox.UseTransposedColumnsPanel();
+
+		_window.Show();
+		Dispatcher.UIThread.RunJobs();
 
 		return stepListBox;
 	}

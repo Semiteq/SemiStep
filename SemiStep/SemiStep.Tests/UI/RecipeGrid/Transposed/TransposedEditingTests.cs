@@ -725,12 +725,14 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 		// borders have null backgrounds and are not hit-testable, so pointer tests would miss.
 		CellPaletteInstaller.Install(_window.Resources, _fixture.AppConfiguration.GridStyle);
 
+		var stepListBox = view.FindControl<ListBox>("StepListBox");
+		stepListBox.Should().NotBeNull();
+		// Exercise the recycle-in-place panel (the production template swap lands in Task 5).
+		stepListBox!.UseTransposedColumnsPanel();
+
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();
 
-		var stepListBox = view.FindControl<ListBox>("StepListBox");
-		stepListBox.Should().NotBeNull();
-
-		return (view, stepListBox!);
+		return (view, stepListBox);
 	}
 }

@@ -94,12 +94,12 @@
 - Modify: `SemiStep/SemiStep.UI/RecipeGrid/Transposed/TransposedColumnsPanel.cs`
 - Modify: tests file
 
-- [ ] Implement `OnItemsChanged`: Add → shift `_realized` keys up + invalidate measure; Remove/Replace → unrealize the removed items' containers first, then shift remaining keys + `generator.ItemContainerIndexChanged` for shifted realized containers; Move → re-key; Reset → teardown (`ClearItemContainer` realized, `RemoveInternalChild` all children, clear `_idle`; do not double-clear already-idle containers).
-- [ ] Write test: insert/remove a step mid-scroll keeps the DataContext↔index mapping correct for realized containers (and the removed item's container is unrealized, not left mapped).
-- [ ] Write test: append step at end grows the extent (desired width = `(N+1)*W`); scrolling to max horizontal offset realizes the new last column (offset-based, no dependency on Task 4's `ScrollIntoView`).
-- [ ] Write test: surface swap (RecipeReplaced / new pool) triggers Reset teardown → containers physically detach → presenters released (no stale-descriptor reuse).
-- [ ] Write test: run the EXISTING transposed suite (virtualization, selection, editing, navigation, viewport-jump) against the injected panel — it must stay green (catches regressions early, before the production swap).
-- [ ] Run tests — must pass before Task 4.
+- [x] Implement `OnItemsChanged`: Add → shift `_realized` keys up + invalidate measure; Remove/Replace → unrealize the removed items' containers first, then shift remaining keys + `generator.ItemContainerIndexChanged` for shifted realized containers; Move → re-key; Reset → teardown (`ClearItemContainer` realized, `RemoveInternalChild` all children, clear `_idle`; do not double-clear already-idle containers).
+- [x] Write test: insert/remove a step mid-scroll keeps the DataContext↔index mapping correct for realized containers (and the removed item's container is unrealized, not left mapped).
+- [x] Write test: append step at end grows the extent (desired width = `(N+1)*W`); scrolling to max horizontal offset realizes the new last column (offset-based, no dependency on Task 4's `ScrollIntoView`).
+- [x] Write test: surface swap (RecipeReplaced / new pool) triggers Reset teardown → containers physically detach → presenters released (no stale-descriptor reuse).
+- [x] Write test: run the EXISTING transposed suite (virtualization, selection, editing, navigation, viewport-jump) against the injected panel — it must stay green (catches regressions early, before the production swap).
+- [x] Run tests — must pass before Task 4.
 
 ### Task 4: ScrollIntoView — exact positioning
 

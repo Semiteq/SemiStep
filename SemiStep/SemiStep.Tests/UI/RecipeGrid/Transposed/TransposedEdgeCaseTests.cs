@@ -149,12 +149,14 @@ public sealed class TransposedEdgeCaseTests : IAsyncLifetime
 			Content = view,
 		};
 
+		var stepListBox = view.FindControl<ListBox>("StepListBox");
+		stepListBox.Should().NotBeNull();
+		// Exercise the recycle-in-place panel (the production template swap lands in Task 5).
+		stepListBox!.UseTransposedColumnsPanel();
+
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();
 
-		var stepListBox = view.FindControl<ListBox>("StepListBox");
-		stepListBox.Should().NotBeNull();
-
-		return (view, stepListBox!);
+		return (view, stepListBox);
 	}
 }

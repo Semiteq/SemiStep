@@ -20,8 +20,8 @@ namespace SemiStep.Tests.UI.RecipeGrid.Transposed;
 
 /// <summary>
 /// Exercises the real transposed view with enough step-columns in a narrow window that the
-/// horizontal VirtualizingStackPanel actually virtualizes and recycles containers — the shipped
-/// cell templates and the execution-class binder must survive recycling.
+/// horizontal <see cref="TransposedColumnsPanel"/> actually virtualizes and recycles containers — the
+/// shipped cell templates and the execution-class binder must survive recycling.
 /// </summary>
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
@@ -299,6 +299,11 @@ public sealed class TransposedVirtualizationTests : IAsyncLifetime
 	private ListBox ShowView()
 	{
 		var view = new TransposedRecipeGridView { DataContext = _surface };
+		var stepListBox = view.FindControl<ListBox>("StepListBox");
+		stepListBox.Should().NotBeNull();
+		// Exercise the recycle-in-place panel (the production template swap lands in Task 5).
+		stepListBox!.UseTransposedColumnsPanel();
+
 		_window = new Window
 		{
 			Width = 560,
@@ -309,9 +314,6 @@ public sealed class TransposedVirtualizationTests : IAsyncLifetime
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();
 
-		var stepListBox = view.FindControl<ListBox>("StepListBox");
-		stepListBox.Should().NotBeNull();
-
-		return stepListBox!;
+		return stepListBox;
 	}
 }

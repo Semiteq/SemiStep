@@ -35,6 +35,7 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 	private readonly Dictionary<int, Control> _realized = new();
 	private readonly Stack<Control> _idle = new();
 	private readonly List<int> _indicesToUnrealize = new();
+	private readonly List<KeyValuePair<int, Control>> _shiftBuffer = new();
 
 	private Rect _viewport;
 	private double _maxRealizedChildHeight;
@@ -128,9 +129,32 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 
 	protected override void OnItemsChanged(IReadOnlyList<object?> items, NotifyCollectionChangedEventArgs e)
 	{
-		// Task 1 skeleton: full index-shift handling lands with the items-changed task. Re-running
-		// realization from the current viewport keeps the panel coherent for the initial-load path.
 		InvalidateMeasure();
+
+		switch (e.Action)
+		{
+			case NotifyCollectionChangedAction.Add:
+				OnItemsInserted(e.NewStartingIndex, e.NewItems!.Count);
+				break;
+
+			case NotifyCollectionChangedAction.Remove:
+				OnItemsRemoved(e.OldStartingIndex, e.OldItems!.Count);
+				break;
+
+			case NotifyCollectionChangedAction.Replace:
+				// Replace keeps indices stable; drop the affected containers so the next measure pass
+				// rebinds fresh containers to the replacement items.
+				UnrealizeRange(e.OldStartingIndex, e.OldItems!.Count);
+				break;
+
+			case NotifyCollectionChangedAction.Move:
+				OnItemsMoved(e);
+				break;
+
+			case NotifyCollectionChangedAction.Reset:
+				OnItemsReset();
+				break;
+		}
 	}
 
 	protected override Control? ScrollIntoView(int index)
@@ -314,6 +338,165 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 		ItemContainerGenerator!.ClearItemContainer(container);
 		container.SetCurrentValue(Visual.IsVisibleProperty, false);
 		_idle.Push(container);
+	}
+
+	private void OnItemsInserted(int index, int count)
+	{
+		if (count <= 0)
+		{
+			return;
+		}
+
+		// Every realized container at or after the insertion point keeps its data item but gains
+		// a higher index; shift its key up and notify the generator of the new index.
+		ShiftRealizedKeys(fromIndex: index, delta: count);
+
+		if (_deferredElement is { } deferred && _deferredIndex >= index)
+		{
+			var oldIndex = _deferredIndex;
+			_deferredIndex += count;
+			ItemContainerGenerator?.ItemContainerIndexChanged(deferred, oldIndex, _deferredIndex);
+		}
+	}
+
+	private void OnItemsRemoved(int index, int count)
+	{
+		if (count <= 0)
+		{
+			return;
+		}
+
+		// Unrealize the removed items' containers first so none stays mapped to a gone item, then
+		// shift the survivors after the gap down into their new indices.
+		UnrealizeRange(index, count);
+		ShiftRealizedKeys(fromIndex: index + count, delta: -count);
+
+		if (_deferredElement is { } deferred && _deferredIndex >= index + count)
+		{
+			var oldIndex = _deferredIndex;
+			_deferredIndex -= count;
+			ItemContainerGenerator?.ItemContainerIndexChanged(deferred, oldIndex, _deferredIndex);
+		}
+	}
+
+	private void OnItemsMoved(NotifyCollectionChangedEventArgs e)
+	{
+		// A move with no source index is a bulk reorder the panel cannot map incrementally; treat it
+		// as a reset (mirrors VirtualizingStackPanel).
+		if (e.OldStartingIndex < 0)
+		{
+			OnItemsReset();
+
+			return;
+		}
+
+		OnItemsRemoved(e.OldStartingIndex, e.OldItems!.Count);
+
+		var insertIndex = e.NewStartingIndex;
+		if (e.NewStartingIndex > e.OldStartingIndex)
+		{
+			insertIndex -= e.OldItems!.Count - 1;
+		}
+
+		OnItemsInserted(insertIndex, e.NewItems!.Count);
+	}
+
+	private void UnrealizeRange(int index, int count)
+	{
+		_indicesToUnrealize.Clear();
+		foreach (var realizedIndex in _realized.Keys)
+		{
+			if (realizedIndex >= index && realizedIndex < index + count)
+			{
+				_indicesToUnrealize.Add(realizedIndex);
+			}
+		}
+
+		foreach (var realizedIndex in _indicesToUnrealize)
+		{
+			var container = _realized[realizedIndex];
+			_realized.Remove(realizedIndex);
+			RecycleToIdle(container);
+		}
+
+		// A removed or replaced item's deferred anchor no longer maps to any item, so release it too.
+		if (_deferredElement is { } deferred && _deferredIndex >= index && _deferredIndex < index + count)
+		{
+			_deferredElement = null;
+			_deferredIndex = -1;
+			RecycleToIdle(deferred);
+		}
+	}
+
+	private void ShiftRealizedKeys(int fromIndex, int delta)
+	{
+		if (delta == 0 || _realized.Count == 0)
+		{
+			return;
+		}
+
+		_shiftBuffer.Clear();
+		foreach (var entry in _realized)
+		{
+			if (entry.Key >= fromIndex)
+			{
+				_shiftBuffer.Add(entry);
+			}
+		}
+
+		if (_shiftBuffer.Count == 0)
+		{
+			return;
+		}
+
+		// Drop the old keys before re-adding the shifted ones so an up-shift never collides with a key
+		// it is about to overwrite.
+		foreach (var entry in _shiftBuffer)
+		{
+			_realized.Remove(entry.Key);
+		}
+
+		var generator = ItemContainerGenerator;
+		foreach (var entry in _shiftBuffer)
+		{
+			var newIndex = entry.Key + delta;
+			_realized[newIndex] = entry.Value;
+			generator?.ItemContainerIndexChanged(entry.Value, entry.Key, newIndex);
+		}
+	}
+
+	private void OnItemsReset()
+	{
+		var generator = ItemContainerGenerator;
+
+		// Clear the still-mapped containers (realized + deferred). Idle containers were already cleared
+		// when they were unrealized, so clearing them again would double-fire ContainerClearing.
+		if (generator is not null)
+		{
+			foreach (var container in _realized.Values)
+			{
+				generator.ClearItemContainer(container);
+			}
+
+			if (_deferredElement is { } deferred)
+			{
+				generator.ClearItemContainer(deferred);
+			}
+		}
+
+		_realized.Clear();
+		_deferredElement = null;
+		_deferredIndex = -1;
+		_maxRealizedChildHeight = 0;
+
+		// Physically detach every child (realized + idle) so each host leaves the visual tree and
+		// releases its pooled presenter — the surface-swap teardown the pool lifecycle depends on.
+		while (Children.Count > 0)
+		{
+			RemoveInternalChild(Children[Children.Count - 1]);
+		}
+
+		_idle.Clear();
 	}
 
 	private void OnItemsControlPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)

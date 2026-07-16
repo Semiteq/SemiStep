@@ -1,0 +1,349 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Layout;
+
+namespace SemiStep.UI.RecipeGrid.Transposed;
+
+/// <summary>
+/// A horizontal virtualizing panel for the transposed step-column grid that recycles containers
+/// in place. Idle containers are hidden (<see cref="Visual.IsVisibleProperty"/> = false) and pushed
+/// to an idle stack instead of being detached, so a container is added to the visual tree exactly
+/// once and reused for its whole life. This removes the per-recycle style-attach, property-store
+/// growth and composition-visual creation that the framework <c>VirtualizingStackPanel</c> pays on
+/// every viewport crossing.
+///
+/// Uniform column width is load-bearing: it makes the viewport-to-index math exact, so there is no
+/// size estimation or scroll anchoring.
+/// </summary>
+public sealed class TransposedColumnsPanel : VirtualizingPanel
+{
+	private const int BufferColumns = 2;
+	private const double ViewportEdgeEpsilon = 0.5;
+
+	/// <summary>
+	/// The uniform width of every step column. Bound in the <c>ItemsPanelTemplate</c> to the
+	/// <c>TransposedStepColumnWidth</c> resource.
+	/// </summary>
+	public static readonly StyledProperty<double> ColumnWidthProperty =
+		AvaloniaProperty.Register<TransposedColumnsPanel, double>(nameof(ColumnWidth), defaultValue: 96d);
+
+	private readonly Dictionary<int, Control> _realized = new();
+	private readonly Stack<Control> _idle = new();
+	private readonly List<int> _indicesToUnrealize = new();
+
+	private Rect _viewport;
+	private double _maxRealizedChildHeight;
+
+	// The selection-anchor container is deferred rather than unrealized when it scrolls out of the
+	// window, so an editor or focus it holds survives offscreen. It is released once the anchor moves.
+	private Control? _deferredElement;
+	private int _deferredIndex = -1;
+
+	static TransposedColumnsPanel()
+	{
+		AffectsMeasure<TransposedColumnsPanel>(ColumnWidthProperty);
+	}
+
+	public TransposedColumnsPanel()
+	{
+		EffectiveViewportChanged += OnEffectiveViewportChanged;
+	}
+
+	public double ColumnWidth
+	{
+		get => GetValue(ColumnWidthProperty);
+		set => SetValue(ColumnWidthProperty, value);
+	}
+
+	protected override Size MeasureOverride(Size availableSize)
+	{
+		var items = Items;
+		var count = items.Count;
+
+		if (count == 0)
+		{
+			UnrealizeAll();
+
+			return default;
+		}
+
+		var (firstIndex, lastIndex) = CalculateRealizedRange(count);
+
+		UnrealizeOutsideRange(firstIndex, lastIndex);
+
+		_maxRealizedChildHeight = 0;
+		for (var index = firstIndex; index <= lastIndex; index++)
+		{
+			var container = Realize(index, items);
+			container.Measure(availableSize);
+			_maxRealizedChildHeight = Math.Max(_maxRealizedChildHeight, container.DesiredSize.Height);
+		}
+
+		// Keep the deferred anchor laid out while it lives offscreen.
+		if (_deferredElement is { } deferred)
+		{
+			deferred.Measure(availableSize);
+			_maxRealizedChildHeight = Math.Max(_maxRealizedChildHeight, deferred.DesiredSize.Height);
+		}
+
+		return new Size(count * ColumnWidth, _maxRealizedChildHeight);
+	}
+
+	protected override Size ArrangeOverride(Size finalSize)
+	{
+		var columnWidth = ColumnWidth;
+
+		foreach (var (index, container) in _realized)
+		{
+			container.Arrange(new Rect(index * columnWidth, 0, columnWidth, finalSize.Height));
+		}
+
+		if (_deferredElement is { } deferred && _deferredIndex >= 0)
+		{
+			deferred.Arrange(new Rect(_deferredIndex * columnWidth, 0, columnWidth, finalSize.Height));
+		}
+
+		return finalSize;
+	}
+
+	protected override void OnItemsControlChanged(ItemsControl? oldValue)
+	{
+		base.OnItemsControlChanged(oldValue);
+
+		if (oldValue is not null)
+		{
+			oldValue.PropertyChanged -= OnItemsControlPropertyChanged;
+		}
+
+		if (ItemsControl is not null)
+		{
+			ItemsControl.PropertyChanged += OnItemsControlPropertyChanged;
+		}
+	}
+
+	protected override void OnItemsChanged(IReadOnlyList<object?> items, NotifyCollectionChangedEventArgs e)
+	{
+		// Task 1 skeleton: full index-shift handling lands with the items-changed task. Re-running
+		// realization from the current viewport keeps the panel coherent for the initial-load path.
+		InvalidateMeasure();
+	}
+
+	protected override Control? ScrollIntoView(int index)
+	{
+		if (index < 0 || index >= Items.Count)
+		{
+			return null;
+		}
+
+		if (ContainerFromIndex(index) is { } container)
+		{
+			container.BringIntoView();
+
+			return container;
+		}
+
+		// Eager realization of an offscreen index lands with the ScrollIntoView task.
+		return null;
+	}
+
+	protected override Control? ContainerFromIndex(int index)
+	{
+		if (index < 0 || index >= Items.Count)
+		{
+			return null;
+		}
+
+		if (_deferredIndex == index)
+		{
+			return _deferredElement;
+		}
+
+		return _realized.GetValueOrDefault(index);
+	}
+
+	protected override int IndexFromContainer(Control container)
+	{
+		if (ReferenceEquals(container, _deferredElement))
+		{
+			return _deferredIndex;
+		}
+
+		foreach (var (index, realized) in _realized)
+		{
+			if (ReferenceEquals(realized, container))
+			{
+				return index;
+			}
+		}
+
+		return -1;
+	}
+
+	protected override IEnumerable<Control>? GetRealizedContainers()
+	{
+		return _realized.Values;
+	}
+
+	protected override IInputElement? GetControl(NavigationDirection direction, IInputElement? from, bool wrap)
+	{
+		// Direction-resolving keyboard navigation lands with the ScrollIntoView task.
+		return null;
+	}
+
+	private (int FirstIndex, int LastIndex) CalculateRealizedRange(int count)
+	{
+		var columnWidth = ColumnWidth;
+
+		if (columnWidth <= 0 || _viewport.Width <= 0)
+		{
+			// The viewport is not known yet (before the first EffectiveViewportChanged); realize a
+			// small window from the start so the panel has content and a measured height.
+			return (0, Math.Min(count - 1, BufferColumns));
+		}
+
+		var firstVisible = (int)Math.Floor(_viewport.Left / columnWidth);
+		var lastVisible = (int)Math.Floor((_viewport.Right - ViewportEdgeEpsilon) / columnWidth);
+
+		var firstIndex = Math.Clamp(firstVisible - BufferColumns, 0, count - 1);
+		var lastIndex = Math.Clamp(lastVisible + BufferColumns, 0, count - 1);
+
+		return (firstIndex, lastIndex);
+	}
+
+	private void UnrealizeOutsideRange(int firstIndex, int lastIndex)
+	{
+		_indicesToUnrealize.Clear();
+		foreach (var index in _realized.Keys)
+		{
+			if (index < firstIndex || index > lastIndex)
+			{
+				_indicesToUnrealize.Add(index);
+			}
+		}
+
+		foreach (var index in _indicesToUnrealize)
+		{
+			Unrealize(index);
+		}
+	}
+
+	private void UnrealizeAll()
+	{
+		_indicesToUnrealize.Clear();
+		_indicesToUnrealize.AddRange(_realized.Keys);
+		foreach (var index in _indicesToUnrealize)
+		{
+			Unrealize(index);
+		}
+	}
+
+	private Control Realize(int index, IReadOnlyList<object?> items)
+	{
+		if (_realized.TryGetValue(index, out var existing))
+		{
+			return existing;
+		}
+
+		// The deferred anchor is already prepared and visible; reclaim it without re-preparing.
+		if (_deferredIndex == index && _deferredElement is { } deferred)
+		{
+			_deferredElement = null;
+			_deferredIndex = -1;
+			_realized[index] = deferred;
+
+			return deferred;
+		}
+
+		var item = items[index];
+		var generator = ItemContainerGenerator!;
+		Control container;
+
+		if (_idle.Count > 0)
+		{
+			// Keep-attached reuse: the container is already a child, so no AddInternalChild.
+			container = _idle.Pop();
+			container.SetCurrentValue(Visual.IsVisibleProperty, true);
+			generator.PrepareItemContainer(container, item, index);
+			generator.ItemContainerPrepared(container, item, index);
+		}
+		else
+		{
+			// First realize of a physical container: the generator contract order, AddInternalChild once.
+			generator.NeedsContainer(item, index, out var recycleKey);
+			container = generator.CreateContainer(item, index, recycleKey);
+			generator.PrepareItemContainer(container, item, index);
+			AddInternalChild(container);
+			generator.ItemContainerPrepared(container, item, index);
+		}
+
+		_realized[index] = container;
+
+		return container;
+	}
+
+	private void Unrealize(int index)
+	{
+		if (!_realized.TryGetValue(index, out var container))
+		{
+			return;
+		}
+
+		_realized.Remove(index);
+
+		// Defer the selection-anchor container instead of unrealizing it: an open editor or focus it
+		// holds must survive scrolling offscreen. It is released via the TabOnceActiveElement listener.
+		if (ItemsControl is { } itemsControl
+			&& ReferenceEquals(KeyboardNavigation.GetTabOnceActiveElement(itemsControl), container))
+		{
+			_deferredElement = container;
+			_deferredIndex = index;
+
+			return;
+		}
+
+		RecycleToIdle(container);
+	}
+
+	private void RecycleToIdle(Control container)
+	{
+		ItemContainerGenerator!.ClearItemContainer(container);
+		container.SetCurrentValue(Visual.IsVisibleProperty, false);
+		_idle.Push(container);
+	}
+
+	private void OnItemsControlPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
+	{
+		if (_deferredElement is null
+			|| e.Property != KeyboardNavigation.TabOnceActiveElementProperty
+			|| !ReferenceEquals(e.GetOldValue<IInputElement?>(), _deferredElement))
+		{
+			return;
+		}
+
+		// The anchor moved off the deferred container, so it can be unrealized for real now.
+		var container = _deferredElement;
+		_deferredElement = null;
+		_deferredIndex = -1;
+
+		RecycleToIdle(container);
+		InvalidateMeasure();
+	}
+
+	private void OnEffectiveViewportChanged(object? sender, EffectiveViewportChangedEventArgs e)
+	{
+		var newViewport = e.EffectiveViewport.Intersect(new Rect(Bounds.Size));
+
+		if (newViewport == _viewport)
+		{
+			return;
+		}
+
+		_viewport = newViewport;
+		InvalidateMeasure();
+	}
+}

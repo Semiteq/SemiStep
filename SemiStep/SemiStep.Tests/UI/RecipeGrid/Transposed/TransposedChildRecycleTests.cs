@@ -284,12 +284,30 @@ public sealed class TransposedChildRecycleTests : IAsyncLifetime
 		stepListBox.IsKeyboardFocusWithin.Should().BeTrue(
 			"focus relocates onto a visible column so it is not stranded on the detached editor and navigation stays live");
 
-		// Keyboard navigation is live afterwards: with focus stranded at null an arrow key no-ops; restored to
-		// a visible column, the grid still owns focus after a navigation keystroke.
-		_window!.KeyPressQwerty(PhysicalKey.ArrowRight, RawInputModifiers.None);
+		// Focus must resolve to a VISIBLE realized container, never a hidden recycled one - deleting the
+		// IsVisible filter in RelocateFocusToVisibleColumn would strand focus on a hidden container and pass
+		// the IsKeyboardFocusWithin check above (a hidden container is still a ListBox descendant).
+		var focusedElement = _window!.FocusManager!.GetFocusedElement() as Control;
+		focusedElement.Should().NotBeNull("focus relocated onto a live control, not null");
+		var focusedContainer = focusedElement as ListBoxItem ?? focusedElement!.FindAncestorOfType<ListBoxItem>();
+		focusedContainer.Should().NotBeNull("focus resolves to a realized column container");
+		focusedContainer!.IsVisible.Should().BeTrue(
+			"focus must land on a VISIBLE column, never a hidden recycled container");
+
+		// Keyboard navigation is live afterwards AND produces an observable move: ArrowLeft from the relocated
+		// container moves selection to the previous column. With focus stranded at null the arrow key no-ops
+		// and SelectedIndex would not change. After scrolling to the far end every visible column is high-index,
+		// so a left move always has room; the guard below rejects a stranded relocation on column 0 (there a
+		// no-op ArrowLeft would leave SelectedIndex at -1 and mask the failure).
+		var relocatedIndex = stepListBox.IndexFromContainer(focusedContainer);
+		relocatedIndex.Should().BeGreaterThan(0, "focus relocated onto a far, non-first column after the scroll");
+		stepListBox.SelectedIndex.Should().Be(-1, "relocation only focuses a column, it does not select one");
+		_window!.KeyPressQwerty(PhysicalKey.ArrowLeft, RawInputModifiers.None);
 		Dispatcher.UIThread.RunJobs();
 
 		stepListBox.IsKeyboardFocusWithin.Should().BeTrue("the grid still owns focus after a navigation keystroke");
+		stepListBox.SelectedIndex.Should().Be(
+			relocatedIndex - 1, "ArrowLeft moved selection to the previous column, an observable navigation effect");
 	}
 
 	private static ContentPresenter ItemContentPresenter(Control container)

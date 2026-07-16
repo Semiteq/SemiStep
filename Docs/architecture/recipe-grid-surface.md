@@ -281,8 +281,9 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   precedence is unchanged. The `IsSelected` leg is sourced from the presenter's own
   `TransposedColumnCellsPresenter.IsColumnSelected` (a `DirectProperty`, bound `Source = this`),
   which `TransposedColumnCellsHost` keeps in sync with the container `ListBoxItem.IsSelected`
-  imperatively (one held subscription, resolved on attach, disposed-before-resubscribe on recycle,
-  reset to `false` on release). It is deliberately NOT a `RelativeSource FindAncestor ListBoxItem`
+  imperatively (one held subscription, resolved on attach, re-subscribed only when the container
+  identity actually changes — stable across an in-place scroll recycle, so a scroll leaves it
+  untouched; it re-resolves on surface swap / re-acquire — reset to `false` on release). It is deliberately NOT a `RelativeSource FindAncestor ListBoxItem`
   lookup: a pooled presenter is transiently off-tree (detached from any `ListBoxItem`), so that
   ancestor leg logged ~1155 "Ancestor not found" binding errors on a short scroll. The presenter
   re-announces the leg in `OnAttachedToVisualTree` so the background converter re-evaluates once the
@@ -414,9 +415,13 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   pending text — silent edit loss. An explicit commit runs before the slots rebind:
   `TransposedColumnCellsPresenter.CommitActiveEditor` (invoked from its `OnDataContextBeginUpdate`,
   which Avalonia calls top-down and stops at children whose `DataContext` is locally set, so it fires
-  while the editor still holds its pending text and captured cell) and from the host on recycle-out.
-  The `_editingCellProperty`/captured-cell stale-guard remains the backstop so a still-focused editor
-  cannot write into the cell it was rebound onto.
+  while the editor still holds its pending text and captured cell). On a scroll recycle-out the host no
+  longer detaches (it only hides — see "host never detaches on scroll" above), so the commit runs from
+  the view's `TransposedRecipeGridView.OnContainerClearing` hook: it finds the still-attached presenter
+  and commits it before the container rebinds. That view hook is the primary scroll-recycle-out commit
+  path; the host's own release path now commits only on surface-swap teardown, when a container is
+  genuinely detached. The `_editingCellProperty`/captured-cell stale-guard remains the backstop so a
+  still-focused editor cannot write into the cell it was rebound onto.
 
 - **Measured result.** These figures were captured under the earlier `VirtualizingStackPanel` +
   pooled-rebind path; they measure the pooled-presenter reuse, not the recycle-in-place panel that

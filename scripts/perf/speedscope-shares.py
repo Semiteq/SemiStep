@@ -2,15 +2,17 @@
 """Speedscope inclusive-time analyzer for the transposed-grid trace gate.
 
 Given a speedscope JSON (as produced by `dotnet-trace collect --format Speedscope`)
-this prints the ABSOLUTE inclusive time (ms) spent in a fixed set of frames, matched
-by fully-qualified declaring-type + method so the headline number is unambiguous and
-identical baseline-vs-after. It also reports whether the attach/styling frames appear
-anywhere under a `Realize` stack (mechanism presence check), and per-frame shares of the
-`MeasureOverride` total for context ONLY -- shares are NOT the gate (the fix shrinks
-numerator and denominator together; see the plan's Testing Strategy).
+this prints the ABSOLUTE inclusive time (ms) spent in a fixed set of frames so the
+headline number is unambiguous and identical baseline-vs-after. It also reports whether
+the attach/styling frames appear anywhere under a `Realize` stack (mechanism presence
+check), and per-frame shares of the `MeasureOverride` total for context ONLY -- shares are
+NOT the gate (the fix shrinks numerator and denominator together; see the plan's Testing
+Strategy).
 
-Match keys (substring against the frame name; the type qualifier disambiguates methods
-like MeasureOverride that many types declare):
+Each match key is a substring tested against the frame name. Keys for methods that several
+types declare (MeasureOverride, Realize) carry the declaring type as the qualifier; keys for
+methods with a single relevant declaration (OnAttachedToVisualTreeCore, ApplyStyling) are the
+bare method name (leading dot), which is already unambiguous:
 
     measure_override  -> "TransposedColumnsPanel.MeasureOverride"
     realize           -> "TransposedColumnsPanel.Realize"
@@ -21,11 +23,9 @@ like MeasureOverride that many types declare):
 
 The attach/styling SUM the gate watches is attached + style_attach + apply_styling.
 
-Both speedscope profile types are handled:
-  * "sampled"  -- samples[] are stacks (root-first), weights[] per sample.
-  * "evented"  -- open/close events; inclusive time via a stack walk.
-Inclusive time is computed over the SET of frames on the stack, so a recursive frame
-(same frame nested) is counted once per time interval, never double-counted.
+dotnet-trace emits "evented" profiles (open/close events); inclusive time is computed via a
+stack walk over the SET of frames on the stack, so a recursive frame (same frame nested) is
+counted once per time interval, never double-counted.
 
 Synthetic leaf frames ("CPU_TIME", "UNMANAGED_CODE_TIME", "?!?", "(unmanaged)") never
 match a real key; their time flows to the nearest real ancestor automatically because
@@ -93,42 +93,32 @@ def analyze_profile(profile, frame_names):
                     realize_presence.add(key)
 
     ptype = profile.get("type")
-    if ptype == "sampled":
-        samples = profile["samples"]
-        weights = profile["weights"]
-        for stack, weight in zip(samples, weights):
+    if ptype != "evented":
+        raise ValueError(f"Unsupported speedscope profile type: {ptype!r} (dotnet-trace emits 'evented')")
+
+    stack = []
+    last_at = profile.get("startValue", 0)
+    for event in profile["events"]:
+        at = event["at"]
+        if at > last_at and stack:
             stack_keys = set()
             for frame_index in stack:
                 key = key_for(frame_names[frame_index])
                 if key is not None:
                     stack_keys.add(key)
-            account(stack_keys, weight)
-    elif ptype == "evented":
-        stack = []
-        last_at = profile.get("startValue", 0)
-        for event in profile["events"]:
-            at = event["at"]
-            if at > last_at and stack:
-                stack_keys = set()
-                for frame_index in stack:
-                    key = key_for(frame_names[frame_index])
-                    if key is not None:
-                        stack_keys.add(key)
-                account(stack_keys, at - last_at)
-            etype = event["type"]
-            if etype == "O":
-                stack.append(event["frame"])
-            elif etype == "C":
-                # Close the matching frame; tolerate imperfect nesting by popping the last
-                # occurrence of the frame index.
-                frame = event["frame"]
-                for i in range(len(stack) - 1, -1, -1):
-                    if stack[i] == frame:
-                        del stack[i]
-                        break
-            last_at = at
-    else:
-        raise ValueError(f"Unknown speedscope profile type: {ptype!r}")
+            account(stack_keys, at - last_at)
+        etype = event["type"]
+        if etype == "O":
+            stack.append(event["frame"])
+        elif etype == "C":
+            # Close the matching frame; tolerate imperfect nesting by popping the last
+            # occurrence of the frame index.
+            frame = event["frame"]
+            for i in range(len(stack) - 1, -1, -1):
+                if stack[i] == frame:
+                    del stack[i]
+                    break
+        last_at = at
 
     return inclusive, realize_presence
 
@@ -179,17 +169,17 @@ def print_report(path):
 
 
 def _selftest():
-    """Hand-written speedscope with known times, including a recursive frame, so inclusive
-    time is verified NOT double-counted. Frame layout for the single sampled stack:
+    """Hand-written evented speedscope with known times, including a recursive frame, so inclusive
+    time is verified NOT double-counted. Three sequential intervals:
 
-        Realize -> ApplyStyling -> ApplyStyling -> CPU_TIME    (weight 100)
-        Realize -> AcquireAndBind                              (weight 40)
-        MeasureOverride                                        (weight 10)
+        [0,100]   Realize -> ApplyStyling(outer) -> ApplyStyling(inner, recursive)
+        [100,140] Realize -> AcquireAndBind
+        [140,150] MeasureOverride
 
     Expected inclusive:
         MeasureOverride  = 10
-        Realize          = 140 (100 + 40)
-        ApplyStyling     = 100 (recursive: counted ONCE for the 100-weight sample)
+        Realize          = 140 (100 + 40, two separate spans)
+        ApplyStyling     = 100 (recursive: the nested span is counted ONCE)
         AcquireAndBind   = 40
         attach/styling sum (attached 0 + style_attach 0 + apply_styling 100) = 100
     Presence: apply_styling PRESENT under Realize; attached/style_attach absent.
@@ -199,21 +189,30 @@ def _selftest():
             "frames": [
                 {"name": "SemiStep.UI.RecipeGrid.Transposed.TransposedColumnsPanel.Realize(int32)"},
                 {"name": "Avalonia.StyledElement.ApplyStyling()"},
-                {"name": "CPU_TIME"},
                 {"name": "SemiStep.UI.RecipeGrid.Transposed.TransposedColumnCellsHost.AcquireAndBind()"},
                 {"name": "SemiStep.UI.RecipeGrid.Transposed.TransposedColumnsPanel.MeasureOverride(Avalonia.Size)"},
             ]
         },
         "profiles": [
             {
-                "type": "sampled",
+                "type": "evented",
                 "unit": "milliseconds",
-                "samples": [
-                    [0, 1, 1, 2],
-                    [0, 3],
-                    [4],
+                "startValue": 0,
+                "endValue": 150,
+                "events": [
+                    {"type": "O", "frame": 0, "at": 0},     # Realize
+                    {"type": "O", "frame": 1, "at": 0},     # ApplyStyling outer
+                    {"type": "O", "frame": 1, "at": 50},    # ApplyStyling inner (recursive)
+                    {"type": "C", "frame": 1, "at": 80},    # close inner
+                    {"type": "C", "frame": 1, "at": 100},   # close outer
+                    {"type": "C", "frame": 0, "at": 100},   # close Realize
+                    {"type": "O", "frame": 0, "at": 100},   # Realize (second span)
+                    {"type": "O", "frame": 2, "at": 100},   # AcquireAndBind
+                    {"type": "C", "frame": 2, "at": 140},   # close AcquireAndBind
+                    {"type": "C", "frame": 0, "at": 140},   # close Realize
+                    {"type": "O", "frame": 3, "at": 140},   # MeasureOverride
+                    {"type": "C", "frame": 3, "at": 150},   # close MeasureOverride
                 ],
-                "weights": [100, 40, 10],
             }
         ],
     }
@@ -234,27 +233,6 @@ def _selftest():
         assert abs(got - want) < 1e-9, f"self-test FAIL {key}: got {got}, want {want}"
 
     assert presence == {"apply_styling"}, f"self-test FAIL presence: {presence}"
-
-    # Evented profile equivalent of the recursive ApplyStyling case: two nested ApplyStyling
-    # opens over a Realize; inclusive ApplyStyling must be the outer span (30), counted once.
-    evented = {
-        "type": "evented",
-        "unit": "milliseconds",
-        "startValue": 0,
-        "endValue": 30,
-        "events": [
-            {"type": "O", "frame": 0, "at": 0},   # Realize
-            {"type": "O", "frame": 1, "at": 0},   # ApplyStyling outer
-            {"type": "O", "frame": 1, "at": 10},  # ApplyStyling inner (recursive)
-            {"type": "C", "frame": 1, "at": 20},  # close inner
-            {"type": "C", "frame": 1, "at": 30},  # close outer
-            {"type": "C", "frame": 0, "at": 30},  # close Realize
-        ],
-    }
-    ev_inclusive, ev_presence = analyze_profile(evented, frame_names)
-    assert abs(ev_inclusive["apply_styling"] - 30.0) < 1e-9, f"evented FAIL: {ev_inclusive['apply_styling']}"
-    assert abs(ev_inclusive["realize"] - 30.0) < 1e-9, f"evented FAIL realize: {ev_inclusive['realize']}"
-    assert ev_presence == {"apply_styling"}, f"evented FAIL presence: {ev_presence}"
 
     print("self-test PASS")
 

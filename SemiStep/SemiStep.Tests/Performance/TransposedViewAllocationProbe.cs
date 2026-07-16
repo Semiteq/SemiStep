@@ -128,8 +128,8 @@ public sealed class TransposedViewAllocationProbe
 
 	// Host re-attach gate: during a scripted ~200-column scroll after warmup, counts how many FRESH
 	// TransposedColumnCellsHost instances get built. Pre-fix each recycle discards and rebuilds the host
-	// subtree, so ~36 new hosts appear per round-trip (see TransposedScrollTraceScenario.Report_HostReattachBaseline).
-	// Post-fix the child is recycled in place, hosts persist, and steady-state scroll builds zero new hosts.
+	// subtree, so ~36 new hosts appear per round-trip (the pre-fix baseline recorded in the plan). Post-fix
+	// the child is recycled in place, hosts persist, and steady-state scroll builds zero new hosts.
 	//
 	// Discriminating metric = new host instances after warmup, NOT AttachedToVisualTree on pre-realized
 	// hosts: pre-fix the host instance is REPLACED (not re-attached), so subscribing AttachedToVisualTree on

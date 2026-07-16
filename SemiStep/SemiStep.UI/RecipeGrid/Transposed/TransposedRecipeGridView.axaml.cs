@@ -144,11 +144,14 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 
 	private void RelocateFocusToVisibleColumn()
 	{
-		if (StepListBox.IsKeyboardFocusWithin)
+		if (!this.IsAttachedToVisualTree() || StepListBox.IsKeyboardFocusWithin)
 		{
 			return;
 		}
 
+		// Any visible column is an acceptable landing spot; take the first realized one. Do NOT order this
+		// by column index: focusing a container makes the panel defer it (keep it attached and visible), so
+		// steering the target changes which container survives recycle and destabilizes anchor release.
 		StepListBox.GetRealizedContainers()
 			.FirstOrDefault(container => container.IsVisible)?
 			.Focus();

@@ -1,11 +1,8 @@
 ﻿using System.Diagnostics;
-using System.Linq;
 
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
 
 using SemiStep.Core.Plc.State;
 
@@ -38,9 +35,8 @@ namespace SemiStep.Tests.Performance;
 //   (c) execution-tick sweep — walk IsCurrentStep/IsPastStep across 200 steps (RecipeActive ticks),
 //       exercising the binding traffic that hits idle subtrees once the child is kept alive.
 //
-// A companion probe fact (Report_HostReattachBaseline) counts how many TransposedColumnCellsHost
-// instances get (re)built across a scripted ~200-column scroll — the "host re-attach" baseline: today
-// each recycle discards and rebuilds the host subtree, so a fresh host attaches per recycle.
+// The host re-attach count (fresh TransposedColumnCellsHost instances built across a scripted scroll) is
+// asserted separately by TransposedViewAllocationProbe.Report_HostReattach_IsZeroAfterFix.
 [Trait("Category", "Performance")]
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
@@ -60,11 +56,6 @@ public sealed class TransposedScrollTraceScenario
 	private const int ScrollHighColumn = 1150;
 	private const int AddRemoveSteps = 50;
 	private const int ExecutionTickSteps = 200;
-
-	// Smaller, faster fixture for the host-reattach count: only needs enough columns to scroll ~200.
-	private const int HostBaselineColumns = 420;
-	private const int HostScrollLowColumn = 20;
-	private const int HostScrollHighColumn = 220;
 
 	private readonly ITestOutputHelper _output;
 
@@ -119,87 +110,6 @@ public sealed class TransposedScrollTraceScenario
 				$"(jumps={ViewportJumpRoundTrips} addRemove={AddRemoveSteps} ticks={ExecutionTickSteps})";
 			_output.WriteLine(report);
 			File.WriteAllText(Path.Combine(Path.GetTempPath(), "semistep_trace_scenario.txt"), report);
-		}
-		finally
-		{
-			await fixture.DisposeAsync();
-		}
-	}
-
-	[AvaloniaFact]
-	public async Task Report_HostReattachBaseline()
-	{
-		Assert.SkipUnless(
-			Environment.GetEnvironmentVariable("SEMISTEP_TRACE_SCENARIO") == "1",
-			"Trace scenario: set SEMISTEP_TRACE_SCENARIO=1 to run.");
-
-		var fixture = new UIFixture();
-		await fixture.InitializeAsync(ConfigName);
-		try
-		{
-			fixture.SeedRecipe(HostBaselineColumns);
-			var surface = fixture.CreateTransposedSurface();
-			surface.Initialize();
-			var view = new TransposedRecipeGridView { DataContext = surface };
-			var window = new Window { Width = WindowWidth, Height = 800, Content = view };
-			window.Show();
-			Dispatcher.UIThread.RunJobs();
-
-			var listBox = view.FindControl<ListBox>("StepListBox")!;
-
-			// Warm one round-trip so the count reflects steady-state recycling, not first realization.
-			listBox.ScrollIntoView(HostScrollHighColumn);
-			Dispatcher.UIThread.RunJobs();
-			listBox.ScrollIntoView(HostScrollLowColumn);
-			Dispatcher.UIThread.RunJobs();
-
-			// Public-event technique (mirrors how the contract test tracks DetachedFromVisualTree): subscribe
-			// AttachedToVisualTree on every host we discover so a persistent host that detaches/re-attaches is
-			// counted as a firing. Pre-fix, recycling discards the host subtree and builds a NEW host each
-			// realize, so the count that matters today is the number of fresh host instances discovered across
-			// the scroll (each attached exactly once) — reported as newHostInstances. Post-fix, hosts persist,
-			// newHostInstances -> 0 and attachFirings is the re-attach count the Task 3 gate asserts is 0.
-			var seenHosts = new HashSet<TransposedColumnCellsHost>(ReferenceEqualityComparer.Instance);
-			var attachFirings = 0;
-			var newHostInstances = 0;
-
-			void Discover()
-			{
-				foreach (var host in listBox.GetVisualDescendants().OfType<TransposedColumnCellsHost>())
-				{
-					if (seenHosts.Add(host))
-					{
-						newHostInstances++;
-						host.AttachedToVisualTree += (_, _) => attachFirings++;
-					}
-				}
-			}
-
-			// Seed the seen-set with the warmed-up hosts; do not count these as scroll-driven rebuilds.
-			Discover();
-			newHostInstances = 0;
-
-			const int ScrollRoundTrips = 20;
-			for (var i = 0; i < ScrollRoundTrips; i++)
-			{
-				listBox.ScrollIntoView(HostScrollHighColumn);
-				Dispatcher.UIThread.RunJobs();
-				Discover();
-
-				listBox.ScrollIntoView(HostScrollLowColumn);
-				Dispatcher.UIThread.RunJobs();
-				Discover();
-			}
-
-			window.Close();
-
-			var perRoundTrip = (double)newHostInstances / ScrollRoundTrips;
-			var report =
-				$"host-reattach baseline: newHostInstances = {newHostInstances}  " +
-				$"attachFirings(tracked) = {attachFirings}  " +
-				$"roundTrips = {ScrollRoundTrips}  new-hosts/roundtrip = {perRoundTrip:F1}";
-			_output.WriteLine(report);
-			File.WriteAllText(Path.Combine(Path.GetTempPath(), "semistep_host_reattach.txt"), report);
 		}
 		finally
 		{

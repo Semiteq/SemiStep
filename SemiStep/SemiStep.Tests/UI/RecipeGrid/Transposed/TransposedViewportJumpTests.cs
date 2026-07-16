@@ -103,7 +103,6 @@ public sealed class TransposedViewportJumpTests : IAsyncLifetime
 		var view = new TransposedRecipeGridView { DataContext = _surface };
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		// Exercise the recycle-in-place panel (the production template swap lands in Task 5).
 		stepListBox!.UseTransposedColumnsPanel();
 
 		_window = new Window

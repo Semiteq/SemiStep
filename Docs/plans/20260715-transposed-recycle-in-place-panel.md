@@ -131,10 +131,10 @@
 - [x] Run tests — must pass before Task 6 (the existing suite already runs against the panel from Task 3).
 
 ### Task 6: Verify acceptance criteria
-- [ ] Confirm the panel replaces VSP and all must-keep behaviors are covered by passing tests.
-- [ ] Run full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`
-- [ ] Run formatter: `dotnet format "SemiStep/SemiStep.slnx" --verify-no-changes`
-- [ ] The gc-verbose before/after allocation gate is a MANUAL step (needs the live app) — see Post-Completion; mark `[x]` with that note.
+- [x] Confirm the panel replaces VSP and all must-keep behaviors are covered by passing tests.
+- [x] Run full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`
+- [x] Run formatter: `dotnet format "SemiStep/SemiStep.slnx" --verify-no-changes`
+- [x] The gc-verbose before/after allocation gate is a MANUAL step (needs the live app) — see Post-Completion; mark `[x]` with that note. (manual (skipped - needs live Release app, see Post-Completion))
 
 ### Task 7: Documentation and cleanup
 - [ ] Update `Docs/architecture/recipe-grid-surface.md`: document the recycle-in-place `TransposedColumnsPanel`, why it replaced `VirtualizingStackPanel` (per-recycle detach/re-attach allocation), and that the pool is now a per-surface factory. Record the allocation-gate result.

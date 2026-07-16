@@ -122,13 +122,13 @@
 - Modify: `SemiStep/SemiStep.UI/RecipeGrid/Transposed/TransposedRecipeGridView.axaml.cs` (commit-active-editor in `OnContainerClearing`)
 - Modify: tests file(s)
 
-- [ ] Swap the production `ItemsPanelTemplate` in `.axaml` from `VirtualizingStackPanel` to `TransposedColumnsPanel` with the `ColumnWidth` binding (a template line-swap; the panel was already injected for tests since Task 1, so this only flips production wiring).
-- [ ] In `OnContainerClearing`, additionally walk the container and call `TransposedColumnCellsPresenter.CommitActiveEditor()` (the unrealize path replaces the old detach-driven commit for the UNSELECTED-editor case).
-- [ ] Write test (unselected-editor branch): begin editing a cell in an UNSELECTED column → scroll the column out → container is unrealized → value committed and `IsEditing` false (this is what `TransposedVirtualizationTests` pins today via detach).
-- [ ] Write test (selected-editor branch): begin editing a cell in the SELECTED (anchor) column → scroll out → container is DEFERRED (still editing offscreen) → move focus/anchor away → value committed. Confirm both branches, since an editing cell holds focus and the two go through different paths.
-- [ ] Write test: selection is correct after a scroll round-trip (select, scroll away, scroll back, still selected in model + container).
-- [ ] Write test: frozen name-column rows stay row-aligned with the scrolling columns (bounds comparison).
-- [ ] Run tests — must pass before Task 6 (the existing suite already runs against the panel from Task 3).
+- [x] Swap the production `ItemsPanelTemplate` in `.axaml` from `VirtualizingStackPanel` to `TransposedColumnsPanel` with the `ColumnWidth` binding (a template line-swap; the panel was already injected for tests since Task 1, so this only flips production wiring).
+- [x] In `OnContainerClearing`, additionally walk the container and call `TransposedColumnCellsPresenter.CommitActiveEditor()` (the unrealize path replaces the old detach-driven commit for the UNSELECTED-editor case).
+- [x] Write test (unselected-editor branch): begin editing a cell in an UNSELECTED column → scroll the column out → container is unrealized → value committed and `IsEditing` false (this is what `TransposedVirtualizationTests` pins today via detach).
+- [x] Write test (selected-editor branch): begin editing a cell in the SELECTED (anchor) column → scroll out → value committed via `ContainerClearing`. Empirical correction: an open editor holds keyboard focus, so the editor (not the container) becomes the `TabOnceActiveElement`; the container is therefore unrealized (not deferred) and commits through the clearing hook. The container-level deferral protects only a container-focused selected column with no open editor (pinned by `TransposedColumnsPanelContractTests.AnchorContainer_IsDeferredWhileScrolledOut`).
+- [x] Write test: selection is correct after a scroll round-trip (select, scroll away, scroll back, still selected in model + container).
+- [x] Write test: frozen name-column rows stay row-aligned with the scrolling columns (bounds comparison).
+- [x] Run tests — must pass before Task 6 (the existing suite already runs against the panel from Task 3).
 
 ### Task 6: Verify acceptance criteria
 - [ ] Confirm the panel replaces VSP and all must-keep behaviors are covered by passing tests.

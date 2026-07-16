@@ -115,6 +115,15 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 	private void OnContainerClearing(object? sender, ContainerClearingEventArgs e)
 	{
 		_stepColumnClassBinder.OnContainerClearing(e.Container);
+
+		// Under keep-attached recycle the host no longer detaches when a column scrolls out, so this
+		// unrealize path is the commit point for an unselected column's open editor: flush its pending
+		// text before the container rebinds to a different column.
+		if (e.Container.GetVisualDescendants().OfType<TransposedColumnCellsPresenter>().FirstOrDefault()
+			is { } presenter)
+		{
+			presenter.CommitActiveEditor();
+		}
 	}
 
 	// Re-applies selection after an orientation flip: the surface got the selection while the view was flipped away.

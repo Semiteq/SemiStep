@@ -81,12 +81,12 @@
 - Modify: `SemiStep/SemiStep.UI/RecipeGrid/Transposed/TransposedColumnsPanel.cs`
 - Modify: `SemiStep/SemiStep.Tests/UI/RecipeGrid/Transposed/TransposedColumnsPanelContractTests.cs` (or a new `TransposedColumnsPanelLayoutTests.cs`)
 
-- [ ] Implement exact math: `firstIndex = floor(viewportX / ColumnWidth)`, extent width = `Items.Count * ColumnWidth`, per-index arrange rect `(index*W, 0, W, height)`; viewport from `EffectiveViewportChanged`; fixed realize buffer.
-- [ ] Implement the `TabOnceActiveElement` deferral fully: defer unrealizing that container, keep measuring/arranging it while deferred, and release (unrealize) it via a `TabOnceActiveElementProperty` listener when the anchor moves.
-- [ ] Write test: realized index range matches the scroll offset (+buffer); idle children are hidden and not arranged.
-- [ ] Write test: the `TabOnceActiveElement` container survives scroll-out (deferred, still laid out) and is unrealized once the anchor moves.
-- [ ] Write test: desired size width = `N * ColumnWidth`; arrange positions match `index * W`.
-- [ ] Run tests — must pass before Task 3.
+- [x] Implement exact math: `firstIndex = floor(viewportX / ColumnWidth)`, extent width = `Items.Count * ColumnWidth`, per-index arrange rect `(index*W, 0, W, height)`; viewport from `EffectiveViewportChanged`; fixed realize buffer.
+- [x] Implement the `TabOnceActiveElement` deferral fully: defer unrealizing that container, keep measuring/arranging it while deferred, and release (unrealize) it via a `TabOnceActiveElementProperty` listener when the anchor moves.
+- [x] Write test: realized index range matches the scroll offset (+buffer); idle children are hidden and not arranged.
+- [x] Write test: the `TabOnceActiveElement` container survives scroll-out (deferred, still laid out) and is unrealized once the anchor moves.
+- [x] Write test: desired size width = `N * ColumnWidth`; arrange positions match `index * W`.
+- [x] Run tests — must pass before Task 3.
 
 ### Task 3: Items-changed handling — add/remove/move + Reset teardown
 

@@ -22,7 +22,12 @@ namespace SemiStep.UI.RecipeGrid.Transposed;
 /// </summary>
 public sealed class TransposedColumnsPanel : VirtualizingPanel
 {
+	// Off-screen columns realized on each side of the viewport, so a scroll does not flicker an
+	// empty edge before the newly exposed column is realized.
 	private const int BufferColumns = 2;
+
+	// Sub-pixel guard: a viewport right edge landing exactly on a column boundary must not count the
+	// next column as visible and realize one extra column.
 	private const double ViewportEdgeEpsilon = 0.5;
 
 	/// <summary>
@@ -39,6 +44,10 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 
 	private Rect _viewport;
 	private double _maxRealizedChildHeight;
+
+	// Set while a measure/arrange pass runs so a re-entrant ScrollIntoView (which itself drives a layout
+	// pass) bails instead of recursing into realization from inside layout.
+	private bool _isInLayout;
 
 	// The selection-anchor container is deferred rather than unrealized when it scrolls out of the
 	// window, so an editor or focus it holds survives offscreen. It is released once the anchor moves.
@@ -63,53 +72,69 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 
 	protected override Size MeasureOverride(Size availableSize)
 	{
-		var items = Items;
-		var count = items.Count;
-
-		if (count == 0)
+		_isInLayout = true;
+		try
 		{
-			UnrealizeAll();
+			var items = Items;
+			var count = items.Count;
 
-			return default;
+			if (count == 0)
+			{
+				UnrealizeAll();
+
+				return default;
+			}
+
+			var (firstIndex, lastIndex) = CalculateRealizedRange(count);
+
+			UnrealizeOutsideRange(firstIndex, lastIndex);
+
+			_maxRealizedChildHeight = 0;
+			for (var index = firstIndex; index <= lastIndex; index++)
+			{
+				var container = Realize(index, items);
+				container.Measure(availableSize);
+				_maxRealizedChildHeight = Math.Max(_maxRealizedChildHeight, container.DesiredSize.Height);
+			}
+
+			// Keep the deferred anchor laid out while it lives offscreen.
+			if (_deferredElement is { } deferred)
+			{
+				deferred.Measure(availableSize);
+				_maxRealizedChildHeight = Math.Max(_maxRealizedChildHeight, deferred.DesiredSize.Height);
+			}
+
+			return new Size(count * ColumnWidth, _maxRealizedChildHeight);
 		}
-
-		var (firstIndex, lastIndex) = CalculateRealizedRange(count);
-
-		UnrealizeOutsideRange(firstIndex, lastIndex);
-
-		_maxRealizedChildHeight = 0;
-		for (var index = firstIndex; index <= lastIndex; index++)
+		finally
 		{
-			var container = Realize(index, items);
-			container.Measure(availableSize);
-			_maxRealizedChildHeight = Math.Max(_maxRealizedChildHeight, container.DesiredSize.Height);
+			_isInLayout = false;
 		}
-
-		// Keep the deferred anchor laid out while it lives offscreen.
-		if (_deferredElement is { } deferred)
-		{
-			deferred.Measure(availableSize);
-			_maxRealizedChildHeight = Math.Max(_maxRealizedChildHeight, deferred.DesiredSize.Height);
-		}
-
-		return new Size(count * ColumnWidth, _maxRealizedChildHeight);
 	}
 
 	protected override Size ArrangeOverride(Size finalSize)
 	{
-		var columnWidth = ColumnWidth;
-
-		foreach (var (index, container) in _realized)
+		_isInLayout = true;
+		try
 		{
-			container.Arrange(new Rect(index * columnWidth, 0, columnWidth, finalSize.Height));
-		}
+			var columnWidth = ColumnWidth;
 
-		if (_deferredElement is { } deferred && _deferredIndex >= 0)
+			foreach (var (index, container) in _realized)
+			{
+				container.Arrange(new Rect(index * columnWidth, 0, columnWidth, finalSize.Height));
+			}
+
+			if (_deferredElement is { } deferred && _deferredIndex >= 0)
+			{
+				deferred.Arrange(new Rect(_deferredIndex * columnWidth, 0, columnWidth, finalSize.Height));
+			}
+
+			return finalSize;
+		}
+		finally
 		{
-			deferred.Arrange(new Rect(_deferredIndex * columnWidth, 0, columnWidth, finalSize.Height));
+			_isInLayout = false;
 		}
-
-		return finalSize;
 	}
 
 	protected override void OnItemsControlChanged(ItemsControl? oldValue)
@@ -159,20 +184,38 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 
 	protected override Control? ScrollIntoView(int index)
 	{
-		if (index < 0 || index >= Items.Count)
+		var items = Items;
+
+		if (_isInLayout || index < 0 || index >= items.Count || !IsEffectivelyVisible)
 		{
 			return null;
 		}
 
-		if (ContainerFromIndex(index) is { } container)
+		if (ContainerFromIndex(index) is { } realized)
 		{
-			container.BringIntoView();
+			realized.BringIntoView();
 
-			return container;
+			return realized;
 		}
 
-		// Eager realization of an offscreen index lands with the ScrollIntoView task.
-		return null;
+		// The target is outside the realized window. Realize it eagerly and place it at its exact rect so
+		// BringIntoView has real bounds to reveal, then settle with a single layout pass. The uniform-width
+		// extent is already exact from the first measure, so no multi-pass extent compensation is needed.
+		var container = Realize(index, items);
+		container.Measure(Size.Infinity);
+
+		var columnWidth = ColumnWidth;
+		var height = _maxRealizedChildHeight > 0 ? _maxRealizedChildHeight : container.DesiredSize.Height;
+		container.Arrange(new Rect(index * columnWidth, 0, columnWidth, height));
+
+		container.BringIntoView();
+		UpdateLayout();
+
+		// The settling pass may have re-realized the target into the window; return whatever now sits at
+		// the index. If the viewport was already at a scroll limit and could not move, that pass may have
+		// recycled the eager container to idle (hidden) — re-realize it so navigation never lands on a
+		// hidden container.
+		return ContainerFromIndex(index) ?? Realize(index, items);
 	}
 
 	protected override Control? ContainerFromIndex(int index)
@@ -215,8 +258,62 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 
 	protected override IInputElement? GetControl(NavigationDirection direction, IInputElement? from, bool wrap)
 	{
-		// Direction-resolving keyboard navigation lands with the ScrollIntoView task.
-		return null;
+		var count = Items.Count;
+		var fromControl = from as Control;
+
+		if (count == 0
+			|| (fromControl is null && direction is not NavigationDirection.First and not NavigationDirection.Last))
+		{
+			return null;
+		}
+
+		var fromIndex = fromControl is not null ? IndexFromContainer(fromControl) : -1;
+		var toIndex = fromIndex;
+
+		switch (direction)
+		{
+			case NavigationDirection.First:
+				toIndex = 0;
+				break;
+			case NavigationDirection.Last:
+				toIndex = count - 1;
+				break;
+			case NavigationDirection.Next:
+			case NavigationDirection.Right:
+				toIndex++;
+				break;
+			case NavigationDirection.Previous:
+			case NavigationDirection.Left:
+				toIndex--;
+				break;
+			case NavigationDirection.Up:
+			case NavigationDirection.Down:
+				// A single horizontal row has no vertical neighbour; keep focus where it is.
+				break;
+			default:
+				return null;
+		}
+
+		if (fromIndex == toIndex)
+		{
+			return from;
+		}
+
+		if (wrap)
+		{
+			if (toIndex < 0)
+			{
+				toIndex = count - 1;
+			}
+			else if (toIndex >= count)
+			{
+				toIndex = 0;
+			}
+		}
+
+		// Resolve past the realization boundary: ScrollIntoView realizes the target so ListBox keyboard
+		// range-extend (Shift+Arrow), Home/End and Page navigation do not dead-end at an idle column.
+		return ScrollIntoView(toIndex);
 	}
 
 	private (int FirstIndex, int LastIndex) CalculateRealizedRange(int count)

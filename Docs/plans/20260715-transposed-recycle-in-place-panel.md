@@ -107,13 +107,13 @@
 - Modify: `SemiStep/SemiStep.UI/RecipeGrid/Transposed/TransposedColumnsPanel.cs`
 - Modify: tests file
 
-- [ ] Implement `ScrollIntoView(index)`: realized → `BringIntoView()`; else realize eagerly, arrange at the exact rect, `BringIntoView()` + one guarded (`_isInLayout`) `UpdateLayout()` (public API; NOT the internal `ExecuteLayoutPass`).
-- [ ] Implement `GetControl(direction, from, wrap)` VSP-style: resolve the direction to a target index and call our `ScrollIntoView` to realize it, returning that container (so ListBox keyboard nav past the realization boundary works).
-- [ ] Write test: a far-index selection request (`OnSelectionRequested`) realizes and positions the target column.
-- [ ] Write test: add-step auto-scroll path (append + RequestSelection) brings the new column into view.
-- [ ] Write test: navigator `MoveTo`/neighbor-column across the realization boundary resolves the right container.
-- [ ] Write test: Shift+Right (range-extend) across the realization boundary extends the selection (exercises `GetControl` → realize).
-- [ ] Run tests — must pass before Task 5.
+- [x] Implement `ScrollIntoView(index)`: realized → `BringIntoView()`; else realize eagerly, arrange at the exact rect, `BringIntoView()` + one guarded (`_isInLayout`) `UpdateLayout()` (public API; NOT the internal `ExecuteLayoutPass`).
+- [x] Implement `GetControl(direction, from, wrap)` VSP-style: resolve the direction to a target index and call our `ScrollIntoView` to realize it, returning that container (so ListBox keyboard nav past the realization boundary works).
+- [x] Write test: a far-index selection request (`OnSelectionRequested`) realizes and positions the target column.
+- [x] Write test: add-step auto-scroll path (append + RequestSelection) brings the new column into view.
+- [x] Write test: navigator `MoveTo`/neighbor-column across the realization boundary resolves the right container.
+- [x] Write test: Shift+Right (range-extend) across the realization boundary extends the selection (exercises `GetControl` → realize).
+- [x] Run tests — must pass before Task 5.
 
 ### Task 5: Integrate into the view + commit-on-clearing
 

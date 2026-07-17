@@ -1,0 +1,56 @@
+{
+  "context": {
+    "runtime": "10.0.9",
+    "avalonia": "12.0.5",
+    "os": "win-x64",
+    "testbed": "dev-primary",
+    "capturedUtc": "2026-07-17T10:24:34.8905768Z"
+  },
+  "metrics": {
+    "canonical.retention.floorBytes": {
+      "value": 123597672,
+      "tolerancePct": 20,
+      "budget": 250000000
+    },
+    "canonical.viewportJump.bytesPerColumn": {
+      "value": 86670.25,
+      "tolerancePct": 20,
+      "budget": 180000
+    },
+    "core.perAppend.bytes.n10": {
+      "value": 3816,
+      "tolerancePct": 20,
+      "budget": 8000
+    },
+    "core.perAppend.bytes.n100": {
+      "value": 5040,
+      "tolerancePct": 20,
+      "budget": 11000
+    },
+    "core.perAppend.bytes.n500": {
+      "value": 9936,
+      "tolerancePct": 20,
+      "budget": 20000
+    },
+    "transposed.perAdd.bytes.n120": {
+      "value": 275290,
+      "tolerancePct": 20,
+      "budget": 560000
+    },
+    "transposed.perAdd.bytes.n20": {
+      "value": 271918,
+      "tolerancePct": 20,
+      "budget": 560000
+    },
+    "transposed.retention.floorBytes": {
+      "value": 43662856,
+      "tolerancePct": 20,
+      "budget": 90000000
+    },
+    "transposed.viewportJump.bytesPerColumn": {
+      "value": 255439,
+      "tolerancePct": 20,
+      "budget": 290000
+    }
+  }
+}

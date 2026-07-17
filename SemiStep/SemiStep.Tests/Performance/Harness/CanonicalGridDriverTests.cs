@@ -6,9 +6,6 @@ using Xunit;
 
 namespace SemiStep.Tests.Performance.Harness;
 
-// Always-on smoke tests for the canonical driver. Mirrors TransposedGridDriverTests exactly, running
-// the same parity bodies against the real DataGrid view - the transposed/canonical symmetry the
-// ratio gates later depend on.
 [Trait("Component", "UI")]
 [Trait("Area", "Performance")]
 [Trait("Category", "Integration")]

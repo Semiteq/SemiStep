@@ -13,25 +13,8 @@ using Xunit;
 
 namespace SemiStep.Tests.Performance;
 
-// Black-box scroll/recycle gates, migrated onto the harness (PerfScenarioRunner + IRecipeGridDriver +
-// PerfBaselines). Every assertion is expressed over framework-boundary signals or driver-agnostic ratios,
-// so a panel-implementation refactor cannot break a gate that still holds the real invariant. Replaces the
-// old white-box host-reattach counter (which named TransposedColumnCellsHost) with FreshVisualInstances==0.
-//
-// These are explicit measurement facts: plain `dotnet test`/CI does not run them (xunit v3 Explicit). Run:
-//   SemiStep/Artifacts/bin/SemiStep.Tests/<config>/SemiStep.Tests.exe -explicit only -method "*AllocationProbe*"
-//
-// Gate hierarchy realized here:
-//   - FreshVisualInstances == 0 on scroll round-trips: an exact, cross-machine invariant, asserted in code.
-//   - transposed/canonical viewport-jump parity ratio <= 3.3x: a same-scenario cross-machine ratio gate.
-//     Honest current-architecture cap (~3.0x measured); tightens to 2.0x once the Host + pool are deleted.
-//   - per-add scaling ratio (N=120 vs N=20) <= 1.5: the flat-growth invariant.
-//   - viewport-jump bytes/column absolute: soft telemetry, baseline-gated once captured (records-only until).
-//
-// The absolute-byte compares are assert-or-record: they hard-fail on regression once Docs/perf/baselines.json
-// carries the metric, and record-only (report to the actuals fixture, no assert) while it is absent.
-// Committing the captured numbers to the baseline flips them to hard gates; the invariant and ratio gates
-// above never depend on a baseline.
+// Black-box scroll/recycle gates over framework-boundary signals. Explicit tests: commands and the gate
+// hierarchy live in Docs/perf/README.md.
 [Trait("Category", "Performance")]
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
@@ -59,16 +42,11 @@ public sealed class TransposedViewAllocationProbe
 	// GC/JIT jitter rather than trusting a single shot.
 	private const int ParitySampleCount = 3;
 
-	// Honest current-architecture cap: a recycled transposed column rebind measures ~3.0x a canonical row while
-	// the TransposedColumnCellsHost + pool indirection is still present. The cap is set ~10% over that
-	// worst-case so it stays a HARD regression gate. It tightens to 2.0x once the host + pool are removed - that
-	// removal drops the extra per-cell allocation the 3x reflects.
+	// ~10% over the measured ~3.0x worst case while TransposedColumnCellsHost + pool remain; tightens to
+	// 2.0x after their deletion (see Docs/perf/README.md, gate hierarchy).
 	private const double ParityRatioLimit = 3.3;
 	private const double ParityRatioTargetAfterHostPoolDeletion = 2.0;
 
-	// Per-add scaling: per-add bytes at a large seed vs a small seed. Realization is viewport-bound and about
-	// equal at both seeds, so the per-add cost stays near 1:1 across N; the ratio grows only if an append
-	// re-touches every column in the recipe (an O(total-column) regression), which this gate catches.
 	private const string ScalingConfig = "WideParams";
 	private const int ScalingWindowWidth = 1400;
 	private const int ScalingWindowHeight = 800;
@@ -87,10 +65,6 @@ public sealed class TransposedViewAllocationProbe
 		_actuals = actuals;
 	}
 
-	// Scroll round-trips over a virtualized viewport must build zero new visuals: after warmup pre-fills the
-	// recycle pool at both endpoints, every subsequent scroll reuses container instances. This is the
-	// black-box replacement for the deleted host-reattach counter and catches ANY newly-created control in
-	// the items-panel subtree, not just a named host type.
 	[AvaloniaFact(Explicit = true)]
 	public async Task ScrollRoundTrips_CreateZeroFreshVisuals()
 	{
@@ -128,9 +102,6 @@ public sealed class TransposedViewAllocationProbe
 			+ "rebuild regression");
 	}
 
-	// Viewport jump: bytes per realized container on a single far jump, measured identically on the
-	// transposed and the canonical driver. The transposed absolute is soft-telemetry (assert-or-record); the
-	// transposed/canonical parity ratio is the hard cross-machine gate.
 	[AvaloniaFact(Explicit = true)]
 	public async Task ViewportJump_BytesPerColumn_WithinParity_AndBaseline()
 	{
@@ -188,8 +159,6 @@ public sealed class TransposedViewAllocationProbe
 			+ "TransposedColumnCellsHost + pool are removed");
 	}
 
-	// Per-add scaling: per-add bytes must not grow with the existing column count. The ratio of per-add bytes
-	// at N=120 vs N=20 is the flat-growth invariant; the absolute per-add values are soft telemetry.
 	[AvaloniaFact(Explicit = true)]
 	public async Task PerAdd_ScalesFlat_WithColumnCount()
 	{
@@ -221,8 +190,6 @@ public sealed class TransposedViewAllocationProbe
 			+ "re-touches every column in the recipe, not just the viewport-realized ones");
 	}
 
-	// Median of ParitySampleCount viewport jumps (by per-column bytes) so the parity ratio is not decided by
-	// a single jittery shot on its ~10% margin.
 	private static async Task<JumpSample> MeasureViewportJumpMedianAsync(IRecipeGridDriver driver)
 	{
 		var samples = new List<JumpSample>(ParitySampleCount);

@@ -13,52 +13,14 @@ using Xunit;
 
 namespace SemiStep.Tests.Performance;
 
-// Selection-cost regression guard for TransposedRecipeGridView.OnSelectionChanged, migrated onto the
-// black-box harness. The view is built and the fixed tail range is selected through the driver
-// (TransposedGridDriver.CreateAsync + SelectRangeAsync); the driver "supplies the selection actions".
+// CPU-bound, allocation-neutral gate: PerfSignals (bytes / fresh visuals) cannot express it, so the
+// measurement is NOT routed through PerfScenarioRunner. It stays a same-process Stopwatch wall-clock
+// RATIO local to this probe (dividing two timings from one process cancels machine speed), the only
+// signal that discriminates the O(S*N) IndexOf scan the fix removed.
 //
-// This is the one CPU-bound, allocation-neutral gate: PerfSignals (allocated bytes / fresh visuals)
-// CANNOT express it, so the measurement is NOT routed through PerfScenarioRunner. It stays a same-process
-// Stopwatch wall-clock RATIO local to this probe (dividing two timings from one process cancels machine
-// speed), which is the only signal that discriminates the O(S*N) IndexOf scan the fix removed.
-//
-// Explicit measurement fact: plain `dotnet test`/CI does not run it (xunit v3 Explicit). Run:
-//   SemiStep/Artifacts/bin/SemiStep.Tests/<config>/SemiStep.Tests.exe \
-//     -explicit only -method "*SelectionCostProbe*"
-//
-// Design that isolates the regression:
-//   - The selection size S is held CONSTANT (a fixed tail range) while N grows across 300 / 1200 /
-//     4800. Select-all would make S = N and force O(N) even with the fix, so it cannot tell a flat
-//     handler from a linear one. A fixed-S tail range is what exposes IndexOf-in-N: the old handler
-//     summed IndexOf over the selected items, each ~N deep, so its per-event cost grew linearly in N;
-//     the fix reads Selection.SelectedIndexes (O(S)) and stays flat.
-//   - The driven operation is a toggle of one selected tail column off then on, issued through the
-//     INDEX-based selection model (driver.Selection.Deselect(index) / Select(index)). Deselect then
-//     re-select of a tail index raises SelectionChanged (RemovedItems / AddedItems), so it routes
-//     through OnSelectionChanged synchronously. The index-based API is used ON PURPOSE instead of
-//     SelectedItems.Remove/Add: the latter resolve item->index via an O(N) IndexOf over the source
-//     collection INSIDE the timed window, injecting an N-growing harness cost that both adds noise and
-//     mimics the very regression under test. Index-shifting inserts are deliberately NOT used: they
-//     raise IndexesChanged, which SelectingItemsControl does not surface as SelectionChanged.
-//   - CRITICAL: only the selection mutations are inside the stopwatch. The dispatcher pump (layout +
-//     cell realization) is kept OUT of the timed region (driver.WaitForIdleAsync() runs after Stop).
-//     That render floor is a large, N-independent, GC-noisy cost that swamped the handler in the first
-//     cut of this probe. With the render excluded, what remains in the timed window is the
-//     selection-model diff plus OnSelectionChanged itself, so the O(S) fix and the O(S*N) regression
-//     separate cleanly.
-//   - S is 200 (not 100) so the regression's S*N comparison count is unmistakable at large N, and
-//     the per-event cost stays measurably above stopwatch noise.
-//   - Per-event cost is a MEDIAN of repeated runs to absorb GC/JIT jitter.
-//   - Before ANY measurement is recorded, the full measured path is exercised once for EVERY N
-//     (a discarded warmup pass over the whole step-count set). Median-of-runs cancels within-fixture
-//     jitter but not a fixture-wide cold-JIT/GC skew, and the baseline N is measured first in a fresh
-//     fixture; the warmup pass puts the baseline and the largest-N fixture on equal JIT footing so the
-//     ratio's denominator is not inflated by first-run warmup.
-//
-// Assertion: per-op cost at N=4800 <= 3x per-op cost at N=300. The fix stays near 1x (flat in N once
-// the render floor is removed); reintroducing the StepColumns.IndexOf scan makes it grow ~16x (linear
-// in N at fixed S), far past the 3x guard. Discrimination was verified by temporarily restoring the
-// IndexOf scan and confirming this probe FAILS; see the plan for the recorded fix/regression numbers.
+// S is held CONSTANT (a fixed tail range) while N grows: select-all would make S = N and hide a linear
+// handler; S=200 keeps the regression's S*N cost above stopwatch noise. Index-shifting inserts are not
+// used: they raise IndexesChanged, which SelectingItemsControl does not surface as SelectionChanged.
 [Trait("Category", "Performance")]
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
@@ -93,12 +55,12 @@ public sealed class TransposedSelectionCostProbe
 		// N is on equal footing. Results are discarded.
 		foreach (var stepCount in _stepCounts)
 		{
-			await MeasurePerEventCostAsync(stepCount);
+			await MeasurePerEventMicrosecondsAsync(stepCount);
 		}
 
 		foreach (var stepCount in _stepCounts)
 		{
-			var perOpMicroseconds = await MeasurePerEventCostAsync(stepCount);
+			var perOpMicroseconds = await MeasurePerEventMicrosecondsAsync(stepCount);
 			perOpByStepCount[stepCount] = perOpMicroseconds;
 			lines.Add(
 				$"N={stepCount,5}  S={SelectionSize,4}  per-selection-event(median) = {perOpMicroseconds,10:N2} us");
@@ -123,9 +85,7 @@ public sealed class TransposedSelectionCostProbe
 			$"This is the O(S*N) IndexOf regression the fix removed. Report:{Environment.NewLine}{report}");
 	}
 
-	// Returns the median (across RunsForMedian) per-event wall-clock cost in microseconds of one
-	// OnSelectionChanged invocation, with a fixed 200-column tail selection over a recipe of stepCount.
-	private static async Task<double> MeasurePerEventCostAsync(int stepCount)
+	private static async Task<double> MeasurePerEventMicrosecondsAsync(int stepCount)
 	{
 		await using var driver = await TransposedGridDriver.CreateAsync(
 			ConfigName, stepCount, WindowWidth, WindowHeight);

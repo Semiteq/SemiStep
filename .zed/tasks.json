@@ -61,4 +61,21 @@
     "args": ["format", "SemiStep/SemiStep.slnx"],
     "cwd": "$ZED_WORKTREE_ROOT",
   },
+  {
+    "label": "Perf Gates (explicit tests, Release)",
+    "command": "dotnet",
+    "args": [
+      "run",
+      "--project",
+      "SemiStep/SemiStep.Tests/SemiStep.Tests.csproj",
+      "-c",
+      "Release",
+      "--",
+      "-explicit",
+      "only",
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always",
+    "use_new_terminal": true,
+  },
 ]

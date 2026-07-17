@@ -9,14 +9,8 @@ using Avalonia.VisualTree;
 
 namespace SemiStep.Tests.Performance.Harness;
 
-// Measures framework-boundary signals around a fixed workload. The runner holds no mutable state, so a
-// throwing workload cannot corrupt a later measurement on the same instance.
-//
-// snapshotScope MUST be the items-panel subtree (the ItemsPresenter / items panel), not the whole
-// TopLevel. Walking the full root pulls in ScrollBar chrome and focus adorners, which would make the
-// FreshVisualInstances == 0 invariant flaky on a stray +1/+2 of framework chrome; scoping to the
-// realized-container subtree keeps == 0 exact while still catching a subtree rebuild (hundreds of
-// instances).
+// snapshotScope MUST be the items-panel subtree, never the TopLevel: window chrome (scrollbars, focus
+// adorners) adds stray visuals that make the FreshVisualInstances == 0 invariant flaky.
 //
 // warmup MUST reach steady-state peak realization (scroll the full measured range once) so the recycle
 // pool is pre-filled; otherwise the first workload pass legitimately creates containers and == 0 is

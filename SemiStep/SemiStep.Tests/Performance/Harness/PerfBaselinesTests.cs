@@ -8,9 +8,6 @@ using Xunit;
 
 namespace SemiStep.Tests.Performance.Harness;
 
-// Always-on unit tests for the baseline comparer and the actuals fixture merge. Pure logic over in-memory
-// JSON: nothing here reads the real Docs/perf/baselines.json, so the tests stay deterministic across
-// re-baselines.
 [Trait("Category", "Unit")]
 [Trait("Component", "UI")]
 [Trait("Area", "Performance")]
@@ -99,10 +96,7 @@ public sealed class PerfBaselinesTests
 		baselines.Contains("absent.metric").Should().BeFalse();
 	}
 
-	// Drift guard: the metric names the probes report (PerfMetricNames.All) MUST equal the metric keys in
-	// the committed Docs/perf/baselines.json. Renaming a probe metric without re-capturing, or dropping an
-	// entry from the file, would silently downgrade that gate to record-only; this always-on test fails
-	// instead. Reads the real committed file on purpose - that is the drift it guards.
+	// Reads the real committed file on purpose: the file<->constants drift is exactly what it guards.
 	[Fact]
 	public void CommittedBaselines_MetricNames_MatchProbeMetricConstants()
 	{
@@ -168,8 +162,8 @@ public sealed class PerfBaselinesTests
 
 		comparison.Passed.Should().BeFalse();
 		comparison.Message.Should().Contain("absent.metric");
-		comparison.Message.Should().Contain("dotnet build SemiStep/SemiStep.slnx -c Release");
-		comparison.Message.Should().Contain("SemiStep.Tests.exe -explicit only");
+		comparison.Message.Should().Contain(
+			"dotnet run --project SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release -- -explicit only");
 		comparison.Message.Should().Contain("Copy-Item");
 	}
 
@@ -199,25 +193,21 @@ public sealed class PerfBaselinesTests
 		var root = document.RootElement;
 		var metrics = root.GetProperty("metrics");
 
-		// Measured metric: value overlaid, tolerance and budget carried through.
 		var scroll = metrics.GetProperty("scroll.bytes");
 		scroll.GetProperty("value").GetDouble().Should().Be(1234);
 		scroll.GetProperty("tolerancePct").GetDouble().Should().Be(20);
 		scroll.GetProperty("budget").GetDouble().Should().Be(2000);
 
-		// Unmeasured metric: fully untouched, including its explicit null budget.
 		var add = metrics.GetProperty("add.bytes");
 		add.GetProperty("value").GetDouble().Should().Be(500);
 		add.GetProperty("tolerancePct").GetDouble().Should().Be(10);
 		add.GetProperty("budget").ValueKind.Should().Be(JsonValueKind.Null);
 
-		// Brand-new measured metric: present with an explicit null budget field.
 		var fresh = metrics.GetProperty("new.metric");
 		fresh.GetProperty("value").GetDouble().Should().Be(4200);
 		fresh.TryGetProperty("budget", out var freshBudget).Should().BeTrue();
 		freshBudget.ValueKind.Should().Be(JsonValueKind.Null);
 
-		// Context carried through with capturedUtc refreshed.
 		var context = root.GetProperty("context");
 		context.GetProperty("testbed").GetString().Should().Be("dev-primary");
 		context.GetProperty("capturedUtc").GetString().Should().Be("2026-01-01T00:00:00Z");

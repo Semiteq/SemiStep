@@ -14,20 +14,29 @@ this directory.
 ## Canonical commands
 
 The measurement facts are xunit v3 **explicit tests** (`Explicit = true`). A plain `dotnet test`
-and CI never run them; they run only through the built test executable with `-explicit only`.
-
-Build Release, then run all gates:
+never runs them; they run only when the test executable is invoked with `-explicit only`. An
+xunit v3 test project IS an executable, so `dotnet run` launches it and forwards the runner flags
+after `--`. The command is identical in PowerShell, bash, and CI:
 
 ```powershell
-dotnet build SemiStep/SemiStep.slnx -c Release
-SemiStep/Artifacts/bin/SemiStep.Tests/release/SemiStep.Tests.exe -explicit only
+dotnet run --project SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release -- -explicit only
 ```
 
 Run a single gate (or a group) by method-name pattern:
 
 ```powershell
-SemiStep/Artifacts/bin/SemiStep.Tests/release/SemiStep.Tests.exe -explicit only -method "*PerAdd_ScalesFlat*"
+dotnet run --project SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release -- -explicit only -method "*PerAdd_ScalesFlat*"
 ```
+
+`dotnet run` builds incrementally first; add `--no-build` to skip that when the Release build is
+already current. The built runner at `SemiStep/Artifacts/bin/SemiStep.Tests/release/SemiStep.Tests.exe`
+takes the same flags and is what `dotnet run` launches under the hood — the diagnostic-layer trace
+capture (below) is the one place that must call it directly.
+
+IDE entry points for the same invocation: the Rider run configuration **Perf Gates**
+(`SemiStep/.run/Perf Gates.run.xml`) and the Zed task **Perf Gates (explicit tests, Release)**
+(`.zed/tasks.json`). Rider's unit-test tree shows explicit tests as "not run" on Run All by
+design; use the run configuration, not the test gutter.
 
 The current probes and their gate methods:
 
@@ -48,7 +57,7 @@ tiered compilation and dynamic PGO for that shell so the numbers settle:
 
 ```powershell
 $env:DOTNET_TieredCompilation='0'; $env:DOTNET_TieredPGO='0'
-SemiStep/Artifacts/bin/SemiStep.Tests/release/SemiStep.Tests.exe -explicit only
+dotnet run --project SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release -- -explicit only
 ```
 
 These knobs are scoped to the current PowerShell session. They matter only for the soft byte
@@ -117,7 +126,7 @@ Re-baselining is a file copy. The actuals artifact that a probe run writes IS th
    point: see what changed before accepting it.
    ```powershell
    $env:DOTNET_TieredCompilation='0'; $env:DOTNET_TieredPGO='0'
-   SemiStep/Artifacts/bin/SemiStep.Tests/release/SemiStep.Tests.exe -explicit only
+   dotnet run --project SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release -- -explicit only
    ```
 2. **Copy the actuals artifact over the baselines.** The fixture writes
    `%TEMP%/semistep-perf-actuals-<pid>.json`. A failing probe prints the exact `Copy-Item`
@@ -134,6 +143,32 @@ loads the current baselines and overlays only the measured metrics (values plus 
 context), carrying every unmeasured metric and every budget through untouched. So the copy is
 safe even after a `-method`-filtered run that touched a single metric — the other metrics survive
 verbatim.
+
+## CI
+
+`.github/workflows/perf.yml` runs the full explicit suite on every push to master (and on
+manual `workflow_dispatch`), on a hosted `windows-latest` runner, separate from the regular
+`ci` workflow so a perf failure is immediately distinguishable from a build/test failure.
+
+The committed `baselines.json` carries numbers captured on the dev testbed, and absolute-byte
+values are not comparable across environments. The workflow therefore overwrites
+`Docs/perf/baselines.json` with an empty metrics document before running. That flips every
+byte gate to its designed record-only path (a metric absent from the baselines is reported,
+not asserted), while the gates whose thresholds live in probe code keep asserting at full
+strength on CI:
+
+- `FreshVisualInstances == 0` scroll invariant,
+- per-add scaling ratio, transposed/canonical parity ratio, selection time ratio,
+- retention flat-delta and bounded-survivor checks.
+
+The byte values measured on the runner are still collected: the actuals artifact is uploaded
+as the `perf-actuals` workflow artifact on every run, pass or fail. That is the telemetry
+trail. If those numbers prove stable across runs, promoting the byte tier to a hard CI gate
+is a data-driven follow-up: commit the artifact as a `ci-hosted` baselines file (set budgets
+by hand) and have the workflow copy it into place instead of the empty document. No test code
+changes in either direction.
+
+Not PR-blocking by design: the perf job is a post-merge detector on master, not a merge gate.
 
 ## Context policy
 
@@ -170,7 +205,9 @@ where the cost went.
 `TransposedScrollTraceScenario.Drive_FixedWorkload_ForCpuTrace` drives the real transposed view
 through a fixed workload (viewport jumps, add/remove steps, an execution-tick sweep) for a CPU
 trace. It is explicit-gated like the rest; launch it under `dotnet-trace` in child-launch mode
-against the Release test build:
+against the Release test build. This is the one invocation that must call the built exe
+directly: `dotnet-trace` traces only the process it launches, and `dotnet run` would put the
+run host between the tracer and the tests:
 
 ```powershell
 $env:DOTNET_TieredCompilation='0'; $env:DOTNET_TieredPGO='0'

@@ -8,8 +8,6 @@ using Xunit;
 
 namespace SemiStep.Tests.Performance.Harness;
 
-// Always-on smoke tests for the transposed driver. Each runs the shared parity body against a freshly
-// built real transposed view, so the same coverage lands on the canonical driver too.
 [Trait("Component", "UI")]
 [Trait("Area", "Performance")]
 [Trait("Category", "Integration")]

@@ -13,18 +13,9 @@ using Xunit;
 
 namespace SemiStep.Tests.Performance;
 
-// Core per-append allocation gate. No driver: the Core API (RecipeSession.Apply -> RecipeAnalyzer.Analyze
-// -> TimingCalculator/RecipeSnapshot) is already black-box, so this probe measures it directly and adopts
-// only the baseline-compare mechanism (report to the actuals fixture + assert-or-record against
-// Docs/perf/baselines.json).
-//
-// Explicit measurement fact: plain `dotnet test`/CI does not run it (xunit v3 Explicit). Run:
-//   SemiStep/Artifacts/bin/SemiStep.Tests/<config>/SemiStep.Tests.exe \
-//     -explicit only -method "*CoreAllocationProbe*"
-//
-// It reports the transient bytes a single Core append allocates at growing recipe sizes. The per-append
-// figure scaling with N is the O(N)-per-mutation / O(N^2)-per-build churn that the Core allocation-reduction
-// work targets. Results are also written to %TEMP%/semistep_core_probe.txt.
+// Core per-append allocation gate. No driver: the Core API is already black-box, so this probe measures
+// it directly and adopts only the baseline-compare mechanism. Per-append bytes scaling with N is the
+// O(N)-per-mutation churn signal.
 [Trait("Category", "Performance")]
 [Trait("Component", "Core")]
 public sealed class CoreAllocationProbe
@@ -47,7 +38,6 @@ public sealed class CoreAllocationProbe
 	{
 		var (_, session, _) = await CoreTestHelper.BuildAsync("WithGroups");
 
-		// Warm the JIT and analysis paths so the measured samples are steady-state.
 		MeasureSingleAppend(session, WarmupSize);
 
 		var baselines = PerfBaselines.Load();
@@ -66,8 +56,6 @@ public sealed class CoreAllocationProbe
 		File.WriteAllText(Path.Combine(Path.GetTempPath(), "semistep_core_probe.txt"), report);
 	}
 
-	// Resets the session, grows the recipe to seedSize steps, then measures the thread-local bytes
-	// allocated by exactly one more append at recipe size == seedSize.
 	private static long MeasureSingleAppend(RecipeSession session, int seedSize)
 	{
 		session.Reset().EnsureSuccess("probe reset");

@@ -43,7 +43,7 @@
                     </ItemsControl>
                 </StackPanel>
 
-                <ListBox x:Name="StepListBox"
+                <transposed:TransposedStepListBox x:Name="StepListBox"
                          Classes="transposed-grid"
                          ItemsSource="{Binding StepColumns}"
                          SelectionMode="Multiple"
@@ -51,7 +51,8 @@
                          ScrollViewer.VerticalScrollBarVisibility="Disabled">
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <VirtualizingStackPanel Orientation="Horizontal" />
+                            <transposed:TransposedColumnsPanel
+                                ColumnWidth="{DynamicResource TransposedStepColumnWidth}" />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
                     <ListBox.ItemTemplate>
@@ -71,15 +72,14 @@
                                             Background="{DynamicResource CurrentStepMarkerBrush}"
                                             IsVisible="{Binding Row.IsCurrentStep}" />
                                 </Border>
-                                <!-- Hosts a pooled cell presenter (built once, rebound on recycle) so a
-                                     recycled column reuses its cell subtrees instead of rebuilding them.
-                                     The heavy cells live in the view-owned pool, outside this
-                                     rebuilt-on-recycle content (see TransposedColumnCellsHost). -->
+                                <!-- Hosts a pooled cell presenter that rebinds when the container re-points
+                                     to a different column. The heavy cell subtrees live in the view-owned
+                                     pool (see TransposedColumnCellsHost). -->
                                 <transposed:TransposedColumnCellsHost />
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
-                </ListBox>
+                </transposed:TransposedStepListBox>
 
             </DockPanel>
         </ScrollViewer>

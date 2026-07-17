@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using ReactiveUI;
@@ -115,6 +116,45 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 	private void OnContainerClearing(object? sender, ContainerClearingEventArgs e)
 	{
 		_stepColumnClassBinder.OnContainerClearing(e.Container);
+
+		// Capture focus ownership BEFORE the commit. CommitActiveEditor tears the focused editor out of the
+		// subtree (the lazy cell swaps its Child back to the display control), which drops keyboard focus to
+		// null, so a post-commit IsKeyboardFocusWithin check would always miss.
+		var containerHeldFocus = e.Container.IsKeyboardFocusWithin;
+
+		// Under keep-attached recycle the host no longer detaches when a column scrolls out, so this
+		// unrealize path is the commit point for an unselected column's open editor: flush its pending
+		// text before the container rebinds to a different column.
+		if (e.Container.GetVisualDescendants().OfType<TransposedColumnCellsPresenter>().FirstOrDefault()
+			is { } presenter)
+		{
+			presenter.CommitActiveEditor();
+		}
+
+		// Committing an open editor swaps its lazy cell back to the display control, detaching the focused
+		// TextBox and dropping keyboard focus to null - which would strand the grid, unable to receive
+		// arrow-key navigation until the next click. The ListBox itself is not focusable (it forwards focus to
+		// a container) and no stable container exists mid-recycle, so defer relocation to a visible column
+		// until the recycle layout settles, keeping keyboard navigation live.
+		if (containerHeldFocus)
+		{
+			Dispatcher.UIThread.Post(RelocateFocusToVisibleColumn, DispatcherPriority.Input);
+		}
+	}
+
+	private void RelocateFocusToVisibleColumn()
+	{
+		if (!this.IsAttachedToVisualTree() || StepListBox.IsKeyboardFocusWithin)
+		{
+			return;
+		}
+
+		// Any visible column is an acceptable landing spot; take the first realized one. Do NOT order this
+		// by column index: focusing a container makes the panel defer it (keep it attached and visible), so
+		// steering the target changes which container survives recycle and destabilizes anchor release.
+		StepListBox.GetRealizedContainers()
+			.FirstOrDefault(container => container.IsVisible)?
+			.Focus();
 	}
 
 	// Re-applies selection after an orientation flip: the surface got the selection while the view was flipped away.

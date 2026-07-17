@@ -241,12 +241,13 @@ public sealed class TransposedSelectionBindingTests : IAsyncLifetime
 		CellPaletteInstaller.Install(_window.Resources, _fixture.AppConfiguration.GridStyle);
 		ExecutionPaletteInstaller.Install(_window.Resources, _fixture.AppConfiguration.GridStyle);
 
+		var stepListBox = view.FindControl<ListBox>("StepListBox");
+		stepListBox.Should().NotBeNull();
+		stepListBox!.UseTransposedColumnsPanel();
+
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();
 
-		var stepListBox = view.FindControl<ListBox>("StepListBox");
-		stepListBox.Should().NotBeNull();
-
-		return stepListBox!;
+		return stepListBox;
 	}
 }

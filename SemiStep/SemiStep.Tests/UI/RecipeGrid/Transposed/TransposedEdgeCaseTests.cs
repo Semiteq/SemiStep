@@ -149,12 +149,13 @@ public sealed class TransposedEdgeCaseTests : IAsyncLifetime
 			Content = view,
 		};
 
+		var stepListBox = view.FindControl<ListBox>("StepListBox");
+		stepListBox.Should().NotBeNull();
+		stepListBox!.UseTransposedColumnsPanel();
+
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();
 
-		var stepListBox = view.FindControl<ListBox>("StepListBox");
-		stepListBox.Should().NotBeNull();
-
-		return (view, stepListBox!);
+		return (view, stepListBox);
 	}
 }

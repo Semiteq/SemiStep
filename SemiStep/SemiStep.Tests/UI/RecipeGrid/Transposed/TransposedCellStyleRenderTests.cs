@@ -178,11 +178,13 @@ public sealed class TransposedCellStyleRenderTests : IAsyncLifetime
 			};
 			CellPaletteInstaller.Install(window.Resources, readOnlyFixture.AppConfiguration.GridStyle);
 			ExecutionPaletteInstaller.Install(window.Resources, readOnlyFixture.AppConfiguration.GridStyle);
-			window.Show();
-			Dispatcher.UIThread.RunJobs();
 
 			var stepListBox = view.FindControl<ListBox>("StepListBox");
 			stepListBox.Should().NotBeNull();
+			stepListBox!.UseTransposedColumnsPanel();
+
+			window.Show();
+			Dispatcher.UIThread.RunJobs();
 
 			var row = surface.StepColumns[0].Row;
 			var descriptors = surface.ParameterDescriptors;
@@ -264,12 +266,13 @@ public sealed class TransposedCellStyleRenderTests : IAsyncLifetime
 		CellPaletteInstaller.Install(_window.Resources, _fixture.AppConfiguration.GridStyle);
 		ExecutionPaletteInstaller.Install(_window.Resources, _fixture.AppConfiguration.GridStyle);
 
+		var stepListBox = view.FindControl<ListBox>("StepListBox");
+		stepListBox.Should().NotBeNull();
+		stepListBox!.UseTransposedColumnsPanel();
+
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();
 
-		var stepListBox = view.FindControl<ListBox>("StepListBox");
-		stepListBox.Should().NotBeNull();
-
-		return (view, stepListBox!);
+		return (view, stepListBox);
 	}
 }

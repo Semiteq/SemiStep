@@ -48,7 +48,8 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 		DataContext = column;
 	}
 
-	// Walks the slot subtree directly (not via focus) so it commits even while detached during a recycle.
+	// Walks the slot subtree directly (not via focus) so it commits even while the presenter is detached
+	// during surface-swap teardown, where a focus-driven commit would not fire.
 	public void CommitActiveEditor()
 	{
 		foreach (var slot in this.GetVisualDescendants().OfType<TransposedLazyCellPresenter>())
@@ -57,9 +58,9 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 		}
 	}
 
-	// Backstop for the rare in-place DataContext swap: Avalonia raises this top-down and stops at the
-	// slot Borders (their DataContext is locally bound), so it fires while the editor still shows the
-	// old cell, before any slot rebinds.
+	// Backstop for the in-place DataContext swap that fires on every container reuse from idle (the normal
+	// scroll-recycle path): Avalonia raises this top-down and stops at the slot Borders (their DataContext
+	// is locally bound), so it fires while the editor still shows the old cell, before any slot rebinds.
 	protected override void OnDataContextBeginUpdate()
 	{
 		CommitActiveEditor();

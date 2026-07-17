@@ -34,13 +34,15 @@ The pieces:
   over it, so changed-cell state, applicability, and the three write events have exactly one
   home.
 - `TransposedRecipeGridView` (`ReactiveUserControl<TransposedRecipeGridSurface>`) — a `ListBox`
-  of step-columns over a horizontal `VirtualizingStackPanel` (no DataGrid): realized element
+  of step-columns over the recycle-in-place `TransposedColumnsPanel` (a custom
+  `VirtualizingPanel`, no DataGrid): realized element
   count is viewport-bound regardless of recipe length, and whole-column selection comes from
   `SelectionMode="Multiple"` natively. Realized columns do not render cells through a
   `FuncDataTemplate`; a view-owned pool hands each realized container a
-  `TransposedColumnCellsPresenter` whose fixed per-descriptor slots rebind on recycle, and
+  `TransposedColumnCellsPresenter` whose fixed per-descriptor slots rebind when the container
+  re-points to a different column, and
   `TransposedCellTemplateFactory.CreateEditor` builds each slot's lazy display/editor cell (see
-  "Allocation characteristics" for the pool, the rebind-on-recycle reuse, and the lazy editor swap);
+  "Allocation characteristics" for the recycle-in-place panel, the pooled presenter, and the lazy editor swap);
   `TransposedStepColumnClassBinder` stamps execution classes on item containers via
   `ContainerPrepared`/`ContainerClearing`. A tunnel pointer-pressed hook implements the
   select-then-edit press model (editors would otherwise swallow the bubbling press): a plain
@@ -279,8 +281,9 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   precedence is unchanged. The `IsSelected` leg is sourced from the presenter's own
   `TransposedColumnCellsPresenter.IsColumnSelected` (a `DirectProperty`, bound `Source = this`),
   which `TransposedColumnCellsHost` keeps in sync with the container `ListBoxItem.IsSelected`
-  imperatively (one held subscription, resolved on attach, disposed-before-resubscribe on recycle,
-  reset to `false` on release). It is deliberately NOT a `RelativeSource FindAncestor ListBoxItem`
+  imperatively (one held subscription, resolved on attach, re-subscribed only when the container
+  identity actually changes — stable across an in-place scroll recycle, so a scroll leaves it
+  untouched; it re-resolves on surface swap / re-acquire — reset to `false` on release). It is deliberately NOT a `RelativeSource FindAncestor ListBoxItem`
   lookup: a pooled presenter is transiently off-tree (detached from any `ListBoxItem`), so that
   ancestor leg logged ~1155 "Ancestor not found" binding errors on a short scroll. The presenter
   re-announces the leg in `OnAttachedToVisualTree` so the background converter re-evaluates once the
@@ -291,31 +294,105 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   per-action metadata dictionaries (Units / FormatKinds / GroupItems) are cached per
   `ActionDefinition` instead of rebuilt per row.
 
-- **Container recycling reuse (the source of canonical parity).** The dominant transient cost is
-  per-realized-column, not retained heap (six gcdumps confirmed the heap plateaus). The canonical
-  `DataGrid` is cheap on scroll not because its editors are lazy — its combo cells are always live —
-  but because it RECYCLES realized rows: a recycled row rebinds its subtree to the new data instead of
-  rebuilding it. The transposed grid previously defeated its own `supportsRecycling:true`: the inner
-  per-column `ItemsControl ItemsSource="{Binding Cells}"` received a fresh `Cells` list on every
-  container recycle and rebuilt every cell subtree from scratch, so a viewport jump that recycled
-  ~20-25 columns paid ~20-25 full column builds in one dispatcher frame. The fix rebinds instead of
-  rebuilds, mirroring the DataGrid.
+- **Recycle-in-place virtualizing panel (`TransposedColumnsPanel`).** Step-columns virtualize
+  through a purpose-built `VirtualizingPanel` (`RecipeGrid/Transposed/TransposedColumnsPanel.cs`),
+  not the horizontal `VirtualizingStackPanel` it replaced. VSP recycles a container by
+  `RemoveInternalChild` (full visual + logical detach) followed by `AddInternalChild` (re-attach) on
+  every viewport crossing, and a ~115-element column subtree then re-runs style-attach
+  (`StyleBase.Attach` / `Setter.Instance`), property-store growth (`Dictionary.Resize`), and
+  composition-visual creation (`CreateCompositionVisual`) on each recycle — a gc-verbose trace put the
+  realization subtree at ~41–56% of scroll-time UI-thread allocation. `TransposedColumnsPanel`
+  recycles IN PLACE, the mechanism Avalonia's own `DataGridRowsPresenter` uses: an idle container is
+  hidden (`IsVisible=false`) and pushed to an idle `Stack`, never removed from the panel; on reuse it
+  is shown and its `DataContext` re-points through the generator
+  (`PrepareItemContainer` / `ItemContainerPrepared`). `AddInternalChild` runs once per physical slot,
+  ever, so the style-attach, property-store, and composition-visual allocators are paid once per
+  container and never again on scroll. Peak `Children.Count` is viewport columns plus a small buffer
+  (~20-25), never the full step count.
 
-  A fixed-slot-in-`ItemTemplate` design (bind slot `i` to `Cells[i]` inside the container template)
-  cannot achieve this in Avalonia: `VirtualizingStackPanel` detaches a recycled container
-  (`RemoveInternalChild`), and on reattach `ContentPresenter` resets its recycling key, which forces a
-  full `ItemTemplate` rebuild (verified by decompiling `Avalonia.Base`/`Avalonia.Controls`). Reuse is
-  instead achieved with a **view-owned pool of direct-editor presenters** that live outside the
-  virtualization lifecycle: `TransposedColumnCellsPool` hands a `TransposedColumnCellsPresenter` (a
+  Uniform column width is load-bearing: every column is `ColumnWidth` wide (bound in the
+  `ItemsPanelTemplate` to the `TransposedStepColumnWidth` resource), so viewport math is exact —
+  `firstIndex = floor(viewportX / ColumnWidth)`, extent = `Items.Count * ColumnWidth`, arrange rect
+  `(index*W, 0, W, height)` — with none of VSP's size-estimation or scroll-anchoring. The panel
+  assumes a single fixed width; a width change arrives only with a new surface (= Reset), so there is
+  no live re-flow path.
+
+  Focus/edit deferral mirrors VSP exactly: the container equal to
+  `KeyboardNavigation.GetTabOnceActiveElement(ItemsControl)` (the selection anchor) is NOT unrealized
+  when scrolled out of the window — it stays measured and arranged, and a
+  `TabOnceActiveElementProperty` listener releases it once the anchor moves. This lets a
+  container-focused selected column survive scroll-out. An open editor holds keyboard focus itself, so
+  the editor (not its container) becomes the `TabOnceActiveElement`; that container is unrealized
+  normally and commits through the `ContainerClearing` hook (see the commit-before-rebind hook below).
+
+  **Allocation gate.** The keep-attached panel is only half the recycle fix; the child-recycle half
+  below ("Child recycled in place") lands the other half and carries the chain's first attached
+  after-trace. The live-app gc-verbose byte gate — realization-subtree allocation share must drop from
+  ~41–56% to <20%, with `Dictionary.Resize`, `CreateCompositionVisual`, and `StyleBase.Attach` /
+  `Setter.Instance` absent from the scroll path — is a manual step on the Release build against a
+  ~2100-step recipe and stays with the user (`CreateCompositionVisual` / `CreateSKFont` are
+  composition/Skia costs headless cannot see). Headless tests pin the keep-attached contract
+  (container reuse across scroll, no `DetachedFromVisualTree` on scroll, bounded `Children.Count`,
+  focus-anchor deferral, selection round-trip).
+
+- **Child recycled in place (`TransposedStepListBox`).** The panel keeping the container attached was
+  only half the recycle fix. On every recycle the generator's
+  `ItemContainerGenerator.ClearItemContainer` clears the container's `Content` AND `ContentTemplate`;
+  the item `DataTemplate` is typed (`x:DataType="StepColumnViewModel"`) and cannot match the
+  intermediate `null`, so `FindDataTemplate` falls to `FuncDataTemplate.Default`, which flips
+  `ContentPresenter._recyclingDataTemplate` and DISCARDS the recyclable child. `PrepareItemContainer`
+  then restored `Content` and rebuilt the whole ~115-element column subtree from scratch (plus two
+  throwaway default-template `TextBlock`s per cycle), re-attaching it to the visual tree and re-running
+  `ApplyStyling` / `StyleBase.Attach` / `CreateCompositionVisual` and re-acquiring the pooled presenter
+  — the exact cascade `VirtualizingStackPanel.RecycleElement` pays, reproduced inside the keep-attached
+  panel. `TransposedStepListBox : ListBox` closes the gap with three overrides:
+  `ClearContainerForItemOverride` skips base (clears only `IsSelected`, so the child survives),
+  `PrepareContainerForItemOverride` re-points `Content` explicitly on a recycled container (base
+  `SetIfUnset` skips an already-set `Content` and would leave the stale column), and
+  `StyleKeyOverride => typeof(ListBox)` keeps the Semi.Avalonia control template and the type-scoped
+  selectors resolving. Both prepares now resolve the SAME `IRecyclingDataTemplate`, so
+  `ContentPresenter` recycles the existing child in place: a scroll reuse touches nothing but a
+  `DataContext` re-point — the panel kept the container attached, this keeps the child attached, and
+  together the two land the full recycle-in-place win. The overrides are pinned to Avalonia 12.0.5
+  `SetIfUnset` / `IsSet` / ClearContainer semantics.
+
+  **Acceptance — first round shipped WITH its after-measurement.** Every prior perf round in this
+  chain deferred the after-trace and reopened as "no perceptible change". This one carries an
+  agent-run headless trace gate: a fixed scripted workload (300 viewport round-trips, add/remove 50
+  steps, a 200-step execution-tick sweep) captured before and after under `dotnet-trace`, compared
+  against pre-committed numbers. Results — attach/styling frame sum
+  (`OnAttachedToVisualTreeCore` + `StyleBase.Attach` + `ApplyStyling`) collapsed **131 587 → 1 181 ms**
+  (0.9% of baseline; `OnAttachedToVisualTreeCore` ABSENT under scroll-phase `Realize`);
+  `MeasureOverride` inclusive **129 354 → 24 529 ms** (−81%); host re-attaches **36 → 0** per
+  round-trip; viewport-jump allocation **1 008 701 → 235 399 B/realized column** (4.3× lower,
+  WideParams). One honest caveat: the `MeasureOverride` absolute bar (Gate #2) missed its target by
+  445 ms / 1.8%. The bar was derived as `baseline − 0.8 × attach_sum`, but the baseline attach sum
+  (131 587) exceeds baseline `MeasureOverride` (129 354) because `StyleBase.Attach` nests inside the
+  `OnAttachedToVisualTreeCore` cascade and part of the attach work runs outside `MeasureOverride`
+  (initial window attach, add-step `AddInternalChild`), so the bar mis-assumed the whole attach cost
+  lived inside `MeasureOverride`. The fix's success rests on Gate #1 (attach provably gone) and Gate #3
+  (host re-attach 0) plus the 81% `MeasureOverride` drop; the 1.8% miss is the documented frame-overlap
+  artifact, accepted, not a root-cause failure.
+
+- **Pooled cell presenter, now a per-surface factory (the source of canonical parity).** The dominant
+  transient cost is per-realized-column, not retained heap (six gcdumps confirmed the heap plateaus).
+  The canonical `DataGrid` is cheap on scroll because it RECYCLES realized rows — a recycled row
+  rebinds its subtree to the new data instead of rebuilding it. The transposed grid mirrors that.
+  Realized columns do not render cells through a `FuncDataTemplate`: `TransposedColumnCellsHost` (a
+  `Decorator` in the `ItemTemplate`) hands each container a `TransposedColumnCellsPresenter` (a
   `StackPanel` subclass building one cell `Border` slot per `ParameterDescriptor`, no per-cell
-  `ContentControl`) to each realized container through `TransposedColumnCellsHost` (a `Decorator` in
-  the `ItemTemplate`). Because the presenters are pooled by the view and only injected into containers,
-  they survive detach/reattach; the `ListBox` still virtualizes. Each slot binds its `DataContext` to
-  `Cells[i]` via `CellSlotConverter` (index passed as `ConverterParameter`), so a container recycle
-  rebinds every slot from `columnA.Cells[i]` to `columnB.Cells[i]` and the subtree persists. Cell
-  height and the frozen left name-column alignment are unchanged; the execution-class binder and
-  current-step marker still operate at `ListBoxItem`/row level. Slots are only built for
-  actually-realized columns, so the never-realized-column `Lazy<>` optimization stays intact.
+  `ContentControl`), and each slot binds its `DataContext` to `Cells[i]` via `CellSlotConverter`
+  (index passed as `ConverterParameter`), so a container re-pointing from `columnA` to `columnB`
+  rebinds every slot from `columnA.Cells[i]` to `columnB.Cells[i]` and the subtree persists rather
+  than rebuilds. Under recycle-in-place the host never detaches on scroll, so it holds one presenter
+  for life and rebinds it (never re-acquires) when its column changes. `TransposedColumnCellsPool` is
+  therefore demoted from a scroll-time cycle to a **per-surface presenter factory**: it serves only
+  the surface-swap teardown — a `RecipeReplaced` / Reset detaches every container
+  (`RemoveInternalChild` on all children, realized and idle), each host releases its presenter into
+  the dying pool, and the next surface's pool starts fresh. Cell height and the frozen left
+  name-column alignment are unchanged; the execution-class binder and current-step marker still
+  operate at `ListBoxItem` / row level. Slots are only built for actually-realized columns, so the
+  never-realized-column `Lazy<>` optimization stays intact.
 
 - **Lazy display/editor swap for both cell kinds.** With reuse in place, live editors also leave the
   jump hot path, and the remaining fresh-container weight is cut by rendering a display `TextBlock` by
@@ -338,15 +415,30 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   pending text — silent edit loss. An explicit commit runs before the slots rebind:
   `TransposedColumnCellsPresenter.CommitActiveEditor` (invoked from its `OnDataContextBeginUpdate`,
   which Avalonia calls top-down and stops at children whose `DataContext` is locally set, so it fires
-  while the editor still holds its pending text and captured cell) and from the host on recycle-out.
-  The `_editingCellProperty`/captured-cell stale-guard remains the backstop so a still-focused editor
-  cannot write into the cell it was rebound onto.
+  while the editor still holds its pending text and captured cell). On a scroll recycle-out the host no
+  longer detaches (it only hides — see "host never detaches on scroll" above), so the commit runs from
+  the view's `TransposedRecipeGridView.OnContainerClearing` hook: it finds the still-attached presenter
+  and commits it before the container rebinds. That view hook is the primary scroll-recycle-out commit
+  path; the host's own release path now commits only on surface-swap teardown, when a container is
+  genuinely detached. The `_editingCellProperty`/captured-cell stale-guard remains the backstop so a
+  still-focused editor cannot write into the cell it was rebound onto.
 
-- **Measured result.** On the viewport-jump metric (one `ScrollIntoView(last)` frame after a
-  round-trip, so it exercises container recycling), transposed bytes per realized column dropped from
-  ~14.5x the canonical recycled-row cost to ~1.03x (WideParams, 36 cells/column) and from ~2.3x to
+- **Measured result.** These figures were captured under the earlier `VirtualizingStackPanel` +
+  pooled-rebind path; they measure the pooled-presenter reuse, not the recycle-in-place panel that
+  later replaced VSP (whose byte/gen0 allocation gate is still pending live-app measurement — see the
+  recycle-in-place panel note below). On the viewport-jump metric (one `ScrollIntoView(last)` frame
+  after a round-trip, so it exercises container recycling), transposed bytes per realized column dropped
+  from ~14.5x the canonical recycled-row cost to ~1.03x (WideParams, 36 cells/column) and from ~2.3x to
   ~0.69x (WithGroups, 5 cells/column); gen0/add fell from ~2.58 to ~0.17-0.25 (WideParams) and from
   ~0.42 to ~0.00-0.08 (WithGroups). With no cell in edit the live-editor census is 0.
+
+- **Known follow-ups (separate PRs, not this change).** Two items are recorded, not done. First, the
+  `TransposedColumnCellsHost` + `TransposedColumnCellsPool` indirection is now dead weight: post-fix the
+  host never detaches on scroll, so its acquire/release cycling is gone and one presenter can be inlined
+  per physical container — a deliberate follow-up touching surface-swap teardown, `CommitActiveEditor`
+  ordering, and `_editCoordinator.Reset`. Second, the residual render-thread `CreateSKFont` text-shaping
+  cost is headless-invisible (no Skia in the trace); if the live re-trace still shows it hot, add a
+  display-text `TextLayout` cache keyed by (string, typeface, size), since grid values repeat heavily.
 
 ## Performance measurement discipline
 

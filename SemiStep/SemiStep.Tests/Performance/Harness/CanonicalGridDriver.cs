@@ -15,9 +15,8 @@ using SemiStep.UI.RecipeGrid;
 
 namespace SemiStep.Tests.Performance.Harness;
 
-// Drives the real canonical DataGrid view over its public surface: ScrollIntoView on the DataGrid, its
-// SelectedItems, and the coordinator mutation commands. Symmetric with TransposedGridDriver so one
-// parity scenario body runs against both.
+// Drives the real canonical DataGrid view over its public surface. Symmetric with TransposedGridDriver
+// so one parity scenario body runs against both.
 public sealed class CanonicalGridDriver : IRecipeGridDriver
 {
 	private const int DefaultWindowWidth = 1200;
@@ -144,8 +143,8 @@ public sealed class CanonicalGridDriver : IRecipeGridDriver
 		await _fixture.DisposeAsync();
 	}
 
-	// The snapshot scope must be the rows-presenter subtree, not the window: resolve it from a realized
-	// row's visual parent so it stays correct regardless of the DataGrid template's chrome.
+	// Resolved from a realized row's visual parent so it stays correct regardless of the DataGrid
+	// template's chrome.
 	private static Visual ResolveRowsPresenter(DataGrid dataGrid)
 	{
 		var row = dataGrid.GetVisualDescendants().OfType<DataGridRow>().FirstOrDefault()

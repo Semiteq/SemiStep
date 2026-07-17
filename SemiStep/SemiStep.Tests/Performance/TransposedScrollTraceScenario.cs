@@ -15,29 +15,9 @@ using Xunit;
 
 namespace SemiStep.Tests.Performance;
 
-// Agent-runnable cpu-trace scenario for the transposed-grid recycle work. NOT part of the normal suite.
-// It drives the REAL headless transposed view (production TransposedColumnsPanel item panel) through a
-// FIXED workload so the acceptance metric is ABSOLUTE inclusive time for the same work, captured before
-// the child-recycle fix (Task 0 baseline) and after it (Task 4). Fixed iteration counts, NOT a fixed
-// duration: a fixed-duration loop would let faster code do more iterations and erase the A/B signal.
-//
-// This is DIAGNOSTICS, not a gate. It is an xunit v3 explicit fact (Explicit = true), so plain
-// `dotnet test`/CI skips it; run it directly under dotnet-trace (child-launch mode, Release test build).
-// The runner selects explicit tests with `-explicit only`. PowerShell:
-//   dotnet-trace collect --format Speedscope -o before.speedscope.json -- \
-//     SemiStep/Artifacts/bin/SemiStep.Tests/release/SemiStep.Tests.exe \
-//     -explicit only -method "*TransposedScrollTraceScenario*"
-//
-// The three phases mirror what the app actually does to the panel:
-//   (a) viewport jumps  — 300 round-trips between two columns 200 apart; each jump recycles a full
-//       viewport of containers, which is the scroll-phase rebuild the fix targets.
-//   (b) change-step-quantity — append then remove 50 steps, the panel churn on step-count edits.
-//   (c) execution-tick sweep — walk IsCurrentStep/IsPastStep across 200 steps (RecipeActive ticks),
-//       exercising the binding traffic that hits idle subtrees once the child is kept alive.
-//
-// The recycle invariant (no fresh visual instances across a scripted scroll) is asserted separately by
-// TransposedViewAllocationProbe.ScrollRoundTrips_CreateZeroFreshVisuals; this scenario only drives the
-// fixed workload for a CPU trace and asserts nothing.
+// Diagnostics, not a gate: drives the real headless transposed view through a fixed workload for a CPU
+// trace and asserts nothing (see Docs/perf/README.md, Diagnostic layer). Fixed iteration counts, never a
+// fixed duration: a fixed-duration loop lets faster code do more iterations and erases the A/B signal.
 [Trait("Category", "Performance")]
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
@@ -46,9 +26,7 @@ public sealed class TransposedScrollTraceScenario
 	private const string ConfigName = "WideParams";
 	private const int WindowWidth = 1400;
 
-	// ~2100 columns is the real-scale recipe the user reports. Seeding is O(N^2) in the surface
-	// (per-append loop-depth rescan), so this is the slowest single step; if it proves prohibitive the
-	// scenario records the largest N that still keeps the traced run >= 20s (see the plan's Task 0 note).
+	// ~2100 columns is the real-scale recipe; seeding is O(N^2) in the surface, so the slowest single step.
 	private const int ScenarioColumns = 2100;
 
 	// Fixed workload counts. Tuned so the untraced baseline run is >= 20s wall-clock on current code.

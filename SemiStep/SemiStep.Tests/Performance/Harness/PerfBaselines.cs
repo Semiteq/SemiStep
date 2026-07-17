@@ -6,9 +6,8 @@ using System.Text.Json;
 
 namespace SemiStep.Tests.Performance.Harness;
 
-// Outcome of comparing one measured metric against its committed baseline. PerfBaselines carries no xunit
-// dependency: a probe turns a non-Passed result into an assertion failure, so the comparer stays pure and
-// unit-testable. A pass that wants attention (measured well under baseline) says so in Message.
+// No xunit dependency by design: a probe turns a non-Passed result into an assertion failure, keeping
+// the comparer pure.
 public sealed record BaselineComparison(bool Passed, string Message);
 
 // Thrown at load when the committed baselines file violates a structural invariant that no re-baseline may
@@ -22,15 +21,12 @@ public sealed class BaselineConfigException : Exception
 	}
 }
 
-// Loads Docs/perf/baselines.json and gates measured metrics against it. Two anti-drift levels per metric:
-// `value` is the soft baseline (moves on re-baseline, catches step regressions via `tolerancePct`);
-// `budget` is a hand-set absolute cap the gate always enforces and promotion never rewrites. Invariant
-// gates (== 0) live in probe code, not in this file.
+// Loads Docs/perf/baselines.json and gates measured metrics against it; value/tolerance vs hand-set
+// budget: see Docs/perf/README.md, "Baseline vs budget split".
 public sealed class PerfBaselines
 {
-	// Applied to a metric that a merge invents (measured but absent from the committed file). Deliberately
-	// the soft telemetry tolerance used throughout the harness; the budget stays null so the probe fails
-	// with "set the budget by hand" until a human sets it.
+	// For a metric measured but absent from the committed file; budget stays null so the probe fails
+	// until a human sets it.
 	private const double DefaultTolerancePct = 20.0;
 
 	private const string BaselinesRelativePath = "Docs/perf/baselines.json";
@@ -39,9 +35,8 @@ public sealed class PerfBaselines
 	// printed by PerfActualsFixture on the failing run; the pattern here names where to look.
 	private const string CaptureAndCopyGuidance =
 		"To capture and promote a fresh baseline:\n"
-		+ "  1. dotnet build SemiStep/SemiStep.slnx -c Release\n"
-		+ "  2. SemiStep/Artifacts/bin/SemiStep.Tests/release/SemiStep.Tests.exe -explicit only\n"
-		+ "  3. Copy-Item \"$env:TEMP\\semistep-perf-actuals-<pid>.json\" \"Docs/perf/baselines.json\"\n"
+		+ "  1. dotnet run --project SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release -- -explicit only\n"
+		+ "  2. Copy-Item \"$env:TEMP\\semistep-perf-actuals-<pid>.json\" \"Docs/perf/baselines.json\"\n"
 		+ "     (the failing run prints the concrete <pid> actuals path)";
 
 	private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -63,17 +58,12 @@ public sealed class PerfBaselines
 		return Parse(File.ReadAllText(path));
 	}
 
-	// True when the committed file carries a baseline entry for this metric. Lets a probe pick between a
-	// hard assert (baseline exists, gate it) and a record-only telemetry pass (no baseline yet, capture it
-	// before it is committed). Once a metric lands in the file, Compare becomes the live gate.
+	// Lets a probe pick hard-assert vs record-only (see PerfMetricGate).
 	public bool Contains(string metricName)
 	{
 		return _metrics.ContainsKey(metricName);
 	}
 
-	// The metric names the committed file carries. The always-on drift guard compares this against the set
-	// of names the probes report (PerfMetricNames.All), so a probe-side rename or a dropped baseline entry
-	// fails the normal suite instead of silently downgrading that gate to record-only.
 	public IReadOnlyCollection<string> MetricNames => _metrics.Keys;
 
 	public static PerfBaselines Parse(string json)
@@ -97,9 +87,6 @@ public sealed class PerfBaselines
 		return new PerfBaselines(metrics);
 	}
 
-	// Fail if actual exceeds the hard budget OR the soft tolerance band. A measured value well under the
-	// baseline passes but flags a stale baseline (advisory, non-failing). A missing metric or an unset
-	// budget fails with hand-holding guidance rather than silently passing.
 	public BaselineComparison Compare(string metricName, double actual)
 	{
 		if (!_metrics.TryGetValue(metricName, out var metric))
@@ -151,11 +138,8 @@ public sealed class PerfBaselines
 			+ $"tolerance={Format(metric.TolerancePct)}%, budget={Format(budget)}.");
 	}
 
-	// Produces the PROPOSED NEXT baselines.json: current metrics carried through verbatim, only the measured
-	// ones overlaid (value replaced, tolerance and budget kept). A measured metric absent from the current
-	// file is added with a default tolerance and an explicit null budget (the field is always present, so
-	// the schema stays identical and a Copy-Item promotion is always safe). Context is carried through with
-	// capturedUtc refreshed.
+	// Budget is emitted even when null so the schema stays identical and a Copy-Item promotion is always
+	// safe; unmeasured metrics and budgets carry through verbatim.
 	public static string MergeIntoBaselines(
 		string currentBaselinesJson,
 		IReadOnlyDictionary<string, double> measured,
@@ -227,8 +211,6 @@ public sealed class PerfBaselines
 		}
 	}
 
-	// Resolves Docs/perf/baselines.json under the repo root located by PerfRepoRoot. Fails with the searched
-	// paths plus the capture-and-copy commands when the root or the file is missing.
 	public static string ResolveBaselinesPath()
 	{
 		var searched = new List<string>();

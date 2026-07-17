@@ -6,31 +6,25 @@ using System.Threading;
 
 namespace SemiStep.Tests.Performance.Harness;
 
-// xunit v3 assembly fixture (registered where probes consume it): a thread-safe collector each probe
-// reports its measured metrics to. This assembly runs serially (AssemblyAttributes.cs disables test
-// parallelization), so Report is not actually called concurrently; the ConcurrentDictionary is defensive
-// thread-safety that stays correct if that ever changes. On assembly disposal a single writer emits
-// %TEMP%/semistep-perf-actuals-<pid>.json ONCE: the PROPOSED NEXT baselines.json (current baselines with
-// only the measured metrics overlaid). The PID suffix keeps concurrent test processes from clobbering each
-// other; promotion is a documented Copy-Item, so there is no promotion code here.
+// xunit v3 assembly fixture: a thread-safe collector each probe reports measured metrics to. On assembly
+// disposal it writes %TEMP%/semistep-perf-actuals-<pid>.json ONCE: the PROPOSED NEXT baselines.json. The
+// PID suffix keeps concurrent test processes from clobbering each other.
 public sealed class PerfActualsFixture : IDisposable
 {
 	private readonly ConcurrentDictionary<string, double> _measured = new(StringComparer.Ordinal);
 
 	private int _disposed;
 
-	// Metrics reported so far, as a live read-only view over the collector for callers that emit the actuals
-	// artifact themselves.
+	// Live read-only view, not a snapshot.
 	public IReadOnlyDictionary<string, double> CollectedMetrics => _measured;
 
-	// Called by a probe after it measures a metric. Last write wins for a repeated name.
+	// Last write wins for a repeated name.
 	public void Report(string metricName, double value)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(metricName);
 		_measured[metricName] = value;
 	}
 
-	// Where the actuals artifact for this process lands. Failing probes print this so promotion is copy-paste.
 	public static string DefaultOutputPath()
 	{
 		return Path.Combine(Path.GetTempPath(), $"semistep-perf-actuals-{Environment.ProcessId}.json");

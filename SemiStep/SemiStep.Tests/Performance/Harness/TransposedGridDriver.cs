@@ -18,8 +18,7 @@ using SemiStep.UI.RecipeGrid.Transposed;
 namespace SemiStep.Tests.Performance.Harness;
 
 // Drives the real transposed view over its public surface: ScrollIntoView on the StepListBox, the
-// ListBox selection model, and the coordinator mutation commands. Adapts the existing UI test builders
-// (UIFixture + UseTransposedColumnsPanel) rather than duplicating them.
+// ListBox selection model, and the coordinator mutation commands.
 public sealed class TransposedGridDriver : IRecipeGridDriver
 {
 	private const int DefaultWindowWidth = 560;
@@ -157,8 +156,8 @@ public sealed class TransposedGridDriver : IRecipeGridDriver
 		await _fixture.DisposeAsync();
 	}
 
-	// The snapshot scope must be the realized-container panel, not the window: resolve it from a realized
-	// container's visual parent so it stays correct regardless of the ListBox template's chrome.
+	// Resolved from a realized container's visual parent so it stays correct regardless of the ListBox
+	// template's chrome.
 	private static Visual ResolveItemsPanel(TransposedStepListBox stepListBox)
 	{
 		var container = stepListBox.GetRealizedContainers()?.FirstOrDefault()

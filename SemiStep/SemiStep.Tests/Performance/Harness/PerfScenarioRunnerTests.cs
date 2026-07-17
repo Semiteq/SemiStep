@@ -11,8 +11,6 @@ using Xunit;
 
 namespace SemiStep.Tests.Performance.Harness;
 
-// Always-on unit tests for the measurement core: they pin the runner's contract (fresh-visual counting,
-// scoping, byte measurement, error resilience) on synthetic controls, independent of any SemiStep view.
 [Trait("Category", "Unit")]
 [Trait("Component", "UI")]
 [Trait("Area", "Performance")]
@@ -131,9 +129,6 @@ public sealed class PerfScenarioRunnerTests
 		window.Close();
 	}
 
-	// The two-point retention gate rests on this standalone floor sample, so pin its contract: it returns a
-	// positive floor and two back-to-back samples are stable (no workload between them, so they must agree
-	// within a wide GC-noise band).
 	[AvaloniaFact]
 	public async Task SampleRetainedFloor_ReturnsPositiveAndStableFloor()
 	{

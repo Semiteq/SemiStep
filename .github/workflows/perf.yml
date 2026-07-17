@@ -1,0 +1,63 @@
+name: perf
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - ".github/workflows/perf.yml"
+      - "SemiStep/**"
+      - "ConfigFiles/**"
+      - "global.json"
+      - "!**.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  perf-gates:
+    name: Perf Gates
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: build
+        run: dotnet build SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release
+
+      # Dev-testbed byte baselines are not comparable here: an empty metrics document flips byte gates to
+      # record-only; invariant/ratio gates (thresholds in probe code) keep asserting. See Docs/perf/README.md, CI.
+      - name: neutralize byte baselines (telemetry-only on CI)
+        run: echo '{ "context": { "testbed": "ci-hosted" }, "metrics": {} }' > Docs/perf/baselines.json
+
+      - name: run perf gates
+        run: dotnet run --project SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release --no-build -- -explicit only
+
+      - name: collect actuals artifact
+        if: always()
+        run: |
+          mkdir -p perf-actuals
+          cp "$(cygpath -u "$TEMP")"/semistep-perf-actuals-*.json perf-actuals/ || echo "no actuals artifact produced"
+
+      - name: upload actuals
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-actuals
+          path: perf-actuals/
+          if-no-files-found: ignore

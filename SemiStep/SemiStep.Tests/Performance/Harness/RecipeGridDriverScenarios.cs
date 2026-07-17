@@ -15,7 +15,6 @@ internal static class RecipeGridDriverScenarios
 {
 	public const int SeededStepCount = 60;
 
-	// Scrolling to the far end must move the virtualized viewport: the realized index set differs.
 	public static async Task ScrollToColumnChangesRealizedRange(IRecipeGridDriver driver)
 	{
 		var before = driver.RealizedIndices;
@@ -33,8 +32,6 @@ internal static class RecipeGridDriverScenarios
 			"the far target index must become realized after the scroll");
 	}
 
-	// RealizedContainers feeds the retention survivor gate, so pin that it exposes the realized container
-	// controls: non-empty on a seeded grid and at least as many as the realized index set it derives from.
 	public static async Task RealizedContainersReflectViewport(IRecipeGridDriver driver)
 	{
 		await driver.WaitForIdleAsync();
@@ -72,7 +69,6 @@ internal static class RecipeGridDriverScenarios
 			2, 3, 4, 5, 6);
 	}
 
-	// Posting to the dispatcher queues the job; only WaitForIdleAsync (RunJobs) must drain it.
 	public static async Task WaitForIdleDrainsDispatcherJobs(IRecipeGridDriver driver)
 	{
 		var executed = false;
@@ -85,8 +81,6 @@ internal static class RecipeGridDriverScenarios
 		executed.Should().BeTrue("WaitForIdleAsync must drain queued dispatcher jobs");
 	}
 
-	// The snapshot scope the runner consumes must be the items-panel subtree, a strict subset of the
-	// whole window - never the TopLevel, or scrollbar chrome would break the FreshVisualInstances gate.
 	public static Task SnapshotScopeIsItemsPanelSubtreeNotWholeRoot(IRecipeGridDriver driver)
 	{
 		driver.SnapshotScope.Should().NotBeSameAs((object)driver.Root);

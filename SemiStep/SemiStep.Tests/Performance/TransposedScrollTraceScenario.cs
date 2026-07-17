@@ -21,12 +21,12 @@ namespace SemiStep.Tests.Performance;
 // the child-recycle fix (Task 0 baseline) and after it (Task 4). Fixed iteration counts, NOT a fixed
 // duration: a fixed-duration loop would let faster code do more iterations and erase the A/B signal.
 //
-// Run it directly under dotnet-trace (child-launch mode, Release test build), env-gated so the normal
-// suite skips it. PowerShell (the child inherits the parent environment):
-//   $env:SEMISTEP_TRACE_SCENARIO='1'
+// This is DIAGNOSTICS, not a gate. It is an xunit v3 explicit fact (Explicit = true), so plain
+// `dotnet test`/CI skips it; run it directly under dotnet-trace (child-launch mode, Release test build).
+// The runner selects explicit tests with `-explicit only`. PowerShell:
 //   dotnet-trace collect --format Speedscope -o before.speedscope.json -- \
 //     SemiStep/Artifacts/bin/SemiStep.Tests/release/SemiStep.Tests.exe \
-//     -method "*TransposedScrollTraceScenario*"
+//     -explicit only -method "*TransposedScrollTraceScenario*"
 //
 // The three phases mirror what the app actually does to the panel:
 //   (a) viewport jumps  — 300 round-trips between two columns 200 apart; each jump recycles a full
@@ -35,8 +35,9 @@ namespace SemiStep.Tests.Performance;
 //   (c) execution-tick sweep — walk IsCurrentStep/IsPastStep across 200 steps (RecipeActive ticks),
 //       exercising the binding traffic that hits idle subtrees once the child is kept alive.
 //
-// The host re-attach count (fresh TransposedColumnCellsHost instances built across a scripted scroll) is
-// asserted separately by TransposedViewAllocationProbe.Report_HostReattach_IsZeroAfterFix.
+// The recycle invariant (no fresh visual instances across a scripted scroll) is asserted separately by
+// TransposedViewAllocationProbe.ScrollRoundTrips_CreateZeroFreshVisuals; this scenario only drives the
+// fixed workload for a CPU trace and asserts nothing.
 [Trait("Category", "Performance")]
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
@@ -64,13 +65,9 @@ public sealed class TransposedScrollTraceScenario
 		_output = output;
 	}
 
-	[AvaloniaFact]
+	[AvaloniaFact(Explicit = true)]
 	public async Task Drive_FixedWorkload_ForCpuTrace()
 	{
-		Assert.SkipUnless(
-			Environment.GetEnvironmentVariable("SEMISTEP_TRACE_SCENARIO") == "1",
-			"Trace scenario: set SEMISTEP_TRACE_SCENARIO=1 to run.");
-
 		var fixture = new UIFixture();
 		await fixture.InitializeAsync(ConfigName);
 		try

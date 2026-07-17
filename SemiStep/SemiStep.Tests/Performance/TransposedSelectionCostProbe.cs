@@ -1,23 +1,30 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
-using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using Avalonia.Threading;
 
-using SemiStep.Tests.UI.Helpers;
-
-using SemiStep.UI.RecipeGrid.Transposed;
+using SemiStep.Tests.Performance.Harness;
 
 using Xunit;
 
 namespace SemiStep.Tests.Performance;
 
-// Selection-cost regression guard for TransposedRecipeGridView.OnSelectionChanged.
+// Selection-cost regression guard for TransposedRecipeGridView.OnSelectionChanged, migrated onto the
+// black-box harness. The view is built and the fixed tail range is selected through the driver
+// (TransposedGridDriver.CreateAsync + SelectRangeAsync); the driver "supplies the selection actions".
 //
-// UNLIKE the report-only TransposedViewAllocationProbe, this probe ASSERTS a ratio (deliberate
-// departure): it is the checked-in instrument that catches a re-introduction of the O(S*N) IndexOf
-// scan the fix removed. It is still env-gated out of CI (SEMISTEP_PROBE=1), because the measurement
-// is wall-clock and seeding 2100 steps is slow.
+// This is the one CPU-bound, allocation-neutral gate: PerfSignals (allocated bytes / fresh visuals)
+// CANNOT express it, so the measurement is NOT routed through PerfScenarioRunner. It stays a same-process
+// Stopwatch wall-clock RATIO local to this probe (dividing two timings from one process cancels machine
+// speed), which is the only signal that discriminates the O(S*N) IndexOf scan the fix removed.
+//
+// Explicit measurement fact: plain `dotnet test`/CI does not run it (xunit v3 Explicit). Run:
+//   SemiStep/Artifacts/bin/SemiStep.Tests/<config>/SemiStep.Tests.exe \
+//     -explicit only -method "*SelectionCostProbe*"
 //
 // Design that isolates the regression:
 //   - The selection size S is held CONSTANT (a fixed tail range) while N grows across 300 / 1200 /
@@ -26,19 +33,19 @@ namespace SemiStep.Tests.Performance;
 //     summed IndexOf over the selected items, each ~N deep, so its per-event cost grew linearly in N;
 //     the fix reads Selection.SelectedIndexes (O(S)) and stays flat.
 //   - The driven operation is a toggle of one selected tail column off then on, issued through the
-//     INDEX-based selection model (Selection.Deselect(index) / Selection.Select(index)). Deselect
-//     then re-select of a tail index raises SelectionChanged (RemovedItems / AddedItems), so it
-//     routes through OnSelectionChanged synchronously. The index-based API is used ON PURPOSE instead
-//     of SelectedItems.Remove/Add: the latter resolve item->index via an O(N) IndexOf over the source
+//     INDEX-based selection model (driver.Selection.Deselect(index) / Select(index)). Deselect then
+//     re-select of a tail index raises SelectionChanged (RemovedItems / AddedItems), so it routes
+//     through OnSelectionChanged synchronously. The index-based API is used ON PURPOSE instead of
+//     SelectedItems.Remove/Add: the latter resolve item->index via an O(N) IndexOf over the source
 //     collection INSIDE the timed window, injecting an N-growing harness cost that both adds noise and
 //     mimics the very regression under test. Index-shifting inserts are deliberately NOT used: they
 //     raise IndexesChanged, which SelectingItemsControl does not surface as SelectionChanged.
-//   - CRITICAL: only the selection mutations are inside the stopwatch. The Dispatcher.RunJobs()
-//     re-render (layout + cell realization) is kept OUT of the timed region. That render floor is a
-//     large, N-independent, GC-noisy cost that swamped the handler in the first cut of this probe
-//     (its fixed-S baseline was non-monotonic: 191 / 314 / 125 us, proving the handler sat below the
-//     floor). With the render excluded, what remains in the timed window is the selection-model
-//     diff plus OnSelectionChanged itself, so the O(S) fix and the O(S*N) regression separate cleanly.
+//   - CRITICAL: only the selection mutations are inside the stopwatch. The dispatcher pump (layout +
+//     cell realization) is kept OUT of the timed region (driver.WaitForIdleAsync() runs after Stop).
+//     That render floor is a large, N-independent, GC-noisy cost that swamped the handler in the first
+//     cut of this probe. With the render excluded, what remains in the timed window is the
+//     selection-model diff plus OnSelectionChanged itself, so the O(S) fix and the O(S*N) regression
+//     separate cleanly.
 //   - S is 200 (not 100) so the regression's S*N comparison count is unmistakable at large N, and
 //     the per-event cost stays measurably above stopwatch noise.
 //   - Per-event cost is a MEDIAN of repeated runs to absorb GC/JIT jitter.
@@ -57,6 +64,9 @@ namespace SemiStep.Tests.Performance;
 [Trait("Area", "RecipeGrid")]
 public sealed class TransposedSelectionCostProbe
 {
+	private const string ConfigName = "WithGroups";
+	private const int WindowWidth = 1200;
+	private const int WindowHeight = 800;
 	private const int SelectionSize = 200;
 	private const int WarmupToggles = 8;
 	private const int TogglesPerRun = 40;
@@ -72,13 +82,9 @@ public sealed class TransposedSelectionCostProbe
 		_output = output;
 	}
 
-	[AvaloniaFact]
+	[AvaloniaFact(Explicit = true)]
 	public async Task SelectionChangedCost_StaysFlatAsRecipeGrows()
 	{
-		Assert.SkipUnless(
-			Environment.GetEnvironmentVariable("SEMISTEP_PROBE") == "1",
-			"Measurement probe: set SEMISTEP_PROBE=1 to run.");
-
 		var lines = new List<string>();
 		var perOpByStepCount = new Dictionary<int, double>();
 
@@ -121,75 +127,51 @@ public sealed class TransposedSelectionCostProbe
 	// OnSelectionChanged invocation, with a fixed 200-column tail selection over a recipe of stepCount.
 	private static async Task<double> MeasurePerEventCostAsync(int stepCount)
 	{
-		var fixture = new UIFixture();
-		await fixture.InitializeAsync();
-		try
+		await using var driver = await TransposedGridDriver.CreateAsync(
+			ConfigName, stepCount, WindowWidth, WindowHeight);
+
+		// Fixed tail range [N-200 .. N-1], established through the driver: positioned so the old IndexOf
+		// scan was ~N deep per selected item. This setup is outside every timed window.
+		var rangeStart = stepCount - SelectionSize;
+		await driver.SelectRangeAsync(rangeStart, stepCount - 1);
+
+		var selection = driver.Selection;
+		var toggledIndex = stepCount - 1;
+
+		for (var i = 0; i < WarmupToggles; i++)
 		{
-			fixture.SeedRecipe(stepCount);
+			selection.Deselect(toggledIndex);
+			selection.Select(toggledIndex);
+		}
 
-			var surface = fixture.CreateTransposedSurface();
-			surface.Initialize();
-			var view = new TransposedRecipeGridView { DataContext = surface };
-			var window = new Window { Width = 1200, Height = 800, Content = view };
-			window.Show();
-			Dispatcher.UIThread.RunJobs();
+		await driver.WaitForIdleAsync();
 
-			var stepListBox = view.FindControl<ListBox>("StepListBox")!;
-			var selection = stepListBox.Selection;
-
-			// Fixed tail range [N-200 .. N-1], selected through the index-based model (no item->index
-			// lookup): positioned so the old IndexOf scan was ~N deep per selected item.
-			var rangeStart = stepCount - SelectionSize;
-			for (var index = rangeStart; index < stepCount; index++)
+		var perOpSamples = new List<double>(RunsForMedian);
+		for (var run = 0; run < RunsForMedian; run++)
+		{
+			var stopwatch = Stopwatch.StartNew();
+			for (var i = 0; i < TogglesPerRun; i++)
 			{
-				selection.Select(index);
-			}
-
-			Dispatcher.UIThread.RunJobs();
-
-			var toggledIndex = stepCount - 1;
-
-			for (var i = 0; i < WarmupToggles; i++)
-			{
+				// Deselect then re-select raises SelectionChanged synchronously twice, so the handler
+				// runs inside this timed window. Driving the index-based model keeps the O(N) item->index
+				// lookup that SelectedItems.Remove/Add would inject OUT of the measurement. The dispatcher
+				// pump (the re-render floor) stays OUT of the timed window too, on purpose.
 				selection.Deselect(toggledIndex);
 				selection.Select(toggledIndex);
 			}
 
-			Dispatcher.UIThread.RunJobs();
+			stopwatch.Stop();
 
-			var perOpSamples = new List<double>(RunsForMedian);
-			for (var run = 0; run < RunsForMedian; run++)
-			{
-				var stopwatch = Stopwatch.StartNew();
-				for (var i = 0; i < TogglesPerRun; i++)
-				{
-					// Deselect then re-select raises SelectionChanged synchronously twice, so the handler
-					// runs inside this timed window. Driving the index-based model keeps the O(N) item->index
-					// lookup that SelectedItems.Remove/Add would inject OUT of the measurement. RunJobs (the
-					// re-render floor) stays OUT of the timed window too, on purpose.
-					selection.Deselect(toggledIndex);
-					selection.Select(toggledIndex);
-				}
+			// Drain the deferred re-render outside the measured window so it never counts toward the
+			// handler cost and the dispatcher queue does not grow across runs.
+			await driver.WaitForIdleAsync();
 
-				stopwatch.Stop();
-
-				// Drain the deferred re-render outside the measured window so it never counts toward the
-				// handler cost and the dispatcher queue does not grow across runs.
-				Dispatcher.UIThread.RunJobs();
-
-				// Two SelectionChanged events per toggle (deselect, then select).
-				var events = TogglesPerRun * 2;
-				perOpSamples.Add(stopwatch.Elapsed.TotalMilliseconds * 1000.0 / events);
-			}
-
-			window.Close();
-
-			return Median(perOpSamples);
+			// Two SelectionChanged events per toggle (deselect, then select).
+			var events = TogglesPerRun * 2;
+			perOpSamples.Add(stopwatch.Elapsed.TotalMilliseconds * 1000.0 / events);
 		}
-		finally
-		{
-			await fixture.DisposeAsync();
-		}
+
+		return Median(perOpSamples);
 	}
 
 	private static double Median(List<double> samples)

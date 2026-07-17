@@ -327,11 +327,13 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
 
   **Allocation gate.** The keep-attached panel is only half the recycle fix; the child-recycle half
   below ("Child recycled in place") lands the other half and carries the chain's first attached
-  after-trace. The live-app gc-verbose byte gate — realization-subtree allocation share must drop from
-  ~41–56% to <20%, with `Dictionary.Resize`, `CreateCompositionVisual`, and `StyleBase.Attach` /
-  `Setter.Instance` absent from the scroll path — is a manual step on the Release build against a
-  ~2100-step recipe and stays with the user (`CreateCompositionVisual` / `CreateSKFont` are
-  composition/Skia costs headless cannot see). Headless tests pin the keep-attached contract
+  after-trace. The realization-subtree allocation is now an automated black-box gate: the perf
+  harness (`SemiStep.Tests/Performance/`, see `Docs/perf/README.md`) asserts `FreshVisualInstances == 0`
+  across a scrolled round-trip and gates bytes per realized column against a committed baseline, so
+  the scroll-rebuild regression this fix removed is caught by an explicit test rather than by hand.
+  Only the composition/Skia share stays a manual step on the Release build against a ~2100-step recipe
+  (`CreateCompositionVisual` / `CreateSKFont` are costs headless cannot see, so felt smoothness on
+  real hardware stays the manual oracle). Headless tests pin the keep-attached contract
   (container reuse across scroll, no `DetachedFromVisualTree` on scroll, bounded `Children.Count`,
   focus-anchor deferral, selection round-trip).
 
@@ -425,8 +427,8 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
 
 - **Measured result.** These figures were captured under the earlier `VirtualizingStackPanel` +
   pooled-rebind path; they measure the pooled-presenter reuse, not the recycle-in-place panel that
-  later replaced VSP (whose byte/gen0 allocation gate is still pending live-app measurement — see the
-  recycle-in-place panel note below). On the viewport-jump metric (one `ScrollIntoView(last)` frame
+  later replaced VSP (whose byte/gen0 allocation is now gated by the black-box perf harness — see the
+  recycle-in-place panel note above and `Docs/perf/README.md`). On the viewport-jump metric (one `ScrollIntoView(last)` frame
   after a round-trip, so it exercises container recycling), transposed bytes per realized column dropped
   from ~14.5x the canonical recycled-row cost to ~1.03x (WideParams, 36 cells/column) and from ~2.3x to
   ~0.69x (WithGroups, 5 cells/column); gen0/add fell from ~2.58 to ~0.17-0.25 (WideParams) and from
@@ -443,6 +445,10 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
 ## Performance measurement discipline
 
 Each transposed-grid performance round is gated on measurement, not on felt lag or code review.
+The lessons from these rounds are now pinned by the black-box perf harness
+(`SemiStep/SemiStep.Tests/Performance/`); its commands, gate hierarchy, re-baseline flow, and
+headless blind spots are documented in `Docs/perf/README.md`.
+
 The rules:
 
 - **Open with a weighted trace.** Before touching code, capture a weighted CPU trace
@@ -455,8 +461,9 @@ The rules:
   (for the selection fix: per-selection-event cost must not scale with N). Ship the after-trace
   with the change so the collapse is documented, not asserted.
 - **Keep a checked-in regression instrument.** `TransposedSelectionCostProbe`
-  (`SemiStep.Tests/Performance/`, env-gated `SEMISTEP_PROBE=1`, `Category=Performance`, skipped in
-  CI) holds selection size constant at S=200 while N grows (300 / 1200 / 4800) and asserts the
+  (`SemiStep.Tests/Performance/`, an xunit v3 explicit test (`Explicit = true`), `Category=Performance`,
+  not run by default and skipped in CI) holds selection size constant at S=200 while N grows
+  (300 / 1200 / 4800) and asserts the
   per-event cost at N=4800 stays within 3× of N=300. The fixed-S design isolates the `IndexOf`-in-N
   regression: select-all would make S=N and force O(N) even with the fix. Restoring the `IndexOf`
   scan makes the ratio return at ~7×–16× (linear in N at fixed S); the fix stays flat. This is the

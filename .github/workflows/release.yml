@@ -56,13 +56,14 @@ jobs:
       - name: publish
         run: dotnet publish SemiStep/SemiStep.UI/SemiStep.UI.csproj -c Release -p:Version=${{ steps.version.outputs.version }}
 
+      # The jrsoftware.org direct download intermittently serves a corrupted file, so winget
+      # (preinstalled on windows runners) installs it instead. Machine scope keeps the
+      # Program Files (x86) path the build-installer step expects.
       - name: install Inno Setup
         shell: powershell
         run: |
-          $url = "https://jrsoftware.org/download.php/is.exe"
-          $installer = "$env:TEMP\innosetup.exe"
-          Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
-          Start-Process -FilePath $installer -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-' -Wait
+          winget install --id JRSoftware.InnoSetup --exact --scope machine --silent `
+            --accept-source-agreements --accept-package-agreements --disable-interactivity
           echo "C:\Program Files (x86)\Inno Setup 6" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: build installer

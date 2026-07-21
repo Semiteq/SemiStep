@@ -2,15 +2,15 @@
 
 SemiStep is a recipe table editor/runtime for PLC integration (S7 protocol).
 Platform: .NET 10, Windows, C# 14. UI: Avalonia 12.0.3 + ReactiveUI (MVVM).
-Solution: `SemiStep/SemiStep.slnx`. All commands run from repository root.
+Solution: `SemiStep.slnx`. All commands run from repository root.
 
 ## Build
 
 ```powershell
 dotnet build SemiStep/SemiStep.UI/SemiStep.UI.csproj            # recommended (entry executable)
-dotnet build SemiStep/SemiStep.slnx                    # all projects
+dotnet build SemiStep.slnx                    # all projects
 dotnet run   --project SemiStep/SemiStep.UI/SemiStep.UI.csproj
-dotnet format SemiStep/SemiStep.slnx                   # pre-commit hook enforces this
+dotnet format SemiStep.slnx                   # pre-commit hook enforces this
 ```
 
 ## Test

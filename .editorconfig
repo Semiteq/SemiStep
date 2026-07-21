@@ -174,6 +174,10 @@ csharp_wrap_before_ternary_opsigns = true
 
 #### Naming Conventions ####
 
+# The per-rule severities below drive the IDE only. Build enforcement of naming
+# (EnforceCodeStyleInBuild) reads the IDE1006 diagnostic severity.
+dotnet_diagnostic.IDE1006.severity = warning
+
 # Naming rules
 dotnet_naming_rule.interface_should_be_begins_with_i.severity = warning
 dotnet_naming_rule.interface_should_be_begins_with_i.symbols = interface

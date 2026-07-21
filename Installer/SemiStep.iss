@@ -8,13 +8,17 @@
 
 #define AppName      "SemiStep"
 #define AppPublisher "Inc Semiteq"
-#define AppExeName   "Semistep.exe"
+#define AppExeName   "SemiStep.exe"
 #define AppId        "{{8B3F2C1A-4D7E-4F9B-A2C6-1E5D8F3B7A4C}"
 
 ; Paths relative to the location of this .iss file (Installer/)
 #define SrcBinDir    "..\SemiStep\Artifacts\publish\SemiStep.UI\release_win-x64"
 
 #define SrcCfgDir    "..\ConfigFiles"
+
+; Deployed roots — must match StartupOptions.DefaultConfigDir / DefaultLogFilePath
+#define ConfigRoot   "C:\DISTR\Config\SemiStep"
+#define LogRoot      "C:\DISTR\Logs"
 #define AppIconFile       "..\SemiStep\SemiStep.UI\logo.ico"
 #define LicenseFile       ".\LICENSE.txt"
 #define WizardImageLarge  ".\WizardImageFile.bmp"
@@ -68,16 +72,6 @@ Name: "preset_mocvd"; Description: "MOCVD"; GroupDescription: "Configuration pre
 Name: "preset_rie";   Description: "RIE";   GroupDescription: "Configuration preset:"; Flags: exclusive
 Name: "desktopicon";  Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
-[InstallDelete]
-; Remove legacy flat-layout config subfolders from prior installations.
-; The new preset-nested layout (MBE\, MOCVD\) is left intact.
-Type: filesandordirs; Name: "C:\DISTR\Config\Semistep\actions"
-Type: filesandordirs; Name: "C:\DISTR\Config\Semistep\columns"
-Type: filesandordirs; Name: "C:\DISTR\Config\Semistep\connection"
-Type: filesandordirs; Name: "C:\DISTR\Config\Semistep\groups"
-Type: filesandordirs; Name: "C:\DISTR\Config\Semistep\properties"
-Type: filesandordirs; Name: "C:\DISTR\Config\Semistep\ui"
-
 [Files]
 ; Application binaries
 Source: "{#SrcBinDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -85,25 +79,24 @@ Source: "{#SrcBinDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 ; Configuration files — both presets are always installed under a hardcoded absolute path
 ; the application reads (see StartupOptions.DefaultConfigDir). The selected [Tasks] entry
 ; controls only which preset the created shortcuts target.
-Source: "..\ConfigFiles\MBE\*";   DestDir: "C:\DISTR\Config\Semistep\MBE";   Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\ConfigFiles\MOCVD\*"; DestDir: "C:\DISTR\Config\Semistep\MOCVD"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\ConfigFiles\RIE\*";   DestDir: "C:\DISTR\Config\Semistep\RIE";   Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SrcCfgDir}\MBE\*";   DestDir: "{#ConfigRoot}\MBE";   Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SrcCfgDir}\MOCVD\*"; DestDir: "{#ConfigRoot}\MOCVD"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SrcCfgDir}\RIE\*";   DestDir: "{#ConfigRoot}\RIE";   Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Dirs]
 ; Ensure the logs directory exists before the app first runs
-;   C:\DISTR\Logs  (see StartupOptions.DefaultLogFilePath)
-Name: "C:\DISTR\Logs"
+Name: "{#LogRoot}"
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MBE"""; Tasks: preset_mbe
-Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MOCVD"""; Tasks: preset_mocvd
-Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\RIE"""; Tasks: preset_rie
+Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""{#ConfigRoot}\MBE"""; Tasks: preset_mbe
+Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""{#ConfigRoot}\MOCVD"""; Tasks: preset_mocvd
+Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""{#ConfigRoot}\RIE"""; Tasks: preset_rie
 Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MBE"""; Tasks: desktopicon and preset_mbe
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MOCVD"""; Tasks: desktopicon and preset_mocvd
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\RIE"""; Tasks: desktopicon and preset_rie
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""{#ConfigRoot}\MBE"""; Tasks: desktopicon and preset_mbe
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""{#ConfigRoot}\MOCVD"""; Tasks: desktopicon and preset_mocvd
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""{#ConfigRoot}\RIE"""; Tasks: desktopicon and preset_rie
 
 [Run]
-Filename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MBE"""; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent; Tasks: preset_mbe
-Filename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\MOCVD"""; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent; Tasks: preset_mocvd
-Filename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""C:\DISTR\Config\Semistep\RIE"""; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent; Tasks: preset_rie
+Filename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""{#ConfigRoot}\MBE"""; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent; Tasks: preset_mbe
+Filename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""{#ConfigRoot}\MOCVD"""; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent; Tasks: preset_mocvd
+Filename: "{app}\{#AppExeName}"; Parameters: "--config-dir ""{#ConfigRoot}\RIE"""; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent; Tasks: preset_rie

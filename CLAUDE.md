@@ -13,6 +13,10 @@ dotnet run   --project SemiStep/SemiStep.UI/SemiStep.UI.csproj
 dotnet format SemiStep.slnx                   # pre-commit hook enforces this
 ```
 
+The build treats warnings and `.editorconfig` naming violations (IDE1006) as errors, so a new one
+fails CI instead of accumulating; formatting is not gated by the build. See
+`Docs/architecture/build-and-deployment.md`.
+
 ## Test
 
 ```powershell

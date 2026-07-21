@@ -3,7 +3,7 @@
 		"label": "Launch SemiStep.UI (MBE)",
 		"adapter": "netcoredbg",
 		"request": "launch",
-		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/Semistep.dll",
+		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/SemiStep.dll",
 		"cwd": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug",
 		"args": [
 			"--config-dir",
@@ -20,7 +20,7 @@
 		"label": "Launch SemiStep.UI (MOCVD)",
 		"adapter": "netcoredbg",
 		"request": "launch",
-		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/Semistep.dll",
+		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/SemiStep.dll",
 		"cwd": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug",
 		"args": [
 			"--config-dir",
@@ -37,7 +37,7 @@
 		"label": "Launch SemiStep.UI (RIE)",
 		"adapter": "netcoredbg",
 		"request": "launch",
-		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/Semistep.dll",
+		"program": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug/SemiStep.dll",
 		"cwd": "${ZED_WORKTREE_ROOT}/SemiStep/Artifacts/bin/SemiStep.UI/debug",
 		"args": [
 			"--config-dir",

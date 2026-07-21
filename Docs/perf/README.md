@@ -34,7 +34,7 @@ takes the same flags and is what `dotnet run` launches under the hood — the di
 capture (below) is the one place that must call it directly.
 
 IDE entry points for the same invocation: the Rider run configuration **Perf Gates**
-(`SemiStep/.run/Perf Gates.run.xml`) and the Zed task **Perf Gates (explicit tests, Release)**
+(`.run/Perf Gates.run.xml`) and the Zed task **Perf Gates (explicit tests, Release)**
 (`.zed/tasks.json`). Rider's unit-test tree shows explicit tests as "not run" on Run All by
 design; use the run configuration, not the test gutter.
 

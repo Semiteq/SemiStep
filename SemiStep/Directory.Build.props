@@ -7,6 +7,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- NuGet audit results depend on the outside world: a new advisory against a transitive
+         package, or an unreachable audit source (NU1900), must not turn restore red with no
+         commit in the repository. -->
+    <WarningsNotAsErrors>NU1900;NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <!-- Version: permanent default, overridden at build/publish time via /p:Version=X.Y.Z -->
@@ -14,9 +20,10 @@
     <Version>0.0.0</Version>
   </PropertyGroup>
 
+  <!-- Release builds must ship symbols so crash dumps from installed machines resolve to
+       source lines; pinning DebugType keeps that independent of the SDK default. -->
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <DebugSymbols>False</DebugSymbols>
-    <DebugType>None</DebugType>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
 
   <!-- Publish defaults for win-x64 self-contained deployment.

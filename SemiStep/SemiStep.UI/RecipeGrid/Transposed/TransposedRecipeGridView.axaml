@@ -10,7 +10,7 @@
              x:DataType="transposed:TransposedRecipeGridSurface">
 
     <UserControl.Styles>
-        <StyleInclude Source="avares://Semistep/Styles/TransposedGridStyles.axaml" />
+        <StyleInclude Source="avares://SemiStep/Styles/TransposedGridStyles.axaml" />
     </UserControl.Styles>
 
     <Border BorderBrush="{DynamicResource GridBorderBrush}"

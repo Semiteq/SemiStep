@@ -36,8 +36,8 @@ Two resource files live in `SemiStep.UI/Localization`:
 - `Resources.resx` — the neutral/invariant set, holding **English** values. English is the fallback
   because it aligns with the English logs, so a missing satellite degrades to English rather than to
   a partial mix.
-- `Resources.ru.resx` — the Russian set, compiled into the `ru/Semistep.resources.dll` satellite
-  assembly (the entry assembly name is `Semistep`).
+- `Resources.ru.resx` — the Russian set, compiled into the `ru/SemiStep.resources.dll` satellite
+  assembly (the entry assembly name is `SemiStep`).
 
 Resources are referenced from AXAML via `{x:Static l:Resources.Key}` (with
 `xmlns:l="clr-namespace:SemiStep.UI.Localization"`) and from C# via `Resources.Key`. Composite labels

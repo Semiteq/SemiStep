@@ -5,14 +5,18 @@ on:
     branches: [master, main]
     paths:
       - ".github/workflows/ci.yml"
+      - ".editorconfig"
       - "SemiStep/**"
+      - "SemiStep.slnx"
       - "ConfigFiles/**"
       - "global.json"
       - "!**.md"
   pull_request:
     paths:
       - ".github/workflows/ci.yml"
+      - ".editorconfig"
       - "SemiStep/**"
+      - "SemiStep.slnx"
       - "ConfigFiles/**"
       - "global.json"
       - "!**.md"

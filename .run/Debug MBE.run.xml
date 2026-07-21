@@ -1,7 +1,7 @@
-﻿<component name="ProjectRunConfigurationManager">
+<component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Debug MBE" type="DotNetProject" factoryName=".NET Project">
     <log_file alias="semistep.log" path="$USER_HOME$/AppData/Local/Temp/Semistep/semistep.log" checked="true" skipped_content="true" />
-    <option name="EXE_PATH" value="$PROJECT_DIR$/SemiStep/Artifacts/bin/SemiStep.UI/debug/SemiStep.UI.exe" />
+    <option name="EXE_PATH" value="$PROJECT_DIR$/SemiStep/Artifacts/bin/SemiStep.UI/debug/SemiStep.exe" />
     <option name="PROGRAM_PARAMETERS" value="--config-dir &quot;$PROJECT_DIR$/ConfigFiles/MBE&quot; --log-file &quot;$USER_HOME$/AppData/Local/Temp/Semistep/semistep.log&quot; --logging-level verbose" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/SemiStep/Artifacts/bin/SemiStep.UI/debug" />
     <option name="PASS_PARENT_ENVS" value="1" />

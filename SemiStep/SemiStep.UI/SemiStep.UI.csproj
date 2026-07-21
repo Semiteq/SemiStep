@@ -2,14 +2,12 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <AssemblyName>Semistep</AssemblyName>
+    <AssemblyName>SemiStep</AssemblyName>
     <ApplicationIcon>logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>SemiStep.Tests</_Parameter1>
-    </AssemblyAttribute>
+    <InternalsVisibleTo Include="SemiStep.Tests"/>
   </ItemGroup>
 
   <ItemGroup>

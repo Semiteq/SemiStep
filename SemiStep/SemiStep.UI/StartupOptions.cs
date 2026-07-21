@@ -8,10 +8,10 @@ public sealed record StartupOptions(
 	LogEventLevel LoggingLevel)
 {
 	public const string DefaultConfigDir =
-		@"C:\DISTR\Config\Semistep\MBE";
+		@"C:\DISTR\Config\SemiStep\MBE";
 
 	public const string DefaultLogFilePath =
-		@"C:\DISTR\Logs\Semistep\semistep.log";
+		@"C:\DISTR\Logs\SemiStep\semistep.log";
 
 	public const LogEventLevel DefaultLoggingLevel =
 		LogEventLevel.Warning;

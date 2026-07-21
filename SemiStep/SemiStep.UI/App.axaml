@@ -6,7 +6,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceInclude Source="avares://Semistep/Styles/ColorPalette.axaml" />
+                <ResourceInclude Source="avares://SemiStep/Styles/ColorPalette.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Uniform 4px rounding on interactive controls. Semi's component radius keys alias
@@ -64,8 +64,8 @@
             <Setter Property="MinHeight" Value="26" />
             <Setter Property="Padding" Value="8,3" />
         </Style>
-        <StyleInclude Source="avares://Semistep/Styles/DataGridStyles.axaml" />
-        <StyleInclude Source="avares://Semistep/Styles/Buttons.axaml" />
+        <StyleInclude Source="avares://SemiStep/Styles/DataGridStyles.axaml" />
+        <StyleInclude Source="avares://SemiStep/Styles/Buttons.axaml" />
         <Style Selector="Window">
             <Setter Property="FontFamily" Value="{DynamicResource ChromeFontFamily}" />
             <Setter Property="FontSize" Value="12" />

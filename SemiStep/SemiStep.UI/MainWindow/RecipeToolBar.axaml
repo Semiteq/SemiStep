@@ -37,7 +37,7 @@
                     Command="{Binding RecipeCommands.AddStepCommand}"
                     ToolTip.Tip="{x:Static l:Resources.ContextAddStep}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://Semistep/Assets/Icons/add.png" />
+                    <Image Source="avares://SemiStep/Assets/Icons/add.png" />
                     <TextBlock Text="{x:Static l:Resources.ToolbarAddStep}" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
@@ -47,7 +47,7 @@
                     Command="{Binding RecipeCommands.DeleteStepCommand}"
                     ToolTip.Tip="{x:Static l:Resources.ContextDeleteStep}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://Semistep/Assets/Icons/delete.png" />
+                    <Image Source="avares://SemiStep/Assets/Icons/delete.png" />
                     <TextBlock Text="{x:Static l:Resources.ToolbarDeleteStep}" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
@@ -59,7 +59,7 @@
                     Command="{Binding Clipboard.CopyStepCommand}"
                     ToolTip.Tip="{x:Static l:Resources.ContextCopyStep}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://Semistep/Assets/Icons/copy.png" />
+                    <Image Source="avares://SemiStep/Assets/Icons/copy.png" />
                     <TextBlock Text="{x:Static l:Resources.ToolbarCopyStep}" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
@@ -69,7 +69,7 @@
                     Command="{Binding Clipboard.CutStepCommand}"
                     ToolTip.Tip="{x:Static l:Resources.ContextCutStep}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://Semistep/Assets/Icons/cut.png" />
+                    <Image Source="avares://SemiStep/Assets/Icons/cut.png" />
                     <TextBlock Text="{x:Static l:Resources.ToolbarCutStep}" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
@@ -79,7 +79,7 @@
                     Command="{Binding Clipboard.PasteStepCommand}"
                     ToolTip.Tip="{x:Static l:Resources.ContextPasteStep}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://Semistep/Assets/Icons/paste.png" />
+                    <Image Source="avares://SemiStep/Assets/Icons/paste.png" />
                     <TextBlock Text="{x:Static l:Resources.ToolbarPasteStep}" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
@@ -91,7 +91,7 @@
                     Command="{Binding RecipeCommands.UndoCommand}"
                     ToolTip.Tip="{x:Static l:Resources.ToolbarUndo}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://Semistep/Assets/Icons/undo.png" />
+                    <Image Source="avares://SemiStep/Assets/Icons/undo.png" />
                     <TextBlock Text="{x:Static l:Resources.ToolbarUndo}" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
@@ -101,7 +101,7 @@
                     Command="{Binding RecipeCommands.RedoCommand}"
                     ToolTip.Tip="{x:Static l:Resources.ToolbarRedo}">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://Semistep/Assets/Icons/redo.png" />
+                    <Image Source="avares://SemiStep/Assets/Icons/redo.png" />
                     <TextBlock Text="{x:Static l:Resources.ToolbarRedo}" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>

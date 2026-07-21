@@ -1,7 +1,7 @@
 # Toolbar icons
 
 256x256 PNG with alpha, referenced from the recipe toolbar as
-`avares://Semistep/Assets/Icons/<name>.png`. The toolbar renders each at 16x16
+`avares://SemiStep/Assets/Icons/<name>.png`. The toolbar renders each at 16x16
 (set in `RecipeToolBar.axaml`), so the larger source just gives crisper Hi-DPI
 downscaling.
 

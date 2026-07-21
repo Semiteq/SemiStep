@@ -118,7 +118,7 @@ Then re-run from Step 3 with the corrected version or message.
 Do not run this unless the user asks. Commands to build the installer locally:
 
 ```powershell
-dotnet clean SemiStep/SemiStep.slnx -c Release
+dotnet clean SemiStep.slnx -c Release
 dotnet publish SemiStep/SemiStep.UI/SemiStep.UI.csproj -c Release -p:Version=<version>
 & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=<version> Installer\SemiStep.iss
 ```

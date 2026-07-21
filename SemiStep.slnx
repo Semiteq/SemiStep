@@ -1,0 +1,5 @@
+<Solution>
+    <Project Path="SemiStep/SemiStep.Core/SemiStep.Core.csproj" />
+    <Project Path="SemiStep/SemiStep.Tests/SemiStep.Tests.csproj" />
+    <Project Path="SemiStep/SemiStep.UI/SemiStep.UI.csproj" />
+</Solution>

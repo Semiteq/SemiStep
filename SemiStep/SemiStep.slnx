@@ -1,5 +1,0 @@
-<Solution>
-    <Project Path="SemiStep.Core/SemiStep.Core.csproj" />
-    <Project Path="SemiStep.Tests/SemiStep.Tests.csproj" />
-    <Project Path="SemiStep.UI/SemiStep.UI.csproj" />
-</Solution>

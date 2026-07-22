@@ -128,7 +128,7 @@ public sealed class TransposedSelectionIndexTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void InsertStepBeforeSelection_DoesNotRaiseSelectionChanged_LeavesSurfaceIndicesUntouched()
+	public void InsertStepBeforeSelection_ShiftsSurfaceIndicesUp()
 	{
 		var stepListBox = ShowView();
 
@@ -136,15 +136,13 @@ public sealed class TransposedSelectionIndexTests : IAsyncLifetime
 		Select(stepListBox, 4);
 		Select(stepListBox, 5);
 
-		var beforeInsert = _surface.SelectedStepIndices.ToList();
-
 		// An index-shifting insert raises IndexesChanged, not SelectionChanged, so OnSelectionChanged
-		// never runs and the surface indices stay as they were. The stale-after-insert gap is a
-		// recorded follow-up; this test only pins that the insert does not route through OnSelectionChanged.
+		// never runs. OnMutation shifts the cached indices arithmetically, so inserting one step before
+		// the selection moves {3, 4, 5} up to {4, 5, 6}.
 		_fixture.Coordinator.InsertStep(0, RecipeTestDriver.WaitActionId);
 		Dispatcher.UIThread.RunJobs();
 
-		_surface.SelectedStepIndices.Should().Equal(beforeInsert);
+		_surface.SelectedStepIndices.Should().Equal(4, 5, 6);
 	}
 
 	private static void Select(ListBox stepListBox, int index)

@@ -171,6 +171,18 @@ and every dead member would have to be implemented and contract-tested by each f
   subscribes and sets its native selection (`null` clears). `RequestSelection` is a safe no-op
   after `Dispose()`.
 
+**Index-shift reconciliation.** An index-shifting mutation (an insert or remove at/before a
+selected step) moves the steps the cached `SelectedStepIndices` point at. The cache is
+reconciled arithmetically inside `RecipeGridSurfaceBase.OnMutation` via `ShiftSelection`,
+driven by the `MutationSignal`, not by any control-level selection event: `StepsInserted` shifts
+each index at/after the insert up by the count, `StepRemoved`/`StepsRemoved` drop the removed
+indices and shift survivors down, and `RecipeReplaced` clears the cache. This keeps the
+invariant on both surfaces without an `ISelectionModel`, which matters because the canonical
+`DataGrid` fires no selection push on an insert-before or a remove-of-selected. `ShiftSelection`
+is a pure function of `(previous indices, signal)`; the snapshot is taken at the top of
+`OnMutation` and assigned after the item mutation, guarded by sequence-equality so a mid-mutation
+control push (the transposed `ListBox` on remove-selected) is not double-applied.
+
 ## Orientation switching
 
 `ActiveRecipeGridSurface` is the single owner of orientation. Everything else observes or

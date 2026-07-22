@@ -137,6 +137,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	{
 		Dispatcher.UIThread.VerifyAccess();
 
+		var selectionSnapshot = SelectedStepIndices;
 		var recipe = _coordinator.CurrentRecipe;
 
 		_logger.LogInformation(
@@ -191,9 +192,56 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 			return;
 		}
 
-		ReconcileSelectionWithItems();
+		switch (signal)
+		{
+			case MutationSignal.StepsInserted:
+			case MutationSignal.StepRemoved:
+			case MutationSignal.StepsRemoved:
+			case MutationSignal.RecipeReplaced:
+			{
+				var shifted = ShiftSelection(selectionSnapshot, signal);
+				if (!SelectedStepIndices.SequenceEqual(shifted))
+				{
+					SelectedStepIndices = shifted;
+				}
+
+				break;
+			}
+		}
+
 		RefreshStepStartTimes(RefreshStartIndexFor(signal));
 		RefreshLoopDepths();
+	}
+
+	// Pure projection of the selection through the same index transaction the switch applied to Items.
+	private static IReadOnlyList<int> ShiftSelection(IReadOnlyList<int> selection, MutationSignal signal)
+	{
+		switch (signal)
+		{
+			case MutationSignal.StepsInserted(var startIndex, var count):
+				return selection
+					.Select(index => index >= startIndex ? index + count : index)
+					.ToList();
+
+			case MutationSignal.StepRemoved(var removedIndex):
+				return selection
+					.Where(index => index != removedIndex)
+					.Select(index => index > removedIndex ? index - 1 : index)
+					.ToList();
+
+			case MutationSignal.StepsRemoved(var removedIndices):
+				var removedSet = removedIndices.ToHashSet();
+				return selection
+					.Where(index => !removedSet.Contains(index))
+					.Select(index => index - removedIndices.Count(removed => removed < index))
+					.ToList();
+
+			case MutationSignal.RecipeReplaced:
+				return [];
+
+			default:
+				return selection;
+		}
 	}
 
 	// start-time[i] depends only on steps 0..i-1, so refreshing from the mutation index is safe; loop-depth can change earlier rows, so it stays a full scan.
@@ -211,23 +259,6 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		};
 
 		return Math.Max(fromIndex, 0);
-	}
-
-	private void ReconcileSelectionWithItems()
-	{
-		var currentSelection = SelectedStepIndices;
-		if (currentSelection.Count == 0)
-		{
-			return;
-		}
-
-		var itemCount = Items.Count;
-		if (currentSelection.All(index => index < itemCount))
-		{
-			return;
-		}
-
-		SelectedStepIndices = currentSelection.Where(index => index < itemCount).ToList();
 	}
 
 	public void RequestSelection(int? stepIndex)

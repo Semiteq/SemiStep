@@ -3,6 +3,8 @@ using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 
+using Microsoft.Extensions.Logging;
+
 using ReactiveUI;
 
 using SemiStep.UI.Coordinator;
@@ -15,14 +17,17 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 	private readonly RecipeCoordinator _coordinator;
 
 	private readonly CompositeDisposable _disposables = new();
+	private readonly ILogger<RecipeFileViewModel> _logger;
 	private readonly MessagePanelViewModel _messagePanel;
 
 	public RecipeFileViewModel(
 		RecipeCoordinator coordinator,
-		MessagePanelViewModel messagePanel)
+		MessagePanelViewModel messagePanel,
+		ILogger<RecipeFileViewModel> logger)
 	{
 		_coordinator = coordinator;
 		_messagePanel = messagePanel;
+		_logger = logger;
 
 		OpenFileInteraction = new Interaction<Unit, string?>();
 		SaveFileInteraction = new Interaction<string?, string?>();
@@ -34,19 +39,13 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		LoadRecipeCommand = ReactiveCommand.CreateFromTask(LoadRecipeAsync, canEdit);
 		NewRecipeCommand = ReactiveCommand.Create(NewRecipe, canEdit);
 
-		SaveRecipeCommand.ThrownExceptions
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.ReportError($"Save failed: {ex.Message}"))
+		SaveRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, "Save failed")
 			.DisposeWith(_disposables);
 
-		SaveAsRecipeCommand.ThrownExceptions
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.ReportError($"Save As failed: {ex.Message}"))
+		SaveAsRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, "Save As failed")
 			.DisposeWith(_disposables);
 
-		LoadRecipeCommand.ThrownExceptions
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.ReportError($"Load failed: {ex.Message}"))
+		LoadRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, "Load failed")
 			.DisposeWith(_disposables);
 	}
 

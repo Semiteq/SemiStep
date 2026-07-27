@@ -1,9 +1,12 @@
-﻿using System.Reactive;
+﻿using System;
+using System.Reactive;
 using System.Runtime.CompilerServices;
 
 using Avalonia.Media;
 
 using FluentResults;
+
+using Microsoft.Extensions.Logging;
 
 using ReactiveUI;
 
@@ -33,29 +36,40 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 	public const int MinPanelMaxHeight = 20;
 	public const int MaxPanelMaxHeight = 2000;
 
-	private readonly GridStyleEditorFacade _gridStyleEditorFacade;
+	private readonly IGridStyleEditorFacade _gridStyleEditorFacade;
 	private readonly string _configDir;
+	private readonly ILogger<GridStyleEditorViewModel> _logger;
 
 	private GridStyleOptions _source;
 	private bool _seeding;
 
-	public GridStyleEditorViewModel(GridStyleEditorFacade gridStyleEditorFacade, StartupOptions startupOptions)
-		: this(gridStyleEditorFacade, startupOptions.ConfigDir, GridStyleOptions.Default)
+	public GridStyleEditorViewModel(
+		IGridStyleEditorFacade gridStyleEditorFacade,
+		StartupOptions startupOptions,
+		ILogger<GridStyleEditorViewModel> logger)
+		: this(gridStyleEditorFacade, startupOptions.ConfigDir, GridStyleOptions.Default, logger)
 	{
 	}
 
 	public GridStyleEditorViewModel(
-		GridStyleEditorFacade gridStyleEditorFacade,
+		IGridStyleEditorFacade gridStyleEditorFacade,
 		string configDir,
-		GridStyleOptions source)
+		GridStyleOptions source,
+		ILogger<GridStyleEditorViewModel> logger)
 	{
 		_gridStyleEditorFacade = gridStyleEditorFacade;
 		_configDir = configDir;
 		_source = source;
+		_logger = logger;
 
 		SaveCommand = ReactiveCommand.Create(
 			Save,
 			this.WhenAnyValue(viewModel => viewModel.CanSave));
+
+		// Modal editor: a save fault must surface on the editor's own ErrorMessage, not the
+		// shared message panel hidden behind the dialog. Subscription lifetime tracks this
+		// transient dialog VM, which is neither IDisposable nor pooled.
+		SaveCommand.ThrownExceptions.Subscribe(ReportSaveException);
 
 		Seed(source);
 	}
@@ -286,6 +300,12 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 
 		ErrorMessage = null;
 		return true;
+	}
+
+	internal void ReportSaveException(Exception exception)
+	{
+		_logger.LogError(exception, "Style editor save failed");
+		ErrorMessage = $"Save failed: {exception.Message}";
 	}
 
 	private void Seed(GridStyleOptions options)

@@ -46,8 +46,28 @@ read `Errors[0]` directly.
   discrete one-shot channel. `RecipeCoordinator` bridges each fault to the operation channel via
   `ReportError(error.Message)` — the message text is owned in Core. The persistent "disconnected"
   label stays in the status bar.
-- **Exception handlers** (`ReportError($"... {ex.Message}")` on `ThrownExceptions`) are not
-  `Result`-based and stay as-is.
+- **Command exceptions** (a `ReactiveCommand` fault on `ThrownExceptions`) are not `Result`-based;
+  they route through `ReportThrownExceptions` (see below) rather than a hand-written handler.
 - **One deliberate exception** to the `"; "` idiom: the clipboard *paste* failure lists each error on
   its own line (`Environment.NewLine`), because a rejected paste can carry many per-step errors that
   read better stacked. It still surfaces every error (never just `Errors[0]`).
+
+## Command-exception pipe (report + log)
+
+A command whose `Execute` throws (file I/O, PLC calls) faults on `ReactiveCommand.ThrownExceptions`.
+These faults route through one extension:
+
+- `IDisposable ReportThrownExceptions<TParam, TResult>(this ReactiveCommand<TParam, TResult>, MessagePanelViewModel panel, ILogger logger, string context)`
+  (`SemiStep.UI/MessageService/ReactiveCommandReportingExtensions.cs`). Per thrown exception it both
+  `logger.LogError(ex, "{Context} failed", context)` **and** `panel.ReportError($"{context}: {ex.Message}")`.
+  The panel keeps the user-facing message it always showed; the log now carries the exception type and
+  full stack that the message drops.
+
+The `logger` argument is the caller's own `ILogger<TVm>`, so the Serilog `{SourceContext}` field names
+the originating view model in every logged fault. The extension takes the concrete
+`MessagePanelViewModel`, not an `IMessageSink` abstraction — one panel implementation exists, so the
+seam stays concrete (matches `ResultReportingExtensions`).
+
+Modal dialogs are the exception: `GridStyleEditorViewModel.SaveCommand` surfaces its fault on the
+editor's own `ErrorMessage` property (and logs), not the shared panel, because a modal owns its error
+surface while it is open.

@@ -8,6 +8,8 @@ using Avalonia.Input.Platform;
 
 using FluentResults;
 
+using Microsoft.Extensions.Logging;
+
 using ReactiveUI;
 
 using SemiStep.Core.Recipes;
@@ -27,6 +29,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 
 	private readonly CompositeDisposable _disposables = new();
 	private readonly ImportedRecipeValidator _importedRecipeValidator;
+	private readonly ILogger<ClipboardViewModel> _logger;
 	private readonly MessagePanelViewModel _messagePanel;
 	private readonly IRecipeGridSurface _recipeGrid;
 	private IClipboard? _clipboard;
@@ -36,13 +39,15 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		IRecipeGridSurface recipeGrid,
 		ClipboardSerializer clipboardSerializer,
 		ImportedRecipeValidator importedRecipeValidator,
-		MessagePanelViewModel messagePanel)
+		MessagePanelViewModel messagePanel,
+		ILogger<ClipboardViewModel> logger)
 	{
 		_coordinator = coordinator;
 		_recipeGrid = recipeGrid;
 		_clipboardSerializer = clipboardSerializer;
 		_importedRecipeValidator = importedRecipeValidator;
 		_messagePanel = messagePanel;
+		_logger = logger;
 
 		var canCopyOrCut = _recipeGrid.CanDeleteStep;
 		var canEdit = _coordinator.CanEditRecipe;
@@ -53,19 +58,13 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 			canEdit.CombineLatest(canCopyOrCut, (left, right) => left && right));
 		PasteStepCommand = ReactiveCommand.CreateFromTask(PasteStepsAsync, canEdit);
 
-		CopyStepCommand.ThrownExceptions
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.ReportError($"Copy failed: {ex.Message}"))
+		CopyStepCommand.ReportThrownExceptions(_messagePanel, _logger, "Copy failed")
 			.DisposeWith(_disposables);
 
-		CutStepCommand.ThrownExceptions
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.ReportError($"Cut failed: {ex.Message}"))
+		CutStepCommand.ReportThrownExceptions(_messagePanel, _logger, "Cut failed")
 			.DisposeWith(_disposables);
 
-		PasteStepCommand.ThrownExceptions
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => _messagePanel.ReportError($"Paste failed: {ex.Message}"))
+		PasteStepCommand.ReportThrownExceptions(_messagePanel, _logger, "Paste failed")
 			.DisposeWith(_disposables);
 	}
 

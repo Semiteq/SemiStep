@@ -12,7 +12,7 @@ namespace SemiStep.Core.Configuration;
 /// row height, spacing, panel height) is the caller's responsibility — the editor view model enforces
 /// those bounds before invoking <see cref="Save"/>.
 /// </summary>
-public sealed class GridStyleEditorFacade
+public sealed class GridStyleEditorFacade : IGridStyleEditorFacade
 {
 	private readonly GridStyleWriter _gridStyleWriter = new();
 

@@ -4,6 +4,8 @@ using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.RecipeFile;
@@ -23,7 +25,10 @@ public sealed class RecipeFileViewModelCanExecuteTests : IAsyncLifetime
 	public async ValueTask InitializeAsync()
 	{
 		await _fixture.InitializeAsync();
-		_recipeFile = new RecipeFileViewModel(_fixture.Coordinator, _fixture.MessagePanel);
+		_recipeFile = new RecipeFileViewModel(
+			_fixture.Coordinator,
+			_fixture.MessagePanel,
+			NullLogger<RecipeFileViewModel>.Instance);
 	}
 
 	public async ValueTask DisposeAsync()

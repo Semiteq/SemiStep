@@ -1,9 +1,21 @@
-﻿using Avalonia.Headless.XUnit;
+﻿using System;
+using System.Reactive;
+using System.Reactive.Linq;
+
+using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 
 using FluentAssertions;
 
+using FluentResults;
+
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
+using ReactiveUI;
+
 using SemiStep.Core.Configuration;
+using SemiStep.Tests.Helpers;
 using SemiStep.UI.Localization;
 using SemiStep.UI.StyleEditor;
 
@@ -247,8 +259,82 @@ public sealed class GridStyleEditorViewModelTests
 		viewModel.CellFontSize.Should().Be(18);
 	}
 
+	[AvaloniaFact]
+	public async Task SaveCommand_WhenSaveThrows_SurfacesErrorMessageAndLogs_WithoutCrashing()
+	{
+		var logger = new RecordingLogger<GridStyleEditorViewModel>();
+		var failure = new InvalidOperationException("disk gone");
+		var viewModel = new GridStyleEditorViewModel(
+			new ThrowingFacade(failure),
+			ConfigDir,
+			GridStyleOptions.Default,
+			logger);
+
+		viewModel.CanSave.Should().BeTrue("the seeded default draft is valid, so SaveCommand can execute");
+
+		await ExecuteSwallowing(viewModel.SaveCommand);
+
+		viewModel.ErrorMessage.Should().Be("Save failed: disk gone");
+		var logged = logger.Entries.Should().ContainSingle().Subject;
+		logged.Level.Should().Be(LogLevel.Error);
+		logged.Exception.Should().BeSameAs(failure);
+	}
+
+	[AvaloniaFact]
+	public void ReportSaveException_SurfacesOnEditorErrorMessage_AndLogsWithException()
+	{
+		var logger = new RecordingLogger<GridStyleEditorViewModel>();
+		var viewModel = new GridStyleEditorViewModel(
+			new GridStyleEditorFacade(),
+			ConfigDir,
+			GridStyleOptions.Default,
+			logger);
+		var failure = new InvalidOperationException("boom");
+
+		viewModel.ReportSaveException(failure);
+
+		viewModel.ErrorMessage.Should().Be("Save failed: boom");
+		var logged = logger.Entries.Should().ContainSingle().Subject;
+		logged.Level.Should().Be(LogLevel.Error);
+		logged.Exception.Should().BeSameAs(failure);
+	}
+
 	private static GridStyleEditorViewModel CreateViewModel(GridStyleOptions source)
 	{
-		return new GridStyleEditorViewModel(new GridStyleEditorFacade(), ConfigDir, source);
+		return new GridStyleEditorViewModel(
+			new GridStyleEditorFacade(),
+			ConfigDir,
+			source,
+			NullLogger<GridStyleEditorViewModel>.Instance);
+	}
+
+	private static async Task ExecuteSwallowing(ReactiveCommand<Unit, bool> command)
+	{
+		try
+		{
+			await command.Execute();
+		}
+		catch (InvalidOperationException)
+		{
+			// The command routes the throw to ThrownExceptions; Execute also rethrows to the awaiter.
+		}
+	}
+
+	private sealed class ThrowingFacade(Exception failure) : IGridStyleEditorFacade
+	{
+		public Task<Result<GridStyleOptions>> Load(string configDir)
+		{
+			return Task.FromResult(Result.Ok(GridStyleOptions.Default));
+		}
+
+		public Result Validate(GridStyleOptions options)
+		{
+			return Result.Ok();
+		}
+
+		public Result Save(string configDir, GridStyleOptions options)
+		{
+			throw failure;
+		}
 	}
 }

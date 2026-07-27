@@ -5,6 +5,8 @@ using Avalonia.Media;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SemiStep.Core.Configuration;
 using SemiStep.Tests.Config.Helpers;
 using SemiStep.Tests.Helpers;
@@ -28,7 +30,11 @@ public sealed class GridStyleEditorWindowTests
 		var configDir = tempDir.Path;
 
 		var loaded = (await facade.Load(configDir)).Value;
-		var viewModel = new GridStyleEditorViewModel(facade, configDir, loaded);
+		var viewModel = new GridStyleEditorViewModel(
+			facade,
+			configDir,
+			loaded,
+			NullLogger<GridStyleEditorViewModel>.Instance);
 
 		viewModel.SelectionBackground = Color.Parse("#123456");
 		viewModel.CellFontSize = loaded.CellFontSize + 1;
@@ -56,7 +62,11 @@ public sealed class GridStyleEditorWindowTests
 
 		var loaded = (await facade.Load(configDir)).Value;
 		// Construct and discard the VM without invoking Save (mirrors the Cancel path).
-		_ = new GridStyleEditorViewModel(facade, configDir, loaded);
+		_ = new GridStyleEditorViewModel(
+			facade,
+			configDir,
+			loaded,
+			NullLogger<GridStyleEditorViewModel>.Instance);
 
 		var after = await File.ReadAllBytesAsync(filePath, TestContext.Current.CancellationToken);
 		after.Should().Equal(before);

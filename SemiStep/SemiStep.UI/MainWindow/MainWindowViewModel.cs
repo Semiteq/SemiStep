@@ -68,30 +68,32 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			.ToProperty(this, x => x.IsTransposedOrientation)
 			.DisposeWith(_disposables);
 
-		ToggleSyncCommand.ThrownExceptions
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => messagePanel.ReportError($"Sync toggle failed: {ex.Message}"))
+		ToggleSyncCommand.ReportThrownExceptions(MessagePanel, _logger, "Sync toggle failed")
 			.DisposeWith(_disposables);
 
-		OpenStyleEditorCommand.ThrownExceptions
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(ex => messagePanel.ReportError($"Style editor failed: {ex.Message}"))
+		OpenStyleEditorCommand.ReportThrownExceptions(MessagePanel, _logger, "Style editor failed")
 			.DisposeWith(_disposables);
 
 		_coordinator.Mutated += OnCoordinatorMutated;
 		_disposables.Add(Disposable.Create(() => _coordinator.Mutated -= OnCoordinatorMutated));
 
 		_coordinator.PlcStateChanged
-			.Subscribe(_ => RaiseConnectionStateProperties())
+			.Subscribe(
+				_ => Guarded("PLC state update", RaiseConnectionStateProperties),
+				OnSubscriptionError("PLC state update"))
 			.DisposeWith(_disposables);
 
 		_coordinator.PlcRecipeConflictDetected
-			.Subscribe(conflict => _ = HandleConflictAsync(conflict.Local, conflict.Plc))
+			.Subscribe(
+				conflict => Guarded("PLC conflict handling", () => _ = HandleConflictAsync(conflict.Local, conflict.Plc)),
+				OnSubscriptionError("PLC conflict handling"))
 			.DisposeWith(_disposables);
 
 		Observable.Interval(TimeSpan.FromSeconds(1))
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(_ => this.RaisePropertyChanged(nameof(LastSyncTimeText)))
+			.Subscribe(
+				_ => Guarded("Sync time refresh", () => this.RaisePropertyChanged(nameof(LastSyncTimeText))),
+				OnSubscriptionError("Sync time refresh"))
 			.DisposeWith(_disposables);
 	}
 
@@ -247,6 +249,26 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	{
 		_ = signal;
 		RaiseAllStateProperties();
+	}
+
+	internal Action<Exception> OnSubscriptionError(string context)
+	{
+		return ex => ExceptionReporter.ReportAndLog(MessagePanel, _logger, context, ex);
+	}
+
+	// A throw inside a subscription's onNext body is NOT routed to onError: Rx disposes the
+	// subscription and rethrows up the pipeline (fatal for a dispatcher-scheduled tick). Wrapping
+	// the body here contains it on the same report + log path as a source-observable error.
+	internal void Guarded(string context, Action body)
+	{
+		try
+		{
+			body();
+		}
+		catch (Exception ex)
+		{
+			ExceptionReporter.ReportAndLog(MessagePanel, _logger, context, ex);
+		}
 	}
 
 	private void RaiseAllStateProperties()

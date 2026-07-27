@@ -140,7 +140,8 @@ public sealed class UIFixture : IAsyncLifetime
 	}
 
 	public MainWindowViewModel CreateMainWindowViewModel(
-		Func<GridStyleEditorViewModel>? styleEditorFactory = null)
+		Func<GridStyleEditorViewModel>? styleEditorFactory = null,
+		ILogger<MainWindowViewModel>? logger = null)
 	{
 		var grid = CreateActiveSurface();
 
@@ -153,9 +154,13 @@ public sealed class UIFixture : IAsyncLifetime
 			grid,
 			clipboardSerializer,
 			importedRecipeValidator,
-			MessagePanel);
+			MessagePanel,
+			NullLogger<ClipboardViewModel>.Instance);
 
-		var recipeFile = new RecipeFileViewModel(Coordinator, MessagePanel);
+		var recipeFile = new RecipeFileViewModel(
+			Coordinator,
+			MessagePanel,
+			NullLogger<RecipeFileViewModel>.Instance);
 
 		var plcMonitor = new PlcMonitorViewModel(
 			Coordinator,
@@ -166,7 +171,8 @@ public sealed class UIFixture : IAsyncLifetime
 			() => new GridStyleEditorViewModel(
 				new GridStyleEditorFacade(),
 				@"C:\does-not-exist",
-				AppConfiguration.GridStyle));
+				AppConfiguration.GridStyle,
+				NullLogger<GridStyleEditorViewModel>.Instance));
 
 		return new MainWindowViewModel(
 			Coordinator,
@@ -177,7 +183,7 @@ public sealed class UIFixture : IAsyncLifetime
 			MessagePanel,
 			plcMonitor,
 			gridStyleEditorViewModelFactory,
-			NullLogger<MainWindowViewModel>.Instance);
+			logger ?? NullLogger<MainWindowViewModel>.Instance);
 	}
 
 	public void SetSyncEnabled(bool isSyncEnabled)

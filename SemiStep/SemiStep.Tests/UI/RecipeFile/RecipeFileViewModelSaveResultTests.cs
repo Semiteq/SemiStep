@@ -5,6 +5,8 @@ using Avalonia.Threading;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
@@ -28,7 +30,10 @@ public sealed class RecipeFileViewModelSaveResultTests : IAsyncLifetime
 	public async ValueTask InitializeAsync()
 	{
 		await _fixture.InitializeAsync();
-		_recipeFile = new RecipeFileViewModel(_fixture.Coordinator, _fixture.MessagePanel);
+		_recipeFile = new RecipeFileViewModel(
+			_fixture.Coordinator,
+			_fixture.MessagePanel,
+			NullLogger<RecipeFileViewModel>.Instance);
 	}
 
 	public async ValueTask DisposeAsync()
@@ -166,7 +171,7 @@ public sealed class RecipeFileViewModelSaveResultTests : IAsyncLifetime
 		var saveAs = async () => await _recipeFile.SaveAsRecipeCommand.Execute();
 
 		await saveAs.Should().ThrowAsync<InvalidOperationException>();
-		// The ThrownExceptions report is posted to the dispatcher via ObserveOn.
+		// The report reaches the panel via MessagePanel's own UI-thread marshalling; drain any queued work.
 		Dispatcher.UIThread.RunJobs();
 		var errorEntry = _fixture.MessagePanel.Entries
 			.Should().ContainSingle(e => e.Severity == MessageSeverity.Error).Subject;

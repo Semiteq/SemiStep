@@ -5,6 +5,8 @@ using Avalonia.Threading;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SemiStep.Core.Configuration;
 
 using SemiStep.Tests.Config.Helpers;
@@ -115,7 +117,11 @@ public sealed class GridStyleEditorWindowOwnerRoutingTests : IAsyncLifetime
 		using var tempDir = CopyShippedConfig("MBE");
 		var facade = new GridStyleEditorFacade();
 		var loaded = (await facade.Load(tempDir.Path)).Value;
-		var viewModel = new GridStyleEditorViewModel(facade, tempDir.Path, loaded);
+		var viewModel = new GridStyleEditorViewModel(
+			facade,
+			tempDir.Path,
+			loaded,
+			NullLogger<GridStyleEditorViewModel>.Instance);
 
 		var editor = new GridStyleEditorWindow { ViewModel = viewModel };
 		// Modal show establishes the Owner relationship and fires the WhenActivated glue that

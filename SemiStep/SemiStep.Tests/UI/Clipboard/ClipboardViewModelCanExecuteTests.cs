@@ -4,6 +4,8 @@ using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
@@ -39,7 +41,8 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 			_surface,
 			clipboardSerializer,
 			importedRecipeValidator,
-			_fixture.MessagePanel);
+			_fixture.MessagePanel,
+			NullLogger<ClipboardViewModel>.Instance);
 	}
 
 	public async ValueTask DisposeAsync()
@@ -113,7 +116,8 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 			_surface,
 			new ClipboardSerializer(_fixture.RecipeMetadataRegistry),
 			new ImportedRecipeValidator(_fixture.RecipeMetadataRegistry),
-			_fixture.MessagePanel);
+			_fixture.MessagePanel,
+			NullLogger<ClipboardViewModel>.Instance);
 
 		((ICommand)clipboard.CutStepCommand).CanExecute(null).Should().BeTrue();
 	}

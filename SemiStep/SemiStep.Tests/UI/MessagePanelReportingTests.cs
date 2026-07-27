@@ -7,6 +7,8 @@ using Avalonia.Threading;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using ReactiveUI;
 
 using SemiStep.Core.Recipes.Clipboard;
@@ -47,7 +49,10 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 	[AvaloniaFact]
 	public async Task RecipeFile_Save_ReportsSuccess()
 	{
-		var recipeFile = new RecipeFileViewModel(_fixture.Coordinator, _fixture.MessagePanel);
+		var recipeFile = new RecipeFileViewModel(
+			_fixture.Coordinator,
+			_fixture.MessagePanel,
+			NullLogger<RecipeFileViewModel>.Instance);
 		var filePath = Path.Combine(Path.GetTempPath(), $"semistep-save-{Guid.NewGuid():N}.csv");
 		recipeFile.SaveFileInteraction.RegisterHandler(context => context.SetOutput(filePath));
 
@@ -69,7 +74,10 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 	[AvaloniaFact]
 	public async Task RecipeFile_Load_ReportsSuccess()
 	{
-		var recipeFile = new RecipeFileViewModel(_fixture.Coordinator, _fixture.MessagePanel);
+		var recipeFile = new RecipeFileViewModel(
+			_fixture.Coordinator,
+			_fixture.MessagePanel,
+			NullLogger<RecipeFileViewModel>.Instance);
 		var filePath = Path.Combine(Path.GetTempPath(), $"semistep-load-{Guid.NewGuid():N}.csv");
 		recipeFile.SaveFileInteraction.RegisterHandler(context => context.SetOutput(filePath));
 		recipeFile.OpenFileInteraction.RegisterHandler(context => context.SetOutput(filePath));
@@ -94,7 +102,10 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 	[AvaloniaFact]
 	public async Task RecipeFile_LoadMissingFile_ReportsError()
 	{
-		var recipeFile = new RecipeFileViewModel(_fixture.Coordinator, _fixture.MessagePanel);
+		var recipeFile = new RecipeFileViewModel(
+			_fixture.Coordinator,
+			_fixture.MessagePanel,
+			NullLogger<RecipeFileViewModel>.Instance);
 		var missingPath = Path.Combine(Path.GetTempPath(), $"semistep-missing-{Guid.NewGuid():N}.csv");
 		recipeFile.OpenFileInteraction.RegisterHandler(context => context.SetOutput(missingPath));
 
@@ -149,7 +160,8 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 			_surface,
 			clipboardSerializer,
 			importedRecipeValidator,
-			_fixture.MessagePanel);
+			_fixture.MessagePanel,
+			NullLogger<ClipboardViewModel>.Instance);
 
 		var window = new Window();
 		window.Show();
@@ -187,7 +199,8 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 			_surface,
 			clipboardSerializer,
 			importedRecipeValidator,
-			_fixture.MessagePanel);
+			_fixture.MessagePanel,
+			NullLogger<ClipboardViewModel>.Instance);
 
 		var window = new Window();
 		window.Show();

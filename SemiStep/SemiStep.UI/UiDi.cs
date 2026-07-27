@@ -23,7 +23,7 @@ public static class UiDi
 	public static IServiceCollection AddUi(this IServiceCollection services)
 	{
 		services.AddSingleton(sp => sp.GetRequiredService<AppConfiguration>().GridStyle);
-		services.AddSingleton<GridStyleEditorFacade>();
+		services.AddSingleton<IGridStyleEditorFacade, GridStyleEditorFacade>();
 		services.AddSingleton<IScheduler>(_ => RxSchedulers.MainThreadScheduler);
 		services.AddSingleton<MessagePanelViewModel>();
 		services.AddSingleton<RecipeCoordinator>();

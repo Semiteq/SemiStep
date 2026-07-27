@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml;
 using Microsoft.Extensions.DependencyInjection;
 
 using ReactiveUI.Avalonia;
+using ReactiveUI.Builder;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
@@ -64,13 +65,13 @@ public class App : Application
 		base.OnFrameworkInitializationCompleted();
 	}
 
-	private static AppBuilder BuildAvaloniaApp()
+	private static AppBuilder BuildAvaloniaApp(Action<IReactiveUIBuilder>? configureReactiveUi = null)
 	{
 		return AppBuilder.Configure<App>()
 			.UseWin32()
 			.UseSkia()
 			.UseHarfBuzz()
-			.UseReactiveUI(_ => { })
+			.UseReactiveUI(configureReactiveUi ?? (_ => { }))
 			.LogToSerilog();
 	}
 
@@ -78,7 +79,10 @@ public class App : Application
 	{
 		ArgumentNullException.ThrowIfNull(serviceProvider);
 		EnsureSingleStart();
-		BuildAvaloniaApp()
+		// Install the backstop inside the UseReactiveUI build callback: WithExceptionHandler is captured
+		// once at build time, which runs before InitializeServices builds the first ReactiveCommand, so
+		// the recoverable handler is in place before any command can throw.
+		BuildAvaloniaApp(builder => GlobalExceptionBackstop.Install(builder, serviceProvider))
 			.AfterSetup(_ =>
 				// Initialize after setup: UseReactiveUI() has registered AvaloniaScheduler as
 				// MainThreadScheduler by now, so ReactiveCommand singletons capture it at construction.

@@ -71,3 +71,40 @@ seam stays concrete (matches `ResultReportingExtensions`).
 Modal dialogs are the exception: `GridStyleEditorViewModel.SaveCommand` surfaces its fault on the
 editor's own `ErrorMessage` property (and logs), not the shared panel, because a modal owns its error
 surface while it is open.
+
+## Global backstop (last-resort ring)
+
+The per-command pipe above catches faults on a *subscribed* `ThrownExceptions`. What escapes every
+inner ring reaches `GlobalExceptionBackstop` (`SemiStep.UI/Logging/`), installed once at startup. It
+wires three handlers, each for a different escape route:
+
+- **Recoverable UI faults** — set through ReactiveUI's `IReactiveUIBuilder.WithExceptionHandler(...)`
+  (namespace `ReactiveUI.Builder`). Fires when a `ReactiveCommand` faults and nothing else observed
+  it. Logs the exception at `Error` and reports a generic message
+  (`"An unexpected error occurred; see the log for details."`) to the panel; in a DEBUG build it then
+  calls `Debugger.Break()`. The app stays alive. This is the pipeline's default observer for
+  `ThrownExceptions`, so it is the safety net beneath every command that forgot to subscribe.
+- **`TaskScheduler.UnobservedTaskException`** — a fire-and-forget task fault that no one awaited. Logs
+  at `Error` and calls `SetObserved()` so the runtime does not escalate. Log-only, no panel report.
+- **`AppDomain.CurrentDomain.UnhandledException`** — a throw on a background thread with no handler.
+  Logs at `Critical` (MEL `Critical` maps to Serilog `Fatal`) and runs `Log.CloseAndFlushAsync()` so
+  the stack reaches the log file before the process dies. It does not stop the death; it guarantees a
+  flushed stack, which is the whole point for background-thread throws that `Program.cs` never sees.
+
+**Ordering.** `Install(IReactiveUIBuilder, IServiceProvider)` runs inside the `UseReactiveUI` build
+callback in `App.Run`. `WithExceptionHandler` captures the handler once at build time, which happens
+before the `InitializeServices` `AfterSetup` builds the first `ReactiveCommand`. The recoverable
+handler is therefore in place before any command can throw. (ReactiveUI 23 dropped the settable
+`RxApp.DefaultExceptionHandler`; the handler is configured only through the builder, so this is the
+one wiring point that satisfies the "set before command construction" constraint.)
+
+**Lazy panel resolve.** Each handler closure resolves `MessagePanelViewModel` from the provider at
+fire time, never inside `Install`. Resolving it eagerly would construct the panel and its
+`ToggleCommand` before the backstop is in place, defeating the purpose. The logger is resolved once
+up front (logger construction has no side effects).
+
+**Deliberate dev trade.** For an unsubscribed `ThrownExceptions`, the old behaviour was a loud crash
+in dev. The backstop converts that into report-loudly plus `Debugger.Break` (DEBUG). An operator-facing
+PLC tool is better served by a generic panel message in production than by a crash, and the dev signal
+survives through the debugger break. `Install` is idempotent (a static `_installed` guard) so a second
+call does not double-subscribe the OS events.

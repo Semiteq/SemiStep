@@ -1,6 +1,5 @@
 ﻿using System.Reactive.Linq;
 
-using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 
@@ -53,8 +52,6 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 
 		try
 		{
-			viewModel.MainWindow = new Window();
-
 			try
 			{
 				await viewModel.OpenStyleEditorCommand.Execute();

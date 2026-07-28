@@ -9,8 +9,10 @@ using Avalonia.Platform.Storage;
 using ReactiveUI;
 using ReactiveUI.Avalonia;
 
+using SemiStep.UI.Plc;
 using SemiStep.UI.Reactive;
 using SemiStep.UI.ShutdownService;
+using SemiStep.UI.StyleEditor;
 
 namespace SemiStep.UI.MainWindow;
 
@@ -32,7 +34,6 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 				return;
 			}
 
-			ViewModel.MainWindow = this;
 			ViewModel.Clipboard.SetClipboard(Clipboard);
 
 			ViewModel.RecipeFile.OpenFileInteraction
@@ -41,6 +42,18 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 
 			ViewModel.RecipeFile.SaveFileInteraction
 				.RegisterHandler(HandleSaveFileDialogAsync)
+				.DisposeWith(disposables);
+
+			ViewModel.ShowStyleEditorInteraction
+				.RegisterHandler(HandleStyleEditorDialogAsync)
+				.DisposeWith(disposables);
+
+			ViewModel.ResolveConflictInteraction
+				.RegisterHandler(HandleResolveConflictDialogAsync)
+				.DisposeWith(disposables);
+
+			ViewModel.RequestCloseInteraction
+				.RegisterHandler(HandleRequestCloseAsync)
 				.DisposeWith(disposables);
 		});
 	}
@@ -247,5 +260,27 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 
 		var selectedPath = file?.Path.LocalPath;
 		context.SetOutput(selectedPath);
+	}
+
+	private async Task HandleStyleEditorDialogAsync(IInteractionContext<GridStyleEditorViewModel, Unit> context)
+	{
+		var window = new GridStyleEditorWindow { DataContext = context.Input };
+		await window.ShowDialog(this);
+		context.SetOutput(Unit.Default);
+	}
+
+	private async Task HandleResolveConflictDialogAsync(IInteractionContext<PlcConflictDialogViewModel, bool?> context)
+	{
+		var dialog = new PlcConflictDialog(context.Input);
+		await dialog.ShowDialog(this);
+		context.SetOutput(dialog.Confirmed ? dialog.KeepLocal : null);
+	}
+
+	private Task HandleRequestCloseAsync(IInteractionContext<Unit, Unit> context)
+	{
+		Close();
+		context.SetOutput(Unit.Default);
+
+		return Task.CompletedTask;
 	}
 }

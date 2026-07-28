@@ -1,4 +1,5 @@
-﻿using System.Reactive.Linq;
+﻿using System.Reactive;
+using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 
 using Avalonia.Headless.XUnit;
@@ -291,5 +292,22 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		await _viewModel.ExitCommand.Execute();
 
 		_window.IsVisible.Should().BeFalse("File > Exit on a clean session must close the window");
+	}
+
+	[AvaloniaFact]
+	public async Task ExitCommand_InvokesRequestCloseInteraction()
+	{
+		// Registered after Show(): interaction handlers are invoked LIFO, so this handler
+		// wins over the window's own close handler and keeps the window open for the assertion.
+		var invoked = false;
+		_viewModel.RequestCloseInteraction.RegisterHandler(context =>
+		{
+			invoked = true;
+			context.SetOutput(Unit.Default);
+		});
+
+		await _viewModel.ExitCommand.Execute();
+
+		invoked.Should().BeTrue("File > Exit must route through the close interaction");
 	}
 }

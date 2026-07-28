@@ -4,8 +4,6 @@ using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 
-using Avalonia.Controls;
-
 using Microsoft.Extensions.Logging;
 
 using ReactiveUI;
@@ -56,7 +54,11 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		MessagePanel = messagePanel;
 		PlcMonitor = plcMonitor;
 
-		ExitCommand = ReactiveCommand.Create(ExecuteExit);
+		ShowStyleEditorInteraction = new Interaction<GridStyleEditorViewModel, Unit>();
+		ResolveConflictInteraction = new Interaction<PlcConflictDialogViewModel, bool?>();
+		RequestCloseInteraction = new Interaction<Unit, Unit>();
+
+		ExitCommand = ReactiveCommand.CreateFromTask(RequestCloseAsync);
 		ToggleSyncCommand = ReactiveCommand.CreateFromTask(ExecuteToggleSyncAsync);
 		OpenStyleEditorCommand = ReactiveCommand.CreateFromTask(ExecuteOpenStyleEditorAsync);
 		ToggleToolBarCommand = ReactiveCommand.Create(ExecuteToggleToolBar);
@@ -72,6 +74,9 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			.DisposeWith(_disposables);
 
 		OpenStyleEditorCommand.ReportThrownExceptions(MessagePanel, _logger, "Style editor failed")
+			.DisposeWith(_disposables);
+
+		ExitCommand.ReportThrownExceptions(MessagePanel, _logger, "Exit failed")
 			.DisposeWith(_disposables);
 
 		ToggleOrientationCommand.ReportThrownExceptions(MessagePanel, _logger, "Orientation toggle failed")
@@ -100,7 +105,12 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			.DisposeWith(_disposables);
 	}
 
-	public Window? MainWindow { get; set; }
+	public Interaction<GridStyleEditorViewModel, Unit> ShowStyleEditorInteraction { get; }
+
+	// Result: null = cancel, true = keep local, false = load from PLC.
+	internal Interaction<PlcConflictDialogViewModel, bool?> ResolveConflictInteraction { get; }
+
+	public Interaction<Unit, Unit> RequestCloseInteraction { get; }
 
 	public IRecipeGridSurface RecipeGrid { get; }
 
@@ -169,29 +179,23 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		RaiseAllStateProperties();
 	}
 
-	private void ExecuteExit()
-	{
-		// Route through the window so MainWindow.OnWindowClosing runs its dirty-close guard.
-		MainWindow?.Close();
-	}
-
 	private void ExecuteToggleToolBar()
 	{
 		IsToolBarVisible = !IsToolBarVisible;
 	}
 
+	// Closing routes through the window handler so MainWindow.OnWindowClosing runs its dirty-close guard.
+	private async Task RequestCloseAsync()
+	{
+		await RequestCloseInteraction.Handle(Unit.Default);
+	}
+
 	private async Task ExecuteOpenStyleEditorAsync()
 	{
-		if (MainWindow is null)
-		{
-			return;
-		}
-
 		var viewModel = _gridStyleEditorViewModelFactory();
 		await viewModel.LoadAsync();
 
-		var window = new GridStyleEditorWindow { DataContext = viewModel };
-		await window.ShowDialog(MainWindow);
+		await ShowStyleEditorInteraction.Handle(viewModel);
 	}
 
 	private async Task ExecuteToggleSyncAsync()
@@ -213,19 +217,13 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		RaiseConnectionStateProperties();
 	}
 
-	private async Task HandleConflictAsync(Recipe local, Recipe plc)
+	internal async Task HandleConflictAsync(Recipe local, Recipe plc)
 	{
-		if (MainWindow is null)
-		{
-			return;
-		}
-
-		var viewModel = new PlcConflictDialogViewModel(local.StepCount, plc.StepCount);
-		var dialog = new PlcConflictDialog(viewModel);
-
+		bool? keepLocal;
 		try
 		{
-			await dialog.ShowDialog(MainWindow);
+			keepLocal = await ResolveConflictInteraction.Handle(
+				new PlcConflictDialogViewModel(local.StepCount, plc.StepCount));
 		}
 		catch (Exception ex)
 		{
@@ -235,7 +233,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
-		if (!dialog.Confirmed)
+		if (keepLocal is null)
 		{
 			return;
 		}
@@ -244,7 +242,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		// fault the discarded task and surface only through the nondeterministic TaskScheduler hook.
 		Guarded("PLC conflict resolution failed", () =>
 		{
-			var result = _coordinator.ResolveConflict(dialog.KeepLocal);
+			var result = _coordinator.ResolveConflict(keepLocal.Value);
 
 			if (result.IsFailed)
 			{

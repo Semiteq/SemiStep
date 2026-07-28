@@ -84,7 +84,8 @@ tags instead of throwing).
 and Serilog timestamps key off `CurrentCulture` and stay invariant/English. So `{elapsed:0.0}`, step
 counts, and log timestamps stay invariant regardless of UI language — the surrounding words localize,
 the numbers do not. Log message templates and notification-panel diagnostic strings (which carry
-exception text) stay hardcoded English by design.
+exception text) stay hardcoded English by design. Typed Core failures, by contrast, localize on type at
+the panel seams through `ReasonLocalizer` — see `error-reporting.md` ("Localizing failures on type").
 
 ## `ErrorWindow` is deliberately hardcoded English
 

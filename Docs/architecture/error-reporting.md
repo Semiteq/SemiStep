@@ -28,13 +28,61 @@ How a failed operation reaches the user. Read this before adding a new error-sur
 `Result`-to-panel routing goes through `ResultReportingExtensions`
 (`SemiStep.UI/MessageService/`):
 
-- `string FormatErrors(this IResultBase)` — joins every error message with `"; "`. The default idiom
-  for rendering a failed result, used by both panel sites and log statements.
-- `void ReportFailure(this MessagePanelViewModel, IResultBase, string? context = null)` — surfaces
-  `FormatErrors()` on the transient operation channel, optionally prefixed with `"{context}: "`.
+- `string FormatErrors(this IResultBase)` — joins every raw English `.Message` with `"; "`. It is the
+  log joiner (feeds Serilog directly) plus the not-yet-routed panel sites; the primary panel path no
+  longer uses it (see below).
+- `void ReportFailure(this MessagePanelViewModel, IResultBase, string? context = null)` — surfaces the
+  **localized** join of the result's errors (`ReasonLocalizer.Localize` over `result.Errors`) on the
+  transient operation channel, optionally prefixed with `"{context}: "`. It no longer delegates to
+  `FormatErrors`.
 
-A failed operation surfaces **all** of its error messages, matching what the log records. Do not
-read `Errors[0]` directly.
+A failed operation surfaces **all** of its error messages, not just `Errors[0]`. The message *set* is
+the same one the log records; under `Resources.Culture = ru` the panel text is localized while the log
+stays English (see "The log path is unchanged").
+
+## Localizing failures on type
+
+Operator-facing Core failures are modelled as **typed `FluentResults.Error` subclasses**, not free-text
+`Result.Fail("...")`. Each subclass owns its English message string in Core (aligned with the English
+log), and carries its data as structured properties (e.g. `OwnedByAnotherInstanceError.Holder`,
+`FormulaComputationFailedError.Target`/`.Reason`) rather than baking them into the string.
+
+The UI localizes these **on type**, not by parsing text or by error codes. `ReasonLocalizer`
+(`SemiStep.UI/Localization/`) takes any `IReason` and switches on its concrete type to select a resx
+template, formatting the structured data into it. An unmapped type falls through to the raw English
+`.Message`, so a failure never renders blank and English is always the floor. `ReasonLocalizer` also
+recurses over `CausedBy` (`IError.Reasons`), so a typed cause nested inside an untyped wrapper still
+localizes.
+
+Localization is applied at exactly **two panel seams**, both of which route their reasons through
+`ReasonLocalizer.Localize`:
+
+- `ResultReportingExtensions.ReportFailure` — the transient operation channel.
+- `MessagePanelViewModel.RefreshReasons` — the persistent validation channel (both the error and the
+  warning branch).
+
+Every other surface that reads `.Message`/`FormatErrors` directly stays English until its own wave
+routes it. This uses the same resx pipeline as the rest of the UI chrome — see `ui-localization.md`.
+
+### The published rule (public error surface)
+
+> A public `Error` type exists **iff** a distinct localized operator sentence exists. Everything else
+> is internal and crosses the UI boundary only wrapped in an envelope type carrying an English `Detail`.
+
+This bounds the localizable public surface to the operator sentences, regardless of how many internal
+failure modes Core grows. A build-time reflection test
+(`SemiStep.Tests/UI/Localization/CoreErrorLocalizationCoverageTests`) enforces it: every public,
+non-abstract `Error` subclass in `SemiStep.Core` must have a registered sample and must localize to a
+non-empty string that differs from its English `.Message` under `Resources.Culture = ru`. A new public
+error type without a switch case and resx pair fails the build instead of leaking English silently.
+
+### The log path is unchanged (always English)
+
+`FormatErrors` stays the **raw English** joiner (`string.Join("; ", result.Errors.Select(e => e.Message))`).
+It is dual-use — it feeds both the panel and Serilog directly at several sites — so localizing it would
+localize the log, which must stay English. `ReportFailure` therefore localizes its reasons itself
+(`result.Errors.Select(ReasonLocalizer.Localize)`) rather than delegating to `FormatErrors`. Logs are
+always English; only the panel seams localize.
 
 ## Routing rules
 

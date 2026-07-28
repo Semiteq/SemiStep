@@ -145,6 +145,31 @@ public sealed class GridStyleEditorWindowOwnerRoutingTests : IAsyncLifetime
 		_mainWindow.IsVisible.Should().BeFalse("Exit Now on a clean owner cascades to close through the guard");
 	}
 
+	[AvaloniaFact]
+	public async Task OnSaveCompleted_RestartPromptThrows_ContainsFaultAndReports()
+	{
+		using var tempDir = CopyShippedConfig("MBE");
+		var facade = new GridStyleEditorFacade();
+		var loaded = (await facade.Load(tempDir.Path)).Value;
+		var viewModel = new GridStyleEditorViewModel(
+			facade,
+			tempDir.Path,
+			loaded,
+			NullLogger<GridStyleEditorViewModel>.Instance);
+
+		// The editor is never shown, so RestartPromptDialog.ShowDialog(owner) throws on an
+		// invisible owner. That stands in for any fault in the async-void restart-prompt path:
+		// without the guard the throw would escape the async void and crash the process.
+		var editor = new GridStyleEditorWindow { ViewModel = viewModel };
+
+		editor.OnSaveCompleted(true);
+		Dispatcher.UIThread.RunJobs();
+
+		viewModel.ErrorMessage.Should().StartWith(
+			"Save failed:",
+			"the fault must surface on the editor's own error surface instead of crashing the app");
+	}
+
 	private GridStyleEditorWindow ShowEditorOwnedByMainWindow()
 	{
 		var editor = new GridStyleEditorWindow();

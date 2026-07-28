@@ -28,16 +28,28 @@ internal partial class GridStyleEditorWindow : ReactiveWindow<GridStyleEditorVie
 		});
 	}
 
-	private async void OnSaveCompleted(bool saved)
+	internal async void OnSaveCompleted(bool saved)
 	{
 		if (!saved)
 		{
 			return;
 		}
 
-		var dialog = new RestartPromptDialog();
-		var exitRequested = await dialog.ShowDialog<bool>(this);
-		CompleteEditorClose(exitRequested);
+		try
+		{
+			var dialog = new RestartPromptDialog();
+			var exitRequested = await dialog.ShowDialog<bool>(this);
+			CompleteEditorClose(exitRequested);
+		}
+		catch (Exception ex)
+		{
+			// This is an async void subscription callback: an unhandled throw here unwinds the
+			// dispatcher loop into Program.Main and kills the process. Surface on the editor's own
+			// error surface (a modal's fault must not land behind the modal) and still close the
+			// editor rather than leaving it hanging.
+			ViewModel?.ReportSaveException(ex);
+			CompleteEditorClose(false);
+		}
 	}
 
 	// Captures the owner before Close(): Avalonia detaches the owned-window link during the close

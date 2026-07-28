@@ -89,6 +89,9 @@ The two async-void dialog paths (`OnWindowClosing`, `OnSaveCompleted`) carry the
 Those are the current cover for dialog faults the global backstop cannot catch: it installs no Avalonia
 dispatcher hook, so an async-void throw would otherwise unwind the dispatcher into `Program.Main`.
 
+For the VM-driven dialogs that route through `Interaction`s registered in `WhenActivated` (rather than
+view code-behind), see `dialogs-and-interactions.md` for the convention.
+
 ## Global backstop (last-resort ring)
 
 The per-command pipe above catches faults on a *subscribed* `ThrownExceptions`. What escapes every

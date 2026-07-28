@@ -16,8 +16,10 @@ runs the guard and terminates the app. The process-exit cascade itself is not ob
 headless test harness (it installs no classic-desktop lifetime); it is covered by manual
 verification. The routing up to `MainWindow.Close()` is what the automated tests assert.
 
-- `File > Exit` (`MainWindowViewModel.ExecuteExit`) calls `MainWindow?.Close()` — same guard as the
-  window's close button. Covered by `MainWindowExitFlowTests`.
+- `File > Exit` (`MainWindowViewModel.ExitCommand`) fires `RequestCloseInteraction`, whose handler in
+  `MainWindow.WhenActivated` calls `Close()` — same guard as the window's close button. The view model
+  no longer holds a `Window` reference (see `dialogs-and-interactions.md`). Covered by
+  `MainWindowExitFlowTests`.
 
 ## No forced-shutdown path remains
 

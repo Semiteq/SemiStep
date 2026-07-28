@@ -145,7 +145,11 @@ public sealed class UIFixture : IAsyncLifetime
 	{
 		var grid = CreateActiveSurface();
 
-		var commands = new RecipeCommandsViewModel(Coordinator, grid);
+		var commands = new RecipeCommandsViewModel(
+			Coordinator,
+			grid,
+			MessagePanel,
+			NullLogger<RecipeCommandsViewModel>.Instance);
 
 		var clipboardSerializer = new ClipboardSerializer(RecipeMetadataRegistry);
 		var importedRecipeValidator = new ImportedRecipeValidator(RecipeMetadataRegistry);

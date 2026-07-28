@@ -110,6 +110,29 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	public async Task ShowExitChoice_DialogShowThrows_ContainsFaultAndReports()
+	{
+		// An unshown owner makes ExitConfirmationDialog.ShowDialog(this) throw, standing in for any
+		// fault in the async-void closing path. Without the guard the throw escapes the async void
+		// event handler and crashes the process.
+		var viewModel = _fixture.CreateMainWindowViewModel();
+		try
+		{
+			var window = new MainWindowView { ViewModel = viewModel };
+
+			await window.ShowExitChoiceAsync();
+
+			var errorEntry = viewModel.MessagePanel.Entries
+				.Should().ContainSingle(e => e.Severity == MessageSeverity.Error).Subject;
+			errorEntry.Message.Should().StartWith("Exit failed:");
+		}
+		finally
+		{
+			viewModel.Dispose();
+		}
+	}
+
+	[AvaloniaFact]
 	public async Task HandleExitChoice_DontSave_ClosesWindow()
 	{
 		await _window.HandleExitChoiceAsync(ExitConfirmationResult.DontSave);

@@ -4,9 +4,12 @@ using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
+using Microsoft.Extensions.Logging;
+
 using ReactiveUI;
 
 using SemiStep.UI.Coordinator;
+using SemiStep.UI.MessageService;
 
 namespace SemiStep.UI.RecipeGrid;
 
@@ -17,13 +20,19 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 	private readonly BehaviorSubject<bool> _canUndo = new(false);
 	private readonly BehaviorSubject<bool> _canRedo = new(false);
 	private readonly IRecipeGridSurface _recipeGrid;
+	private readonly MessagePanelViewModel _messagePanel;
+	private readonly ILogger<RecipeCommandsViewModel> _logger;
 
 	public RecipeCommandsViewModel(
 		RecipeCoordinator coordinator,
-		IRecipeGridSurface recipeGrid)
+		IRecipeGridSurface recipeGrid,
+		MessagePanelViewModel messagePanel,
+		ILogger<RecipeCommandsViewModel> logger)
 	{
 		_coordinator = coordinator;
 		_recipeGrid = recipeGrid;
+		_messagePanel = messagePanel;
+		_logger = logger;
 
 		_coordinator.Mutated += OnCoordinatorMutated;
 		_disposables.Add(Disposable.Create(() => _coordinator.Mutated -= OnCoordinatorMutated));
@@ -43,6 +52,18 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 		DeleteStepCommand.DisposeWith(_disposables);
 		UndoCommand.DisposeWith(_disposables);
 		RedoCommand.DisposeWith(_disposables);
+
+		AddStepCommand.ReportThrownExceptions(_messagePanel, _logger, "Add step failed")
+			.DisposeWith(_disposables);
+
+		DeleteStepCommand.ReportThrownExceptions(_messagePanel, _logger, "Delete step failed")
+			.DisposeWith(_disposables);
+
+		UndoCommand.ReportThrownExceptions(_messagePanel, _logger, "Undo failed")
+			.DisposeWith(_disposables);
+
+		RedoCommand.ReportThrownExceptions(_messagePanel, _logger, "Redo failed")
+			.DisposeWith(_disposables);
 	}
 
 	private void OnCoordinatorMutated(MutationSignal signal)
@@ -74,10 +95,13 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 			? _coordinator.InsertStep(_recipeGrid.SelectedStepIndex + 1, firstActionId)
 			: _coordinator.AppendStep(firstActionId);
 
-		if (result.IsSuccess)
+		if (result.IsFailed)
 		{
-			_recipeGrid.RequestSelection(result.Value);
+			_messagePanel.ReportFailure(result);
+			return;
 		}
+
+		_recipeGrid.RequestSelection(result.Value);
 	}
 
 	private void DeleteStep()
@@ -92,10 +116,13 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 			? _coordinator.RemoveStep(indices[0])
 			: _coordinator.RemoveSteps(indices);
 
-		if (result.IsSuccess)
+		if (result.IsFailed)
 		{
-			_recipeGrid.RequestSelection(result.Value);
+			_messagePanel.ReportFailure(result);
+			return;
 		}
+
+		_recipeGrid.RequestSelection(result.Value);
 	}
 
 	private void Undo()

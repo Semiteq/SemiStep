@@ -72,6 +72,23 @@ Modal dialogs are the exception: `GridStyleEditorViewModel.SaveCommand` surfaces
 editor's own `ErrorMessage` property (and logs), not the shared panel, because a modal owns its error
 surface while it is open.
 
+## Invoking a command imperatively
+
+When code fires a command directly rather than through a bound control (a hotkey handler, for example),
+invoke it through `ExecuteIfPossible` (`SemiStep.UI/Reactive/CommandInvocationExtensions.cs`), never
+through `ReactiveCommand.Execute()`. `ExecuteIfPossible` routes through `ICommand.Execute`, which keeps
+the command inside the reporting boundary: a fault still reaches `ThrownExceptions`, so the report+log
+ring above (or the global backstop below) handles it, and nothing rethrows on the caller thread. It also
+honors `canExecute` — `ReactiveCommand.Execute()` ignores the guard and runs anyway — and, because
+`ICommand.CanExecute` is false while a command is executing, it suppresses re-entrant invocation during
+an in-flight command. A raw `.Execute().Subscribe()` with no `onError` bypasses all three: the second
+delivery channel (the `Execute()` observable's `OnError`) rethrows inside the dispatcher and unwinds to
+`Program.Main`, killing the process.
+
+The two async-void dialog paths (`OnWindowClosing`, `OnSaveCompleted`) carry their own try/catch guards.
+Those are the current cover for dialog faults the global backstop cannot catch: it installs no Avalonia
+dispatcher hook, so an async-void throw would otherwise unwind the dispatcher into `Program.Main`.
+
 ## Global backstop (last-resort ring)
 
 The per-command pipe above catches faults on a *subscribed* `ThrownExceptions`. What escapes every

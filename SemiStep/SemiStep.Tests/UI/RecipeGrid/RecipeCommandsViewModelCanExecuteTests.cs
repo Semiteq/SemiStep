@@ -4,6 +4,8 @@ using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Logging.Abstractions;
+
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
@@ -27,7 +29,11 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		await _fixture.InitializeAsync();
 		_surface = _fixture.CreateCanonicalSurface();
 		_surface.Initialize();
-		_commands = new RecipeCommandsViewModel(_fixture.Coordinator, _surface);
+		_commands = new RecipeCommandsViewModel(
+			_fixture.Coordinator,
+			_surface,
+			_fixture.MessagePanel,
+			NullLogger<RecipeCommandsViewModel>.Instance);
 	}
 
 	public async ValueTask DisposeAsync()
@@ -106,7 +112,11 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_surface.UpdateSelection(new[] { 0 });
 
-		using var commands = new RecipeCommandsViewModel(_fixture.Coordinator, _surface);
+		using var commands = new RecipeCommandsViewModel(
+			_fixture.Coordinator,
+			_surface,
+			_fixture.MessagePanel,
+			NullLogger<RecipeCommandsViewModel>.Instance);
 
 		((ICommand)commands.DeleteStepCommand).CanExecute(null).Should().BeTrue();
 	}

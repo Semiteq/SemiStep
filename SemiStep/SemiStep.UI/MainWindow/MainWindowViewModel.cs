@@ -74,6 +74,9 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		OpenStyleEditorCommand.ReportThrownExceptions(MessagePanel, _logger, "Style editor failed")
 			.DisposeWith(_disposables);
 
+		ToggleOrientationCommand.ReportThrownExceptions(MessagePanel, _logger, "Orientation toggle failed")
+			.DisposeWith(_disposables);
+
 		_coordinator.Mutated += OnCoordinatorMutated;
 		_disposables.Add(Disposable.Create(() => _coordinator.Mutated -= OnCoordinatorMutated));
 
@@ -237,12 +240,17 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			return;
 		}
 
-		var result = _coordinator.ResolveConflict(dialog.KeepLocal);
-
-		if (result.IsFailed)
+		// The conflict callback runs fire-and-forget, so a throw in the post-dialog resolution would
+		// fault the discarded task and surface only through the nondeterministic TaskScheduler hook.
+		Guarded("PLC conflict resolution failed", () =>
 		{
-			MessagePanel.ReportFailure(result);
-		}
+			var result = _coordinator.ResolveConflict(dialog.KeepLocal);
+
+			if (result.IsFailed)
+			{
+				MessagePanel.ReportFailure(result);
+			}
+		});
 	}
 
 	private void OnCoordinatorMutated(MutationSignal signal)

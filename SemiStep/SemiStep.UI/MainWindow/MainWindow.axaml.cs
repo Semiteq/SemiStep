@@ -9,6 +9,7 @@ using Avalonia.Platform.Storage;
 using ReactiveUI;
 using ReactiveUI.Avalonia;
 
+using SemiStep.UI.Reactive;
 using SemiStep.UI.ShutdownService;
 
 namespace SemiStep.UI.MainWindow;
@@ -58,7 +59,7 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 		// outside the IsEditing gate.
 		if (e.Key == Key.T && e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
 		{
-			ViewModel.ToggleOrientationCommand.Execute().Subscribe();
+			ViewModel.ToggleOrientationCommand.ExecuteIfPossible();
 			e.Handled = true;
 
 			return;
@@ -69,25 +70,25 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 			switch (e.Key)
 			{
 				case Key.Delete:
-					ViewModel.RecipeCommands.DeleteStepCommand.Execute().Subscribe();
+					ViewModel.RecipeCommands.DeleteStepCommand.ExecuteIfPossible();
 					e.Handled = true;
 
 					return;
 
 				case Key.C when e.KeyModifiers == KeyModifiers.Control:
-					ViewModel.Clipboard.CopyStepCommand.Execute().Subscribe();
+					ViewModel.Clipboard.CopyStepCommand.ExecuteIfPossible();
 					e.Handled = true;
 
 					return;
 
 				case Key.X when e.KeyModifiers == KeyModifiers.Control:
-					ViewModel.Clipboard.CutStepCommand.Execute().Subscribe();
+					ViewModel.Clipboard.CutStepCommand.ExecuteIfPossible();
 					e.Handled = true;
 
 					return;
 
 				case Key.V when e.KeyModifiers == KeyModifiers.Control:
-					ViewModel.Clipboard.PasteStepCommand.Execute().Subscribe();
+					ViewModel.Clipboard.PasteStepCommand.ExecuteIfPossible();
 					e.Handled = true;
 
 					return;
@@ -125,6 +126,11 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 
 		e.Cancel = true;
 
+		await ShowExitChoiceAsync();
+	}
+
+	internal async Task ShowExitChoiceAsync()
+	{
 		_exitChoiceInProgress = true;
 		try
 		{
@@ -132,6 +138,13 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 			var result = await dialog.ShowDialog<ExitConfirmationResult>(this);
 
 			await HandleExitChoiceAsync(result);
+		}
+		catch (Exception ex)
+		{
+			// Reached from an async void event handler: an unhandled throw here unwinds the
+			// dispatcher loop into Program.Main and kills the process. Contain it, report,
+			// and keep the window open (e.Cancel is already true at the call site).
+			ViewModel?.MessagePanel.ReportError($"Exit failed: {ex.Message}");
 		}
 		finally
 		{

@@ -448,4 +448,10 @@
   <data name="EditorDefaultFont" xml:space="preserve">
     <value>(По умолчанию)</value>
   </data>
+  <data name="ErrorOwnedByAnotherInstance" xml:space="preserve">
+    <value>Синхронизация ПЛК занята другим экземпляром (пользователь {0}, с {1:HH:mm} UTC).</value>
+  </data>
+  <data name="ErrorFormulaComputationFailed" xml:space="preserve">
+    <value>Вычисление формулы для цели «{0}» не выполнено: {1}</value>
+  </data>
 </root>

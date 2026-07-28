@@ -146,12 +146,12 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 
 			foreach (var error in reasonList.OfType<IError>())
 			{
-				_validationEntries.Add(new MessageEntry(MessageSeverity.Error, error.Message));
+				_validationEntries.Add(new MessageEntry(MessageSeverity.Error, ReasonLocalizer.Localize(error)));
 			}
 
 			foreach (var warning in reasonList.OfType<Warning>())
 			{
-				_validationEntries.Add(new MessageEntry(MessageSeverity.Warning, warning.Message));
+				_validationEntries.Add(new MessageEntry(MessageSeverity.Warning, ReasonLocalizer.Localize(warning)));
 			}
 
 			Rebuild();

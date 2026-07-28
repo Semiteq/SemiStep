@@ -293,4 +293,8 @@ public class Resources
 	public static string EditorCannotSave => ResourceManager.GetString("EditorCannotSave", resourceCulture) ?? string.Empty;
 
 	public static string EditorDefaultFont => ResourceManager.GetString("EditorDefaultFont", resourceCulture) ?? string.Empty;
+
+	public static string ErrorOwnedByAnotherInstance => ResourceManager.GetString("ErrorOwnedByAnotherInstance", resourceCulture) ?? string.Empty;
+
+	public static string ErrorFormulaComputationFailed => ResourceManager.GetString("ErrorFormulaComputationFailed", resourceCulture) ?? string.Empty;
 }

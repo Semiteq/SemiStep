@@ -448,4 +448,10 @@
   <data name="EditorDefaultFont" xml:space="preserve">
     <value>(Default)</value>
   </data>
+  <data name="ErrorOwnedByAnotherInstance" xml:space="preserve">
+    <value>PLC sync is owned by another instance (user {0}, since {1:HH:mm} UTC).</value>
+  </data>
+  <data name="ErrorFormulaComputationFailed" xml:space="preserve">
+    <value>Formula computation for target '{0}' failed: {1}</value>
+  </data>
 </root>

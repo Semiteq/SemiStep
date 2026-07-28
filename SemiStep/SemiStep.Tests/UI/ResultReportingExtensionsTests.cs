@@ -6,6 +6,10 @@ using FluentAssertions;
 
 using FluentResults;
 
+using SemiStep.Core.Recipes.Formulas.Errors;
+
+using SemiStep.Tests.UI.Localization;
+
 using SemiStep.UI.MessageService;
 
 using Xunit;
@@ -79,5 +83,30 @@ public sealed class ResultReportingExtensionsTests : IDisposable
 
 		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
 		entry.Message.Should().Be("Step 1: first; second");
+	}
+
+	[Fact]
+	public void FormatErrors_TypedError_UnderRussianCulture_StaysRawEnglish()
+	{
+		var result = Result.Fail(new FormulaComputationFailedError("temp", "min > max"));
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			result.FormatErrors().Should().Be("Formula computation for target 'temp' failed: min > max");
+		}
+	}
+
+	[AvaloniaFact]
+	public void ReportFailure_TypedError_UnderRussianCulture_LocalizesInPanel()
+	{
+		var result = Result.Fail(new FormulaComputationFailedError("temp", "min > max"));
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			_panel.ReportFailure(result);
+		}
+
+		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
+		entry.Message.Should().Be("Вычисление формулы для цели «temp» не выполнено: min > max");
 	}
 }

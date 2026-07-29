@@ -14,7 +14,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 using ReactiveUI;
 
 using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Analysis;
 using SemiStep.Core.Recipes.Clipboard;
+using SemiStep.Core.Recipes.Errors;
+using SemiStep.Core.Recipes.Formulas;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
@@ -197,7 +200,7 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void GateValidationFailure_ReportedUnderRussianCulture_ShowsRussianPositionEnglishDetail()
+	public void GateValidationFailure_ReportedUnderRussianCulture_ShowsRussianPositionAndDetail()
 	{
 		const int BoundActionId = 11;
 		const string AmountColumnKey = "amount";
@@ -241,7 +244,121 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 
 		var entry = panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
 		entry.Message.Should().Contain("Шаг").And.Contain("Столбец")
-			.And.Contain(AmountColumnKey).And.Contain("exceeds maximum");
+			.And.Contain(AmountColumnKey).And.Contain("больше максимума");
+	}
+
+	[AvaloniaFact]
+	public void GateGroupFailure_ReportedUnderRussianCulture_ShowsRussianPositionAndGroupDetail()
+	{
+		const int ValveActionId = 50;
+		const string ValveGroupId = "valve";
+		const string TargetColumnKey = "target";
+		const int InvalidGroupKey = 99;
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[ValveActionId] = new ActionDefinition(
+				id: ValveActionId,
+				uiName: "Valve",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
+				{
+					new ActionPropertyDefinition(
+						Key: TargetColumnKey,
+						GroupName: ValveGroupId,
+						PropertyTypeId: "enum",
+						DefaultValue: null)
+				})
+		};
+		var groups = new Dictionary<string, GroupDefinition>
+		{
+			[ValveGroupId] = new GroupDefinition(
+				GroupId: ValveGroupId,
+				Items: new Dictionary<int, string> { [1] = "Open", [2] = "Close" })
+		};
+		var registry = TestRecipeMetadataRegistryFactory.Build(
+			new[]
+			{
+				TestPropertyTypeDefinitionBuilder.CreateInt("enum"),
+				TestPropertyTypeDefinitionBuilder.CreateString("text", maxLength: 8)
+			},
+			actions,
+			groups);
+		var validator = new ImportedRecipeValidator(registry);
+		var step = new Step(
+			ValveActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(TargetColumnKey), PropertyValue.FromInt(InvalidGroupKey)));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+		result.IsFailed.Should().BeTrue();
+
+		using var panel = new MessagePanelViewModel();
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			panel.ReportFailure(result);
+		}
+
+		var entry = panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
+		entry.Message.Should().Contain("Шаг").And.Contain("Столбец")
+			.And.Contain(TargetColumnKey).And.Contain("не является допустимым членом группы")
+			.And.Contain(ValveGroupId);
+	}
+
+	[AvaloniaFact]
+	public void InteractiveEditFailure_ReportedUnderRussianCulture_SurfacesLocalizedValueErrorStandalone()
+	{
+		const int BoundActionId = 11;
+		const string AmountColumnKey = "amount";
+		const string BoundPropertyTypeId = "int_bounded";
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[BoundActionId] = new ActionDefinition(
+				id: BoundActionId,
+				uiName: "Bound",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
+				{
+					new ActionPropertyDefinition(
+						Key: AmountColumnKey,
+						GroupName: null,
+						PropertyTypeId: BoundPropertyTypeId,
+						DefaultValue: null)
+				})
+		};
+		var registry = TestRecipeMetadataRegistryFactory.Build(
+			new[]
+			{
+				TestPropertyTypeDefinitionBuilder.CreateInt(BoundPropertyTypeId, min: 0, max: 100),
+				TestPropertyTypeDefinitionBuilder.CreateString("text", maxLength: 8)
+			},
+			actions);
+		var session = BuildSession(registry);
+		session.AppendStep(BoundActionId).IsSuccess.Should().BeTrue();
+
+		var result = session.UpdateStepProperty(0, AmountColumnKey, "500");
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().ContainSingle().Which.Should().BeOfType<ValueAboveMaximumError>(
+			"the interactive-edit path bubbles the typed value error undecorated, with no AtStep/AtColumn wrapper");
+
+		using var panel = new MessagePanelViewModel();
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			panel.ReportFailure(result, string.Format(CultureInfo.InvariantCulture, Resources.StepFormat, 1));
+		}
+
+		var entry = panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
+		entry.Message.Should().Contain("больше максимума").And.Contain(BoundPropertyTypeId);
+	}
+
+	private static RecipeSession BuildSession(RecipeMetadataRegistry registry)
+	{
+		return new RecipeSession(
+			new RecipeAnalyzer(registry),
+			registry,
+			new FormulaEvaluator(registry, NullLogger<FormulaEvaluator>.Instance),
+			new StubPlcSyncService(),
+			NullLogger<RecipeSession>.Instance);
 	}
 
 	[AvaloniaFact]

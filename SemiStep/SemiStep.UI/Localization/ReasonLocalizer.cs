@@ -28,6 +28,32 @@ public static class ReasonLocalizer
 			FormulaComputationFailedError error => Format(Resources.ErrorFormulaComputationFailed, error.Target, error.Reason),
 			AtStepError error => Format(Resources.AtStepFormat, error.StepNumber, Localize(error.Inner)),
 			AtColumnError error => Format(Resources.AtColumnFormat, error.ColumnKey, Localize(error.Inner)),
+			PropertyValueTypeMismatchError error => Format(
+				Resources.ErrorPropertyValueTypeMismatch, error.ExpectedType, error.ActualType, error.Id),
+			UnsupportedPropertySystemTypeError error => Format(
+				Resources.ErrorUnsupportedPropertySystemType, error.SystemType),
+			GroupValueNotIntegerError error => Format(
+				Resources.ErrorGroupValueNotInteger, error.ActualType),
+			ValueBelowMinimumError error => Format(
+				Resources.ErrorValueBelowMinimum, error.Value, error.Min, error.Id),
+			ValueAboveMaximumError error => Format(
+				Resources.ErrorValueAboveMaximum, error.Value, error.Max, error.Id),
+			StringContainsNulError error => Format(
+				Resources.ErrorStringContainsNul, error.Id),
+			StringTooLongError error => Format(
+				Resources.ErrorStringTooLong, error.Length, error.Max, error.Id),
+			ActionByIdNotFoundError error => Format(
+				Resources.ErrorActionByIdNotFound, error.Id),
+			ActionByNameNotFoundError error => Format(
+				Resources.ErrorActionByNameNotFound, error.Name),
+			PropertyNotFoundError error => Format(
+				Resources.ErrorPropertyNotFound, error.PropertyTypeId),
+			ColumnNotFoundError error => Format(
+				Resources.ErrorColumnNotFound, error.Key),
+			GroupNotFoundError error => Format(
+				Resources.ErrorGroupNotFound, error.GroupId),
+			ValueNotInGroupError error => Format(
+				Resources.ErrorValueNotInGroup, error.Key, error.GroupId),
 			UnmatchedEndForWarning warning => Format(Resources.WarningUnmatchedEndFor, warning.StepIndex),
 			UnclosedForLoopWarning warning => Format(Resources.WarningUnclosedForLoop, warning.StartIndex),
 			_ => null

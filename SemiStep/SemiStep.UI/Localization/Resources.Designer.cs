@@ -302,6 +302,32 @@ public class Resources
 
 	public static string AtColumnFormat => ResourceManager.GetString("AtColumnFormat", resourceCulture) ?? string.Empty;
 
+	public static string ErrorPropertyValueTypeMismatch => ResourceManager.GetString("ErrorPropertyValueTypeMismatch", resourceCulture) ?? string.Empty;
+
+	public static string ErrorUnsupportedPropertySystemType => ResourceManager.GetString("ErrorUnsupportedPropertySystemType", resourceCulture) ?? string.Empty;
+
+	public static string ErrorGroupValueNotInteger => ResourceManager.GetString("ErrorGroupValueNotInteger", resourceCulture) ?? string.Empty;
+
+	public static string ErrorValueBelowMinimum => ResourceManager.GetString("ErrorValueBelowMinimum", resourceCulture) ?? string.Empty;
+
+	public static string ErrorValueAboveMaximum => ResourceManager.GetString("ErrorValueAboveMaximum", resourceCulture) ?? string.Empty;
+
+	public static string ErrorStringContainsNul => ResourceManager.GetString("ErrorStringContainsNul", resourceCulture) ?? string.Empty;
+
+	public static string ErrorStringTooLong => ResourceManager.GetString("ErrorStringTooLong", resourceCulture) ?? string.Empty;
+
+	public static string ErrorActionByIdNotFound => ResourceManager.GetString("ErrorActionByIdNotFound", resourceCulture) ?? string.Empty;
+
+	public static string ErrorActionByNameNotFound => ResourceManager.GetString("ErrorActionByNameNotFound", resourceCulture) ?? string.Empty;
+
+	public static string ErrorPropertyNotFound => ResourceManager.GetString("ErrorPropertyNotFound", resourceCulture) ?? string.Empty;
+
+	public static string ErrorColumnNotFound => ResourceManager.GetString("ErrorColumnNotFound", resourceCulture) ?? string.Empty;
+
+	public static string ErrorGroupNotFound => ResourceManager.GetString("ErrorGroupNotFound", resourceCulture) ?? string.Empty;
+
+	public static string ErrorValueNotInGroup => ResourceManager.GetString("ErrorValueNotInGroup", resourceCulture) ?? string.Empty;
+
 	public static string WarningUnmatchedEndFor => ResourceManager.GetString("WarningUnmatchedEndFor", resourceCulture) ?? string.Empty;
 
 	public static string WarningUnclosedForLoop => ResourceManager.GetString("WarningUnclosedForLoop", resourceCulture) ?? string.Empty;

@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using FluentResults;
 
 using SemiStep.Core.Configuration;
+using SemiStep.Core.Recipes.Errors;
 
 namespace SemiStep.Core.Recipes;
 
@@ -111,7 +112,7 @@ public sealed class RecipeMetadataRegistry
 
 	public Result<ActionDefinition> GetAction(int id)
 	{
-		return TryGetOrFail(_actionsById, id, $"Action with id {id} not found");
+		return TryGetOrFail(_actionsById, id, new ActionByIdNotFoundError(id));
 	}
 
 	public bool TryGetAction(int id, [MaybeNullWhen(false)] out ActionDefinition action)
@@ -121,17 +122,17 @@ public sealed class RecipeMetadataRegistry
 
 	public Result<ActionDefinition> GetActionByName(string name)
 	{
-		return TryGetOrFail(_actionsByName, name, $"Action with name '{name}' not found");
+		return TryGetOrFail(_actionsByName, name, new ActionByNameNotFoundError(name));
 	}
 
 	public Result ActionExists(int id)
 	{
-		return ContainsOrFail(_actionsById, id, $"Action with id {id} not found");
+		return ContainsOrFail(_actionsById, id, new ActionByIdNotFoundError(id));
 	}
 
 	public Result ActionExistsByName(string name)
 	{
-		return ContainsOrFail(_actionsByName, name, $"Action with name '{name}' not found");
+		return ContainsOrFail(_actionsByName, name, new ActionByNameNotFoundError(name));
 	}
 
 	public IReadOnlyList<ActionDefinition> GetAllActions()
@@ -141,22 +142,22 @@ public sealed class RecipeMetadataRegistry
 
 	public Result<PropertyTypeDefinition> GetProperty(string propertyTypeId)
 	{
-		return TryGetOrFail(_properties, propertyTypeId, $"Property '{propertyTypeId}' not found");
+		return TryGetOrFail(_properties, propertyTypeId, new PropertyNotFoundError(propertyTypeId));
 	}
 
 	public Result PropertyExists(string propertyTypeId)
 	{
-		return ContainsOrFail(_properties, propertyTypeId, $"Property '{propertyTypeId}' not found");
+		return ContainsOrFail(_properties, propertyTypeId, new PropertyNotFoundError(propertyTypeId));
 	}
 
 	public Result<GridColumnDefinition> GetColumn(string key)
 	{
-		return TryGetOrFail(_columns, key, $"Column '{key}' not found");
+		return TryGetOrFail(_columns, key, new ColumnNotFoundError(key));
 	}
 
 	public Result ColumnExists(string key)
 	{
-		return ContainsOrFail(_columns, key, $"Column '{key}' not found");
+		return ContainsOrFail(_columns, key, new ColumnNotFoundError(key));
 	}
 
 	public IReadOnlyList<GridColumnDefinition> GetAllColumns()
@@ -166,12 +167,12 @@ public sealed class RecipeMetadataRegistry
 
 	public Result<GroupDefinition> GetGroup(string groupId)
 	{
-		return TryGetOrFail(_groups, groupId, $"Group '{groupId}' not found");
+		return TryGetOrFail(_groups, groupId, new GroupNotFoundError(groupId));
 	}
 
 	public Result GroupExists(string groupId)
 	{
-		return ContainsOrFail(_groups, groupId, $"Group '{groupId}' not found");
+		return ContainsOrFail(_groups, groupId, new GroupNotFoundError(groupId));
 	}
 
 	/// <summary>
@@ -292,7 +293,7 @@ public sealed class RecipeMetadataRegistry
 
 		if (!groupResult.Value.Items.ContainsKey(key))
 		{
-			return Result.Fail($"Value {key} is not a valid member of group '{groupId}'");
+			return Result.Fail(new ValueNotInGroupError(key, groupId));
 		}
 
 		return Result.Ok();
@@ -301,26 +302,26 @@ public sealed class RecipeMetadataRegistry
 	private static Result<TValue> TryGetOrFail<TKey, TValue>(
 		Dictionary<TKey, TValue> dictionary,
 		TKey key,
-		string errorMessage) where TKey : notnull
+		IError error) where TKey : notnull
 	{
 		if (dictionary.TryGetValue(key, out var value))
 		{
 			return value;
 		}
 
-		return Result.Fail(errorMessage);
+		return Result.Fail(error);
 	}
 
 	private static Result ContainsOrFail<TKey, TValue>(
 		Dictionary<TKey, TValue> dictionary,
 		TKey key,
-		string errorMessage) where TKey : notnull
+		IError error) where TKey : notnull
 	{
 		if (dictionary.ContainsKey(key))
 		{
 			return Result.Ok();
 		}
 
-		return Result.Fail(errorMessage);
+		return Result.Fail(error);
 	}
 }

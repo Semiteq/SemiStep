@@ -7,6 +7,7 @@ using FluentAssertions;
 using FluentResults;
 
 using SemiStep.Core.Plc.Sync.Ownership;
+using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
@@ -33,6 +34,32 @@ public sealed class CoreErrorLocalizationCoverageTests
 			new AtStepError(1, new Error("x")),
 		[typeof(AtColumnError)] =
 			new AtColumnError("k", new Error("x")),
+		[typeof(PropertyValueTypeMismatchError)] =
+			new PropertyValueTypeMismatchError("int", "Int32", "temperature"),
+		[typeof(UnsupportedPropertySystemTypeError)] =
+			new UnsupportedPropertySystemTypeError("decimal"),
+		[typeof(GroupValueNotIntegerError)] =
+			new GroupValueNotIntegerError(PropertyType.String),
+		[typeof(ValueBelowMinimumError)] =
+			new ValueBelowMinimumError(3, 10, "temperature"),
+		[typeof(ValueAboveMaximumError)] =
+			new ValueAboveMaximumError(500, 100, "temperature"),
+		[typeof(StringContainsNulError)] =
+			new StringContainsNulError("label"),
+		[typeof(StringTooLongError)] =
+			new StringTooLongError(20, 8, "label"),
+		[typeof(ActionByIdNotFoundError)] =
+			new ActionByIdNotFoundError(42),
+		[typeof(ActionByNameNotFoundError)] =
+			new ActionByNameNotFoundError("Heat"),
+		[typeof(PropertyNotFoundError)] =
+			new PropertyNotFoundError("temperature"),
+		[typeof(ColumnNotFoundError)] =
+			new ColumnNotFoundError("temp"),
+		[typeof(GroupNotFoundError)] =
+			new GroupNotFoundError("valves"),
+		[typeof(ValueNotInGroupError)] =
+			new ValueNotInGroupError(7, "valves"),
 		[typeof(UnmatchedEndForWarning)] =
 			new UnmatchedEndForWarning(1),
 		[typeof(UnclosedForLoopWarning)] =

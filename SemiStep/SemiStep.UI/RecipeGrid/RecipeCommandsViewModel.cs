@@ -128,11 +128,19 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 
 	private void Undo()
 	{
-		_coordinator.Undo();
+		var result = _coordinator.Undo();
+		if (result.IsFailed)
+		{
+			_messagePanel.ReportFailure(result);
+		}
 	}
 
 	private void Redo()
 	{
-		_coordinator.Redo();
+		var result = _coordinator.Redo();
+		if (result.IsFailed)
+		{
+			_messagePanel.ReportFailure(result);
+		}
 	}
 }

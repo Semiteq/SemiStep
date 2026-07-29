@@ -83,6 +83,43 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 			.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
 	}
 
+	[AvaloniaFact]
+	public async Task Undo_WhenNoHistory_ReportsFailedResultToPanel()
+	{
+		var expected = _fixture.Coordinator.Undo();
+		expected.IsFailed.Should().BeTrue();
+		var expectedMessage = expected.FormatErrors();
+
+		await ExecuteSwallowing(_commands.UndoCommand);
+
+		_fixture.MessagePanel.Entries.Should()
+			.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
+	}
+
+	[AvaloniaFact]
+	public async Task Redo_WhenNoHistory_ReportsFailedResultToPanel()
+	{
+		var expected = _fixture.Coordinator.Redo();
+		expected.IsFailed.Should().BeTrue();
+		var expectedMessage = expected.FormatErrors();
+
+		await ExecuteSwallowing(_commands.RedoCommand);
+
+		_fixture.MessagePanel.Entries.Should()
+			.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
+	}
+
+	[AvaloniaFact]
+	public async Task Undo_WhenHistoryExists_ReportsNoError()
+	{
+		_fixture.SeedRecipe(2);
+		_fixture.Coordinator.CanUndo.Should().BeTrue();
+
+		await ExecuteSwallowing(_commands.UndoCommand);
+
+		_fixture.MessagePanel.Entries.Should().NotContain(e => e.IsError);
+	}
+
 	private static async Task ExecuteSwallowing(ReactiveCommand<Unit, Unit> command)
 	{
 		try

@@ -338,11 +338,18 @@ public sealed class RecipeCoordinator : IDisposable
 			result = await Dispatcher.UIThread.InvokeAsync(() =>
 			{
 				var validateResult = _session.LoadAsCurrentValidated(loadResult.Value, _importedRecipeValidator);
-				if (validateResult.IsSuccess)
+				if (validateResult.IsFailed)
 				{
-					_session.MarkSaved();
+					return validateResult;
 				}
-				return validateResult;
+
+				_session.MarkSaved();
+
+				// Carry only the CSV load-integrity warning through the return. The structural
+				// analysis reasons already surface via RebuildMessagePanel -> RefreshReasons, so
+				// merging them here would double-count and hide the load warning behind the same
+				// sealed Warning type the viewmodel inspects.
+				return Result.Ok().WithReasons(loadResult.Successes);
 			});
 		}
 

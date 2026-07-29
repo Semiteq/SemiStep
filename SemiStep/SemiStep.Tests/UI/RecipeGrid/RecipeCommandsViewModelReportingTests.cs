@@ -14,6 +14,7 @@ using SemiStep.Core.Recipes;
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.RecipeGrid;
 
@@ -57,7 +58,7 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 		await ExecuteSwallowing(_commands.AddStepCommand);
 
 		_fixture.MessagePanel.Entries.Should()
-			.Contain(e => e.IsError && e.Message.StartsWith("Add step failed:") && e.Message.Contains("boom"));
+			.Contain(e => e.IsError && e.Message.StartsWith($"{Resources.AddStepFailed}:") && e.Message.Contains("boom"));
 
 		var logged = _logger.Entries.Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);

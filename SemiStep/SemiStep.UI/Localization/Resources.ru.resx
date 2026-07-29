@@ -454,4 +454,97 @@
   <data name="ErrorFormulaComputationFailed" xml:space="preserve">
     <value>Вычисление формулы для цели «{0}» не выполнено: {1}</value>
   </data>
+  <data name="CopyStepFailed" xml:space="preserve">
+    <value>Не удалось скопировать</value>
+  </data>
+  <data name="CutStepFailed" xml:space="preserve">
+    <value>Не удалось вырезать</value>
+  </data>
+  <data name="PasteStepFailed" xml:space="preserve">
+    <value>Не удалось вставить</value>
+  </data>
+  <data name="SaveFailed" xml:space="preserve">
+    <value>Не удалось сохранить</value>
+  </data>
+  <data name="SaveAsFailed" xml:space="preserve">
+    <value>Не удалось сохранить как</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Не удалось загрузить</value>
+  </data>
+  <data name="SyncToggleFailed" xml:space="preserve">
+    <value>Не удалось переключить синхронизацию</value>
+  </data>
+  <data name="StyleEditorFailed" xml:space="preserve">
+    <value>Ошибка редактора стилей</value>
+  </data>
+  <data name="ExitFailed" xml:space="preserve">
+    <value>Не удалось выйти</value>
+  </data>
+  <data name="OrientationToggleFailed" xml:space="preserve">
+    <value>Не удалось изменить ориентацию</value>
+  </data>
+  <data name="PlcStateUpdateFailed" xml:space="preserve">
+    <value>Не удалось обновить состояние ПЛК</value>
+  </data>
+  <data name="PlcConflictHandlingFailed" xml:space="preserve">
+    <value>Не удалось обработать конфликт ПЛК</value>
+  </data>
+  <data name="SyncTimeRefreshFailed" xml:space="preserve">
+    <value>Не удалось обновить время синхронизации</value>
+  </data>
+  <data name="PlcConflictResolutionFailed" xml:space="preserve">
+    <value>Не удалось разрешить конфликт ПЛК</value>
+  </data>
+  <data name="AddStepFailed" xml:space="preserve">
+    <value>Не удалось добавить шаг</value>
+  </data>
+  <data name="DeleteStepFailed" xml:space="preserve">
+    <value>Не удалось удалить шаг</value>
+  </data>
+  <data name="UndoFailed" xml:space="preserve">
+    <value>Не удалось отменить</value>
+  </data>
+  <data name="RedoFailed" xml:space="preserve">
+    <value>Не удалось повторить</value>
+  </data>
+  <data name="PlcConflictDialogShowFailed" xml:space="preserve">
+    <value>Не удалось показать диалог конфликта ПЛК</value>
+  </data>
+  <data name="SaveRecipeFailed" xml:space="preserve">
+    <value>Не удалось сохранить рецепт</value>
+  </data>
+  <data name="SavedFormat" xml:space="preserve">
+    <value>Сохранено: {0}</value>
+  </data>
+  <data name="LoadedFormat" xml:space="preserve">
+    <value>Загружено: {0}</value>
+  </data>
+  <data name="PlcReconnect" xml:space="preserve">
+    <value>Переподключение ПЛК</value>
+  </data>
+  <data name="StepFormat" xml:space="preserve">
+    <value>Шаг {0}</value>
+  </data>
+  <data name="StepActionChangeFailedFormat" xml:space="preserve">
+    <value>Шаг {0}: не удалось изменить действие</value>
+  </data>
+  <data name="UnexpectedErrorMessage" xml:space="preserve">
+    <value>Произошла непредвиденная ошибка; подробности см. в журнале.</value>
+  </data>
+  <data name="OpenRecipeDialogTitle" xml:space="preserve">
+    <value>Открыть рецепт</value>
+  </data>
+  <data name="SaveRecipeDialogTitle" xml:space="preserve">
+    <value>Сохранить рецепт</value>
+  </data>
+  <data name="RecipeFilesFilter" xml:space="preserve">
+    <value>Файлы рецептов</value>
+  </data>
+  <data name="AllFilesFilter" xml:space="preserve">
+    <value>Все файлы</value>
+  </data>
+  <data name="CsvFilesFilter" xml:space="preserve">
+    <value>Файлы CSV</value>
+  </data>
 </root>

@@ -16,6 +16,7 @@ using ReactiveUI;
 using SemiStep.Core.Recipes;
 
 using SemiStep.UI.Coordinator;
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 
 namespace SemiStep.UI.RecipeGrid;
@@ -314,7 +315,9 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 
 		if (result.IsFailed)
 		{
-			_messagePanel.ReportFailure(result, $"Step {stepIndex + 1}");
+			_messagePanel.ReportFailure(
+				result,
+				string.Format(CultureInfo.InvariantCulture, Resources.StepFormat, stepIndex + 1));
 			return;
 		}
 
@@ -343,7 +346,9 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 
 		if (result.IsFailed)
 		{
-			_messagePanel.ReportFailure(result, $"Step {stepIndex + 1}");
+			_messagePanel.ReportFailure(
+				result,
+				string.Format(CultureInfo.InvariantCulture, Resources.StepFormat, stepIndex + 1));
 			return;
 		}
 
@@ -369,8 +374,9 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 
 		if (result.IsFailed)
 		{
-			_messagePanel.ReportError(
-				$"Step {stepIndex + 1}: Failed to change action - {result.FormatErrors()}");
+			_messagePanel.ReportFailure(
+				result,
+				string.Format(CultureInfo.InvariantCulture, Resources.StepActionChangeFailedFormat, stepIndex + 1));
 			return;
 		}
 

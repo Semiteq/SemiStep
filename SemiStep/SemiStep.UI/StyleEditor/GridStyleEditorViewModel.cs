@@ -305,7 +305,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 	internal void ReportSaveException(Exception exception)
 	{
 		_logger.LogError(exception, "Style editor save failed");
-		ErrorMessage = $"Save failed: {exception.Message}";
+		ErrorMessage = $"{Resources.SaveFailed}: {exception.Message}";
 	}
 
 	private void Seed(GridStyleOptions options)

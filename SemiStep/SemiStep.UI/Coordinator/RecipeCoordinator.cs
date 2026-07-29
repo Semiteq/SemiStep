@@ -16,6 +16,7 @@ using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 
 namespace SemiStep.UI.Coordinator;
@@ -417,7 +418,7 @@ public sealed class RecipeCoordinator : IDisposable
 				_logger.LogWarning(
 					"Reconnect reconciliation failed to apply PLC recipe: {Errors}",
 					applyResult.FormatErrors());
-				_messagePanel.ReportFailure(applyResult, "PLC reconnect");
+				_messagePanel.ReportFailure(applyResult, Resources.PlcReconnect);
 				return applyResult;
 			}
 

@@ -1,4 +1,5 @@
-﻿using System.Reactive;
+﻿using System.Globalization;
+using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using ReactiveUI;
 
 using SemiStep.UI.Coordinator;
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 
 namespace SemiStep.UI.RecipeFile;
@@ -39,13 +41,13 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		LoadRecipeCommand = ReactiveCommand.CreateFromTask(LoadRecipeAsync, canEdit);
 		NewRecipeCommand = ReactiveCommand.Create(NewRecipe, canEdit);
 
-		SaveRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, "Save failed")
+		SaveRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.SaveFailed)))
 			.DisposeWith(_disposables);
 
-		SaveAsRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, "Save As failed")
+		SaveAsRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.SaveAsFailed)))
 			.DisposeWith(_disposables);
 
-		LoadRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, "Load failed")
+		LoadRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.LoadFailed)))
 			.DisposeWith(_disposables);
 	}
 
@@ -100,13 +102,14 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 		if (result.IsFailed)
 		{
-			_messagePanel.ReportFailure(result, "Failed to save recipe");
+			_messagePanel.ReportFailure(result, Resources.SaveRecipeFailed);
 
 			return false;
 		}
 
 		CurrentFilePath = filePath;
-		_messagePanel.ReportSuccess($"Saved: {Path.GetFileName(filePath)}");
+		_messagePanel.ReportSuccess(
+			string.Format(CultureInfo.InvariantCulture, Resources.SavedFormat, Path.GetFileName(filePath)));
 
 		return true;
 	}
@@ -128,7 +131,8 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		}
 
 		CurrentFilePath = filePath;
-		_messagePanel.ReportSuccess($"Loaded: {Path.GetFileName(filePath)}");
+		_messagePanel.ReportSuccess(
+			string.Format(CultureInfo.InvariantCulture, Resources.LoadedFormat, Path.GetFileName(filePath)));
 	}
 
 	private void NewRecipe()

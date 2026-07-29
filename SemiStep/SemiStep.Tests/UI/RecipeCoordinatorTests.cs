@@ -14,6 +14,7 @@ using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.Coordinator;
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 
 using Xunit;
@@ -470,7 +471,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		var operationEntry = _fixture.MessagePanel.Entries[0];
 		operationEntry.Severity.Should().Be(MessageSeverity.Error,
 			"a failed reconnect-apply has no initiating VM, so the coordinator must report it as an operation error");
-		operationEntry.Message.Should().Contain("PLC reconnect",
+		operationEntry.Message.Should().Contain(Resources.PlcReconnect,
 			"the operation message must identify the reconnect-apply origin");
 
 		_fixture.MessagePanel.ErrorCount.Should().Be(0,

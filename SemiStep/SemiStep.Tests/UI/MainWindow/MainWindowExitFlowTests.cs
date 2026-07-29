@@ -10,6 +10,7 @@ using FluentAssertions;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
+using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.ShutdownService;
@@ -106,7 +107,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		_window.IsVisible.Should().BeTrue("a save exception must not discard the recipe by closing the window");
 		var errorEntry = _fixture.MessagePanel.Entries
 			.Should().ContainSingle(e => e.Severity == MessageSeverity.Error).Subject;
-		errorEntry.Message.Should().StartWith("Save failed:");
+		errorEntry.Message.Should().StartWith($"{Resources.SaveFailed}:");
 		errorEntry.Message.Should().Contain("disk detached");
 	}
 
@@ -125,7 +126,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 
 			var errorEntry = viewModel.MessagePanel.Entries
 				.Should().ContainSingle(e => e.Severity == MessageSeverity.Error).Subject;
-			errorEntry.Message.Should().StartWith("Exit failed:");
+			errorEntry.Message.Should().StartWith(Resources.ExitFailed + ":");
 		}
 		finally
 		{

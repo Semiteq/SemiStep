@@ -454,4 +454,97 @@
   <data name="ErrorFormulaComputationFailed" xml:space="preserve">
     <value>Formula computation for target '{0}' failed: {1}</value>
   </data>
+  <data name="CopyStepFailed" xml:space="preserve">
+    <value>Copy failed</value>
+  </data>
+  <data name="CutStepFailed" xml:space="preserve">
+    <value>Cut failed</value>
+  </data>
+  <data name="PasteStepFailed" xml:space="preserve">
+    <value>Paste failed</value>
+  </data>
+  <data name="SaveFailed" xml:space="preserve">
+    <value>Save failed</value>
+  </data>
+  <data name="SaveAsFailed" xml:space="preserve">
+    <value>Save As failed</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Load failed</value>
+  </data>
+  <data name="SyncToggleFailed" xml:space="preserve">
+    <value>Sync toggle failed</value>
+  </data>
+  <data name="StyleEditorFailed" xml:space="preserve">
+    <value>Style editor failed</value>
+  </data>
+  <data name="ExitFailed" xml:space="preserve">
+    <value>Exit failed</value>
+  </data>
+  <data name="OrientationToggleFailed" xml:space="preserve">
+    <value>Orientation toggle failed</value>
+  </data>
+  <data name="PlcStateUpdateFailed" xml:space="preserve">
+    <value>PLC state update failed</value>
+  </data>
+  <data name="PlcConflictHandlingFailed" xml:space="preserve">
+    <value>PLC conflict handling failed</value>
+  </data>
+  <data name="SyncTimeRefreshFailed" xml:space="preserve">
+    <value>Sync time refresh failed</value>
+  </data>
+  <data name="PlcConflictResolutionFailed" xml:space="preserve">
+    <value>PLC conflict resolution failed</value>
+  </data>
+  <data name="AddStepFailed" xml:space="preserve">
+    <value>Add step failed</value>
+  </data>
+  <data name="DeleteStepFailed" xml:space="preserve">
+    <value>Delete step failed</value>
+  </data>
+  <data name="UndoFailed" xml:space="preserve">
+    <value>Undo failed</value>
+  </data>
+  <data name="RedoFailed" xml:space="preserve">
+    <value>Redo failed</value>
+  </data>
+  <data name="PlcConflictDialogShowFailed" xml:space="preserve">
+    <value>Failed to show PLC conflict dialog</value>
+  </data>
+  <data name="SaveRecipeFailed" xml:space="preserve">
+    <value>Failed to save recipe</value>
+  </data>
+  <data name="SavedFormat" xml:space="preserve">
+    <value>Saved: {0}</value>
+  </data>
+  <data name="LoadedFormat" xml:space="preserve">
+    <value>Loaded: {0}</value>
+  </data>
+  <data name="PlcReconnect" xml:space="preserve">
+    <value>PLC reconnect</value>
+  </data>
+  <data name="StepFormat" xml:space="preserve">
+    <value>Step {0}</value>
+  </data>
+  <data name="StepActionChangeFailedFormat" xml:space="preserve">
+    <value>Step {0}: Failed to change action</value>
+  </data>
+  <data name="UnexpectedErrorMessage" xml:space="preserve">
+    <value>An unexpected error occurred; see the log for details.</value>
+  </data>
+  <data name="OpenRecipeDialogTitle" xml:space="preserve">
+    <value>Open Recipe</value>
+  </data>
+  <data name="SaveRecipeDialogTitle" xml:space="preserve">
+    <value>Save Recipe</value>
+  </data>
+  <data name="RecipeFilesFilter" xml:space="preserve">
+    <value>Recipe Files</value>
+  </data>
+  <data name="AllFilesFilter" xml:space="preserve">
+    <value>All Files</value>
+  </data>
+  <data name="CsvFilesFilter" xml:space="preserve">
+    <value>CSV Files</value>
+  </data>
 </root>

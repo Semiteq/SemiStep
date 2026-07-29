@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using ReactiveUI;
 
 using SemiStep.Tests.Helpers;
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 
 using Xunit;
@@ -29,8 +30,9 @@ public sealed class ReactiveCommandReportingExtensionsTests
 		var logger = new RecordingLogger<object>();
 		var failure = new InvalidOperationException("boom");
 		var command = ReactiveCommand.Create<Unit, Unit>(_ => throw failure);
+		var context = new LocalizedText(nameof(Resources.CopyStepFailed));
 
-		using var subscription = command.ReportThrownExceptions(panel, logger, "Copy failed");
+		using var subscription = command.ReportThrownExceptions(panel, logger, context);
 
 		try
 		{
@@ -38,7 +40,7 @@ public sealed class ReactiveCommandReportingExtensionsTests
 
 			var entry = panel.Entries.Should().ContainSingle().Subject;
 			entry.Severity.Should().Be(MessageSeverity.Error);
-			entry.Message.Should().Be("Copy failed: boom");
+			entry.Message.Should().Be($"{context.Localized}: boom");
 
 			var logged = logger.Entries.Should().ContainSingle().Subject;
 			logged.Level.Should().Be(LogLevel.Error);
@@ -58,7 +60,8 @@ public sealed class ReactiveCommandReportingExtensionsTests
 		var logger = new RecordingLogger<object>();
 		var command = ReactiveCommand.Create<Unit, Unit>(_ => Unit.Default);
 
-		using var subscription = command.ReportThrownExceptions(panel, logger, "Copy failed");
+		using var subscription = command.ReportThrownExceptions(
+			panel, logger, new LocalizedText(nameof(Resources.CopyStepFailed)));
 
 		try
 		{

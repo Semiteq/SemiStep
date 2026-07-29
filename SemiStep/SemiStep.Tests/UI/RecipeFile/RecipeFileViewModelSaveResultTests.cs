@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.RecipeFile;
 
@@ -175,7 +176,7 @@ public sealed class RecipeFileViewModelSaveResultTests : IAsyncLifetime
 		Dispatcher.UIThread.RunJobs();
 		var errorEntry = _fixture.MessagePanel.Entries
 			.Should().ContainSingle(e => e.Severity == MessageSeverity.Error).Subject;
-		errorEntry.Message.Should().StartWith("Save As failed:");
+		errorEntry.Message.Should().StartWith($"{Resources.SaveAsFailed}:");
 		errorEntry.Message.Should().Contain("disk detached");
 	}
 }

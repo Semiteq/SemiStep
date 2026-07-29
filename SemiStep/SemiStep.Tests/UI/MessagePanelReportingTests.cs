@@ -1,4 +1,5 @@
-﻿using System.Reactive.Linq;
+﻿using System.Globalization;
+using System.Reactive.Linq;
 
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
@@ -17,6 +18,7 @@ using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.Clipboard;
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.RecipeFile;
 using SemiStep.UI.RecipeGrid;
@@ -62,7 +64,8 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 
 			var operationEntry = _fixture.MessagePanel.Entries.First();
 			operationEntry.Severity.Should().Be(MessageSeverity.Info);
-			operationEntry.Message.Should().StartWith("Saved:");
+			operationEntry.Message.Should().Be(
+				string.Format(CultureInfo.CurrentCulture, Resources.SavedFormat, Path.GetFileName(filePath)));
 		}
 		finally
 		{
@@ -90,7 +93,8 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 
 			var operationEntry = _fixture.MessagePanel.Entries.First();
 			operationEntry.Severity.Should().Be(MessageSeverity.Info);
-			operationEntry.Message.Should().StartWith("Loaded:");
+			operationEntry.Message.Should().Be(
+				string.Format(CultureInfo.CurrentCulture, Resources.LoadedFormat, Path.GetFileName(filePath)));
 		}
 		finally
 		{
@@ -131,7 +135,8 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 		_surface.RecipeRows[0].SetPropertyValue(RecipeTestDriver.StepDurationColumn, "not_a_valid_number");
 
 		var operationEntry = _fixture.MessagePanel.Entries.Should().ContainSingle(entry => entry.IsError).Subject;
-		operationEntry.Message.Should().StartWith("Step 1:");
+		operationEntry.Message.Should().StartWith(
+			string.Format(CultureInfo.CurrentCulture, Resources.StepFormat, 1) + ":");
 		_fixture.MessagePanel.ErrorCount.Should().Be(0,
 			"a rejected edit is an operation outcome surfaced transiently, not a structural defect counted in the panel");
 	}
@@ -145,7 +150,8 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 		_surface.RecipeRows[0].SetPropertyValue("action", "999999");
 
 		var operationEntry = _fixture.MessagePanel.Entries.Should().ContainSingle(entry => entry.IsError).Subject;
-		operationEntry.Message.Should().StartWith("Step 1: Failed to change action");
+		operationEntry.Message.Should().StartWith(
+			string.Format(CultureInfo.CurrentCulture, Resources.StepActionChangeFailedFormat, 1));
 		_fixture.MessagePanel.ErrorCount.Should().Be(0,
 			"a rejected action change is an operation outcome surfaced transiently, not a structural defect counted in the panel");
 	}
@@ -177,7 +183,7 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 
 			var operationEntry = _fixture.MessagePanel.Entries.First();
 			operationEntry.Severity.Should().Be(MessageSeverity.Error);
-			operationEntry.Message.Should().StartWith("Paste failed:");
+			operationEntry.Message.Should().StartWith(Resources.PasteStepFailed + ":");
 		}
 		finally
 		{

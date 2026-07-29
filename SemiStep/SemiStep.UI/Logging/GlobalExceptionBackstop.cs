@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 
 using ReactiveUI.Builder;
 
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 
 using SerilogLog = Serilog.Log;
@@ -18,7 +19,7 @@ namespace SemiStep.UI.Logging;
 
 internal static class GlobalExceptionBackstop
 {
-	internal const string RecoverableUserMessage = "An unexpected error occurred; see the log for details.";
+	internal static string RecoverableUserMessage => Resources.UnexpectedErrorMessage;
 
 	// ReactiveUI 23 dropped the settable RxApp.DefaultExceptionHandler; the pipeline handler is configured
 	// once through the builder (RxState.InitializeExceptionHandler), which runs before the first

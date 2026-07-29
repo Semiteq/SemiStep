@@ -14,6 +14,7 @@ using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
+using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.ShutdownService;
 using SemiStep.UI.StyleEditor;
@@ -166,7 +167,7 @@ public sealed class GridStyleEditorWindowOwnerRoutingTests : IAsyncLifetime
 		Dispatcher.UIThread.RunJobs();
 
 		viewModel.ErrorMessage.Should().StartWith(
-			"Save failed:",
+			Resources.SaveFailed + ":",
 			"the fault must surface on the editor's own error surface instead of crashing the app");
 	}
 

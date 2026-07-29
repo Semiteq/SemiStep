@@ -274,7 +274,7 @@ public sealed class GridStyleEditorViewModelTests
 
 		await ExecuteSwallowing(viewModel.SaveCommand);
 
-		viewModel.ErrorMessage.Should().Be("Save failed: disk gone");
+		viewModel.ErrorMessage.Should().Be($"{Resources.SaveFailed}: disk gone");
 		var logged = logger.Entries.Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
 		logged.Exception.Should().BeSameAs(failure);
@@ -293,7 +293,7 @@ public sealed class GridStyleEditorViewModelTests
 
 		viewModel.ReportSaveException(failure);
 
-		viewModel.ErrorMessage.Should().Be("Save failed: boom");
+		viewModel.ErrorMessage.Should().Be($"{Resources.SaveFailed}: boom");
 		var logged = logger.Entries.Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
 		logged.Exception.Should().BeSameAs(failure);

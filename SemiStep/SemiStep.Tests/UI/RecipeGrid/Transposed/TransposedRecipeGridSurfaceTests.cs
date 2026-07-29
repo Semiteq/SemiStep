@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Globalization;
 
 using Avalonia.Headless.XUnit;
 
@@ -12,6 +13,7 @@ using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.Coordinator;
+using SemiStep.UI.Localization;
 using SemiStep.UI.RecipeGrid.Transposed;
 
 using Xunit;
@@ -468,7 +470,8 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 
 		var operationEntry = _fixture.MessagePanel.Entries.Should()
 			.ContainSingle(entry => entry.IsError).Subject;
-		operationEntry.Message.Should().StartWith("Step 1:");
+		operationEntry.Message.Should().StartWith(
+			string.Format(CultureInfo.CurrentCulture, Resources.StepFormat, 1) + ":");
 	}
 
 	[AvaloniaFact]
@@ -481,7 +484,8 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 
 		var operationEntry = _fixture.MessagePanel.Entries.Should()
 			.ContainSingle(entry => entry.IsError).Subject;
-		operationEntry.Message.Should().StartWith("Step 1: Failed to change action");
+		operationEntry.Message.Should().StartWith(
+			string.Format(CultureInfo.CurrentCulture, Resources.StepActionChangeFailedFormat, 1));
 	}
 
 	[AvaloniaFact]

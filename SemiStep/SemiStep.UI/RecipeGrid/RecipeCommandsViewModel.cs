@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using ReactiveUI;
 
 using SemiStep.UI.Coordinator;
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 
 namespace SemiStep.UI.RecipeGrid;
@@ -53,16 +54,16 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 		UndoCommand.DisposeWith(_disposables);
 		RedoCommand.DisposeWith(_disposables);
 
-		AddStepCommand.ReportThrownExceptions(_messagePanel, _logger, "Add step failed")
+		AddStepCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.AddStepFailed)))
 			.DisposeWith(_disposables);
 
-		DeleteStepCommand.ReportThrownExceptions(_messagePanel, _logger, "Delete step failed")
+		DeleteStepCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.DeleteStepFailed)))
 			.DisposeWith(_disposables);
 
-		UndoCommand.ReportThrownExceptions(_messagePanel, _logger, "Undo failed")
+		UndoCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.UndoFailed)))
 			.DisposeWith(_disposables);
 
-		RedoCommand.ReportThrownExceptions(_messagePanel, _logger, "Redo failed")
+		RedoCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.RedoFailed)))
 			.DisposeWith(_disposables);
 	}
 

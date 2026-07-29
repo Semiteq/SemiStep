@@ -105,11 +105,13 @@ always English; only the panel seams localize.
 A command whose `Execute` throws (file I/O, PLC calls) faults on `ReactiveCommand.ThrownExceptions`.
 These faults route through one extension:
 
-- `IDisposable ReportThrownExceptions<TParam, TResult>(this ReactiveCommand<TParam, TResult>, MessagePanelViewModel panel, ILogger logger, string context)`
+- `IDisposable ReportThrownExceptions<TParam, TResult>(this ReactiveCommand<TParam, TResult>, MessagePanelViewModel panel, ILogger logger, LocalizedText context)`
   (`SemiStep.UI/MessageService/ReactiveCommandReportingExtensions.cs`). Per thrown exception it both
-  `logger.LogError(ex, "{Context} failed", context)` **and** `panel.ReportError($"{context}: {ex.Message}")`.
-  The panel keeps the user-facing message it always showed; the log now carries the exception type and
-  full stack that the message drops.
+  `logger.LogError(ex, "{Context}", context.Invariant)` **and** `panel.ReportError($"{context.Localized}: {ex.Message}")`.
+  The split is deliberate: the log gets `context.Invariant` (English, stable for grepping), the panel gets
+  `context.Localized` (the current-culture value) — see `ui-localization.md`'s "Operational, error, and status
+  messages" section. The panel keeps the user-facing message it always showed; the log now carries the
+  exception type and full stack that the message drops.
 
 The `logger` argument is the caller's own `ILogger<TVm>`, so the Serilog `{SourceContext}` field names
 the originating view model in every logged fault. The extension takes the concrete

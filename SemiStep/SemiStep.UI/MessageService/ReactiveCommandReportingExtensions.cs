@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 
 using ReactiveUI;
 
+using SemiStep.UI.Localization;
+
 namespace SemiStep.UI.MessageService;
 
 public static class ReactiveCommandReportingExtensions
@@ -12,12 +14,11 @@ public static class ReactiveCommandReportingExtensions
 		this ReactiveCommand<TParam, TResult> command,
 		MessagePanelViewModel panel,
 		ILogger logger,
-		string context)
+		LocalizedText context)
 	{
 		ArgumentNullException.ThrowIfNull(command);
 		ArgumentNullException.ThrowIfNull(panel);
 		ArgumentNullException.ThrowIfNull(logger);
-		ArgumentNullException.ThrowIfNull(context);
 
 		return command.ThrownExceptions.Subscribe(ex => ExceptionReporter.ReportAndLog(panel, logger, context, ex));
 	}

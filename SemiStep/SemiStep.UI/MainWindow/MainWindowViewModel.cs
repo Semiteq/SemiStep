@@ -70,16 +70,16 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 			.ToProperty(this, x => x.IsTransposedOrientation)
 			.DisposeWith(_disposables);
 
-		ToggleSyncCommand.ReportThrownExceptions(MessagePanel, _logger, "Sync toggle failed")
+		ToggleSyncCommand.ReportThrownExceptions(MessagePanel, _logger, new LocalizedText(nameof(Resources.SyncToggleFailed)))
 			.DisposeWith(_disposables);
 
-		OpenStyleEditorCommand.ReportThrownExceptions(MessagePanel, _logger, "Style editor failed")
+		OpenStyleEditorCommand.ReportThrownExceptions(MessagePanel, _logger, new LocalizedText(nameof(Resources.StyleEditorFailed)))
 			.DisposeWith(_disposables);
 
-		ExitCommand.ReportThrownExceptions(MessagePanel, _logger, "Exit failed")
+		ExitCommand.ReportThrownExceptions(MessagePanel, _logger, new LocalizedText(nameof(Resources.ExitFailed)))
 			.DisposeWith(_disposables);
 
-		ToggleOrientationCommand.ReportThrownExceptions(MessagePanel, _logger, "Orientation toggle failed")
+		ToggleOrientationCommand.ReportThrownExceptions(MessagePanel, _logger, new LocalizedText(nameof(Resources.OrientationToggleFailed)))
 			.DisposeWith(_disposables);
 
 		_coordinator.Mutated += OnCoordinatorMutated;
@@ -87,21 +87,25 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 		_coordinator.PlcStateChanged
 			.Subscribe(
-				_ => Guarded("PLC state update", RaiseConnectionStateProperties),
-				OnSubscriptionError("PLC state update"))
+				_ => Guarded(new LocalizedText(nameof(Resources.PlcStateUpdateFailed)), RaiseConnectionStateProperties),
+				OnSubscriptionError(new LocalizedText(nameof(Resources.PlcStateUpdateFailed))))
 			.DisposeWith(_disposables);
 
 		_coordinator.PlcRecipeConflictDetected
 			.Subscribe(
-				conflict => Guarded("PLC conflict handling", () => _ = HandleConflictAsync(conflict.Local, conflict.Plc)),
-				OnSubscriptionError("PLC conflict handling"))
+				conflict => Guarded(
+					new LocalizedText(nameof(Resources.PlcConflictHandlingFailed)),
+					() => _ = HandleConflictAsync(conflict.Local, conflict.Plc)),
+				OnSubscriptionError(new LocalizedText(nameof(Resources.PlcConflictHandlingFailed))))
 			.DisposeWith(_disposables);
 
 		Observable.Interval(TimeSpan.FromSeconds(1))
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Subscribe(
-				_ => Guarded("Sync time refresh", () => this.RaisePropertyChanged(nameof(LastSyncTimeText))),
-				OnSubscriptionError("Sync time refresh"))
+				_ => Guarded(
+					new LocalizedText(nameof(Resources.SyncTimeRefreshFailed)),
+					() => this.RaisePropertyChanged(nameof(LastSyncTimeText))),
+				OnSubscriptionError(new LocalizedText(nameof(Resources.SyncTimeRefreshFailed))))
 			.DisposeWith(_disposables);
 	}
 
@@ -228,7 +232,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		catch (Exception ex)
 		{
 			_logger.LogWarning("Unexpected error while showing PLC conflict dialog: {Message}", ex.Message);
-			MessagePanel.ReportError("Failed to show PLC conflict dialog");
+			MessagePanel.ReportError(Resources.PlcConflictDialogShowFailed);
 
 			return;
 		}
@@ -240,7 +244,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 		// The conflict callback runs fire-and-forget, so a throw in the post-dialog resolution would
 		// fault the discarded task and surface only through the nondeterministic TaskScheduler hook.
-		Guarded("PLC conflict resolution failed", () =>
+		Guarded(new LocalizedText(nameof(Resources.PlcConflictResolutionFailed)), () =>
 		{
 			var result = _coordinator.ResolveConflict(keepLocal.Value);
 
@@ -257,7 +261,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		RaiseAllStateProperties();
 	}
 
-	internal Action<Exception> OnSubscriptionError(string context)
+	internal Action<Exception> OnSubscriptionError(LocalizedText context)
 	{
 		return ex => ExceptionReporter.ReportAndLog(MessagePanel, _logger, context, ex);
 	}
@@ -265,7 +269,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	// A throw inside a subscription's onNext body is NOT routed to onError: Rx disposes the
 	// subscription and rethrows up the pipeline (fatal for a dispatcher-scheduled tick). Wrapping
 	// the body here contains it on the same report + log path as a source-observable error.
-	internal void Guarded(string context, Action body)
+	internal void Guarded(LocalizedText context, Action body)
 	{
 		try
 		{

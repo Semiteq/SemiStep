@@ -83,9 +83,42 @@ tags instead of throwing).
 `CurrentCulture` is **never** assigned. Resource lookup keys off `UICulture`; number/date formatting
 and Serilog timestamps key off `CurrentCulture` and stay invariant/English. So `{elapsed:0.0}`, step
 counts, and log timestamps stay invariant regardless of UI language — the surrounding words localize,
-the numbers do not. Log message templates and notification-panel diagnostic strings (which carry
-exception text) stay hardcoded English by design. Typed Core failures, by contrast, localize on type at
-the panel seams through `ReasonLocalizer` — see `error-reporting.md` ("Localizing failures on type").
+the numbers do not. Log message templates stay hardcoded English by design. The operational/error/status
+strings the operator sees (command-fault contexts, report/success messages, file-picker titles) localize —
+see "Operational, error, and status messages" below. Typed Core failures localize on type at the panel
+seams through `ReasonLocalizer` — see `error-reporting.md` ("Localizing failures on type"); free-text
+`Result.Fail("…")` and exception `.Message` detail stay English until their per-subsystem waves.
+
+## Operational, error, and status messages
+
+The UI-composed strings on the error and status paths — the ones an operator reads when a command fails
+or a file is saved — go through resx like the rest of the chrome. They split into two shapes by whether
+the same string is also logged.
+
+**Report+log context (dual-use).** Command faults funnel through a single `context` argument that is BOTH
+logged AND shown in the notification panel (`ExceptionReporter.ReportAndLog` logs the context, then reports
+`"{context}: {ex.Message}"`). Logs must stay English (they align with the English log templates) while the
+panel must localize. A `LocalizedText` (in `SemiStep.UI.Localization`) carries a resx key and resolves it
+two ways: `.Invariant` for the log (`GetString(key, CultureInfo.InvariantCulture)`) and `.Localized` for the
+panel (`GetString(key, Resources.Culture)`). Call sites build it compile-safely against the designer accessor,
+`new LocalizedText(nameof(Resources.CopyStepFailed))` — a typo fails the build because the accessor must exist.
+`ReportThrownExceptions`, `ExceptionReporter.ReportAndLog`, and `MainWindowViewModel.Guarded`/`OnSubscriptionError`
+take `LocalizedText`; so the same fault logs English and shows the current-culture value from one key.
+
+**Panel-only strings.** Sites that only report (no log) take the localized accessor directly:
+`ReportError(Resources.X)`, `ReportFailure(result, Resources.X)`, and
+`ReportSuccess(string.Format(CultureInfo.InvariantCulture, Resources.SavedFormat, name))` for the count/name
+formats. The generic backstop message and the PLC-conflict-dialog-show failure resolve the same way.
+
+**File pickers.** The open/save dialog `Title` and the `FilePickerFileType` display names ("Recipe Files",
+"All Files", "CSV Files") come from resx accessors. The window title is not localized: it is the product
+name plus user data plus a `" *"` dirty marker, and its only natural-language part (the new-recipe placeholder)
+already uses `Resources.WindowTitleNewRecipe`.
+
+**What stays English.** Exception `.Message` detail (the suffix after the localized context), free-text
+Core `Result` text not yet typed by its wave, and every `logger.Log*` template. The `ReasonLocalizer` seam
+localizes typed Core error *content* on type; #115 localizes only the UI-composed *context* around it — a
+disjoint seam. See `error-reporting.md`.
 
 ## `ErrorWindow` is deliberately hardcoded English
 

@@ -13,6 +13,7 @@ using ReactiveUI;
 
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
+using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.RecipeGrid;
@@ -43,17 +44,18 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 	}
 
 	[AvaloniaTheory]
-	[InlineData("PLC state update")]
-	[InlineData("PLC conflict handling")]
-	[InlineData("Sync time refresh")]
-	public void OnSubscriptionError_ReportsToPanelAndLogsException(string context)
+	[InlineData(nameof(Resources.PlcStateUpdateFailed))]
+	[InlineData(nameof(Resources.PlcConflictHandlingFailed))]
+	[InlineData(nameof(Resources.SyncTimeRefreshFailed))]
+	public void OnSubscriptionError_ReportsToPanelAndLogsException(string contextKey)
 	{
 		var failure = new InvalidOperationException("boom");
+		var context = new LocalizedText(contextKey);
 
 		_viewModel.OnSubscriptionError(context)(failure);
 
 		_fixture.MessagePanel.Entries.Should().ContainSingle(
-			entry => entry.Severity == MessageSeverity.Error && entry.Message == $"{context}: boom");
+			entry => entry.Severity == MessageSeverity.Error && entry.Message == $"{context.Localized}: boom");
 
 		var logged = _logger.Entries.Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
@@ -64,13 +66,14 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 	public void Guarded_ThrowInOnNextBody_ReportsToPanelAndLogs_WithoutEscaping()
 	{
 		var failure = new InvalidOperationException("boom");
+		var context = new LocalizedText(nameof(Resources.SyncTimeRefreshFailed));
 
-		var act = () => _viewModel.Guarded("Sync time refresh", () => throw failure);
+		var act = () => _viewModel.Guarded(context, () => throw failure);
 
 		act.Should().NotThrow("a throw in the onNext body must be contained, not propagated to the pipeline");
 
 		_fixture.MessagePanel.Entries.Should().ContainSingle(
-			entry => entry.Severity == MessageSeverity.Error && entry.Message == "Sync time refresh: boom");
+			entry => entry.Severity == MessageSeverity.Error && entry.Message == $"{context.Localized}: boom");
 
 		var logged = _logger.Entries.Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
@@ -81,6 +84,7 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 	public async Task ToggleOrientation_WhenFlipThrows_ReportsErrorToPanelAndLogs()
 	{
 		var failure = new InvalidOperationException("boom");
+		var context = new LocalizedText(nameof(Resources.OrientationToggleFailed));
 		var grid = (ActiveRecipeGridSurface)_viewModel.RecipeGrid;
 
 		// The flip raises Orientation; a throwing observer on that change makes the command body
@@ -99,7 +103,7 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 		}
 
 		_fixture.MessagePanel.Entries.Should().ContainSingle(
-			entry => entry.Severity == MessageSeverity.Error && entry.Message == "Orientation toggle failed: boom");
+			entry => entry.Severity == MessageSeverity.Error && entry.Message == $"{context.Localized}: boom");
 
 		var logged = _logger.Entries.Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
@@ -113,7 +117,7 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 		// entry rather than being dropped. Guarded's own throw-containment is proven above.
 		var result = Result.Fail("resolution rejected");
 
-		_viewModel.Guarded("PLC conflict resolution failed", () =>
+		_viewModel.Guarded(new LocalizedText(nameof(Resources.PlcConflictResolutionFailed)), () =>
 		{
 			if (result.IsFailed)
 			{

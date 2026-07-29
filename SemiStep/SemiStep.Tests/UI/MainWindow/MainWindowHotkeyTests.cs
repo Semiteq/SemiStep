@@ -10,6 +10,7 @@ using ReactiveUI;
 
 using SemiStep.Tests.UI.Helpers;
 
+using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.Reactive;
@@ -56,7 +57,7 @@ public sealed class MainWindowHotkeyTests : IAsyncLifetime
 		invoke.Should().NotThrow("ExecuteIfPossible swallows the caller-thread rethrow that would crash the app");
 
 		_fixture.MessagePanel.Entries.Should().ContainSingle(
-			entry => entry.Severity == MessageSeverity.Error && entry.Message == "Orientation toggle failed: boom");
+			entry => entry.Severity == MessageSeverity.Error && entry.Message == $"{Resources.OrientationToggleFailed}: boom");
 	}
 
 	[AvaloniaFact]

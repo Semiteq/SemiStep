@@ -14,6 +14,8 @@ using SemiStep.UI.Reactive;
 using SemiStep.UI.ShutdownService;
 using SemiStep.UI.StyleEditor;
 
+using LocalizationResources = SemiStep.UI.Localization.Resources;
+
 namespace SemiStep.UI.MainWindow;
 
 internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
@@ -157,7 +159,7 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 			// Reached from an async void event handler: an unhandled throw here unwinds the
 			// dispatcher loop into Program.Main and kills the process. Contain it, report,
 			// and keep the window open (e.Cancel is already true at the call site).
-			ViewModel?.MessagePanel.ReportError($"Exit failed: {ex.Message}");
+			ViewModel?.MessagePanel.ReportError($"{LocalizationResources.ExitFailed}: {ex.Message}");
 		}
 		finally
 		{
@@ -231,12 +233,12 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 	{
 		var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 		{
-			Title = "Open Recipe",
+			Title = LocalizationResources.OpenRecipeDialogTitle,
 			AllowMultiple = false,
 			FileTypeFilter =
 			[
-				new FilePickerFileType("Recipe Files") { Patterns = ["*.csv", "*.recipe"] },
-				new FilePickerFileType("All Files") { Patterns = ["*.*"] }
+				new FilePickerFileType(LocalizationResources.RecipeFilesFilter) { Patterns = ["*.csv", "*.recipe"] },
+				new FilePickerFileType(LocalizationResources.AllFilesFilter) { Patterns = ["*.*"] }
 			]
 		});
 
@@ -248,13 +250,13 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 	{
 		var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
 		{
-			Title = "Save Recipe",
+			Title = LocalizationResources.SaveRecipeDialogTitle,
 			DefaultExtension = "csv",
 			SuggestedFileName = context.Input ?? "recipe",
 			FileTypeChoices =
 			[
-				new FilePickerFileType("CSV Files") { Patterns = ["*.csv"] },
-				new FilePickerFileType("Recipe Files") { Patterns = ["*.recipe"] }
+				new FilePickerFileType(LocalizationResources.CsvFilesFilter) { Patterns = ["*.csv"] },
+				new FilePickerFileType(LocalizationResources.RecipeFilesFilter) { Patterns = ["*.recipe"] }
 			]
 		});
 

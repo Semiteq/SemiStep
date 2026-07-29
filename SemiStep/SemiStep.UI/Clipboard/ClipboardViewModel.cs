@@ -17,6 +17,7 @@ using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Helpers;
 
 using SemiStep.UI.Coordinator;
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.RecipeGrid;
 
@@ -58,13 +59,13 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 			canEdit.CombineLatest(canCopyOrCut, (left, right) => left && right));
 		PasteStepCommand = ReactiveCommand.CreateFromTask(PasteStepsAsync, canEdit);
 
-		CopyStepCommand.ReportThrownExceptions(_messagePanel, _logger, "Copy failed")
+		CopyStepCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.CopyStepFailed)))
 			.DisposeWith(_disposables);
 
-		CutStepCommand.ReportThrownExceptions(_messagePanel, _logger, "Cut failed")
+		CutStepCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.CutStepFailed)))
 			.DisposeWith(_disposables);
 
-		PasteStepCommand.ReportThrownExceptions(_messagePanel, _logger, "Paste failed")
+		PasteStepCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.PasteStepFailed)))
 			.DisposeWith(_disposables);
 	}
 
@@ -134,11 +135,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		var recipeResult = DeserializeStepsFromClipboard(csvText);
 		if (recipeResult.IsFailed)
 		{
-			var errorMessages = string.Join(
-				Environment.NewLine,
-				recipeResult.Errors.Select(e => e.Message));
-
-			_messagePanel.ReportError($"Paste failed: {errorMessages}");
+			_messagePanel.ReportFailure(recipeResult, Resources.PasteStepFailed);
 
 			return;
 		}

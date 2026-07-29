@@ -297,4 +297,66 @@ public class Resources
 	public static string ErrorOwnedByAnotherInstance => ResourceManager.GetString("ErrorOwnedByAnotherInstance", resourceCulture) ?? string.Empty;
 
 	public static string ErrorFormulaComputationFailed => ResourceManager.GetString("ErrorFormulaComputationFailed", resourceCulture) ?? string.Empty;
+
+	public static string CopyStepFailed => ResourceManager.GetString("CopyStepFailed", resourceCulture) ?? string.Empty;
+
+	public static string CutStepFailed => ResourceManager.GetString("CutStepFailed", resourceCulture) ?? string.Empty;
+
+	public static string PasteStepFailed => ResourceManager.GetString("PasteStepFailed", resourceCulture) ?? string.Empty;
+
+	public static string SaveFailed => ResourceManager.GetString("SaveFailed", resourceCulture) ?? string.Empty;
+
+	public static string SaveAsFailed => ResourceManager.GetString("SaveAsFailed", resourceCulture) ?? string.Empty;
+
+	public static string LoadFailed => ResourceManager.GetString("LoadFailed", resourceCulture) ?? string.Empty;
+
+	public static string SyncToggleFailed => ResourceManager.GetString("SyncToggleFailed", resourceCulture) ?? string.Empty;
+
+	public static string StyleEditorFailed => ResourceManager.GetString("StyleEditorFailed", resourceCulture) ?? string.Empty;
+
+	public static string ExitFailed => ResourceManager.GetString("ExitFailed", resourceCulture) ?? string.Empty;
+
+	public static string OrientationToggleFailed => ResourceManager.GetString("OrientationToggleFailed", resourceCulture) ?? string.Empty;
+
+	public static string PlcStateUpdateFailed => ResourceManager.GetString("PlcStateUpdateFailed", resourceCulture) ?? string.Empty;
+
+	public static string PlcConflictHandlingFailed => ResourceManager.GetString("PlcConflictHandlingFailed", resourceCulture) ?? string.Empty;
+
+	public static string SyncTimeRefreshFailed => ResourceManager.GetString("SyncTimeRefreshFailed", resourceCulture) ?? string.Empty;
+
+	public static string PlcConflictResolutionFailed => ResourceManager.GetString("PlcConflictResolutionFailed", resourceCulture) ?? string.Empty;
+
+	public static string AddStepFailed => ResourceManager.GetString("AddStepFailed", resourceCulture) ?? string.Empty;
+
+	public static string DeleteStepFailed => ResourceManager.GetString("DeleteStepFailed", resourceCulture) ?? string.Empty;
+
+	public static string UndoFailed => ResourceManager.GetString("UndoFailed", resourceCulture) ?? string.Empty;
+
+	public static string RedoFailed => ResourceManager.GetString("RedoFailed", resourceCulture) ?? string.Empty;
+
+	public static string PlcConflictDialogShowFailed => ResourceManager.GetString("PlcConflictDialogShowFailed", resourceCulture) ?? string.Empty;
+
+	public static string SaveRecipeFailed => ResourceManager.GetString("SaveRecipeFailed", resourceCulture) ?? string.Empty;
+
+	public static string SavedFormat => ResourceManager.GetString("SavedFormat", resourceCulture) ?? string.Empty;
+
+	public static string LoadedFormat => ResourceManager.GetString("LoadedFormat", resourceCulture) ?? string.Empty;
+
+	public static string PlcReconnect => ResourceManager.GetString("PlcReconnect", resourceCulture) ?? string.Empty;
+
+	public static string StepFormat => ResourceManager.GetString("StepFormat", resourceCulture) ?? string.Empty;
+
+	public static string StepActionChangeFailedFormat => ResourceManager.GetString("StepActionChangeFailedFormat", resourceCulture) ?? string.Empty;
+
+	public static string UnexpectedErrorMessage => ResourceManager.GetString("UnexpectedErrorMessage", resourceCulture) ?? string.Empty;
+
+	public static string OpenRecipeDialogTitle => ResourceManager.GetString("OpenRecipeDialogTitle", resourceCulture) ?? string.Empty;
+
+	public static string SaveRecipeDialogTitle => ResourceManager.GetString("SaveRecipeDialogTitle", resourceCulture) ?? string.Empty;
+
+	public static string RecipeFilesFilter => ResourceManager.GetString("RecipeFilesFilter", resourceCulture) ?? string.Empty;
+
+	public static string AllFilesFilter => ResourceManager.GetString("AllFilesFilter", resourceCulture) ?? string.Empty;
+
+	public static string CsvFilesFilter => ResourceManager.GetString("CsvFilesFilter", resourceCulture) ?? string.Empty;
 }

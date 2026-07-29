@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using FluentAssertions;
 
 using SemiStep.Tests.UI.Helpers;
+using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.MessageService;
 
@@ -65,7 +66,7 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 
 			var operationEntry = _fixture.MessagePanel.Entries
 				.Should().ContainSingle(e => e.Severity == MessageSeverity.Error).Subject;
-			operationEntry.Message.Should().StartWith("Style editor failed:");
+			operationEntry.Message.Should().StartWith($"{Resources.StyleEditorFailed}:");
 			operationEntry.Message.Should().Contain("factory boom");
 		}
 		finally

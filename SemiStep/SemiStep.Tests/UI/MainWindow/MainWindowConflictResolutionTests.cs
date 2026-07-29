@@ -3,9 +3,9 @@
 using FluentAssertions;
 
 using SemiStep.Core.Recipes;
-
 using SemiStep.Tests.UI.Helpers;
 
+using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.MessageService;
 
@@ -95,7 +95,7 @@ public sealed class MainWindowConflictResolutionTests : IAsyncLifetime
 
 		await act.Should().NotThrowAsync("a dialog fault must be contained on the fire-and-forget path");
 		_fixture.MessagePanel.Entries.Should().Contain(
-			entry => entry.Severity == MessageSeverity.Error && entry.Message == "Failed to show PLC conflict dialog");
+			entry => entry.Severity == MessageSeverity.Error && entry.Message == Resources.PlcConflictDialogShowFailed);
 	}
 
 	[AvaloniaFact]
@@ -104,7 +104,7 @@ public sealed class MainWindowConflictResolutionTests : IAsyncLifetime
 		await _viewModel.HandleConflictAsync(CurrentRecipe, CurrentRecipe);
 
 		_fixture.MessagePanel.Entries.Should().Contain(
-			entry => entry.Severity == MessageSeverity.Error && entry.Message == "Failed to show PLC conflict dialog",
+			entry => entry.Severity == MessageSeverity.Error && entry.Message == Resources.PlcConflictDialogShowFailed,
 			"an unhandled interaction must convert today's silent drop into a report");
 	}
 

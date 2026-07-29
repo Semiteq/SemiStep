@@ -59,6 +59,22 @@ public sealed class ResourceSyncTests
 	}
 
 	[Fact]
+	public void EveryNeutralKey_HasDesignerAccessor()
+	{
+		// The per-key resolution test walks designer accessors -> resx (designer subset of resx).
+		// This is the reverse leg: every resx data name must have a matching public static string
+		// accessor, so a new resx key without a generated accessor fails the build's contract here.
+		var accessorNames = typeof(Resources)
+			.GetProperties(BindingFlags.Public | BindingFlags.Static)
+			.Where(property => property.PropertyType == typeof(string))
+			.Select(property => property.Name)
+			.ToHashSet();
+
+		_neutral.Keys.Should().BeSubsetOf(accessorNames,
+			"every resx data name must have a matching public static string accessor in Resources.Designer.cs");
+	}
+
+	[Fact]
 	public void EveryValue_IsNonEmpty_InBothSatellites()
 	{
 		_neutral.Values.Should().NotContain(string.Empty, "no English resx value may be blank");

@@ -4,6 +4,7 @@ using System.Linq;
 using FluentResults;
 
 using SemiStep.Core.Plc.Sync.Ownership;
+using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
 
@@ -27,6 +28,8 @@ public static class ReasonLocalizer
 			FormulaComputationFailedError error => Format(Resources.ErrorFormulaComputationFailed, error.Target, error.Reason),
 			AtStepError error => Format(Resources.AtStepFormat, error.StepNumber, Localize(error.Inner)),
 			AtColumnError error => Format(Resources.AtColumnFormat, error.ColumnKey, Localize(error.Inner)),
+			UnmatchedEndForWarning warning => Format(Resources.WarningUnmatchedEndFor, warning.StepIndex),
+			UnclosedForLoopWarning warning => Format(Resources.WarningUnclosedForLoop, warning.StartIndex),
 			_ => null
 		};
 

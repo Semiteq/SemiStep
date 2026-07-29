@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 
+using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Shared;
 
 namespace SemiStep.Core.Recipes.Analysis;
@@ -42,7 +43,7 @@ internal static class LoopParser
 				}
 				case (int)ServiceActionId.EndForLoop when stack.Count == 0:
 				{
-					reasons.Add(new Warning($"Unmatched EndFor at step {i}"));
+					reasons.Add(new UnmatchedEndForWarning(i));
 
 					break;
 				}
@@ -64,7 +65,7 @@ internal static class LoopParser
 		while (stack.Count > 0)
 		{
 			var frame = stack.Pop();
-			reasons.Add(new Warning($"Unclosed For loop starting at step {frame.StartIndex}"));
+			reasons.Add(new UnclosedForLoopWarning(frame.StartIndex));
 		}
 
 		return Result

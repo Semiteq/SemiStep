@@ -285,4 +285,24 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 			window.Close();
 		}
 	}
+
+	[AvaloniaFact]
+	public void RefreshReasons_UnclosedForWarning_UnderRussianCulture_SurfacesRussianWarningInPanel()
+	{
+		_fixture.Session.Reset();
+		var driver = new RecipeTestDriver(_fixture.Session);
+		driver.AddFor(3).AddWait(1f);
+
+		_fixture.Session.IsValid.Should().BeFalse(
+			"an unclosed For loop is a structural defect that the typed warning must flip through OfType<Warning>()");
+
+		using var panel = new MessagePanelViewModel();
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			panel.RefreshReasons(_fixture.Session.Snapshot.Reasons);
+		}
+
+		var entry = panel.Entries.Should().ContainSingle(item => item.IsWarning).Subject;
+		entry.Message.Should().Be("Незакрытый цикл For, начатый на шаге 0");
+	}
 }

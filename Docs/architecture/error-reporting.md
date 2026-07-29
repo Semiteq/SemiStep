@@ -45,7 +45,9 @@ stays English (see "The log path is unchanged").
 Operator-facing Core failures are modelled as **typed `FluentResults.Error` subclasses**, not free-text
 `Result.Fail("...")`. Each subclass owns its English message string in Core (aligned with the English
 log), and carries its data as structured properties (e.g. `OwnedByAnotherInstanceError.Holder`,
-`FormulaComputationFailedError.Target`/`.Reason`) rather than baking them into the string.
+`FormulaComputationFailedError.Target`/`.Reason`) rather than baking them into the string. The same
+seam also localizes typed `Success`-derived `Warning` subclasses (e.g. the loop warnings) by type, so
+warnings and errors share one localization path.
 
 The UI localizes these **on type**, not by parsing text or by error codes. `ReasonLocalizer`
 (`SemiStep.UI/Localization/`) takes any `IReason` and switches on its concrete type to select a resx
@@ -98,13 +100,18 @@ decorators already placed here, with no gate change.
 
 > A public `Error` type exists **iff** a distinct localized operator sentence exists. Everything else
 > is internal and crosses the UI boundary only wrapped in an envelope type carrying an English `Detail`.
+> The identical build-time contract applies to typed `Warning` subclasses: a public, non-abstract
+> `Warning` type exists **iff** a distinct localized operator sentence exists.
 
 This bounds the localizable public surface to the operator sentences, regardless of how many internal
 failure modes Core grows. A build-time reflection test
-(`SemiStep.Tests/UI/Localization/CoreErrorLocalizationCoverageTests`) enforces it: every public,
-non-abstract `Error` subclass in `SemiStep.Core` must have a registered sample and must localize to a
-non-empty string that differs from its English `.Message` under `Resources.Culture = ru`. A new public
-error type without a switch case and resx pair fails the build instead of leaking English silently.
+(`SemiStep.Tests/UI/Localization/CoreErrorLocalizationCoverageTests`,
+`EveryPublicCoreReasonType_...`) enforces it over both reason kinds: it enumerates every public,
+non-abstract `Error` subclass **and** every public, non-abstract `Warning` subclass in `SemiStep.Core`
+(the two enumerations concatenated, keyed through a shared `Dictionary<Type, IReason>` sample map). Each
+must have a registered sample and must localize to a non-empty string that differs from its English
+`.Message` under `Resources.Culture = ru`. A new public error or warning type without a switch case and
+resx pair fails the build instead of leaking English silently.
 
 ### The log path is unchanged (always English)
 

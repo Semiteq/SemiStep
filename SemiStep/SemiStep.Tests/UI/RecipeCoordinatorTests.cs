@@ -406,8 +406,8 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.ForLoopActionId);
 
-		_fixture.MessagePanel.Entries.Should().Contain(
-			e => e.IsWarning && e.Message.Contains("Unclosed For loop", StringComparison.OrdinalIgnoreCase),
+		_fixture.MessagePanel.Entries.Should().ContainSingle(
+			e => e.IsWarning,
 			"a successful mutation that leaves the recipe structurally defective surfaces the warning from the snapshot");
 
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.EndForLoopActionId);

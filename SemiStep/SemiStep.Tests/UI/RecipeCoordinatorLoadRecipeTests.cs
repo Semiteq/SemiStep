@@ -17,6 +17,7 @@ using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
+using SemiStep.Core.Shared;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
@@ -172,6 +173,38 @@ public sealed class RecipeCoordinatorLoadRecipeTests
 			result.IsSuccess.Should().BeTrue("loading a valid empty CSV must succeed");
 			panel.Entries.Should().NotContain(e => e.IsWarning,
 				"an empty recipe is a normal initial state and must not produce warnings");
+		}
+		finally
+		{
+			coordinator.Dispose();
+			panel.Dispose();
+			File.Delete(tempFilePath);
+		}
+	}
+
+	[AvaloniaFact]
+	public async Task LoadRecipeAsync_RowCountMismatch_CarriesWarningOnSuccessResult()
+	{
+		var (coordinator, panel) = await BuildCoordinatorAsync(services => services.AddCsv());
+		coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		var tempFilePath = Path.Combine(Path.GetTempPath(), $"{TempFilePrefix}.{Guid.NewGuid():N}.csv");
+		await coordinator.SaveRecipeAsync(tempFilePath);
+
+		try
+		{
+			// SaveAsync always writes a correct ROWS header, so a round-trip cannot trigger the
+			// mismatch; patch the metadata to a wrong value to simulate a hand-edited recipe.
+			var original = await File.ReadAllTextAsync(tempFilePath);
+			var patched = original.Replace("# ROWS=\"1\"", "# ROWS=\"99\"", StringComparison.Ordinal);
+			patched.Should().NotBe(original, "the ROWS header must actually change for the fixture to be valid");
+			await File.WriteAllTextAsync(tempFilePath, patched);
+
+			var result = await coordinator.LoadRecipeAsync(tempFilePath);
+
+			result.IsSuccess.Should().BeTrue("a row-count mismatch is a warning, not a load failure");
+			result.Successes.OfType<Warning>()
+				.Should().ContainSingle("the CSV load-integrity warning must ride the returned success Result")
+				.Which.Message.Should().Contain("Row count mismatch");
 		}
 		finally
 		{

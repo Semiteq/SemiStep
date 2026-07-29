@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 
 using ReactiveUI;
 
+using SemiStep.Core.Shared;
+
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
@@ -131,8 +133,17 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		}
 
 		CurrentFilePath = filePath;
-		_messagePanel.ReportSuccess(
-			string.Format(CultureInfo.InvariantCulture, Resources.LoadedFormat, Path.GetFileName(filePath)));
+
+		var warnings = result.Successes.OfType<Warning>().ToList();
+		if (warnings.Count > 0)
+		{
+			_messagePanel.ReportWarning(string.Join("; ", warnings.Select(warning => warning.Message)));
+		}
+		else
+		{
+			_messagePanel.ReportSuccess(
+				string.Format(CultureInfo.InvariantCulture, Resources.LoadedFormat, Path.GetFileName(filePath)));
+		}
 	}
 
 	private void NewRecipe()

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections.Immutable;
+using System.Globalization;
 using System.Reactive.Linq;
 
 using Avalonia.Controls;
@@ -12,10 +13,13 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using ReactiveUI;
 
+using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
+using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
+using SemiStep.Tests.UI.Localization;
 
 using SemiStep.UI.Clipboard;
 using SemiStep.UI.Localization;
@@ -190,6 +194,54 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 			clipboardViewModel.Dispose();
 			window.Close();
 		}
+	}
+
+	[AvaloniaFact]
+	public void GateValidationFailure_ReportedUnderRussianCulture_ShowsRussianPositionEnglishDetail()
+	{
+		const int BoundActionId = 11;
+		const string AmountColumnKey = "amount";
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[BoundActionId] = new ActionDefinition(
+				id: BoundActionId,
+				uiName: "Bound",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
+				{
+					new ActionPropertyDefinition(
+						Key: AmountColumnKey,
+						GroupName: null,
+						PropertyTypeId: "int_bounded",
+						DefaultValue: null)
+				})
+		};
+		var registry = TestRecipeMetadataRegistryFactory.Build(
+			new[]
+			{
+				TestPropertyTypeDefinitionBuilder.CreateInt("int_bounded", min: 0, max: 100),
+				TestPropertyTypeDefinitionBuilder.CreateString("text", maxLength: 8)
+			},
+			actions);
+		var validator = new ImportedRecipeValidator(registry);
+		var step = new Step(
+			BoundActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(AmountColumnKey), PropertyValue.FromInt(500)));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+		result.IsFailed.Should().BeTrue();
+
+		using var panel = new MessagePanelViewModel();
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			panel.ReportFailure(result);
+		}
+
+		var entry = panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
+		entry.Message.Should().Contain("Шаг").And.Contain("Столбец")
+			.And.Contain(AmountColumnKey).And.Contain("exceeds maximum");
 	}
 
 	[AvaloniaFact]

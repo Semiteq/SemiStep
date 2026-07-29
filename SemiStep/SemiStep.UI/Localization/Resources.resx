@@ -454,6 +454,12 @@
   <data name="ErrorFormulaComputationFailed" xml:space="preserve">
     <value>Formula computation for target '{0}' failed: {1}</value>
   </data>
+  <data name="AtStepFormat" xml:space="preserve">
+    <value>Step {0}: {1}</value>
+  </data>
+  <data name="AtColumnFormat" xml:space="preserve">
+    <value>Column '{0}': {1}</value>
+  </data>
   <data name="CopyStepFailed" xml:space="preserve">
     <value>Copy failed</value>
   </data>

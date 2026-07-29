@@ -454,6 +454,12 @@
   <data name="ErrorFormulaComputationFailed" xml:space="preserve">
     <value>Вычисление формулы для цели «{0}» не выполнено: {1}</value>
   </data>
+  <data name="AtStepFormat" xml:space="preserve">
+    <value>Шаг {0}: {1}</value>
+  </data>
+  <data name="AtColumnFormat" xml:space="preserve">
+    <value>Столбец «{0}»: {1}</value>
+  </data>
   <data name="CopyStepFailed" xml:space="preserve">
     <value>Не удалось скопировать</value>
   </data>

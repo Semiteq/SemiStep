@@ -7,6 +7,7 @@ using FluentAssertions;
 using FluentResults;
 
 using SemiStep.Core.Plc.Sync.Ownership;
+using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
 using SemiStep.Core.Shared;
@@ -53,6 +54,40 @@ public sealed class ReasonLocalizerTests
 		using (ResourcesCultureScope.Use("en"))
 		{
 			ReasonLocalizer.Localize(error).Should().Be(error.Message);
+		}
+	}
+
+	[Fact]
+	public void Localize_UnmatchedEndForWarning_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new UnmatchedEndForWarning(2))
+				.Should().Be("Непарный EndFor на шаге 2");
+		}
+	}
+
+	[Fact]
+	public void Localize_UnclosedForLoopWarning_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new UnclosedForLoopWarning(5))
+				.Should().Be("Незакрытый цикл For, начатый на шаге 5");
+		}
+	}
+
+	[Fact]
+	public void Localize_TypedLoopWarnings_UnderEnglishCulture_MatchOriginalMessage()
+	{
+		Warning[] samples = [new UnmatchedEndForWarning(2), new UnclosedForLoopWarning(5)];
+
+		using (ResourcesCultureScope.Use("en"))
+		{
+			foreach (var sample in samples)
+			{
+				ReasonLocalizer.Localize(sample).Should().Be(sample.Message);
+			}
 		}
 	}
 

@@ -348,7 +348,7 @@ public sealed class RecipeCoordinator : IDisposable
 				// Carry only the CSV load-integrity warning through the return. The structural
 				// analysis reasons already surface via RebuildMessagePanel -> RefreshReasons, so
 				// merging them here would double-count and hide the load warning behind the same
-				// sealed Warning type the viewmodel inspects.
+				// Warning type the viewmodel inspects.
 				return Result.Ok().WithReasons(loadResult.Successes);
 			});
 		}

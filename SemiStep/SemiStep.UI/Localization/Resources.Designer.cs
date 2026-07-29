@@ -302,6 +302,10 @@ public class Resources
 
 	public static string AtColumnFormat => ResourceManager.GetString("AtColumnFormat", resourceCulture) ?? string.Empty;
 
+	public static string WarningUnmatchedEndFor => ResourceManager.GetString("WarningUnmatchedEndFor", resourceCulture) ?? string.Empty;
+
+	public static string WarningUnclosedForLoop => ResourceManager.GetString("WarningUnclosedForLoop", resourceCulture) ?? string.Empty;
+
 	public static string CopyStepFailed => ResourceManager.GetString("CopyStepFailed", resourceCulture) ?? string.Empty;
 
 	public static string CutStepFailed => ResourceManager.GetString("CutStepFailed", resourceCulture) ?? string.Empty;

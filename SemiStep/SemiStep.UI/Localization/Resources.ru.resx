@@ -460,6 +460,12 @@
   <data name="AtColumnFormat" xml:space="preserve">
     <value>Столбец «{0}»: {1}</value>
   </data>
+  <data name="WarningUnmatchedEndFor" xml:space="preserve">
+    <value>Непарный EndFor на шаге {0}</value>
+  </data>
+  <data name="WarningUnclosedForLoop" xml:space="preserve">
+    <value>Незакрытый цикл For, начатый на шаге {0}</value>
+  </data>
   <data name="CopyStepFailed" xml:space="preserve">
     <value>Не удалось скопировать</value>
   </data>

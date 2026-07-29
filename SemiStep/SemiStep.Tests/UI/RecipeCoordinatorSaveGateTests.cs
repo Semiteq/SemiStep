@@ -47,8 +47,8 @@ public sealed class RecipeCoordinatorSaveGateTests
 
 			result.IsFailed.Should().BeTrue("Save must reject a recipe with structural defects");
 			File.Exists(tempFilePath).Should().BeFalse("the file must not be written when Save is rejected");
-			panel.Entries.Should().Contain(
-				e => e.IsWarning && e.Message.Contains("Unclosed For loop", StringComparison.OrdinalIgnoreCase),
+			panel.Entries.Should().ContainSingle(
+				e => e.IsWarning,
 				"the underlying analyzer warning must still surface in the message panel after the rejected Save");
 		}
 		finally

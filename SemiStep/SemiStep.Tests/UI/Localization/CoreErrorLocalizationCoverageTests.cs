@@ -7,8 +7,10 @@ using FluentAssertions;
 using FluentResults;
 
 using SemiStep.Core.Plc.Sync.Ownership;
+using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
+using SemiStep.Core.Shared;
 
 using SemiStep.UI.Localization;
 
@@ -21,7 +23,7 @@ namespace SemiStep.Tests.UI.Localization;
 [Trait("Category", "Unit")]
 public sealed class CoreErrorLocalizationCoverageTests
 {
-	private static readonly IReadOnlyDictionary<Type, Error> _typeData = new Dictionary<Type, Error>
+	private static readonly IReadOnlyDictionary<Type, IReason> _typeData = new Dictionary<Type, IReason>
 	{
 		[typeof(OwnedByAnotherInstanceError)] =
 			new OwnedByAnotherInstanceError(new OwnerInfo(1, "MACHINE", "alice", DateTimeOffset.UnixEpoch)),
@@ -30,30 +32,39 @@ public sealed class CoreErrorLocalizationCoverageTests
 		[typeof(AtStepError)] =
 			new AtStepError(1, new Error("x")),
 		[typeof(AtColumnError)] =
-			new AtColumnError("k", new Error("x"))
+			new AtColumnError("k", new Error("x")),
+		[typeof(UnmatchedEndForWarning)] =
+			new UnmatchedEndForWarning(1),
+		[typeof(UnclosedForLoopWarning)] =
+			new UnclosedForLoopWarning(1)
 	};
 
 	[Fact]
-	public void EveryPublicCoreErrorType_HasSampleAndLocalizesUnderRussianCulture()
+	public void EveryPublicCoreReasonType_HasSampleAndLocalizesUnderRussianCulture()
 	{
 		using (ResourcesCultureScope.Use("ru"))
 		{
-			foreach (var errorType in PublicCoreErrorTypes())
+			PublicCoreErrorTypes().Should().NotBeEmpty(
+				"the coverage loop must not pass vacuously if all public Core errors became internal");
+			PublicCoreWarningTypes().Should().NotBeEmpty(
+				"the coverage loop must not pass vacuously if all public Core warnings became internal");
+
+			foreach (var reasonType in PublicCoreErrorTypes().Concat(PublicCoreWarningTypes()))
 			{
 				_typeData.Should().ContainKey(
-					errorType,
-					"every public Core Error subclass needs a sample in _typeData");
+					reasonType,
+					"every public Core Error/Warning subclass needs a sample in _typeData");
 
-				var sample = _typeData[errorType];
+				var sample = _typeData[reasonType];
 				var localized = ReasonLocalizer.Localize(sample);
 
 				localized.Should().NotBeNullOrEmpty(
 					"{0} must localize to a non-empty sentence",
-					errorType.Name);
+					reasonType.Name);
 				localized.Should().NotBe(
 					sample.Message,
 					"{0} needs a ReasonLocalizer switch case producing localized text under ru",
-					errorType.Name);
+					reasonType.Name);
 			}
 		}
 	}
@@ -66,5 +77,15 @@ public sealed class CoreErrorLocalizationCoverageTests
 				&& !type.IsAbstract
 				&& typeof(Error).IsAssignableFrom(type)
 				&& type != typeof(Error));
+	}
+
+	private static IEnumerable<Type> PublicCoreWarningTypes()
+	{
+		return typeof(Warning).Assembly
+			.GetTypes()
+			.Where(type => type.IsVisible
+				&& !type.IsAbstract
+				&& typeof(Warning).IsAssignableFrom(type)
+				&& type != typeof(Warning));
 	}
 }

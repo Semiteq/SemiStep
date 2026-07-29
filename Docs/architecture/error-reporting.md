@@ -76,9 +76,9 @@ stringifying it.
 
 These localize by **composition**, which is distinct from the fallback recursion above. A decorator's
 `ReasonLocalizer` case formats its *own* localized template (`AtStepFormat` = `"Step {0}: {1}"`, ru
-`"Шаг {0}: {1}"`; `AtColumnFormat` = `"Column '{0}': {1}"`, ru `"Столбец '{0}': {1}"`) with
+`"Шаг {0}: {1}"`; `AtColumnFormat` = `"Column '{0}': {1}"`, ru `"Столбец «{0}»: {1}"`) with
 `Localize(Inner)` as the trailing argument, so nesting composes:
-`Localize(AtStep(3, AtColumn("gas", inner)))` → `"Шаг 3: Столбец 'gas': <inner>"`. The two modes are
+`Localize(AtStep(3, AtColumn("gas", inner)))` → `"Шаг 3: Столбец «gas»: <inner>"`. The two modes are
 mirror images:
 
 - **Fallback recursion** finds a typed cause inside an *untyped* wrapper — it walks `CausedBy` and
@@ -89,12 +89,24 @@ mirror images:
 Because both decorators are public non-abstract Core `Error` subclasses, the coverage test forces a
 `ReasonLocalizer` case for each; a missing case is a red build.
 
-**Interim state (until slice 4).** The gate localizes the *position* now; the inner *detail* stays
-English. The value errors it wraps (`PropertyValidator`, `GroupHasIntKey`, the unknown-action /
-must-be-integer raises) are still free-text, so `Localize(Inner)` falls through to `Inner.Message`.
-Under `ru` a gate failure reads e.g. `"Шаг 3: Столбец 'gas': value 5 is out of range"` — Russian
-position, English detail. Slice 4 types those value errors; once typed, they localize through the
-decorators already placed here, with no gate change.
+### Recipe value errors localize on both paths
+
+The two producers every recipe-value check flows through — `PropertyValidator` (range/type/string rules)
+and `RecipeMetadataRegistry` (not-found / not-in-group lookups) — raise **typed** value errors, so they
+localize by type on both routes that carry them to the panel:
+
+- **Import path (decorated).** `ImportedRecipeValidator` wraps each failure in `AtStepError`/`AtColumnError`,
+  which compose `Localize(Inner)`. Because the inner is now typed, `Localize(Inner)` renders it localized
+  rather than falling through to `Inner.Message`. Under `ru` a gate failure reads position *and* detail in
+  Russian, e.g. `"Шаг 3: Столбец «gas»: Значение 5 больше максимума 4 для «amount»"` — no gate change was
+  needed; the decorators placed in slice 3 already compose the now-typed inner.
+- **Interactive-edit path (undecorated).** `RecipeSession.UpdateStepProperty` →
+  `ParseAndValidateColumnValue` → `PropertyValidator`/registry bubbles the typed error straight to the panel
+  with no decorator, so it localizes standalone.
+
+Still free-text (deferred to a later wave): `ImportedRecipeValidator`'s own unknown-action raise,
+`PropertyParser`, and the `RecipeSession` index errors. `Localize(Inner)` falls through to `.Message` for
+those until their own wave types them.
 
 ### The published rule (public error surface)
 

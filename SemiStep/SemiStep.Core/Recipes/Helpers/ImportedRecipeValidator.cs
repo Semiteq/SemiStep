@@ -70,7 +70,7 @@ public sealed class ImportedRecipeValidator(
 		{
 			errors.Add(new AtColumnError(
 				column.Key,
-				new Error($"Group value must be integer, got {propertyValue.Type}")));
+				new GroupValueNotIntegerError(propertyValue.Type)));
 			return;
 		}
 

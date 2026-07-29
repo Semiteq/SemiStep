@@ -112,6 +112,66 @@ public sealed class ReasonLocalizerTests
 		}
 	}
 
+	[Fact]
+	public void Localize_ValueAboveMaximum_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new ValueAboveMaximumError(500, 100, "temperature"))
+				.Should().Be("Значение 500 больше максимума 100 для «temperature»");
+		}
+	}
+
+	[Fact]
+	public void Localize_StringTooLong_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new StringTooLongError(20, 8, "label"))
+				.Should().Be("Длина строки 20 превышает максимум 8 для «label»");
+		}
+	}
+
+	[Fact]
+	public void Localize_ColumnNotFound_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new ColumnNotFoundError("temp"))
+				.Should().Be("Столбец «temp» не найден");
+		}
+	}
+
+	[Fact]
+	public void Localize_ValueNotInGroup_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new ValueNotInGroupError(7, "valves"))
+				.Should().Be("Значение 7 не является допустимым членом группы «valves»");
+		}
+	}
+
+	[Fact]
+	public void Localize_RecipeValueErrors_UnderEnglishCulture_MatchOriginalMessage()
+	{
+		IError[] samples =
+		[
+			new ValueAboveMaximumError(500, 100, "temperature"),
+			new StringTooLongError(20, 8, "label"),
+			new ColumnNotFoundError("temp"),
+			new ValueNotInGroupError(7, "valves")
+		];
+
+		using (ResourcesCultureScope.Use("en"))
+		{
+			foreach (var sample in samples)
+			{
+				ReasonLocalizer.Localize(sample).Should().Be(sample.Message);
+			}
+		}
+	}
+
 	[Theory]
 	[InlineData("ru")]
 	[InlineData("en")]

@@ -460,6 +460,45 @@
   <data name="AtColumnFormat" xml:space="preserve">
     <value>Column '{0}': {1}</value>
   </data>
+  <data name="ErrorPropertyValueTypeMismatch" xml:space="preserve">
+    <value>Expected {0} value but got {1} for '{2}'</value>
+  </data>
+  <data name="ErrorUnsupportedPropertySystemType" xml:space="preserve">
+    <value>Unsupported property system type: {0}</value>
+  </data>
+  <data name="ErrorGroupValueNotInteger" xml:space="preserve">
+    <value>Group value must be integer, got {0}</value>
+  </data>
+  <data name="ErrorValueBelowMinimum" xml:space="preserve">
+    <value>Value {0} is below minimum {1} for '{2}'</value>
+  </data>
+  <data name="ErrorValueAboveMaximum" xml:space="preserve">
+    <value>Value {0} exceeds maximum {1} for '{2}'</value>
+  </data>
+  <data name="ErrorStringContainsNul" xml:space="preserve">
+    <value>String value contains embedded NUL character for '{0}'</value>
+  </data>
+  <data name="ErrorStringTooLong" xml:space="preserve">
+    <value>String length {0} exceeds maximum {1} for '{2}'</value>
+  </data>
+  <data name="ErrorActionByIdNotFound" xml:space="preserve">
+    <value>Action with id {0} not found</value>
+  </data>
+  <data name="ErrorActionByNameNotFound" xml:space="preserve">
+    <value>Action with name '{0}' not found</value>
+  </data>
+  <data name="ErrorPropertyNotFound" xml:space="preserve">
+    <value>Property '{0}' not found</value>
+  </data>
+  <data name="ErrorColumnNotFound" xml:space="preserve">
+    <value>Column '{0}' not found</value>
+  </data>
+  <data name="ErrorGroupNotFound" xml:space="preserve">
+    <value>Group '{0}' not found</value>
+  </data>
+  <data name="ErrorValueNotInGroup" xml:space="preserve">
+    <value>Value {0} is not a valid member of group '{1}'</value>
+  </data>
   <data name="WarningUnmatchedEndFor" xml:space="preserve">
     <value>Unmatched EndFor at step {0}</value>
   </data>

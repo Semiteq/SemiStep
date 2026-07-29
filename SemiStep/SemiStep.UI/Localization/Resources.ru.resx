@@ -460,6 +460,45 @@
   <data name="AtColumnFormat" xml:space="preserve">
     <value>Столбец «{0}»: {1}</value>
   </data>
+  <data name="ErrorPropertyValueTypeMismatch" xml:space="preserve">
+    <value>Ожидалось значение типа {0}, получено {1} для «{2}»</value>
+  </data>
+  <data name="ErrorUnsupportedPropertySystemType" xml:space="preserve">
+    <value>Неподдерживаемый системный тип свойства: {0}</value>
+  </data>
+  <data name="ErrorGroupValueNotInteger" xml:space="preserve">
+    <value>Значение группы должно быть целым числом, получено {0}</value>
+  </data>
+  <data name="ErrorValueBelowMinimum" xml:space="preserve">
+    <value>Значение {0} меньше минимума {1} для «{2}»</value>
+  </data>
+  <data name="ErrorValueAboveMaximum" xml:space="preserve">
+    <value>Значение {0} больше максимума {1} для «{2}»</value>
+  </data>
+  <data name="ErrorStringContainsNul" xml:space="preserve">
+    <value>Строковое значение содержит встроенный символ NUL для «{0}»</value>
+  </data>
+  <data name="ErrorStringTooLong" xml:space="preserve">
+    <value>Длина строки {0} превышает максимум {1} для «{2}»</value>
+  </data>
+  <data name="ErrorActionByIdNotFound" xml:space="preserve">
+    <value>Действие с идентификатором {0} не найдено</value>
+  </data>
+  <data name="ErrorActionByNameNotFound" xml:space="preserve">
+    <value>Действие с именем «{0}» не найдено</value>
+  </data>
+  <data name="ErrorPropertyNotFound" xml:space="preserve">
+    <value>Свойство «{0}» не найдено</value>
+  </data>
+  <data name="ErrorColumnNotFound" xml:space="preserve">
+    <value>Столбец «{0}» не найден</value>
+  </data>
+  <data name="ErrorGroupNotFound" xml:space="preserve">
+    <value>Группа «{0}» не найдена</value>
+  </data>
+  <data name="ErrorValueNotInGroup" xml:space="preserve">
+    <value>Значение {0} не является допустимым членом группы «{1}»</value>
+  </data>
   <data name="WarningUnmatchedEndFor" xml:space="preserve">
     <value>Непарный EndFor на шаге {0}</value>
   </data>

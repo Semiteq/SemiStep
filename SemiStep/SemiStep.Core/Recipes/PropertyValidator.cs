@@ -1,5 +1,7 @@
 ﻿using FluentResults;
 
+using SemiStep.Core.Recipes.Errors;
+
 namespace SemiStep.Core.Recipes;
 
 internal static class PropertyValidator
@@ -10,12 +12,12 @@ internal static class PropertyValidator
 		{
 			"int" => value is int intVal
 				? ValidateNumericRange(property, (double)intVal)
-				: Result.Fail($"Expected int value but got {value.GetType().Name} for '{property.Id}'"),
+				: Result.Fail(new PropertyValueTypeMismatchError("int", value.GetType().Name, property.Id)),
 			"float" => value is float floatVal
 				? ValidateNumericRange(property, (double)floatVal)
-				: Result.Fail($"Expected float value but got {value.GetType().Name} for '{property.Id}'"),
+				: Result.Fail(new PropertyValueTypeMismatchError("float", value.GetType().Name, property.Id)),
 			"string" => ValidateStringLength(property, value),
-			_ => Result.Fail($"Unsupported property system type: {property.SystemType}")
+			_ => Result.Fail(new UnsupportedPropertySystemTypeError(property.SystemType))
 		};
 	}
 
@@ -31,7 +33,7 @@ internal static class PropertyValidator
 
 		if (parsed.Value is not int intKey)
 		{
-			return Result.Fail($"Group value must be integer, got {parsed.Type}");
+			return Result.Fail(new GroupValueNotIntegerError(parsed.Type));
 		}
 
 		return recipeMetadataRegistry.GroupHasIntKey(intKey, actionProperty.GroupName);
@@ -42,13 +44,13 @@ internal static class PropertyValidator
 		if (property.Min.HasValue && value < property.Min.Value)
 		{
 			return Result.Fail(
-				$"Value {value} is below minimum {property.Min.Value} for '{property.Id}'");
+				new ValueBelowMinimumError(value, property.Min.Value, property.Id));
 		}
 
 		if (property.Max.HasValue && value > property.Max.Value)
 		{
 			return Result.Fail(
-				$"Value {value} exceeds maximum {property.Max.Value} for '{property.Id}'");
+				new ValueAboveMaximumError(value, property.Max.Value, property.Id));
 		}
 
 		return Result.Ok();
@@ -59,19 +61,19 @@ internal static class PropertyValidator
 		if (value is not string str)
 		{
 			return Result.Fail(
-				$"Expected string value but got {value.GetType().Name} for '{property.Id}'");
+				new PropertyValueTypeMismatchError("string", value.GetType().Name, property.Id));
 		}
 
 		if (str.Contains('\0'))
 		{
 			return Result.Fail(
-				$"String value contains embedded NUL character for '{property.Id}'");
+				new StringContainsNulError(property.Id));
 		}
 
 		if (property.MaxLength.HasValue && str.Length > property.MaxLength.Value)
 		{
 			return Result.Fail(
-				$"String length {str.Length} exceeds maximum {property.MaxLength.Value} for '{property.Id}'");
+				new StringTooLongError(str.Length, property.MaxLength.Value, property.Id));
 		}
 
 		return Result.Ok();

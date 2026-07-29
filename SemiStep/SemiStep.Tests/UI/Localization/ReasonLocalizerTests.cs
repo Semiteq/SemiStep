@@ -7,6 +7,7 @@ using FluentAssertions;
 using FluentResults;
 
 using SemiStep.Core.Plc.Sync.Ownership;
+using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
 using SemiStep.Core.Shared;
 
@@ -99,6 +100,39 @@ public sealed class ReasonLocalizerTests
 		using (ResourcesCultureScope.Use(culture))
 		{
 			ReasonLocalizer.Localize(warning).Should().Be("unmatched EndFor at step 3");
+		}
+	}
+
+	[Fact]
+	public void Localize_NestedStepColumnDecorators_UnderRussianCulture_ComposesLocalizedPositions()
+	{
+		var error = new AtStepError(3, new AtColumnError("gas", new Error("bad")));
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(error).Should().Be("Шаг 3: Столбец «gas»: bad");
+		}
+	}
+
+	[Fact]
+	public void Localize_NestedStepColumnDecorators_UnderEnglishCulture_ComposesEnglishPositions()
+	{
+		var error = new AtStepError(3, new AtColumnError("gas", new Error("bad")));
+
+		using (ResourcesCultureScope.Use("en"))
+		{
+			ReasonLocalizer.Localize(error).Should().Be("Step 3: Column 'gas': bad");
+		}
+	}
+
+	[Fact]
+	public void Localize_ColumnDecorator_UnderRussianCulture_ComposesLocalizedPosition()
+	{
+		var error = new AtColumnError("gas", new Error("bad"));
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(error).Should().Be("Столбец «gas»: bad");
 		}
 	}
 

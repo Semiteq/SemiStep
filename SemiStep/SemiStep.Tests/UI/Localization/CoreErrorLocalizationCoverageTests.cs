@@ -7,6 +7,7 @@ using FluentAssertions;
 using FluentResults;
 
 using SemiStep.Core.Plc.Sync.Ownership;
+using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
 
 using SemiStep.UI.Localization;
@@ -25,7 +26,11 @@ public sealed class CoreErrorLocalizationCoverageTests
 		[typeof(OwnedByAnotherInstanceError)] =
 			new OwnedByAnotherInstanceError(new OwnerInfo(1, "MACHINE", "alice", DateTimeOffset.UnixEpoch)),
 		[typeof(FormulaComputationFailedError)] =
-			new FormulaComputationFailedError("temp", "min > max")
+			new FormulaComputationFailedError("temp", "min > max"),
+		[typeof(AtStepError)] =
+			new AtStepError(1, new Error("x")),
+		[typeof(AtColumnError)] =
+			new AtColumnError("k", new Error("x"))
 	};
 
 	[Fact]

@@ -1,5 +1,7 @@
 ﻿using FluentResults;
 
+using SemiStep.Core.Recipes.Errors;
+
 namespace SemiStep.Core.Recipes.Helpers;
 
 public sealed class ImportedRecipeValidator(
@@ -7,7 +9,7 @@ public sealed class ImportedRecipeValidator(
 {
 	public Result Validate(Recipe recipe)
 	{
-		var errors = new List<string>();
+		var errors = new List<IError>();
 
 		for (var stepIndex = 0; stepIndex < recipe.Steps.Count; stepIndex++)
 		{
@@ -17,7 +19,7 @@ public sealed class ImportedRecipeValidator(
 
 			foreach (var error in stepErrors)
 			{
-				errors.Add($"Step {stepNumber}: {error}");
+				errors.Add(new AtStepError(stepNumber, error));
 			}
 		}
 
@@ -26,14 +28,14 @@ public sealed class ImportedRecipeValidator(
 			: Result.Fail(errors);
 	}
 
-	private List<string> ValidateStep(Step step)
+	private List<IError> ValidateStep(Step step)
 	{
-		var errors = new List<string>();
+		var errors = new List<IError>();
 
 		var actionResult = recipeMetadataRegistry.GetAction(step.ActionKey);
 		if (actionResult.IsFailed)
 		{
-			errors.Add($"Unknown action ID {step.ActionKey}");
+			errors.Add(new Error($"Unknown action ID {step.ActionKey}"));
 			return errors;
 		}
 
@@ -62,30 +64,32 @@ public sealed class ImportedRecipeValidator(
 	private void ValidateGroupColumn(
 		ActionPropertyDefinition column,
 		PropertyValue propertyValue,
-		List<string> errors)
+		List<IError> errors)
 	{
 		if (propertyValue.Value is not int intKey)
 		{
-			errors.Add($"Group property '{column.Key}' must be integer, got {propertyValue.Type}");
+			errors.Add(new AtColumnError(
+				column.Key,
+				new Error($"Group value must be integer, got {propertyValue.Type}")));
 			return;
 		}
 
-		if (recipeMetadataRegistry.GroupHasIntKey(intKey, column.GroupName!).IsFailed)
+		var groupResult = recipeMetadataRegistry.GroupHasIntKey(intKey, column.GroupName!);
+		if (groupResult.IsFailed)
 		{
-			errors.Add(
-				$"Value {intKey} is not a valid member of group '{column.GroupName}' for column '{column.Key}'");
+			errors.Add(new AtColumnError(column.Key, groupResult.Errors[0]));
 		}
 	}
 
 	private void ValidatePropertyColumn(
 		ActionPropertyDefinition column,
 		PropertyValue propertyValue,
-		List<string> errors)
+		List<IError> errors)
 	{
 		var propertyDefResult = recipeMetadataRegistry.GetProperty(column.PropertyTypeId);
 		if (propertyDefResult.IsFailed)
 		{
-			errors.Add($"Property '{column.Key}': {string.Join("; ", propertyDefResult.Errors.Select(e => e.Message))}");
+			errors.Add(new AtColumnError(column.Key, propertyDefResult.Errors[0]));
 			return;
 		}
 
@@ -94,7 +98,7 @@ public sealed class ImportedRecipeValidator(
 		{
 			foreach (var error in validationResult.Errors)
 			{
-				errors.Add($"Property '{column.Key}': {error.Message}");
+				errors.Add(new AtColumnError(column.Key, error));
 			}
 		}
 	}

@@ -4,6 +4,7 @@ using System.Linq;
 using FluentResults;
 
 using SemiStep.Core.Plc.Sync.Ownership;
+using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
 
 namespace SemiStep.UI.Localization;
@@ -24,6 +25,8 @@ public static class ReasonLocalizer
 				error.Holder.UserName,
 				error.Holder.AcquiredUtc),
 			FormulaComputationFailedError error => Format(Resources.ErrorFormulaComputationFailed, error.Target, error.Reason),
+			AtStepError error => Format(Resources.AtStepFormat, error.StepNumber, Localize(error.Inner)),
+			AtColumnError error => Format(Resources.AtColumnFormat, error.ColumnKey, Localize(error.Inner)),
 			_ => null
 		};
 

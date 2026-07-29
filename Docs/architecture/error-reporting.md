@@ -64,6 +64,36 @@ Localization is applied at exactly **two panel seams**, both of which route thei
 Every other surface that reads `.Message`/`FormatErrors` directly stays English until its own wave
 routes it. This uses the same resx pipeline as the rest of the UI chrome — see `ui-localization.md`.
 
+### Positional decorators (compose, not discriminate)
+
+`AtStepError`/`AtColumnError` (`SemiStep.Core/Recipes/Errors/`) are typed *positional* decorators: each
+adds a position (`StepNumber` / `ColumnKey`) and delegates the sentence to an inner reason held in
+`Inner`. `ImportedRecipeValidator` — the shared recipe-value gate — wraps each step's failures in
+`AtStepError` and each column's in `AtColumnError`, **preserving the typed inner** rather than
+stringifying it.
+
+These localize by **composition**, which is distinct from the fallback recursion above. A decorator's
+`ReasonLocalizer` case formats its *own* localized template (`AtStepFormat` = `"Step {0}: {1}"`, ru
+`"Шаг {0}: {1}"`; `AtColumnFormat` = `"Column '{0}': {1}"`, ru `"Столбец '{0}': {1}"`) with
+`Localize(Inner)` as the trailing argument, so nesting composes:
+`Localize(AtStep(3, AtColumn("gas", inner)))` → `"Шаг 3: Столбец 'gas': <inner>"`. The two modes are
+mirror images:
+
+- **Fallback recursion** finds a typed cause inside an *untyped* wrapper — it walks `CausedBy` and
+  localizes the first typed reason it reaches.
+- **Composition** is the reverse — a *typed* decorator localizes its own position and folds the
+  localized inner into it.
+
+Because both decorators are public non-abstract Core `Error` subclasses, the coverage test forces a
+`ReasonLocalizer` case for each; a missing case is a red build.
+
+**Interim state (until slice 4).** The gate localizes the *position* now; the inner *detail* stays
+English. The value errors it wraps (`PropertyValidator`, `GroupHasIntKey`, the unknown-action /
+must-be-integer raises) are still free-text, so `Localize(Inner)` falls through to `Inner.Message`.
+Under `ru` a gate failure reads e.g. `"Шаг 3: Столбец 'gas': value 5 is out of range"` — Russian
+position, English detail. Slice 4 types those value errors; once typed, they localize through the
+decorators already placed here, with no gate change.
+
 ### The published rule (public error surface)
 
 > A public `Error` type exists **iff** a distinct localized operator sentence exists. Everything else

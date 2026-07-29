@@ -298,6 +298,10 @@ public class Resources
 
 	public static string ErrorFormulaComputationFailed => ResourceManager.GetString("ErrorFormulaComputationFailed", resourceCulture) ?? string.Empty;
 
+	public static string AtStepFormat => ResourceManager.GetString("AtStepFormat", resourceCulture) ?? string.Empty;
+
+	public static string AtColumnFormat => ResourceManager.GetString("AtColumnFormat", resourceCulture) ?? string.Empty;
+
 	public static string CopyStepFailed => ResourceManager.GetString("CopyStepFailed", resourceCulture) ?? string.Empty;
 
 	public static string CutStepFailed => ResourceManager.GetString("CutStepFailed", resourceCulture) ?? string.Empty;

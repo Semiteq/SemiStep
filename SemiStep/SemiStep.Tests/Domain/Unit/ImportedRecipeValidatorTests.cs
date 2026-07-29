@@ -2,7 +2,10 @@
 
 using FluentAssertions;
 
+using FluentResults;
+
 using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Helpers;
 
@@ -43,7 +46,7 @@ public sealed class ImportedRecipeValidatorTests
 		};
 	}
 
-	private static ImportedRecipeValidator BuildValidator()
+	private static RecipeMetadataRegistry BuildValveRegistry()
 	{
 		var actions = new Dictionary<int, ActionDefinition>
 		{
@@ -72,8 +75,12 @@ public sealed class ImportedRecipeValidatorTests
 				})
 		};
 
-		var registry = BuildRecipeMetadataRegistry(actions, groups);
-		return new ImportedRecipeValidator(registry);
+		return BuildRecipeMetadataRegistry(actions, groups);
+	}
+
+	private static ImportedRecipeValidator BuildValidator()
+	{
+		return new ImportedRecipeValidator(BuildValveRegistry());
 	}
 
 	private static Recipe BuildRecipeWithStep(int actionId, string columnKey, PropertyValue value)
@@ -248,7 +255,7 @@ public sealed class ImportedRecipeValidatorTests
 	private const string CommentColumnKey = "comment";
 	private const string IntColumnKey = "amount";
 
-	private static ImportedRecipeValidator BuildPropertyAwareValidator()
+	private static RecipeMetadataRegistry BuildPropertyAwareRegistry()
 	{
 		var actions = new Dictionary<int, ActionDefinition>
 		{
@@ -271,8 +278,12 @@ public sealed class ImportedRecipeValidatorTests
 				})
 		};
 
-		var registry = BuildRecipeMetadataRegistry(actions);
-		return new ImportedRecipeValidator(registry);
+		return BuildRecipeMetadataRegistry(actions);
+	}
+
+	private static ImportedRecipeValidator BuildPropertyAwareValidator()
+	{
+		return new ImportedRecipeValidator(BuildPropertyAwareRegistry());
 	}
 
 	[Fact]
@@ -332,5 +343,126 @@ public sealed class ImportedRecipeValidatorTests
 		result.Errors.Should().HaveCount(2);
 		result.Errors.Should().Contain(error => error.Message.Contains("Step 1"));
 		result.Errors.Should().Contain(error => error.Message.Contains("Step 2"));
+	}
+
+	[Fact]
+	public void Validate_InvalidGroupKey_ForwardsTypedGroupErrorThroughDecorators()
+	{
+		var registry = BuildValveRegistry();
+		var validator = new ImportedRecipeValidator(registry);
+		var recipe = BuildRecipeWithStep(ValveActionId, TargetColumnKey, PropertyValue.FromInt(InvalidGroupKey));
+
+		var result = validator.Validate(recipe);
+
+		var stepError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtStepError>().Subject;
+		stepError.StepNumber.Should().Be(1);
+
+		var columnError = stepError.Inner.Should().BeOfType<AtColumnError>().Subject;
+		columnError.ColumnKey.Should().Be(TargetColumnKey);
+
+		var expectedInner = registry.GroupHasIntKey(InvalidGroupKey, ValveGroupId).Errors[0];
+		columnError.Inner.Message.Should().Be(expectedInner.Message,
+			"the GroupHasIntKey typed error is forwarded verbatim, not rebuilt into a fabricated string");
+		columnError.Inner.Should().NotBeOfType<AtColumnError>().And.NotBeOfType<AtStepError>();
+	}
+
+	[Fact]
+	public void Validate_PropertyValidationFailure_ForwardsTypedInnerThroughDecorators()
+	{
+		var registry = BuildPropertyAwareRegistry();
+		var validator = new ImportedRecipeValidator(registry);
+		var step = new Step(
+			CommentActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(IntColumnKey), PropertyValue.FromInt(500)));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		var stepError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtStepError>().Subject;
+		stepError.StepNumber.Should().Be(1);
+
+		var columnError = stepError.Inner.Should().BeOfType<AtColumnError>().Subject;
+		columnError.ColumnKey.Should().Be(IntColumnKey);
+
+		columnError.Inner.Message.Should().Contain("exceeds maximum").And.Contain("int_bounded");
+		columnError.Inner.Message.Should().NotContain(IntColumnKey,
+			"the column key is carried by the AtColumnError decorator, not baked into the forwarded inner");
+	}
+
+	[Fact]
+	public void Validate_MissingPropertyDefinition_ForwardsTypedGetPropertyErrorThroughDecorators()
+	{
+		const int GhostActionId = 300;
+		const string GhostColumnKey = "ghost";
+		const string MissingPropertyTypeId = "nonexistent_type";
+		var actions = new Dictionary<int, ActionDefinition>
+		{
+			[GhostActionId] = new ActionDefinition(
+				id: GhostActionId,
+				uiName: "Ghost",
+				deployDuration: DeployDuration.Immediate,
+				properties: new[]
+				{
+					new ActionPropertyDefinition(
+						Key: GhostColumnKey,
+						GroupName: null,
+						PropertyTypeId: MissingPropertyTypeId,
+						DefaultValue: null)
+				})
+		};
+		var registry = BuildRecipeMetadataRegistry(actions);
+		var validator = new ImportedRecipeValidator(registry);
+		var step = new Step(
+			GhostActionId,
+			ImmutableDictionary<PropertyId, PropertyValue>.Empty
+				.Add(new PropertyId(GhostColumnKey), PropertyValue.FromInt(1)));
+		var recipe = new Recipe(ImmutableList.Create(step));
+
+		var result = validator.Validate(recipe);
+
+		var stepError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtStepError>().Subject;
+		var columnError = stepError.Inner.Should().BeOfType<AtColumnError>().Subject;
+		columnError.ColumnKey.Should().Be(GhostColumnKey);
+
+		var expectedInner = registry.GetProperty(MissingPropertyTypeId).Errors[0];
+		columnError.Inner.Message.Should().Be(expectedInner.Message,
+			"the GetProperty typed error is forwarded verbatim, not string-joined into a new message");
+	}
+
+	[Fact]
+	public void Validate_GroupColumnWithNonIntValue_RaisesFreeTextInnerWithoutColumnKey()
+	{
+		var validator = BuildValidator();
+		var recipe = BuildRecipeWithStep(ValveActionId, TargetColumnKey, PropertyValue.FromString("Open"));
+
+		var result = validator.Validate(recipe);
+
+		var stepError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtStepError>().Subject;
+		stepError.StepNumber.Should().Be(1);
+
+		var columnError = stepError.Inner.Should().BeOfType<AtColumnError>().Subject;
+		columnError.ColumnKey.Should().Be(TargetColumnKey);
+
+		columnError.Inner.Message.Should().Be($"Group value must be integer, got {PropertyType.String}");
+		columnError.Inner.Message.Should().NotContain(TargetColumnKey,
+			"the column key is carried by the AtColumnError decorator, not baked into the raised group error");
+		columnError.Inner.Should().NotBeOfType<AtColumnError>().And.NotBeOfType<AtStepError>();
+	}
+
+	[Fact]
+	public void Validate_UnknownActionId_RaisesBareStepLevelErrorWithoutColumnDecorator()
+	{
+		const int UnknownActionId = 9999;
+		var validator = BuildValidator();
+		var recipe = BuildRecipeWithStep(UnknownActionId, TargetColumnKey, PropertyValue.FromInt(ValidGroupKey));
+
+		var result = validator.Validate(recipe);
+
+		var stepError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtStepError>().Subject;
+		stepError.StepNumber.Should().Be(1);
+
+		stepError.Inner.Should().NotBeOfType<AtColumnError>();
+		stepError.Inner.Message.Should().Be($"Unknown action ID {UnknownActionId}");
 	}
 }

@@ -1,5 +1,7 @@
 ﻿using FluentResults;
 
+using SemiStep.Core.Recipes.Errors;
+
 namespace SemiStep.Core.Recipes.Analysis;
 
 public sealed class RecipeAnalyzer(RecipeMetadataRegistry registry)
@@ -24,7 +26,7 @@ public sealed class RecipeAnalyzer(RecipeMetadataRegistry registry)
 
 		if (maxDepth > MaxLoopDepth)
 		{
-			return Result.Fail($"Maximum loop nesting depth ({MaxLoopDepth}) exceeded: {maxDepth}");
+			return Result.Fail(new MaxLoopNestingDepthExceededError(MaxLoopDepth, maxDepth));
 		}
 
 		var snapshot = RecipeSnapshot.Create(

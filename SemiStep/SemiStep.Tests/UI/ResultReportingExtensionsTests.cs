@@ -88,7 +88,7 @@ public sealed class ResultReportingExtensionsTests : IDisposable
 	[Fact]
 	public void FormatErrors_TypedError_UnderRussianCulture_StaysRawEnglish()
 	{
-		var result = Result.Fail(new FormulaComputationFailedError("temp", "min > max"));
+		var result = Result.Fail(new FormulaComputationFailedError("temp", new Error("min > max")));
 
 		using (ResourcesCultureScope.Use("ru"))
 		{
@@ -99,7 +99,7 @@ public sealed class ResultReportingExtensionsTests : IDisposable
 	[AvaloniaFact]
 	public void ReportFailure_TypedError_UnderRussianCulture_LocalizesInPanel()
 	{
-		var result = Result.Fail(new FormulaComputationFailedError("temp", "min > max"));
+		var result = Result.Fail(new FormulaComputationFailedError("temp", new Error("min > max")));
 
 		using (ResourcesCultureScope.Use("ru"))
 		{

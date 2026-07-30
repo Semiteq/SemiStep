@@ -45,7 +45,7 @@ stays English (see "The log path is unchanged").
 Operator-facing Core failures are modelled as **typed `FluentResults.Error` subclasses**, not free-text
 `Result.Fail("...")`. Each subclass owns its English message string in Core (aligned with the English
 log), and carries its data as structured properties (e.g. `OwnedByAnotherInstanceError.Holder`,
-`FormulaComputationFailedError.Target`/`.Reason`) rather than baking them into the string. The same
+`FormulaComputationFailedError.Target`/`.Inner`) rather than baking them into the string. The same
 seam also localizes typed `Success`-derived `Warning` subclasses (e.g. the loop warnings) by type, so
 warnings and errors share one localization path.
 
@@ -86,7 +86,14 @@ mirror images:
 - **Composition** is the reverse — a *typed* decorator localizes its own position and folds the
   localized inner into it.
 
-Because both decorators are public non-abstract Core `Error` subclasses, the coverage test forces a
+`FormulaComputationFailedError` composes the same way, but folds a *cause* instead of a position: it
+carries the typed inner in `Inner` and its `ReasonLocalizer` case renders
+`Format(ErrorFormulaComputationFailed, Target, Localize(Inner))`. When the inner is a typed value error
+(the `PropertyValidator` cause on the formula path), `Localize(Inner)` recurses and the whole sentence —
+headline *and* detail — reads in the current culture; a free-text inner falls through to its English
+`.Message`.
+
+Because these decorators are public non-abstract Core `Error` subclasses, the coverage test forces a
 `ReasonLocalizer` case for each; a missing case is a red build.
 
 ### Recipe value errors localize on both paths
@@ -104,9 +111,16 @@ localize by type on both routes that carry them to the panel:
   `ParseAndValidateColumnValue` → `PropertyValidator`/registry bubbles the typed error straight to the panel
   with no decorator, so it localizes standalone.
 
-Still free-text (deferred to a later wave): `ImportedRecipeValidator`'s own unknown-action raise,
-`PropertyParser`, and the `RecipeSession` index errors. `Localize(Inner)` falls through to `.Message` for
-those until their own wave types them.
+The remaining lower-frequency recipe producers now localize by type too: `RecipeSession`
+(undo/redo-empty and insert/step index errors), `PropertyParser` (parse failures), `RecipeAnalyzer`
+(max loop-nesting depth), and `LoopParser` (iteration-count unsupported type) all raise typed errors
+instead of `Result.Fail(string)`. `ImportedRecipeValidator` no longer raises its own unknown-action
+string — it forwards the registry's typed `ActionByIdNotFoundError`. With these typed, `Localize(Inner)`
+renders them localized rather than falling through to `.Message`.
+
+Still free-text (deferred to a later wave): clipboard/CSV producers, PLC, the style-editor, and the
+five formula-internal free-text inners (null expression, evaluation exception, non-finite, Int32/float
+overflow), which stay English under `ru` because their inner is wrapped in a plain `new Error(text)`.
 
 ### The published rule (public error surface)
 

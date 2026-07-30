@@ -1,6 +1,7 @@
 ﻿using FluentResults;
 
 using SemiStep.Core.Recipes.Analysis.Warnings;
+using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Shared;
 
 namespace SemiStep.Core.Recipes.Analysis;
@@ -84,8 +85,7 @@ internal static class LoopParser
 		{
 			PropertyType.Int => iterationProperty.AsInt(),
 			PropertyType.Float => (int)iterationProperty.AsFloat(),
-			_ => new Error($"Iteration count property has unsupported type " +
-						   $"'{iterationProperty.Type}' in step {step.ActionKey}")
+			_ => new IterationCountUnsupportedTypeError(iterationProperty.Type, step.ActionKey)
 		};
 	}
 

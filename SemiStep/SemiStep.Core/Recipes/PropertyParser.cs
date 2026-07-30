@@ -1,6 +1,9 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 
 using FluentResults;
+
+using SemiStep.Core.Recipes.Errors;
 
 namespace SemiStep.Core.Recipes;
 
@@ -15,7 +18,8 @@ public static class PropertyParser
 			PropertyType.Int => ParseInt(input),
 			PropertyType.Float => ParseFloat(input),
 			PropertyType.String => Result.Ok(PropertyValue.FromString(input)),
-			_ => Result.Fail($"Unknown property type '{propertyType}'")
+			_ => throw new InvalidOperationException(
+				$"Unknown property type '{propertyType}'. FromSystemType only yields Int/Float/String, so this arm is unreachable.")
 		};
 	}
 
@@ -26,7 +30,7 @@ public static class PropertyParser
 			return Result.Ok(PropertyValue.FromInt(result));
 		}
 
-		return Result.Fail($"Cannot parse '{rawValue}' as integer");
+		return Result.Fail(new PropertyValueParseError(rawValue, "integer"));
 	}
 
 	private static Result<PropertyValue> ParseFloat(string rawValue)
@@ -36,6 +40,6 @@ public static class PropertyParser
 			return Result.Ok(PropertyValue.FromFloat(result));
 		}
 
-		return Result.Fail($"Cannot parse '{rawValue}' as float");
+		return Result.Fail(new PropertyValueParseError(rawValue, "float"));
 	}
 }

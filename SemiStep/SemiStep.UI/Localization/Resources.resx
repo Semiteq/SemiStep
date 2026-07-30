@@ -499,6 +499,27 @@
   <data name="ErrorValueNotInGroup" xml:space="preserve">
     <value>Value {0} is not a valid member of group '{1}'</value>
   </data>
+  <data name="ErrorNoStateToUndo" xml:space="preserve">
+    <value>No state to undo to</value>
+  </data>
+  <data name="ErrorNoStateToRedo" xml:space="preserve">
+    <value>No state to redo to</value>
+  </data>
+  <data name="ErrorInsertIndexOutOfRange" xml:space="preserve">
+    <value>Insert index {0} is out of range for recipe with {1} steps</value>
+  </data>
+  <data name="ErrorStepIndexOutOfRange" xml:space="preserve">
+    <value>Step index {0} is out of range for recipe with {1} steps</value>
+  </data>
+  <data name="ErrorPropertyValueParse" xml:space="preserve">
+    <value>Cannot parse '{0}' as {1}</value>
+  </data>
+  <data name="ErrorMaxLoopNestingDepthExceeded" xml:space="preserve">
+    <value>Maximum loop nesting depth ({0}) exceeded: {1}</value>
+  </data>
+  <data name="ErrorIterationCountUnsupportedType" xml:space="preserve">
+    <value>Iteration count property has unsupported type {0} in step {1}</value>
+  </data>
   <data name="WarningUnmatchedEndFor" xml:space="preserve">
     <value>Unmatched EndFor at step {0}</value>
   </data>

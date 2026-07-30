@@ -328,6 +328,20 @@ public class Resources
 
 	public static string ErrorValueNotInGroup => ResourceManager.GetString("ErrorValueNotInGroup", resourceCulture) ?? string.Empty;
 
+	public static string ErrorNoStateToUndo => ResourceManager.GetString("ErrorNoStateToUndo", resourceCulture) ?? string.Empty;
+
+	public static string ErrorNoStateToRedo => ResourceManager.GetString("ErrorNoStateToRedo", resourceCulture) ?? string.Empty;
+
+	public static string ErrorInsertIndexOutOfRange => ResourceManager.GetString("ErrorInsertIndexOutOfRange", resourceCulture) ?? string.Empty;
+
+	public static string ErrorStepIndexOutOfRange => ResourceManager.GetString("ErrorStepIndexOutOfRange", resourceCulture) ?? string.Empty;
+
+	public static string ErrorPropertyValueParse => ResourceManager.GetString("ErrorPropertyValueParse", resourceCulture) ?? string.Empty;
+
+	public static string ErrorMaxLoopNestingDepthExceeded => ResourceManager.GetString("ErrorMaxLoopNestingDepthExceeded", resourceCulture) ?? string.Empty;
+
+	public static string ErrorIterationCountUnsupportedType => ResourceManager.GetString("ErrorIterationCountUnsupportedType", resourceCulture) ?? string.Empty;
+
 	public static string WarningUnmatchedEndFor => ResourceManager.GetString("WarningUnmatchedEndFor", resourceCulture) ?? string.Empty;
 
 	public static string WarningUnclosedForLoop => ResourceManager.GetString("WarningUnclosedForLoop", resourceCulture) ?? string.Empty;

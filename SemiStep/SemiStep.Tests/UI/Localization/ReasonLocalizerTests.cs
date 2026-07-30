@@ -11,8 +11,8 @@ using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
+using SemiStep.Core.Recipes.Import.Warnings;
 using SemiStep.Core.Shared;
-
 using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 
@@ -89,6 +89,27 @@ public sealed class ReasonLocalizerTests
 			{
 				ReasonLocalizer.Localize(sample).Should().Be(sample.Message);
 			}
+		}
+	}
+
+	[Fact]
+	public void Localize_RowCountMismatchWarning_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new RowCountMismatchWarning("recipe.csv", 5, 3))
+				.Should().Be("Несоответствие количества строк в «recipe.csv»: метаданные указывают 5, фактически 3");
+		}
+	}
+
+	[Fact]
+	public void Localize_RowCountMismatchWarning_UnderEnglishCulture_MatchesOriginalMessage()
+	{
+		var sample = new RowCountMismatchWarning("recipe.csv", 5, 3);
+
+		using (ResourcesCultureScope.Use("en"))
+		{
+			ReasonLocalizer.Localize(sample).Should().Be(sample.Message);
 		}
 	}
 

@@ -526,6 +526,9 @@
   <data name="WarningUnclosedForLoop" xml:space="preserve">
     <value>Незакрытый цикл For, начатый на шаге {0}</value>
   </data>
+  <data name="WarningRowCountMismatch" xml:space="preserve">
+    <value>Несоответствие количества строк в «{0}»: метаданные указывают {1}, фактически {2}</value>
+  </data>
   <data name="CopyStepFailed" xml:space="preserve">
     <value>Не удалось скопировать</value>
   </data>

@@ -4,6 +4,7 @@ using FluentAssertions;
 
 using FluentResults;
 
+using SemiStep.Core.Recipes.Import.Warnings;
 using SemiStep.Core.Shared;
 
 using SemiStep.Tests.UI.Localization;
@@ -234,5 +235,31 @@ public sealed class MessagePanelViewModelTests
 		}
 
 		panel.HasEntries.Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void ReportWarnings_TypedWarning_UnderRussianCulture_SurfacesRussianInOperationSlot()
+	{
+		var panel = new MessagePanelViewModel();
+		var result = Result.Ok().WithSuccess(new RowCountMismatchWarning("recipe.csv", 5, 3));
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			panel.ReportWarnings(result);
+		}
+
+		var entry = panel.Entries.Should().ContainSingle().Subject;
+		entry.Severity.Should().Be(MessageSeverity.Warning);
+		entry.Message.Should().Be("Несоответствие количества строк в «recipe.csv»: метаданные указывают 5, фактически 3");
+	}
+
+	[AvaloniaFact]
+	public void ReportWarnings_ResultWithoutWarnings_ReportsNothing()
+	{
+		var panel = new MessagePanelViewModel();
+
+		panel.ReportWarnings(Result.Ok());
+
+		panel.Entries.Should().BeEmpty();
 	}
 }

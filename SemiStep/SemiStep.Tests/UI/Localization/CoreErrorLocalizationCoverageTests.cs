@@ -11,6 +11,7 @@ using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
+using SemiStep.Core.Recipes.Import.Warnings;
 using SemiStep.Core.Shared;
 
 using SemiStep.UI.Localization;
@@ -77,7 +78,9 @@ public sealed class CoreErrorLocalizationCoverageTests
 		[typeof(UnmatchedEndForWarning)] =
 			new UnmatchedEndForWarning(1),
 		[typeof(UnclosedForLoopWarning)] =
-			new UnclosedForLoopWarning(1)
+			new UnclosedForLoopWarning(1),
+		[typeof(RowCountMismatchWarning)] =
+			new RowCountMismatchWarning("recipe.csv", 5, 3)
 	};
 
 	[Fact]

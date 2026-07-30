@@ -2,6 +2,7 @@
 
 using Microsoft.Extensions.Logging;
 
+using SemiStep.Core.Recipes.Import.Warnings;
 using SemiStep.Core.Shared;
 
 namespace SemiStep.Core.Recipes.Import;
@@ -52,8 +53,8 @@ public class CsvService
 
 		if (metadata.Rows > 0 && metadata.Rows != result.Value.StepCount)
 		{
-			okResult = okResult.WithWarning(
-				$"Row count mismatch in '{filePath}': metadata says {metadata.Rows}, actual is {result.Value.StepCount}");
+			okResult = okResult.WithSuccess(
+				new RowCountMismatchWarning(filePath, metadata.Rows, result.Value.StepCount));
 		}
 
 		_logger.LogInformation("Loaded recipe from {FilePath}: {StepCount} steps", filePath, result.Value.StepCount);

@@ -346,6 +346,8 @@ public class Resources
 
 	public static string WarningUnclosedForLoop => ResourceManager.GetString("WarningUnclosedForLoop", resourceCulture) ?? string.Empty;
 
+	public static string WarningRowCountMismatch => ResourceManager.GetString("WarningRowCountMismatch", resourceCulture) ?? string.Empty;
+
 	public static string CopyStepFailed => ResourceManager.GetString("CopyStepFailed", resourceCulture) ?? string.Empty;
 
 	public static string CutStepFailed => ResourceManager.GetString("CutStepFailed", resourceCulture) ?? string.Empty;

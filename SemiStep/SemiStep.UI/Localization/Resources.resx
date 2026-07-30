@@ -526,6 +526,9 @@
   <data name="WarningUnclosedForLoop" xml:space="preserve">
     <value>Unclosed For loop starting at step {0}</value>
   </data>
+  <data name="WarningRowCountMismatch" xml:space="preserve">
+    <value>Row count mismatch in '{0}': metadata says {1}, actual is {2}</value>
+  </data>
   <data name="CopyStepFailed" xml:space="preserve">
     <value>Copy failed</value>
   </data>

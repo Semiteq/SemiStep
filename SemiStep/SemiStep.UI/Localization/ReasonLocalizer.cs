@@ -7,6 +7,7 @@ using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
+using SemiStep.Core.Recipes.Import.Warnings;
 
 namespace SemiStep.UI.Localization;
 
@@ -68,6 +69,8 @@ public static class ReasonLocalizer
 				Resources.ErrorIterationCountUnsupportedType, error.Type, error.ActionKey),
 			UnmatchedEndForWarning warning => Format(Resources.WarningUnmatchedEndFor, warning.StepIndex),
 			UnclosedForLoopWarning warning => Format(Resources.WarningUnclosedForLoop, warning.StartIndex),
+			RowCountMismatchWarning warning => Format(
+				Resources.WarningRowCountMismatch, warning.FilePath, warning.MetadataRows, warning.ActualRows),
 			_ => null
 		};
 

@@ -35,6 +35,13 @@ How a failed operation reaches the user. Read this before adding a new error-sur
   **localized** join of the result's errors (`ReasonLocalizer.Localize` over `result.Errors`) on the
   transient operation channel, optionally prefixed with `"{context}: "`. It no longer delegates to
   `FormatErrors`.
+- `void ReportWarnings(this MessagePanelViewModel, IResultBase)` — the warning-side twin of
+  `ReportFailure`. It surfaces the **localized** join of the result's warnings
+  (`ReasonLocalizer.Localize` over `result.Successes.OfType<Warning>()`) on the same transient operation
+  channel, and guards the empty case (no warning → no transient entry). This is the transient-warning
+  localizing path; it delegates to the raw `MessagePanelViewModel.ReportWarning(string)` member, which
+  stays as the internal sink that accepts an already-composed string. `RowCountMismatchWarning` (the CSV
+  row-count mismatch on file load) is the first typed warning to flow through it.
 
 A failed operation surfaces **all** of its error messages, not just `Errors[0]`. The message *set* is
 the same one the log records; under `Resources.Culture = ru` the panel text is localized while the log
@@ -56,10 +63,13 @@ template, formatting the structured data into it. An unmapped type falls through
 recurses over `CausedBy` (`IError.Reasons`), so a typed cause nested inside an untyped wrapper still
 localizes.
 
-Localization is applied at exactly **two panel seams**, both of which route their reasons through
+Localization is applied at exactly **three panel seams**, each of which routes its reasons through
 `ReasonLocalizer.Localize`:
 
-- `ResultReportingExtensions.ReportFailure` — the transient operation channel.
+- `ResultReportingExtensions.ReportFailure` — the transient operation channel, error side.
+- `ResultReportingExtensions.ReportWarnings` — the transient operation channel, warning side (the twin
+  of `ReportFailure`). Distinct from `RefreshReasons`: `ReportWarnings` carries the outcome of a single
+  operation, while `RefreshReasons` rebuilds the persistent snapshot-validity list.
 - `MessagePanelViewModel.RefreshReasons` — the persistent validation channel (both the error and the
   warning branch).
 
@@ -118,7 +128,8 @@ instead of `Result.Fail(string)`. `ImportedRecipeValidator` no longer raises its
 string — it forwards the registry's typed `ActionByIdNotFoundError`. With these typed, `Localize(Inner)`
 renders them localized rather than falling through to `.Message`.
 
-Still free-text (deferred to a later wave): clipboard/CSV producers, PLC, the style-editor, and the
+Still free-text (deferred to a later wave): clipboard/CSV producer errors (the CSV row-count warning is
+already typed — see above), PLC, the style-editor, and the
 five formula-internal free-text inners (null expression, evaluation exception, non-finite, Int32/float
 overflow), which stay English under `ru` because their inner is wrapped in a plain `new Error(text)`.
 

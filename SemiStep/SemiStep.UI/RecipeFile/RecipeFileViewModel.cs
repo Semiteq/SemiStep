@@ -134,10 +134,9 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 		CurrentFilePath = filePath;
 
-		var warnings = result.Successes.OfType<Warning>().ToList();
-		if (warnings.Count > 0)
+		if (result.Successes.OfType<Warning>().Any())
 		{
-			_messagePanel.ReportWarning(string.Join("; ", warnings.Select(warning => warning.Message)));
+			_messagePanel.ReportWarnings(result);
 		}
 		else
 		{

@@ -3,6 +3,8 @@ using System.Linq;
 
 using FluentResults;
 
+using SemiStep.Core.Shared;
+
 using SemiStep.UI.Localization;
 
 namespace SemiStep.UI.MessageService;
@@ -18,6 +20,15 @@ public static class ResultReportingExtensions
 	{
 		var message = Join(result.Errors.Select(ReasonLocalizer.Localize));
 		panel.ReportError(context is null ? message : $"{context}: {message}");
+	}
+
+	public static void ReportWarnings(this MessagePanelViewModel panel, IResultBase result)
+	{
+		var message = Join(result.Successes.OfType<Warning>().Select(ReasonLocalizer.Localize));
+		if (message.Length > 0)
+		{
+			panel.ReportWarning(message);
+		}
 	}
 
 	private static string Join(IEnumerable<string> parts)

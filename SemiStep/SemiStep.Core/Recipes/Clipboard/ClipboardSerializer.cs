@@ -6,9 +6,17 @@ using CsvHelper.Configuration;
 
 using FluentResults;
 
+using Microsoft.Extensions.Logging;
+
+using SemiStep.Core.Recipes.Clipboard.Errors;
+using SemiStep.Core.Recipes.Errors;
+using SemiStep.Core.Recipes.Import.Errors;
+
 namespace SemiStep.Core.Recipes.Clipboard;
 
-public sealed class ClipboardSerializer(RecipeMetadataRegistry recipeMetadataRegistry)
+public sealed class ClipboardSerializer(
+	RecipeMetadataRegistry recipeMetadataRegistry,
+	ILogger<ClipboardSerializer> logger)
 {
 	private const char Separator = '\t';
 
@@ -54,7 +62,8 @@ public sealed class ClipboardSerializer(RecipeMetadataRegistry recipeMetadataReg
 		}
 		catch (Exception ex)
 		{
-			return Result.Fail($"Failed to parse clipboard data: {ex.Message}");
+			logger.LogWarning("Failed to parse clipboard data: {Message}", ex.Message);
+			return Result.Fail(new ClipboardParseFailedError().CausedBy(ex));
 		}
 	}
 
@@ -83,8 +92,7 @@ public sealed class ClipboardSerializer(RecipeMetadataRegistry recipeMetadataReg
 			if (csvReader.ColumnCount > csvColumns.Count)
 			{
 				return Result.Fail(
-					$"Column count mismatch on row {rowNumber}: expected {csvColumns.Count}, got {csvReader.ColumnCount}. " +
-					"The clipboard data does not match the current configuration.");
+					new ColumnCountMismatchError(rowNumber, csvColumns.Count, csvReader.ColumnCount));
 			}
 
 			var stepResult = TryParseStep(csvReader, csvColumns, columnIndexMap, actionColumnIndex);
@@ -92,7 +100,7 @@ public sealed class ClipboardSerializer(RecipeMetadataRegistry recipeMetadataReg
 			{
 				foreach (var error in stepResult.Errors)
 				{
-					errors.Add(new Error($"Row {rowNumber}").CausedBy(error));
+					errors.Add(new AtRowError(rowNumber, error));
 				}
 
 				continue;
@@ -108,7 +116,7 @@ public sealed class ClipboardSerializer(RecipeMetadataRegistry recipeMetadataReg
 
 		if (steps.Count == 0)
 		{
-			return Result.Fail("No valid steps found in clipboard data");
+			return Result.Fail(new NoValidStepsError());
 		}
 
 		return new Recipe(steps.ToImmutableList());
@@ -123,17 +131,17 @@ public sealed class ClipboardSerializer(RecipeMetadataRegistry recipeMetadataReg
 		var rawAction = csvReader.GetField(actionColumnIndex);
 		if (string.IsNullOrWhiteSpace(rawAction))
 		{
-			return Result.Fail("Action column is empty");
+			return Result.Fail(new ActionColumnEmptyError());
 		}
 
 		if (!int.TryParse(rawAction, NumberStyles.Integer, CultureInfo.InvariantCulture, out var actionKey))
 		{
-			return Result.Fail($"Cannot parse action value '{rawAction}' as integer");
+			return Result.Fail(new ActionValueNotIntegerError(rawAction));
 		}
 
 		if (recipeMetadataRegistry.ActionExists(actionKey).IsFailed)
 		{
-			return Result.Fail($"Unknown action ID '{actionKey}'");
+			return Result.Fail(new ActionByIdNotFoundError(actionKey));
 		}
 
 		var actionDef = recipeMetadataRegistry.GetAction(actionKey).Value;
@@ -188,7 +196,7 @@ public sealed class ClipboardSerializer(RecipeMetadataRegistry recipeMetadataReg
 			{
 				foreach (var error in parseResult.Errors)
 				{
-					errors.Add(new Error($"Column '{column.Key}': {error.Message}"));
+					errors.Add(new AtColumnError(column.Key, error));
 				}
 			}
 			else
@@ -215,7 +223,7 @@ public sealed class ClipboardSerializer(RecipeMetadataRegistry recipeMetadataReg
 			}
 		}
 
-		return Result.Fail($"Action column with key '{StepValueParser.ActionColumnKey}' not found in configuration");
+		return Result.Fail(new ActionColumnNotFoundError());
 	}
 
 	private static Dictionary<string, int> BuildColumnIndexMap(List<GridColumnDefinition> columns)

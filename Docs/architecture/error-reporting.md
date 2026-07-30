@@ -129,12 +129,20 @@ instead of `Result.Fail(string)`. `ImportedRecipeValidator` no longer raises its
 string — it forwards the registry's typed `ActionByIdNotFoundError`. With these typed, `Localize(Inner)`
 renders them localized rather than falling through to `.Message`.
 
-The CSV import producers now localize by type too. `CsvRowConverter`/`CsvFileSerializer`/`CsvService`
+The CSV **and clipboard** import producers now localize by type too. `CsvRowConverter`/`CsvFileSerializer`/`CsvService`
 raise typed leaves (`ActionColumnNotFoundError`, `ActionColumnEmptyError`, `ActionValueNotIntegerError`,
 `CsvBodyEmptyError`, `CsvHeaderMismatchError`, `RecipeFileNotFoundError` in `SemiStep.Core/Recipes/Import/Errors/`)
 plus the `AtRowError`/`AtColumnError` decorators and the reused `ActionByIdNotFoundError`
 (all three in `SemiStep.Core/Recipes/Errors/`), so a bad cell
-surfaces the full localized `AtRow -> AtColumn -> typed value error` chain under `ru`. The `CsvService`
+surfaces the full localized `AtRow -> AtColumn -> typed value error` chain under `ru`. `ClipboardSerializer`
+(the paste path) raises the same shared tabular-parse errors — `AtRowError`/`AtColumnError`, `ActionColumnEmptyError`,
+`ActionValueNotIntegerError`, `ActionByIdNotFoundError`, `ActionColumnNotFoundError` — plus three clipboard-specific
+leaves (`ClipboardParseFailedError`, `ColumnCountMismatchError`, `NoValidStepsError` in
+`SemiStep.Core/Recipes/Clipboard/Errors/`), so a non-parseable pasted cell surfaces the same
+`Строка 1: Столбец «task»: Не удалось разобрать «abc» как float` chain under `ru`. The shared tabular-parse
+errors serve both the CSV and the clipboard ingress; with both typed, the file-and-paste import surface is fully
+localized. `ClipboardParseFailedError` is a Rule-B exception-envelope (headline only, `.CausedBy(ex)`, detail kept in
+the log through `ClipboardSerializer`'s `logger.LogWarning(..., ex.Message)`), mirroring `CsvService`. The `CsvService`
 load/save IO failures use a **Rule-B exception-envelope**: `RecipeLoadFailedError`/`RecipeSaveFailedError`
 carry the `filePath` and localize a headline only (`"Failed to load recipe from '{0}'"`), raised with
 `.CausedBy(ex)`. The envelope drops `: {ex.Message}` from the user-facing sentence; the raw exception detail
@@ -142,8 +150,7 @@ survives in the log through `CsvService`'s existing `_logger.LogWarning(..., ex.
 coordinator log joiner reads only the top-level `.Message` and does not walk `CausedBy`, so the localized
 headline is what the operator reads while the exception rides the cause for future consumers).
 
-Still free-text (deferred to a later wave): clipboard producer errors (the CSV producers are now typed —
-see above), PLC, the style-editor, and the five formula-internal free-text inners (null expression,
+Still free-text (deferred to a later wave): PLC, the style-editor, and the five formula-internal free-text inners (null expression,
 evaluation exception, non-finite, Int32/float overflow), which stay English under `ru` because their inner
 is wrapped in a plain `new Error(text)`.
 

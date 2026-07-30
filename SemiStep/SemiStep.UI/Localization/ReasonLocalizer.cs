@@ -5,6 +5,7 @@ using FluentResults;
 
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes.Analysis.Warnings;
+using SemiStep.Core.Recipes.Clipboard.Errors;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
 using SemiStep.Core.Recipes.Import.Errors;
@@ -31,6 +32,10 @@ public static class ReasonLocalizer
 			AtStepError error => Format(Resources.AtStepFormat, error.StepNumber, Localize(error.Inner)),
 			AtColumnError error => Format(Resources.AtColumnFormat, error.ColumnKey, Localize(error.Inner)),
 			AtRowError error => Format(Resources.AtRowFormat, error.RowNumber, Localize(error.Inner)),
+			ClipboardParseFailedError => Resources.ErrorClipboardParseFailed,
+			ColumnCountMismatchError error => Format(
+				Resources.ErrorColumnCountMismatch, error.RowNumber, error.Expected, error.Actual),
+			NoValidStepsError => Resources.ErrorNoValidSteps,
 			ActionColumnNotFoundError => Resources.ErrorActionColumnNotFound,
 			ActionColumnEmptyError => Resources.ErrorActionColumnEmpty,
 			ActionValueNotIntegerError error => Format(Resources.ErrorActionValueNotInteger, error.RawAction),

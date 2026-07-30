@@ -9,6 +9,7 @@ using FluentResults;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis.Warnings;
+using SemiStep.Core.Recipes.Clipboard.Errors;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
 using SemiStep.Core.Recipes.Import.Errors;
@@ -40,6 +41,12 @@ public sealed class CoreErrorLocalizationCoverageTests
 			new AtRowError(1, new Error("x")),
 		[typeof(ActionColumnNotFoundError)] =
 			new ActionColumnNotFoundError(),
+		[typeof(ClipboardParseFailedError)] =
+			new ClipboardParseFailedError(),
+		[typeof(ColumnCountMismatchError)] =
+			new ColumnCountMismatchError(1, 4, 5),
+		[typeof(NoValidStepsError)] =
+			new NoValidStepsError(),
 		[typeof(ActionColumnEmptyError)] =
 			new ActionColumnEmptyError(),
 		[typeof(ActionValueNotIntegerError)] =

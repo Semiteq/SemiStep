@@ -33,7 +33,9 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		_surface = _fixture.CreateCanonicalSurface();
 		_surface.Initialize();
 
-		var clipboardSerializer = new ClipboardSerializer(_fixture.RecipeMetadataRegistry);
+		var clipboardSerializer = new ClipboardSerializer(
+			_fixture.RecipeMetadataRegistry,
+			NullLogger<ClipboardSerializer>.Instance);
 		var importedRecipeValidator = new ImportedRecipeValidator(_fixture.RecipeMetadataRegistry);
 
 		_clipboard = new ClipboardViewModel(
@@ -114,7 +116,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 		using var clipboard = new ClipboardViewModel(
 			_fixture.Coordinator,
 			_surface,
-			new ClipboardSerializer(_fixture.RecipeMetadataRegistry),
+			new ClipboardSerializer(_fixture.RecipeMetadataRegistry, NullLogger<ClipboardSerializer>.Instance),
 			new ImportedRecipeValidator(_fixture.RecipeMetadataRegistry),
 			_fixture.MessagePanel,
 			NullLogger<ClipboardViewModel>.Instance);

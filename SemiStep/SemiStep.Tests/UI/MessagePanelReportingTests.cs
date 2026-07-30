@@ -166,7 +166,9 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 	[AvaloniaFact]
 	public async Task Clipboard_PasteInvalidContent_ReportsError()
 	{
-		var clipboardSerializer = new ClipboardSerializer(_fixture.RecipeMetadataRegistry);
+		var clipboardSerializer = new ClipboardSerializer(
+			_fixture.RecipeMetadataRegistry,
+			NullLogger<ClipboardSerializer>.Instance);
 		var importedRecipeValidator = new ImportedRecipeValidator(_fixture.RecipeMetadataRegistry);
 		var clipboardViewModel = new ClipboardViewModel(
 			_fixture.Coordinator,
@@ -367,7 +369,9 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		var clipboardSerializer = new ClipboardSerializer(_fixture.RecipeMetadataRegistry);
+		var clipboardSerializer = new ClipboardSerializer(
+			_fixture.RecipeMetadataRegistry,
+			NullLogger<ClipboardSerializer>.Instance);
 		var importedRecipeValidator = new ImportedRecipeValidator(_fixture.RecipeMetadataRegistry);
 		var clipboardViewModel = new ClipboardViewModel(
 			_fixture.Coordinator,

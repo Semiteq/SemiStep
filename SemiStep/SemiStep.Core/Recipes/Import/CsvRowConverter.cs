@@ -4,6 +4,8 @@ using System.Globalization;
 using FluentResults;
 
 using SemiStep.Core.Configuration;
+using SemiStep.Core.Recipes.Errors;
+using SemiStep.Core.Recipes.Import.Errors;
 
 namespace SemiStep.Core.Recipes.Import;
 
@@ -26,23 +28,23 @@ public sealed class CsvRowConverter(AppConfiguration config)
 		var actionIndex = _columnOrder.IndexOf(ActionColumnKey);
 		if (actionIndex < 0 || actionIndex >= rawFields.Length)
 		{
-			return Result.Fail("Action column not found");
+			return Result.Fail(new ActionColumnNotFoundError());
 		}
 
 		var rawAction = rawFields[actionIndex].Trim();
 		if (string.IsNullOrWhiteSpace(rawAction))
 		{
-			return Result.Fail("Action column is empty");
+			return Result.Fail(new ActionColumnEmptyError());
 		}
 
 		if (!int.TryParse(rawAction, NumberStyles.Integer, CultureInfo.InvariantCulture, out var actionKey))
 		{
-			return Result.Fail($"Cannot parse action value '{rawAction}' as integer");
+			return Result.Fail(new ActionValueNotIntegerError(rawAction));
 		}
 
 		if (!config.Actions.TryGetValue(actionKey, out var actionDef))
 		{
-			return Result.Fail($"Unknown action ID '{actionKey}'");
+			return Result.Fail(new ActionByIdNotFoundError(actionKey));
 		}
 
 		var actionPropertyKeys = actionDef.Properties
@@ -86,7 +88,7 @@ public sealed class CsvRowConverter(AppConfiguration config)
 			{
 				foreach (var e in parseResult.Errors)
 				{
-					errors.Add(new Error($"Column '{columnKey}': {e.Message}"));
+					errors.Add(new AtColumnError(columnKey, e));
 				}
 
 				continue;
@@ -97,7 +99,7 @@ public sealed class CsvRowConverter(AppConfiguration config)
 			{
 				foreach (var e in validationResult.Errors)
 				{
-					errors.Add(new Error($"Column '{columnKey}': {e.Message}"));
+					errors.Add(new AtColumnError(columnKey, e));
 				}
 
 				continue;

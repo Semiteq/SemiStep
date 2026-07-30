@@ -11,6 +11,7 @@ using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
+using SemiStep.Core.Recipes.Import.Errors;
 using SemiStep.Core.Recipes.Import.Warnings;
 using SemiStep.Core.Shared;
 using SemiStep.UI.Localization;
@@ -323,6 +324,123 @@ public sealed class ReasonLocalizerTests
 		{
 			ReasonLocalizer.Localize(wrapped)
 				.Should().Be("Вычисление формулы для цели «temp» не выполнено: min > max");
+		}
+	}
+
+	[Fact]
+	public void Localize_CsvRowColumnValueChain_UnderRussianCulture_ComposesRussianDetail()
+	{
+		var error = new AtRowError(2, new AtColumnError("gas", new ValueAboveMaximumError(5, 4, "amount")));
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(error)
+				.Should().Be("Строка 2: Столбец «gas»: Значение 5 больше максимума 4 для «amount»");
+		}
+	}
+
+	[Fact]
+	public void Localize_CsvHeaderMismatch_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new CsvHeaderMismatchError("action; step", "action; temp"))
+				.Should().Be("Несоответствие заголовка CSV. Ожидалось: [action; step], фактически: [action; temp]");
+		}
+	}
+
+	[Fact]
+	public void Localize_ActionValueNotInteger_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new ActionValueNotIntegerError("abc"))
+				.Should().Be("Не удалось разобрать значение действия «abc» как целое число");
+		}
+	}
+
+	[Fact]
+	public void Localize_ActionColumnNotFound_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new ActionColumnNotFoundError())
+				.Should().Be("Столбец действия не найден");
+		}
+	}
+
+	[Fact]
+	public void Localize_ActionColumnEmpty_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new ActionColumnEmptyError())
+				.Should().Be("Столбец действия пуст");
+		}
+	}
+
+	[Fact]
+	public void Localize_CsvBodyEmpty_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new CsvBodyEmptyError())
+				.Should().Be("Тело CSV пусто");
+		}
+	}
+
+	[Fact]
+	public void Localize_RecipeFileNotFound_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new RecipeFileNotFoundError("recipe.csv"))
+				.Should().Be("Файл рецепта не найден: recipe.csv");
+		}
+	}
+
+	[Fact]
+	public void Localize_RecipeLoadFailed_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new RecipeLoadFailedError("recipe.csv"))
+				.Should().Be("Не удалось загрузить рецепт из «recipe.csv»");
+		}
+	}
+
+	[Fact]
+	public void Localize_RecipeSaveFailed_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new RecipeSaveFailedError("recipe.csv"))
+				.Should().Be("Не удалось сохранить рецепт в «recipe.csv»");
+		}
+	}
+
+	[Fact]
+	public void Localize_CsvImportErrors_UnderEnglishCulture_MatchOriginalMessage()
+	{
+		IError[] samples =
+		[
+			new AtRowError(2, new AtColumnError("gas", new ValueAboveMaximumError(5, 4, "amount"))),
+			new CsvHeaderMismatchError("action; step", "action; temp"),
+			new ActionValueNotIntegerError("abc"),
+			new ActionColumnNotFoundError(),
+			new ActionColumnEmptyError(),
+			new CsvBodyEmptyError(),
+			new RecipeFileNotFoundError("recipe.csv"),
+			new RecipeLoadFailedError("recipe.csv"),
+			new RecipeSaveFailedError("recipe.csv")
+		];
+
+		using (ResourcesCultureScope.Use("en"))
+		{
+			foreach (var sample in samples)
+			{
+				ReasonLocalizer.Localize(sample).Should().Be(sample.Message);
+			}
 		}
 	}
 

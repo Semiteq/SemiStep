@@ -7,6 +7,7 @@ using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
+using SemiStep.Core.Recipes.Import.Errors;
 using SemiStep.Core.Recipes.Import.Warnings;
 
 namespace SemiStep.UI.Localization;
@@ -29,6 +30,15 @@ public static class ReasonLocalizer
 			FormulaComputationFailedError error => Format(Resources.ErrorFormulaComputationFailed, error.Target, Localize(error.Inner)),
 			AtStepError error => Format(Resources.AtStepFormat, error.StepNumber, Localize(error.Inner)),
 			AtColumnError error => Format(Resources.AtColumnFormat, error.ColumnKey, Localize(error.Inner)),
+			AtRowError error => Format(Resources.AtRowFormat, error.RowNumber, Localize(error.Inner)),
+			ActionColumnNotFoundError => Resources.ErrorActionColumnNotFound,
+			ActionColumnEmptyError => Resources.ErrorActionColumnEmpty,
+			ActionValueNotIntegerError error => Format(Resources.ErrorActionValueNotInteger, error.RawAction),
+			CsvBodyEmptyError => Resources.ErrorCsvBodyEmpty,
+			CsvHeaderMismatchError error => Format(Resources.ErrorCsvHeaderMismatch, error.Expected, error.Actual),
+			RecipeFileNotFoundError error => Format(Resources.ErrorRecipeFileNotFound, error.FilePath),
+			RecipeLoadFailedError error => Format(Resources.ErrorRecipeLoadFailed, error.FilePath),
+			RecipeSaveFailedError error => Format(Resources.ErrorRecipeSaveFailed, error.FilePath),
 			PropertyValueTypeMismatchError error => Format(
 				Resources.ErrorPropertyValueTypeMismatch, error.ExpectedType, error.ActualType, error.Id),
 			UnsupportedPropertySystemTypeError error => Format(

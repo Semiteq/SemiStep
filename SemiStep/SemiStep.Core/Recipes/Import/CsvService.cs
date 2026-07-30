@@ -2,6 +2,7 @@
 
 using Microsoft.Extensions.Logging;
 
+using SemiStep.Core.Recipes.Import.Errors;
 using SemiStep.Core.Recipes.Import.Warnings;
 using SemiStep.Core.Shared;
 
@@ -22,7 +23,7 @@ public class CsvService
 	{
 		if (!File.Exists(filePath))
 		{
-			return Result.Fail($"Recipe file not found: {filePath}");
+			return Result.Fail(new RecipeFileNotFoundError(filePath));
 		}
 
 		string bodyText;
@@ -34,12 +35,12 @@ public class CsvService
 		catch (IOException ex)
 		{
 			_logger.LogWarning("IO error while loading recipe from {FilePath}: {Message}", filePath, ex.Message);
-			return Result.Fail($"Failed to load recipe from '{filePath}': {ex.Message}");
+			return Result.Fail(new RecipeLoadFailedError(filePath).CausedBy(ex));
 		}
 		catch (UnauthorizedAccessException ex)
 		{
 			_logger.LogWarning("Access denied while loading recipe from {FilePath}: {Message}", filePath, ex.Message);
-			return Result.Fail($"Failed to load recipe from '{filePath}': {ex.Message}");
+			return Result.Fail(new RecipeLoadFailedError(filePath).CausedBy(ex));
 		}
 
 		var result = _csvFileSerializer.Deserialize(bodyText);
@@ -74,12 +75,12 @@ public class CsvService
 		catch (IOException ex)
 		{
 			_logger.LogWarning("IO error while saving recipe to {FilePath}: {Message}", filePath, ex.Message);
-			return Result.Fail($"Failed to save recipe to '{filePath}': {ex.Message}");
+			return Result.Fail(new RecipeSaveFailedError(filePath).CausedBy(ex));
 		}
 		catch (UnauthorizedAccessException ex)
 		{
 			_logger.LogWarning("Access denied while saving recipe to {FilePath}: {Message}", filePath, ex.Message);
-			return Result.Fail($"Failed to save recipe to '{filePath}': {ex.Message}");
+			return Result.Fail(new RecipeSaveFailedError(filePath).CausedBy(ex));
 		}
 
 		_logger.LogInformation("Saved recipe to {FilePath}: {StepCount} steps", filePath, recipe.StepCount);

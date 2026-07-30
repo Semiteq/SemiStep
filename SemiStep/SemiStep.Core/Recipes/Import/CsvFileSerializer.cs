@@ -6,6 +6,9 @@ using CsvHelper.Configuration;
 
 using FluentResults;
 
+using SemiStep.Core.Recipes.Errors;
+using SemiStep.Core.Recipes.Import.Errors;
+
 namespace SemiStep.Core.Recipes.Import;
 
 public sealed class CsvFileSerializer(
@@ -38,7 +41,7 @@ public sealed class CsvFileSerializer(
 
 		if (lines.Length == 0)
 		{
-			return Result.Fail("CSV body is empty");
+			return Result.Fail(new CsvBodyEmptyError());
 		}
 
 		var headerResult = ValidateHeader(lines[0]);
@@ -58,7 +61,7 @@ public sealed class CsvFileSerializer(
 				var rowNumber = i + 1;
 				foreach (var error in stepResult.Errors)
 				{
-					allErrors.Add(new Error($"Row {rowNumber}").CausedBy(error));
+					allErrors.Add(new AtRowError(rowNumber, error));
 				}
 			}
 			else
@@ -82,9 +85,9 @@ public sealed class CsvFileSerializer(
 
 		if (!expected.SequenceEqual(actual))
 		{
-			return Result.Fail(
-				$"CSV header mismatch. Expected: [{string.Join("; ", expected)}], " +
-				$"Actual: [{string.Join("; ", actual)}]");
+			return Result.Fail(new CsvHeaderMismatchError(
+				string.Join("; ", expected),
+				string.Join("; ", actual)));
 		}
 
 		return Result.Ok();

@@ -302,6 +302,24 @@ public class Resources
 
 	public static string AtColumnFormat => ResourceManager.GetString("AtColumnFormat", resourceCulture) ?? string.Empty;
 
+	public static string AtRowFormat => ResourceManager.GetString("AtRowFormat", resourceCulture) ?? string.Empty;
+
+	public static string ErrorActionColumnNotFound => ResourceManager.GetString("ErrorActionColumnNotFound", resourceCulture) ?? string.Empty;
+
+	public static string ErrorActionColumnEmpty => ResourceManager.GetString("ErrorActionColumnEmpty", resourceCulture) ?? string.Empty;
+
+	public static string ErrorActionValueNotInteger => ResourceManager.GetString("ErrorActionValueNotInteger", resourceCulture) ?? string.Empty;
+
+	public static string ErrorCsvBodyEmpty => ResourceManager.GetString("ErrorCsvBodyEmpty", resourceCulture) ?? string.Empty;
+
+	public static string ErrorCsvHeaderMismatch => ResourceManager.GetString("ErrorCsvHeaderMismatch", resourceCulture) ?? string.Empty;
+
+	public static string ErrorRecipeFileNotFound => ResourceManager.GetString("ErrorRecipeFileNotFound", resourceCulture) ?? string.Empty;
+
+	public static string ErrorRecipeLoadFailed => ResourceManager.GetString("ErrorRecipeLoadFailed", resourceCulture) ?? string.Empty;
+
+	public static string ErrorRecipeSaveFailed => ResourceManager.GetString("ErrorRecipeSaveFailed", resourceCulture) ?? string.Empty;
+
 	public static string ErrorPropertyValueTypeMismatch => ResourceManager.GetString("ErrorPropertyValueTypeMismatch", resourceCulture) ?? string.Empty;
 
 	public static string ErrorUnsupportedPropertySystemType => ResourceManager.GetString("ErrorUnsupportedPropertySystemType", resourceCulture) ?? string.Empty;

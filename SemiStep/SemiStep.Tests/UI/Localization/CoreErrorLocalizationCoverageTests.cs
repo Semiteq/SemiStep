@@ -11,6 +11,7 @@ using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
+using SemiStep.Core.Recipes.Import.Errors;
 using SemiStep.Core.Recipes.Import.Warnings;
 using SemiStep.Core.Shared;
 
@@ -35,6 +36,24 @@ public sealed class CoreErrorLocalizationCoverageTests
 			new AtStepError(1, new Error("x")),
 		[typeof(AtColumnError)] =
 			new AtColumnError("k", new Error("x")),
+		[typeof(AtRowError)] =
+			new AtRowError(1, new Error("x")),
+		[typeof(ActionColumnNotFoundError)] =
+			new ActionColumnNotFoundError(),
+		[typeof(ActionColumnEmptyError)] =
+			new ActionColumnEmptyError(),
+		[typeof(ActionValueNotIntegerError)] =
+			new ActionValueNotIntegerError("abc"),
+		[typeof(CsvBodyEmptyError)] =
+			new CsvBodyEmptyError(),
+		[typeof(CsvHeaderMismatchError)] =
+			new CsvHeaderMismatchError("a; b", "a; c"),
+		[typeof(RecipeFileNotFoundError)] =
+			new RecipeFileNotFoundError("recipe.csv"),
+		[typeof(RecipeLoadFailedError)] =
+			new RecipeLoadFailedError("recipe.csv"),
+		[typeof(RecipeSaveFailedError)] =
+			new RecipeSaveFailedError("recipe.csv"),
 		[typeof(PropertyValueTypeMismatchError)] =
 			new PropertyValueTypeMismatchError("int", "Int32", "temperature"),
 		[typeof(UnsupportedPropertySystemTypeError)] =

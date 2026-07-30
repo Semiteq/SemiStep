@@ -460,6 +460,33 @@
   <data name="AtColumnFormat" xml:space="preserve">
     <value>Column '{0}': {1}</value>
   </data>
+  <data name="AtRowFormat" xml:space="preserve">
+    <value>Row {0}: {1}</value>
+  </data>
+  <data name="ErrorActionColumnNotFound" xml:space="preserve">
+    <value>Action column not found</value>
+  </data>
+  <data name="ErrorActionColumnEmpty" xml:space="preserve">
+    <value>Action column is empty</value>
+  </data>
+  <data name="ErrorActionValueNotInteger" xml:space="preserve">
+    <value>Cannot parse action value '{0}' as integer</value>
+  </data>
+  <data name="ErrorCsvBodyEmpty" xml:space="preserve">
+    <value>CSV body is empty</value>
+  </data>
+  <data name="ErrorCsvHeaderMismatch" xml:space="preserve">
+    <value>CSV header mismatch. Expected: [{0}], Actual: [{1}]</value>
+  </data>
+  <data name="ErrorRecipeFileNotFound" xml:space="preserve">
+    <value>Recipe file not found: {0}</value>
+  </data>
+  <data name="ErrorRecipeLoadFailed" xml:space="preserve">
+    <value>Failed to load recipe from '{0}'</value>
+  </data>
+  <data name="ErrorRecipeSaveFailed" xml:space="preserve">
+    <value>Failed to save recipe to '{0}'</value>
+  </data>
   <data name="ErrorPropertyValueTypeMismatch" xml:space="preserve">
     <value>Expected {0} value but got {1} for '{2}'</value>
   </data>

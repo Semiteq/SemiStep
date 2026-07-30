@@ -460,6 +460,33 @@
   <data name="AtColumnFormat" xml:space="preserve">
     <value>Столбец «{0}»: {1}</value>
   </data>
+  <data name="AtRowFormat" xml:space="preserve">
+    <value>Строка {0}: {1}</value>
+  </data>
+  <data name="ErrorActionColumnNotFound" xml:space="preserve">
+    <value>Столбец действия не найден</value>
+  </data>
+  <data name="ErrorActionColumnEmpty" xml:space="preserve">
+    <value>Столбец действия пуст</value>
+  </data>
+  <data name="ErrorActionValueNotInteger" xml:space="preserve">
+    <value>Не удалось разобрать значение действия «{0}» как целое число</value>
+  </data>
+  <data name="ErrorCsvBodyEmpty" xml:space="preserve">
+    <value>Тело CSV пусто</value>
+  </data>
+  <data name="ErrorCsvHeaderMismatch" xml:space="preserve">
+    <value>Несоответствие заголовка CSV. Ожидалось: [{0}], фактически: [{1}]</value>
+  </data>
+  <data name="ErrorRecipeFileNotFound" xml:space="preserve">
+    <value>Файл рецепта не найден: {0}</value>
+  </data>
+  <data name="ErrorRecipeLoadFailed" xml:space="preserve">
+    <value>Не удалось загрузить рецепт из «{0}»</value>
+  </data>
+  <data name="ErrorRecipeSaveFailed" xml:space="preserve">
+    <value>Не удалось сохранить рецепт в «{0}»</value>
+  </data>
   <data name="ErrorPropertyValueTypeMismatch" xml:space="preserve">
     <value>Ожидалось значение типа {0}, получено {1} для «{2}»</value>
   </data>

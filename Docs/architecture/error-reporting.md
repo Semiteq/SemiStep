@@ -78,16 +78,17 @@ routes it. This uses the same resx pipeline as the rest of the UI chrome — see
 
 ### Positional decorators (compose, not discriminate)
 
-`AtStepError`/`AtColumnError` (`SemiStep.Core/Recipes/Errors/`) are typed *positional* decorators: each
-adds a position (`StepNumber` / `ColumnKey`) and delegates the sentence to an inner reason held in
-`Inner`. `ImportedRecipeValidator` — the shared recipe-value gate — wraps each step's failures in
-`AtStepError` and each column's in `AtColumnError`, **preserving the typed inner** rather than
-stringifying it.
+`AtStepError`/`AtColumnError`/`AtRowError` (`SemiStep.Core/Recipes/Errors/`) are typed *positional*
+decorators: each adds a position (`StepNumber` / `ColumnKey` / `RowNumber`) and delegates the sentence to
+an inner reason held in `Inner`. `ImportedRecipeValidator` — the shared recipe-value gate — wraps each
+step's failures in `AtStepError` and each column's in `AtColumnError`, **preserving the typed inner**
+rather than stringifying it. `AtRowError` is the CSV/clipboard sibling of `AtStepError` (a source-file row
+is not a recipe step): the CSV row wrap in `CsvFileSerializer` composes `AtRowError(n, AtColumnError(k, <typed value error>))`.
 
 These localize by **composition**, which is distinct from the fallback recursion above. A decorator's
 `ReasonLocalizer` case formats its *own* localized template (`AtStepFormat` = `"Step {0}: {1}"`, ru
-`"Шаг {0}: {1}"`; `AtColumnFormat` = `"Column '{0}': {1}"`, ru `"Столбец «{0}»: {1}"`) with
-`Localize(Inner)` as the trailing argument, so nesting composes:
+`"Шаг {0}: {1}"`; `AtColumnFormat` = `"Column '{0}': {1}"`, ru `"Столбец «{0}»: {1}"`; `AtRowFormat` = `"Row {0}: {1}"`, ru
+`"Строка {0}: {1}"`) with `Localize(Inner)` as the trailing argument, so nesting composes:
 `Localize(AtStep(3, AtColumn("gas", inner)))` → `"Шаг 3: Столбец «gas»: <inner>"`. The two modes are
 mirror images:
 
@@ -128,10 +129,23 @@ instead of `Result.Fail(string)`. `ImportedRecipeValidator` no longer raises its
 string — it forwards the registry's typed `ActionByIdNotFoundError`. With these typed, `Localize(Inner)`
 renders them localized rather than falling through to `.Message`.
 
-Still free-text (deferred to a later wave): clipboard/CSV producer errors (the CSV row-count warning is
-already typed — see above), PLC, the style-editor, and the
-five formula-internal free-text inners (null expression, evaluation exception, non-finite, Int32/float
-overflow), which stay English under `ru` because their inner is wrapped in a plain `new Error(text)`.
+The CSV import producers now localize by type too. `CsvRowConverter`/`CsvFileSerializer`/`CsvService`
+raise typed leaves (`ActionColumnNotFoundError`, `ActionColumnEmptyError`, `ActionValueNotIntegerError`,
+`CsvBodyEmptyError`, `CsvHeaderMismatchError`, `RecipeFileNotFoundError` in `SemiStep.Core/Recipes/Import/Errors/`)
+plus the `AtRowError`/`AtColumnError` decorators and the reused `ActionByIdNotFoundError`
+(all three in `SemiStep.Core/Recipes/Errors/`), so a bad cell
+surfaces the full localized `AtRow -> AtColumn -> typed value error` chain under `ru`. The `CsvService`
+load/save IO failures use a **Rule-B exception-envelope**: `RecipeLoadFailedError`/`RecipeSaveFailedError`
+carry the `filePath` and localize a headline only (`"Failed to load recipe from '{0}'"`), raised with
+`.CausedBy(ex)`. The envelope drops `: {ex.Message}` from the user-facing sentence; the raw exception detail
+survives in the log through `CsvService`'s existing `_logger.LogWarning(..., ex.Message)` calls (the
+coordinator log joiner reads only the top-level `.Message` and does not walk `CausedBy`, so the localized
+headline is what the operator reads while the exception rides the cause for future consumers).
+
+Still free-text (deferred to a later wave): clipboard producer errors (the CSV producers are now typed —
+see above), PLC, the style-editor, and the five formula-internal free-text inners (null expression,
+evaluation exception, non-finite, Int32/float overflow), which stay English under `ru` because their inner
+is wrapped in a plain `new Error(text)`.
 
 ### The published rule (public error surface)
 

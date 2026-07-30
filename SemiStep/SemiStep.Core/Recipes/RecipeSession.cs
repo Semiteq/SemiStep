@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 
 using SemiStep.Core.Plc;
 using SemiStep.Core.Recipes.Analysis;
+using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Shared;
@@ -85,7 +86,7 @@ public sealed class RecipeSession
 		if (_undoStack.Count == 0)
 		{
 			_logger.LogInformation("Undo requested but no state available");
-			return Result.Fail("No state to undo to");
+			return Result.Fail(new NoStateToUndoError());
 		}
 
 		var previousIndex = _undoStack.Count - 1;
@@ -113,7 +114,7 @@ public sealed class RecipeSession
 		if (_redoStack.Count == 0)
 		{
 			_logger.LogInformation("Redo requested but no state available");
-			return Result.Fail("No state to redo to");
+			return Result.Fail(new NoStateToRedoError());
 		}
 
 		var nextIndex = _redoStack.Count - 1;
@@ -633,7 +634,7 @@ public sealed class RecipeSession
 	{
 		if (index < 0 || index > recipe.Steps.Count)
 		{
-			return Result.Fail($"Insert index {index} is out of range for recipe with {recipe.Steps.Count} steps");
+			return Result.Fail(new InsertIndexOutOfRangeError(index, recipe.Steps.Count));
 		}
 
 		return Result.Ok();
@@ -643,7 +644,7 @@ public sealed class RecipeSession
 	{
 		if (index < 0 || index >= recipe.Steps.Count)
 		{
-			return Result.Fail($"Step index {index} is out of range for recipe with {recipe.Steps.Count} steps");
+			return Result.Fail(new StepIndexOutOfRangeError(index, recipe.Steps.Count));
 		}
 
 		return Result.Ok();

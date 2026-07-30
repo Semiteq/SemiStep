@@ -25,7 +25,7 @@ public static class ReasonLocalizer
 				Resources.ErrorOwnedByAnotherInstance,
 				error.Holder.UserName,
 				error.Holder.AcquiredUtc),
-			FormulaComputationFailedError error => Format(Resources.ErrorFormulaComputationFailed, error.Target, error.Reason),
+			FormulaComputationFailedError error => Format(Resources.ErrorFormulaComputationFailed, error.Target, Localize(error.Inner)),
 			AtStepError error => Format(Resources.AtStepFormat, error.StepNumber, Localize(error.Inner)),
 			AtColumnError error => Format(Resources.AtColumnFormat, error.ColumnKey, Localize(error.Inner)),
 			PropertyValueTypeMismatchError error => Format(
@@ -54,6 +54,18 @@ public static class ReasonLocalizer
 				Resources.ErrorGroupNotFound, error.GroupId),
 			ValueNotInGroupError error => Format(
 				Resources.ErrorValueNotInGroup, error.Key, error.GroupId),
+			NoStateToUndoError => Resources.ErrorNoStateToUndo,
+			NoStateToRedoError => Resources.ErrorNoStateToRedo,
+			InsertIndexOutOfRangeError error => Format(
+				Resources.ErrorInsertIndexOutOfRange, error.Index, error.StepCount),
+			StepIndexOutOfRangeError error => Format(
+				Resources.ErrorStepIndexOutOfRange, error.Index, error.StepCount),
+			PropertyValueParseError error => Format(
+				Resources.ErrorPropertyValueParse, error.RawValue, error.TargetType),
+			MaxLoopNestingDepthExceededError error => Format(
+				Resources.ErrorMaxLoopNestingDepthExceeded, error.MaxAllowed, error.ActualDepth),
+			IterationCountUnsupportedTypeError error => Format(
+				Resources.ErrorIterationCountUnsupportedType, error.Type, error.ActionKey),
 			UnmatchedEndForWarning warning => Format(Resources.WarningUnmatchedEndFor, warning.StepIndex),
 			UnclosedForLoopWarning warning => Format(Resources.WarningUnclosedForLoop, warning.StartIndex),
 			_ => null

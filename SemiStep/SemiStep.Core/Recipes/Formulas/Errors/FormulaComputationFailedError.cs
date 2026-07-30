@@ -2,18 +2,10 @@
 
 namespace SemiStep.Core.Recipes.Formulas.Errors;
 
-public sealed class FormulaComputationFailedError : Error
+public sealed class FormulaComputationFailedError(string target, IError inner)
+	: Error($"Formula computation for target '{target}' failed: {inner.Message}")
 {
-	public FormulaComputationFailedError(string target, string reason)
-		: base($"Formula computation for target '{target}' failed: {reason}")
-	{
-		Target = target;
-		Reason = reason;
-		Metadata["target"] = target;
-		Metadata["reason"] = reason;
-	}
+	public string Target { get; } = target;
 
-	public string Target { get; }
-
-	public string Reason { get; }
+	public IError Inner { get; } = inner;
 }

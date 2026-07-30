@@ -29,7 +29,7 @@ public sealed class CoreErrorLocalizationCoverageTests
 		[typeof(OwnedByAnotherInstanceError)] =
 			new OwnedByAnotherInstanceError(new OwnerInfo(1, "MACHINE", "alice", DateTimeOffset.UnixEpoch)),
 		[typeof(FormulaComputationFailedError)] =
-			new FormulaComputationFailedError("temp", "min > max"),
+			new FormulaComputationFailedError("temp", new Error("min > max")),
 		[typeof(AtStepError)] =
 			new AtStepError(1, new Error("x")),
 		[typeof(AtColumnError)] =
@@ -60,6 +60,20 @@ public sealed class CoreErrorLocalizationCoverageTests
 			new GroupNotFoundError("valves"),
 		[typeof(ValueNotInGroupError)] =
 			new ValueNotInGroupError(7, "valves"),
+		[typeof(NoStateToUndoError)] =
+			new NoStateToUndoError(),
+		[typeof(NoStateToRedoError)] =
+			new NoStateToRedoError(),
+		[typeof(InsertIndexOutOfRangeError)] =
+			new InsertIndexOutOfRangeError(5, 3),
+		[typeof(StepIndexOutOfRangeError)] =
+			new StepIndexOutOfRangeError(5, 3),
+		[typeof(PropertyValueParseError)] =
+			new PropertyValueParseError("abc", "integer"),
+		[typeof(MaxLoopNestingDepthExceededError)] =
+			new MaxLoopNestingDepthExceededError(3, 5),
+		[typeof(IterationCountUnsupportedTypeError)] =
+			new IterationCountUnsupportedTypeError(PropertyType.String, 42),
 		[typeof(UnmatchedEndForWarning)] =
 			new UnmatchedEndForWarning(1),
 		[typeof(UnclosedForLoopWarning)] =

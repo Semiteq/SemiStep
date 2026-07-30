@@ -120,7 +120,7 @@ public sealed class FormulaEvaluator
 			{
 				return Result.Fail<double>(new FormulaComputationFailedError(
 					target,
-					"Expression evaluated to null."));
+					new Error("Expression evaluated to null.")));
 			}
 
 			computed = Convert.ToDouble(raw, CultureInfo.InvariantCulture);
@@ -132,7 +132,7 @@ public sealed class FormulaEvaluator
 				"Formula evaluation failed for action {ActionId} target {Target}",
 				actionId,
 				target);
-			return Result.Fail<double>(new FormulaComputationFailedError(target, evaluationException.Message));
+			return Result.Fail<double>(new FormulaComputationFailedError(target, new Error(evaluationException.Message)));
 		}
 
 		if (double.IsNaN(computed) || double.IsInfinity(computed))
@@ -140,7 +140,7 @@ public sealed class FormulaEvaluator
 			var token = double.IsNaN(computed) ? "NaN" : "Infinity";
 			return Result.Fail<double>(new FormulaComputationFailedError(
 				target,
-				$"Expression produced non-finite value '{token}' ({computed.ToString(CultureInfo.InvariantCulture)})."));
+				new Error($"Expression produced non-finite value '{token}' ({computed.ToString(CultureInfo.InvariantCulture)}).")));
 		}
 
 		return Result.Ok(computed);
@@ -155,17 +155,13 @@ public sealed class FormulaEvaluator
 		var validation = PropertyValidator.Validate(propertyDefinition, newPropertyValue.Value);
 		if (validation.IsFailed)
 		{
-			return Result.Fail(new FormulaComputationFailedError(
-				target,
-				validation.Errors[0].Message).CausedBy(validation.Errors));
+			return Result.Fail(new FormulaComputationFailedError(target, validation.Errors[0]));
 		}
 
 		var groupCheck = PropertyValidator.ValidateGroupValue(targetActionProperty, newPropertyValue, _registry);
 		if (groupCheck.IsFailed)
 		{
-			return Result.Fail(new FormulaComputationFailedError(
-				target,
-				string.Join("; ", groupCheck.Errors.Select(e => e.Message))).CausedBy(groupCheck.Errors));
+			return Result.Fail(new FormulaComputationFailedError(target, groupCheck.Errors[0]));
 		}
 
 		return Result.Ok();
@@ -222,7 +218,7 @@ public sealed class FormulaEvaluator
 				return Result.Fail<PropertyValue>(
 					new FormulaComputationFailedError(
 						target,
-						$"Recalculated value {computed.ToString(CultureInfo.InvariantCulture)} overflows Int32."));
+						new Error($"Recalculated value {computed.ToString(CultureInfo.InvariantCulture)} overflows Int32.")));
 			}
 
 			return Result.Ok(PropertyValue.FromInt((int)rounded));
@@ -236,7 +232,7 @@ public sealed class FormulaEvaluator
 				return Result.Fail<PropertyValue>(
 					new FormulaComputationFailedError(
 						target,
-						$"Recalculated value {computed.ToString(CultureInfo.InvariantCulture)} is not representable as a finite float."));
+						new Error($"Recalculated value {computed.ToString(CultureInfo.InvariantCulture)} is not representable as a finite float.")));
 			}
 
 			return Result.Ok(PropertyValue.FromFloat(floatValue));

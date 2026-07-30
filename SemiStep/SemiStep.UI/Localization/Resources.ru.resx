@@ -499,6 +499,27 @@
   <data name="ErrorValueNotInGroup" xml:space="preserve">
     <value>Значение {0} не является допустимым членом группы «{1}»</value>
   </data>
+  <data name="ErrorNoStateToUndo" xml:space="preserve">
+    <value>Нет состояния для отмены</value>
+  </data>
+  <data name="ErrorNoStateToRedo" xml:space="preserve">
+    <value>Нет состояния для повтора</value>
+  </data>
+  <data name="ErrorInsertIndexOutOfRange" xml:space="preserve">
+    <value>Индекс вставки {0} вне диапазона для рецепта из {1} шагов</value>
+  </data>
+  <data name="ErrorStepIndexOutOfRange" xml:space="preserve">
+    <value>Индекс шага {0} вне диапазона для рецепта из {1} шагов</value>
+  </data>
+  <data name="ErrorPropertyValueParse" xml:space="preserve">
+    <value>Не удалось разобрать «{0}» как {1}</value>
+  </data>
+  <data name="ErrorMaxLoopNestingDepthExceeded" xml:space="preserve">
+    <value>Превышена максимальная глубина вложенности циклов ({0}): {1}</value>
+  </data>
+  <data name="ErrorIterationCountUnsupportedType" xml:space="preserve">
+    <value>Свойство счётчика итераций имеет неподдерживаемый тип {0} в шаге {1}</value>
+  </data>
   <data name="WarningUnmatchedEndFor" xml:space="preserve">
     <value>Непарный EndFor на шаге {0}</value>
   </data>

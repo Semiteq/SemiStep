@@ -463,6 +463,6 @@ public sealed class ImportedRecipeValidatorTests
 		stepError.StepNumber.Should().Be(1);
 
 		stepError.Inner.Should().NotBeOfType<AtColumnError>();
-		stepError.Inner.Message.Should().Be($"Unknown action ID {UnknownActionId}");
+		stepError.Inner.Message.Should().Be($"Action with id {UnknownActionId} not found");
 	}
 }

@@ -35,7 +35,7 @@ public sealed class ImportedRecipeValidator(
 		var actionResult = recipeMetadataRegistry.GetAction(step.ActionKey);
 		if (actionResult.IsFailed)
 		{
-			errors.Add(new Error($"Unknown action ID {step.ActionKey}"));
+			errors.Add(actionResult.Errors[0]);
 			return errors;
 		}
 

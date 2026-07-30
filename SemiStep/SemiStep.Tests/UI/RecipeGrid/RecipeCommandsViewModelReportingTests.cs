@@ -13,6 +13,7 @@ using SemiStep.Core.Recipes;
 
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
+using SemiStep.Tests.UI.Localization;
 
 using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
@@ -77,10 +78,13 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 
 		_surface.SelectedStepIndices = new[] { 99 };
 
-		await ExecuteSwallowing(_commands.DeleteStepCommand);
+		using (ResourcesCultureScope.Use("en"))
+		{
+			await ExecuteSwallowing(_commands.DeleteStepCommand);
 
-		_fixture.MessagePanel.Entries.Should()
-			.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
+			_fixture.MessagePanel.Entries.Should()
+				.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
+		}
 	}
 
 	[AvaloniaFact]
@@ -90,10 +94,13 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 		expected.IsFailed.Should().BeTrue();
 		var expectedMessage = expected.FormatErrors();
 
-		await ExecuteSwallowing(_commands.UndoCommand);
+		using (ResourcesCultureScope.Use("en"))
+		{
+			await ExecuteSwallowing(_commands.UndoCommand);
 
-		_fixture.MessagePanel.Entries.Should()
-			.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
+			_fixture.MessagePanel.Entries.Should()
+				.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
+		}
 	}
 
 	[AvaloniaFact]
@@ -103,10 +110,13 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 		expected.IsFailed.Should().BeTrue();
 		var expectedMessage = expected.FormatErrors();
 
-		await ExecuteSwallowing(_commands.RedoCommand);
+		using (ResourcesCultureScope.Use("en"))
+		{
+			await ExecuteSwallowing(_commands.RedoCommand);
 
-		_fixture.MessagePanel.Entries.Should()
-			.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
+			_fixture.MessagePanel.Entries.Should()
+				.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
+		}
 	}
 
 	[AvaloniaFact]

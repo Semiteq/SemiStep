@@ -7,6 +7,7 @@ using FluentAssertions;
 using FluentResults;
 
 using SemiStep.Core.Plc.Sync.Ownership;
+using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
@@ -33,7 +34,7 @@ public sealed class ReasonLocalizerTests
 
 	private static FormulaComputationFailedError FormulaFailed()
 	{
-		return new FormulaComputationFailedError("temp", "min > max");
+		return new FormulaComputationFailedError("temp", new Error("min > max"));
 	}
 
 	[Fact]
@@ -169,6 +170,67 @@ public sealed class ReasonLocalizerTests
 			{
 				ReasonLocalizer.Localize(sample).Should().Be(sample.Message);
 			}
+		}
+	}
+
+	[Fact]
+	public void Localize_StepIndexOutOfRange_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new StepIndexOutOfRangeError(5, 3))
+				.Should().Be("Индекс шага 5 вне диапазона для рецепта из 3 шагов");
+		}
+	}
+
+	[Fact]
+	public void Localize_PropertyValueParse_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new PropertyValueParseError("abc", "integer"))
+				.Should().Be("Не удалось разобрать «abc» как integer");
+		}
+	}
+
+	[Fact]
+	public void Localize_IterationCountUnsupportedType_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new IterationCountUnsupportedTypeError(PropertyType.String, 42))
+				.Should().Be("Свойство счётчика итераций имеет неподдерживаемый тип String в шаге 42");
+		}
+	}
+
+	[Fact]
+	public void Localize_RemainingRecipeErrors_UnderEnglishCulture_MatchOriginalMessage()
+	{
+		IError[] samples =
+		[
+			new StepIndexOutOfRangeError(5, 3),
+			new PropertyValueParseError("abc", "integer"),
+			new IterationCountUnsupportedTypeError(PropertyType.String, 42)
+		];
+
+		using (ResourcesCultureScope.Use("en"))
+		{
+			foreach (var sample in samples)
+			{
+				ReasonLocalizer.Localize(sample).Should().Be(sample.Message);
+			}
+		}
+	}
+
+	[Fact]
+	public void Localize_FormulaComputationFailed_WrappingTypedInner_UnderRussianCulture_ComposesRussianDetail()
+	{
+		var error = new FormulaComputationFailedError("temp", new ValueAboveMaximumError(500, 100, "temperature"));
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(error)
+				.Should().Be("Вычисление формулы для цели «temp» не выполнено: Значение 500 больше максимума 100 для «temperature»");
 		}
 	}
 

@@ -2,4 +2,7 @@
 
 namespace SemiStep.Core.Plc.S7.Protocol;
 
-internal sealed class NotConnectedError(string message) : Error(message);
+public sealed class NotConnectedError()
+	: Error("Not connected to PLC")
+{
+}

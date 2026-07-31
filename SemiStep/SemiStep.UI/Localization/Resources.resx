@@ -451,6 +451,24 @@
   <data name="ErrorConnectionLost" xml:space="preserve">
     <value>PLC connection lost</value>
   </data>
+  <data name="ErrorNotConnected" xml:space="preserve">
+    <value>Not connected to PLC</value>
+  </data>
+  <data name="ErrorProtocolVersionMismatch" xml:space="preserve">
+    <value>PLC protocol version {0} does not match expected {1}</value>
+  </data>
+  <data name="ErrorRecipeActive" xml:space="preserve">
+    <value>Recipe is being executed on PLC</value>
+  </data>
+  <data name="ErrorRecipeNotCommitted" xml:space="preserve">
+    <value>Recipe not committed on PLC</value>
+  </data>
+  <data name="ErrorWriteVerificationFailed" xml:space="preserve">
+    <value>Recipe write verification failed after {0} attempts</value>
+  </data>
+  <data name="ErrorPlcCommandFailed" xml:space="preserve">
+    <value>PLC command failed</value>
+  </data>
   <data name="ErrorOwnedByAnotherInstance" xml:space="preserve">
     <value>PLC sync is owned by another instance (user {0}, since {1:HH:mm} UTC).</value>
   </data>

@@ -296,6 +296,18 @@ public class Resources
 
 	public static string ErrorConnectionLost => ResourceManager.GetString("ErrorConnectionLost", resourceCulture) ?? string.Empty;
 
+	public static string ErrorNotConnected => ResourceManager.GetString("ErrorNotConnected", resourceCulture) ?? string.Empty;
+
+	public static string ErrorProtocolVersionMismatch => ResourceManager.GetString("ErrorProtocolVersionMismatch", resourceCulture) ?? string.Empty;
+
+	public static string ErrorRecipeActive => ResourceManager.GetString("ErrorRecipeActive", resourceCulture) ?? string.Empty;
+
+	public static string ErrorRecipeNotCommitted => ResourceManager.GetString("ErrorRecipeNotCommitted", resourceCulture) ?? string.Empty;
+
+	public static string ErrorWriteVerificationFailed => ResourceManager.GetString("ErrorWriteVerificationFailed", resourceCulture) ?? string.Empty;
+
+	public static string ErrorPlcCommandFailed => ResourceManager.GetString("ErrorPlcCommandFailed", resourceCulture) ?? string.Empty;
+
 	public static string ErrorOwnedByAnotherInstance => ResourceManager.GetString("ErrorOwnedByAnotherInstance", resourceCulture) ?? string.Empty;
 
 	public static string ErrorFormulaComputationFailed => ResourceManager.GetString("ErrorFormulaComputationFailed", resourceCulture) ?? string.Empty;

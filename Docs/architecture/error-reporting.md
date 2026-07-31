@@ -162,9 +162,44 @@ survives in the log through `CsvService`'s existing `_logger.LogWarning(..., ex.
 coordinator log joiner reads only the top-level `.Message` and does not walk `CausedBy`, so the localized
 headline is what the operator reads while the exception rides the cause for future consumers).
 
-Still free-text (deferred to a later wave): PLC, the style-editor, and the five formula-internal free-text inners (null expression,
+Still free-text (deferred to a later wave): the style-editor and the five formula-internal free-text inners (null expression,
 evaluation exception, non-finite, Int32/float overflow), which stay English under `ru` because their inner
-is wrapped in a plain `new Error(text)`.
+is wrapped in a plain `new Error(text)`. (PLC is now typed — see "PLC faults localize by type" below —
+except the two deliberately-deferred producers noted there.)
+
+### PLC faults localize by type
+
+The PLC operator-facing producer surface now raises **typed** errors, so a sync failure localizes by type
+on the fault channel the same way recipe failures do on the panel. Seven typed faults cover it:
+`ConnectionLostError` and `NotConnectedError` (connection), `ProtocolVersionMismatchError` (version),
+`RecipeActiveError` (a sync attempted while the PLC executes the recipe), `WriteVerificationFailedError(attempts)`
+(the write-back read-verify mismatch), `RecipeNotCommittedError` (the managing-area commit check), and the
+Rule-B envelope `PlcCommandFailedError`. `NotConnectedError`/`ProtocolVersionMismatchError` live in
+`SemiStep.Core/Plc/S7/Protocol/`; the five sync-side faults in `SemiStep.Core/Plc/Sync/`.
+
+**Un-laundering the fault seam.** `PlcSyncExecutor` used to re-wrap a typed inner's `.Message` in a fresh
+`new Error(...)` before emitting the fault, discarding the type so `OnPlcFault`'s single-`IError` seam could
+not localize it. It now forwards the typed inner directly (`reportFault(activeResult.Errors[0])`,
+`reportFault(writeResult.Errors[0])`), so the type reaches `ReasonLocalizer` and the fault renders in the
+current culture. The 6a fault seam is single-error by design: forwarding `Errors[0]` drops any sibling
+errors, which the transient one-slot operation channel could not show anyway.
+
+**Rule-B envelope.** `PlcCommandFailedError` is a fieldless headline (`"PLC command failed"`): the raw
+transport exception message (a socket/timeout string) is not operator-useful, so it rides `.CausedBy(ex)`
+into the result chain and a `_logger.Log(ex, …)` line at the catch (writes at `LogError`, reads at
+`LogWarning`) into the diagnostics log, while the localized headline is what the operator reads. Same shape
+as `RecipeLoadFailedError`. `PlcTransactionExecutor`'s five read/write catches raise it; the exception type
+survives on `Reasons` for future consumers.
+
+**Producers that stay English by design (deferred):** `PlcTransactionExecutor`'s short
+protocol-version read (`"…returned {n} bytes, expected {m}"`) is a malformed-wire diagnostic edge, not an
+operator-actionable fault; `PlcLifecycleManager`'s enable catch is a connect/cancellation concern that
+belongs with the cancellation pass (slice 6c). A third: the codec decode failures (`ExecutionStateCodec`
+and `ManagingAreaCodec` return a plain `new Error("…data length …")` on a short read) are still untyped, so
+when `PlcSyncExecutor` forwards them through `reportFault(activeResult.Errors[0])` a decode-Fail reaches the
+panel as raw English. This is a malformed-wire diagnostic edge like the short-version read, not an
+operator-actionable fault; typing the codec layer is out of scope for this wave. All three stay free-text
+until then.
 
 ### The published rule (public error surface)
 
@@ -200,8 +235,10 @@ always English; only the panel seams localize.
 - **PLC connection-loss / sync failures** arrive as a typed `IError` on `IPlcSyncService.Faults`, a
   discrete one-shot channel. `RecipeCoordinator.OnPlcFault` bridges each fault to the operation channel
   via `ReportFailure(error)` (the single-`IError` seam), so a typed fault localizes while the log keeps
-  the English `.Message`. `ConnectionLostError` is the first typed PLC fault; an untyped fault still
-  falls through to its English `.Message`. The persistent "disconnected" label stays in the status bar.
+  the English `.Message`. The whole PLC operator-facing fault surface is now typed (connection, version,
+  recipe-active, write-verification, not-committed, command — see "PLC faults localize by type"); an
+  untyped fault still falls through to its English `.Message`. The persistent "disconnected" label stays
+  in the status bar.
 - **Command exceptions** (a `ReactiveCommand` fault on `ThrownExceptions`) are not `Result`-based;
   they route through `ReportThrownExceptions` (see below) rather than a hand-written handler.
 - **One deliberate exception** to the `"; "` idiom: the clipboard *paste* failure lists each error on

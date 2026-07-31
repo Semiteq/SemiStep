@@ -451,6 +451,24 @@
   <data name="ErrorConnectionLost" xml:space="preserve">
     <value>Соединение с ПЛК потеряно</value>
   </data>
+  <data name="ErrorNotConnected" xml:space="preserve">
+    <value>Нет соединения с ПЛК</value>
+  </data>
+  <data name="ErrorProtocolVersionMismatch" xml:space="preserve">
+    <value>Версия протокола ПЛК {0} не соответствует ожидаемой {1}</value>
+  </data>
+  <data name="ErrorRecipeActive" xml:space="preserve">
+    <value>Рецепт выполняется на ПЛК</value>
+  </data>
+  <data name="ErrorRecipeNotCommitted" xml:space="preserve">
+    <value>Рецепт не зафиксирован на ПЛК</value>
+  </data>
+  <data name="ErrorWriteVerificationFailed" xml:space="preserve">
+    <value>Проверка записи рецепта не удалась после {0} попыток</value>
+  </data>
+  <data name="ErrorPlcCommandFailed" xml:space="preserve">
+    <value>Ошибка команды ПЛК</value>
+  </data>
   <data name="ErrorOwnedByAnotherInstance" xml:space="preserve">
     <value>Синхронизация ПЛК занята другим экземпляром (пользователь {0}, с {1:HH:mm} UTC).</value>
   </data>

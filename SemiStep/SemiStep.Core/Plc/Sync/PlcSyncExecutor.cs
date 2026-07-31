@@ -152,7 +152,7 @@ internal sealed class PlcSyncExecutor(
 			{
 				_logger.LogError(ex, "Unhandled exception in sync task");
 				setStatus(PlcSyncStatus.Failed);
-				reportFault(new Error(ex.Message));
+				reportFault(new PlcCommandFailedError().CausedBy(ex));
 			}
 		}, ct);
 	}
@@ -191,34 +191,31 @@ internal sealed class PlcSyncExecutor(
 		{
 			_logger.LogDebug("Skipping sync: not connected to PLC");
 
-			return Result.Fail("Not connected");
+			return Result.Fail(new NotConnectedError());
 		}
 
 		var activeResult = await transactionExecutor.IsRecipeActiveAsync(ct);
 		if (activeResult.IsFailed)
 		{
 			var isDisconnected = activeResult.Errors.OfType<NotConnectedError>().Any();
-			var faultMessage = isDisconnected
-				? "Not connected to PLC"
-				: activeResult.Errors[0].Message;
 			setStatus(PlcSyncStatus.Failed);
-			reportFault(new Error(faultMessage));
+			reportFault(activeResult.Errors[0]);
 
 			if (isDisconnected)
 			{
 				_logger.LogWarning("Sync blocked: not connected to PLC");
 			}
 
-			return Result.Fail(activeResult.Errors[0].Message);
+			return activeResult.ToResult();
 		}
 
 		if (activeResult.Value)
 		{
 			setStatus(PlcSyncStatus.Failed);
-			reportFault(new Error("Recipe is being executed on PLC"));
+			reportFault(new RecipeActiveError());
 			_logger.LogWarning("Sync blocked: recipe is being executed on PLC");
 
-			return Result.Fail("Recipe active");
+			return Result.Fail(new RecipeActiveError());
 		}
 
 		return Result.Ok();
@@ -232,8 +229,9 @@ internal sealed class PlcSyncExecutor(
 		if (writeResult.IsFailed)
 		{
 			setStatus(PlcSyncStatus.Failed);
-			reportFault(new Error(writeResult.Errors[0].Message));
-			if (!writeResult.Errors.OfType<NotConnectedError>().Any())
+			reportFault(writeResult.Errors[0]);
+			if (!writeResult.Errors.OfType<NotConnectedError>().Any()
+				&& !writeResult.Errors.OfType<PlcCommandFailedError>().Any())
 			{
 				_logger.LogError("Sync failed: {Message}", writeResult.Errors[0].Message);
 			}

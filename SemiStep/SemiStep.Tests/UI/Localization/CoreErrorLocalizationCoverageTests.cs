@@ -6,6 +6,7 @@ using FluentAssertions;
 
 using FluentResults;
 
+using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
@@ -32,6 +33,18 @@ public sealed class CoreErrorLocalizationCoverageTests
 	{
 		[typeof(ConnectionLostError)] =
 			new ConnectionLostError(),
+		[typeof(NotConnectedError)] =
+			new NotConnectedError(),
+		[typeof(ProtocolVersionMismatchError)] =
+			new ProtocolVersionMismatchError(2, 1),
+		[typeof(RecipeActiveError)] =
+			new RecipeActiveError(),
+		[typeof(RecipeNotCommittedError)] =
+			new RecipeNotCommittedError(),
+		[typeof(WriteVerificationFailedError)] =
+			new WriteVerificationFailedError(3),
+		[typeof(PlcCommandFailedError)] =
+			new PlcCommandFailedError(),
 		[typeof(OwnedByAnotherInstanceError)] =
 			new OwnedByAnotherInstanceError(new OwnerInfo(1, "MACHINE", "alice", DateTimeOffset.UnixEpoch)),
 		[typeof(FormulaComputationFailedError)] =

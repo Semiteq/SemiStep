@@ -6,6 +6,7 @@ using FluentAssertions;
 
 using FluentResults;
 
+using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis.Warnings;
@@ -29,6 +30,8 @@ public sealed class CoreErrorLocalizationCoverageTests
 {
 	private static readonly IReadOnlyDictionary<Type, IReason> _typeData = new Dictionary<Type, IReason>
 	{
+		[typeof(ConnectionLostError)] =
+			new ConnectionLostError(),
 		[typeof(OwnedByAnotherInstanceError)] =
 			new OwnedByAnotherInstanceError(new OwnerInfo(1, "MACHINE", "alice", DateTimeOffset.UnixEpoch)),
 		[typeof(FormulaComputationFailedError)] =

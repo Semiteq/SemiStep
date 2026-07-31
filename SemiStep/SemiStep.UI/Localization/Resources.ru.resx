@@ -448,6 +448,9 @@
   <data name="EditorDefaultFont" xml:space="preserve">
     <value>(По умолчанию)</value>
   </data>
+  <data name="ErrorConnectionLost" xml:space="preserve">
+    <value>Соединение с ПЛК потеряно</value>
+  </data>
   <data name="ErrorOwnedByAnotherInstance" xml:space="preserve">
     <value>Синхронизация ПЛК занята другим экземпляром (пользователь {0}, с {1:HH:mm} UTC).</value>
   </data>

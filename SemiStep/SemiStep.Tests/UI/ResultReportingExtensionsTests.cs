@@ -6,6 +6,7 @@ using FluentAssertions;
 
 using FluentResults;
 
+using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Recipes.Formulas.Errors;
 
 using SemiStep.Tests.UI.Localization;
@@ -108,5 +109,26 @@ public sealed class ResultReportingExtensionsTests : IDisposable
 
 		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
 		entry.Message.Should().Be("Вычисление формулы для цели «temp» не выполнено: min > max");
+	}
+
+	[AvaloniaFact]
+	public void ReportFailure_SingleTypedError_UnderRussianCulture_LocalizesInOperationSlot()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			_panel.ReportFailure(new ConnectionLostError());
+		}
+
+		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
+		entry.Message.Should().Be("Соединение с ПЛК потеряно");
+	}
+
+	[AvaloniaFact]
+	public void ReportFailure_SingleUntypedError_FallsThroughToItsMessage()
+	{
+		_panel.ReportFailure((IError)new Error("x"));
+
+		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
+		entry.Message.Should().Be("x");
 	}
 }

@@ -163,7 +163,7 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 	public void HandleConnectionLost()
 	{
 		_executor.Reset();
-		EmitFault(new Error("PLC connection lost"));
+		EmitFault(new ConnectionLostError());
 	}
 
 	public async Task WaitForPendingSyncAsync(CancellationToken ct = default)

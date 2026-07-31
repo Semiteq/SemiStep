@@ -42,6 +42,14 @@ How a failed operation reaches the user. Read this before adding a new error-sur
   localizing path; it delegates to the raw `MessagePanelViewModel.ReportWarning(string)` member, which
   stays as the internal sink that accepts an already-composed string. `RowCountMismatchWarning` (the CSV
   row-count mismatch on file load) is the first typed warning to flow through it.
+- `void ReportFailure(this MessagePanelViewModel, IError)` — the single-error twin of
+  `ReportFailure(IResultBase)`/`ReportWarnings`. It localizes **one** transient `IError`
+  (`ReasonLocalizer.Localize(error)`) into the operation slot at `Error` severity, delegating to the raw
+  `ReportError(string)` sink. `IError` is not `IResultBase`, so this is an unambiguous overload, not a new
+  name. It is the localizing path for a fault that arrives as a bare error rather than inside a `Result`:
+  `RecipeCoordinator.OnPlcFault` routes each `IPlcSyncService.Faults` error through it, and
+  `ConnectionLostError` is the first typed PLC fault to flow through it. An untyped inner still falls
+  through to `.Message`, so a free-text `IError` stays English.
 
 A failed operation surfaces **all** of its error messages, not just `Errors[0]`. The message *set* is
 the same one the log records; under `Resources.Culture = ru` the panel text is localized while the log
@@ -63,12 +71,16 @@ template, formatting the structured data into it. An unmapped type falls through
 recurses over `CausedBy` (`IError.Reasons`), so a typed cause nested inside an untyped wrapper still
 localizes.
 
-Localization is applied at exactly **three panel seams**, each of which routes its reasons through
+Localization is applied at exactly **four panel seams**, each of which routes its reasons through
 `ReasonLocalizer.Localize`:
 
-- `ResultReportingExtensions.ReportFailure` — the transient operation channel, error side.
+- `ResultReportingExtensions.ReportFailure(IResultBase)` — the transient operation channel, error side
+  (the localized join of a failed `Result`'s errors).
+- `ResultReportingExtensions.ReportFailure(IError)` — the transient operation channel, single-error side.
+  The single-`IError` twin of the `IResultBase` overload: it localizes one bare transient error (e.g. a
+  PLC fault off `IPlcSyncService.Faults`) rather than a whole `Result`.
 - `ResultReportingExtensions.ReportWarnings` — the transient operation channel, warning side (the twin
-  of `ReportFailure`). Distinct from `RefreshReasons`: `ReportWarnings` carries the outcome of a single
+  of `ReportFailure(IResultBase)`). Distinct from `RefreshReasons`: `ReportWarnings` carries the outcome of a single
   operation, while `RefreshReasons` rebuilds the persistent snapshot-validity list.
 - `MessagePanelViewModel.RefreshReasons` — the persistent validation channel (both the error and the
   warning branch).
@@ -186,9 +198,10 @@ always English; only the panel seams localize.
 - **Persistent structural state** (the current recipe's validity) goes to the validation channel via
   `RefreshReasons`, and from there to the status-bar counts.
 - **PLC connection-loss / sync failures** arrive as a typed `IError` on `IPlcSyncService.Faults`, a
-  discrete one-shot channel. `RecipeCoordinator` bridges each fault to the operation channel via
-  `ReportError(error.Message)` — the message text is owned in Core. The persistent "disconnected"
-  label stays in the status bar.
+  discrete one-shot channel. `RecipeCoordinator.OnPlcFault` bridges each fault to the operation channel
+  via `ReportFailure(error)` (the single-`IError` seam), so a typed fault localizes while the log keeps
+  the English `.Message`. `ConnectionLostError` is the first typed PLC fault; an untyped fault still
+  falls through to its English `.Message`. The persistent "disconnected" label stays in the status bar.
 - **Command exceptions** (a `ReactiveCommand` fault on `ThrownExceptions`) are not `Result`-based;
   they route through `ReportThrownExceptions` (see below) rather than a hand-written handler.
 - **One deliberate exception** to the `"; "` idiom: the clipboard *paste* failure lists each error on

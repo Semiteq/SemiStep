@@ -3,7 +3,10 @@
 using FluentAssertions;
 
 using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Clipboard.Errors;
 using SemiStep.Tests.Csv.Helpers;
+using SemiStep.Tests.UI.Localization;
+using SemiStep.UI.Localization;
 
 using Xunit;
 
@@ -94,6 +97,7 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 		var result = fixture.ClipboardSerializer.DeserializeSteps("");
 
 		result.IsFailed.Should().BeTrue();
+		result.Errors[0].Should().BeOfType<NoValidStepsError>();
 	}
 
 	[Fact]
@@ -111,6 +115,17 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 		var result = fixture.ClipboardSerializer.DeserializeSteps(malformed);
 
 		result.IsFailed.Should().BeTrue();
+		result.Errors[0].Should().BeOfType<ColumnCountMismatchError>();
+	}
+
+	[Fact]
+	public void ClipboardDeserialize_UnescapedQuote_ReturnsClipboardParseFailed()
+	{
+		var unescapedQuote = "1\"0\t5.0";
+		var result = fixture.ClipboardSerializer.DeserializeSteps(unescapedQuote);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors[0].Should().BeOfType<ClipboardParseFailedError>();
 	}
 
 	[Fact]
@@ -133,5 +148,22 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().ContainSingle()
 			.Which.Message.Should().Contain("Column count mismatch");
+	}
+
+	[Fact]
+	public void ClipboardDeserialize_NonParseableValue_UnderRussianCulture_ComposesLocalizedRowColumnValueChain()
+	{
+		// Field order: action, step_duration, task (float), comment. Action 20 (For) declares the float
+		// "task" property.
+		var body = "20\t5.0\tabc\tc";
+		var result = fixture.ClipboardSerializer.DeserializeSteps(body);
+
+		result.IsFailed.Should().BeTrue();
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			var localized = ReasonLocalizer.Localize(result.Errors[0]);
+			localized.Should().Contain("Строка 1: Столбец «task»: Не удалось разобрать «abc» как float");
+		}
 	}
 }

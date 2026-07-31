@@ -9,6 +9,7 @@ using FluentResults;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis.Warnings;
+using SemiStep.Core.Recipes.Clipboard.Errors;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas.Errors;
 using SemiStep.Core.Recipes.Import.Errors;
@@ -433,6 +434,57 @@ public sealed class ReasonLocalizerTests
 			new RecipeFileNotFoundError("recipe.csv"),
 			new RecipeLoadFailedError("recipe.csv"),
 			new RecipeSaveFailedError("recipe.csv")
+		];
+
+		using (ResourcesCultureScope.Use("en"))
+		{
+			foreach (var sample in samples)
+			{
+				ReasonLocalizer.Localize(sample).Should().Be(sample.Message);
+			}
+		}
+	}
+
+	[Fact]
+	public void Localize_ClipboardParseFailed_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new ClipboardParseFailedError())
+				.Should().Be("Не удалось разобрать данные буфера обмена");
+		}
+	}
+
+	[Fact]
+	public void Localize_ColumnCountMismatch_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new ColumnCountMismatchError(2, 4, 5))
+				.Should().Be(
+					"Несоответствие количества столбцов в строке 2: ожидалось 4, получено 5. "
+					+ "Данные буфера обмена не соответствуют текущей конфигурации.");
+		}
+	}
+
+	[Fact]
+	public void Localize_NoValidSteps_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new NoValidStepsError())
+				.Should().Be("В данных буфера обмена не найдено допустимых шагов");
+		}
+	}
+
+	[Fact]
+	public void Localize_ClipboardImportErrors_UnderEnglishCulture_MatchOriginalMessage()
+	{
+		IError[] samples =
+		[
+			new ClipboardParseFailedError(),
+			new ColumnCountMismatchError(2, 4, 5),
+			new NoValidStepsError()
 		];
 
 		using (ResourcesCultureScope.Use("en"))

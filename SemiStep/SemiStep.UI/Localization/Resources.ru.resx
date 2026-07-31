@@ -466,6 +466,15 @@
   <data name="ErrorActionColumnNotFound" xml:space="preserve">
     <value>Столбец действия не найден</value>
   </data>
+  <data name="ErrorClipboardParseFailed" xml:space="preserve">
+    <value>Не удалось разобрать данные буфера обмена</value>
+  </data>
+  <data name="ErrorColumnCountMismatch" xml:space="preserve">
+    <value>Несоответствие количества столбцов в строке {0}: ожидалось {1}, получено {2}. Данные буфера обмена не соответствуют текущей конфигурации.</value>
+  </data>
+  <data name="ErrorNoValidSteps" xml:space="preserve">
+    <value>В данных буфера обмена не найдено допустимых шагов</value>
+  </data>
   <data name="ErrorActionColumnEmpty" xml:space="preserve">
     <value>Столбец действия пуст</value>
   </data>

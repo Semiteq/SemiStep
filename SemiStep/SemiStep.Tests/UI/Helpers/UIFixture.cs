@@ -152,7 +152,9 @@ public sealed class UIFixture : IAsyncLifetime
 			MessagePanel,
 			NullLogger<RecipeCommandsViewModel>.Instance);
 
-		var clipboardSerializer = new ClipboardSerializer(RecipeMetadataRegistry);
+		var clipboardSerializer = new ClipboardSerializer(
+			RecipeMetadataRegistry,
+			NullLogger<ClipboardSerializer>.Instance);
 		var importedRecipeValidator = new ImportedRecipeValidator(RecipeMetadataRegistry);
 		var clipboard = new ClipboardViewModel(
 			Coordinator,

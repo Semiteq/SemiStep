@@ -466,6 +466,15 @@
   <data name="ErrorActionColumnNotFound" xml:space="preserve">
     <value>Action column not found</value>
   </data>
+  <data name="ErrorClipboardParseFailed" xml:space="preserve">
+    <value>Failed to parse clipboard data</value>
+  </data>
+  <data name="ErrorColumnCountMismatch" xml:space="preserve">
+    <value>Column count mismatch on row {0}: expected {1}, got {2}. The clipboard data does not match the current configuration.</value>
+  </data>
+  <data name="ErrorNoValidSteps" xml:space="preserve">
+    <value>No valid steps found in clipboard data</value>
+  </data>
   <data name="ErrorActionColumnEmpty" xml:space="preserve">
     <value>Action column is empty</value>
   </data>

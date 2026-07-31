@@ -306,6 +306,12 @@ public class Resources
 
 	public static string ErrorActionColumnNotFound => ResourceManager.GetString("ErrorActionColumnNotFound", resourceCulture) ?? string.Empty;
 
+	public static string ErrorClipboardParseFailed => ResourceManager.GetString("ErrorClipboardParseFailed", resourceCulture) ?? string.Empty;
+
+	public static string ErrorColumnCountMismatch => ResourceManager.GetString("ErrorColumnCountMismatch", resourceCulture) ?? string.Empty;
+
+	public static string ErrorNoValidSteps => ResourceManager.GetString("ErrorNoValidSteps", resourceCulture) ?? string.Empty;
+
 	public static string ErrorActionColumnEmpty => ResourceManager.GetString("ErrorActionColumnEmpty", resourceCulture) ?? string.Empty;
 
 	public static string ErrorActionValueNotInteger => ResourceManager.GetString("ErrorActionValueNotInteger", resourceCulture) ?? string.Empty;

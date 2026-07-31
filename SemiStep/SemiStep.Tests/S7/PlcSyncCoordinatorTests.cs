@@ -320,7 +320,7 @@ public sealed class PlcSyncCoordinatorTests
 	}
 
 	[Fact]
-	public async Task SyncWriteFailure_EmitsFaultCarryingMessage()
+	public async Task SyncWriteFailure_EmitsTypedFaultCarryingException()
 	{
 		var (coordinator, transport, _) = Build(connected: true);
 		const string FailureMessage = "transport write blew up";
@@ -344,8 +344,47 @@ public sealed class PlcSyncCoordinatorTests
 			cancellationToken: TestContext.Current.CancellationToken);
 
 		faults.Should().ContainSingle("a sync-write failure must emit exactly one fault");
-		faults[0].Message.Should().Be(FailureMessage,
-			"the fault must carry the write-failure message so the user sees the cause");
+		faults[0].Should().BeOfType<PlcCommandFailedError>(
+			"the fault must carry the typed envelope so the panel localizes it by type");
+		faults[0].Reasons.OfType<ExceptionalError>()
+			.Should().ContainSingle("CausedBy must retain the underlying exception in the result chain")
+			.Which.Exception.Message.Should().Be(FailureMessage,
+				"the original exception rides CausedBy for the diagnostics log");
+		coordinator.Status.Should().Be(PlcSyncStatus.Failed);
+	}
+
+	[Fact]
+	public async Task SyncWhenRecipeActiveOnPlc_EmitsTypedRecipeActiveFault()
+	{
+		var (coordinator, transport, _) = Build(connected: true);
+
+		var layout = BuildTestConfiguration().Layout;
+
+		// Drive IsRecipeActiveAsync true: the execution-state DB read reports the recipe as active.
+		transport.SetReadResponseForDb(layout.ExecutionDb.DbNumber, (_, count) =>
+		{
+			var bytes = new byte[count];
+			bytes[layout.ExecutionDb.RecipeActiveOffset] = 1;
+			return bytes;
+		});
+
+		var faults = new List<IError>();
+		using var subscription = coordinator.Faults.Subscribe(faults.Add);
+
+		coordinator.NotifyRecipeChanged(Recipe.Empty, isValid: true);
+		await coordinator.WaitForPendingSyncAsync(TestContext.Current.CancellationToken);
+
+		await TestHelpers.WaitUntilAsync(
+			() => faults.Count > 0,
+			timeout: TimeSpan.FromMilliseconds(2500),
+			pollInterval: TimeSpan.FromMilliseconds(20),
+			cancellationToken: TestContext.Current.CancellationToken);
+
+		faults.Should().ContainSingle("a sync blocked by an active recipe must emit exactly one fault");
+		faults[0].Should().BeOfType<RecipeActiveError>(
+			"the fault must carry the typed error so the panel localizes it by type");
+		transport.WriteLog.Should().BeEmpty(
+			"no write may reach the PLC while a recipe is active");
 		coordinator.Status.Should().Be(PlcSyncStatus.Failed);
 	}
 }

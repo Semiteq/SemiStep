@@ -3,6 +3,7 @@ using System.Linq;
 
 using FluentResults;
 
+using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes.Analysis.Warnings;
@@ -26,6 +27,14 @@ public static class ReasonLocalizer
 		var text = reason switch
 		{
 			ConnectionLostError => Resources.ErrorConnectionLost,
+			NotConnectedError => Resources.ErrorNotConnected,
+			ProtocolVersionMismatchError error => Format(
+				Resources.ErrorProtocolVersionMismatch, error.Actual, error.Expected),
+			RecipeActiveError => Resources.ErrorRecipeActive,
+			RecipeNotCommittedError => Resources.ErrorRecipeNotCommitted,
+			WriteVerificationFailedError error => Format(
+				Resources.ErrorWriteVerificationFailed, error.Attempts),
+			PlcCommandFailedError => Resources.ErrorPlcCommandFailed,
 			OwnedByAnotherInstanceError error => Format(
 				Resources.ErrorOwnedByAnotherInstance,
 				error.Holder.UserName,

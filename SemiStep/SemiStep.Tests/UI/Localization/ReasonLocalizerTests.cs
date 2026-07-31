@@ -6,6 +6,7 @@ using FluentAssertions;
 
 using FluentResults;
 
+using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
@@ -79,6 +80,88 @@ public sealed class ReasonLocalizerTests
 		using (ResourcesCultureScope.Use("en"))
 		{
 			ReasonLocalizer.Localize(error).Should().Be(error.Message);
+		}
+	}
+
+	[Fact]
+	public void Localize_NotConnected_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new NotConnectedError())
+				.Should().Be("Нет соединения с ПЛК");
+		}
+	}
+
+	[Fact]
+	public void Localize_ProtocolVersionMismatch_UnderRussianCulture_ComposesActualAndExpected()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new ProtocolVersionMismatchError(expected: 2, actual: 1))
+				.Should().Be("Версия протокола ПЛК 1 не соответствует ожидаемой 2");
+		}
+	}
+
+	[Fact]
+	public void Localize_RecipeActive_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new RecipeActiveError())
+				.Should().Be("Рецепт выполняется на ПЛК");
+		}
+	}
+
+	[Fact]
+	public void Localize_RecipeNotCommitted_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new RecipeNotCommittedError())
+				.Should().Be("Рецепт не зафиксирован на ПЛК");
+		}
+	}
+
+	[Fact]
+	public void Localize_WriteVerificationFailed_UnderRussianCulture_ComposesAttempts()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new WriteVerificationFailedError(3))
+				.Should().Be("Проверка записи рецепта не удалась после 3 попыток");
+		}
+	}
+
+	[Fact]
+	public void Localize_PlcCommandFailed_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new PlcCommandFailedError())
+				.Should().Be("Ошибка команды ПЛК");
+		}
+	}
+
+	[Fact]
+	public void Localize_PlcProducerErrors_UnderEnglishCulture_MatchOriginalMessage()
+	{
+		IError[] samples =
+		[
+			new NotConnectedError(),
+			new ProtocolVersionMismatchError(expected: 2, actual: 1),
+			new RecipeActiveError(),
+			new RecipeNotCommittedError(),
+			new WriteVerificationFailedError(3),
+			new PlcCommandFailedError()
+		];
+
+		using (ResourcesCultureScope.Use("en"))
+		{
+			foreach (var sample in samples)
+			{
+				ReasonLocalizer.Localize(sample).Should().Be(sample.Message);
+			}
 		}
 	}
 

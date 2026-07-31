@@ -60,7 +60,7 @@ internal sealed class PlcTransactionExecutor
 	{
 		if (!_transport.IsConnected)
 		{
-			return Result.Fail(new NotConnectedError("Not connected to PLC"));
+			return Result.Fail(new NotConnectedError());
 		}
 
 		try
@@ -102,7 +102,8 @@ internal sealed class PlcTransactionExecutor
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
-			return Result.Fail(ex.Message);
+			_logger.LogWarning(ex, "PLC recipe data read failed");
+			return Result.Fail(new PlcCommandFailedError().CausedBy(ex));
 		}
 	}
 
@@ -110,7 +111,7 @@ internal sealed class PlcTransactionExecutor
 	{
 		if (!_transport.IsConnected)
 		{
-			return Result.Fail(new NotConnectedError("Not connected to PLC"));
+			return Result.Fail(new NotConnectedError());
 		}
 
 		var dataResult = _converter.FromRecipe(recipe);
@@ -152,7 +153,7 @@ internal sealed class PlcTransactionExecutor
 		}
 
 		return Result.Fail(
-			$"Recipe write verification failed after {_protocolSettings.MaxRetryAttempts} attempts");
+			new WriteVerificationFailedError(_protocolSettings.MaxRetryAttempts));
 	}
 
 	public Task<Result<PlcManagingAreaState>> ReadManagingAreaAsync(CancellationToken ct = default)
@@ -168,7 +169,7 @@ internal sealed class PlcTransactionExecutor
 	{
 		if (!_transport.IsConnected)
 		{
-			return Result.Fail(new NotConnectedError("Not connected to PLC"));
+			return Result.Fail(new NotConnectedError());
 		}
 
 		try
@@ -188,7 +189,8 @@ internal sealed class PlcTransactionExecutor
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
-			return Result.Fail(ex.Message);
+			_logger.LogWarning(ex, "PLC protocol version read failed");
+			return Result.Fail(new PlcCommandFailedError().CausedBy(ex));
 		}
 	}
 
@@ -202,7 +204,7 @@ internal sealed class PlcTransactionExecutor
 
 		if (!managingAreaResult.Value.Committed)
 		{
-			return Result.Fail("Recipe not committed on PLC");
+			return Result.Fail(new RecipeNotCommittedError());
 		}
 
 		var recipeDataResult = await ReadRecipeDataAsync(ct);
@@ -219,7 +221,7 @@ internal sealed class PlcTransactionExecutor
 	{
 		if (!_transport.IsConnected)
 		{
-			return Result.Fail(new NotConnectedError("Not connected to PLC"));
+			return Result.Fail(new NotConnectedError());
 		}
 
 		try
@@ -229,7 +231,8 @@ internal sealed class PlcTransactionExecutor
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
-			return Result.Fail(ex.Message);
+			_logger.LogWarning(ex, "PLC read/decode failed for DB {DbNumber}", dbNumber);
+			return Result.Fail(new PlcCommandFailedError().CausedBy(ex));
 		}
 	}
 
@@ -264,7 +267,8 @@ internal sealed class PlcTransactionExecutor
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
-			return Result.Fail(ex.Message);
+			_logger.LogError(ex, "PLC recipe data write failed");
+			return Result.Fail(new PlcCommandFailedError().CausedBy(ex));
 		}
 	}
 
@@ -298,7 +302,8 @@ internal sealed class PlcTransactionExecutor
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
-			return Result.Fail(ex.Message);
+			_logger.LogError(ex, "PLC managing-area write failed");
+			return Result.Fail(new PlcCommandFailedError().CausedBy(ex));
 		}
 	}
 }

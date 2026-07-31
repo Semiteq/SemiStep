@@ -6,6 +6,7 @@ using FluentAssertions;
 
 using FluentResults;
 
+using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Recipes.Formulas.Errors;
 
@@ -121,6 +122,42 @@ public sealed class ResultReportingExtensionsTests : IDisposable
 
 		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
 		entry.Message.Should().Be("Соединение с ПЛК потеряно");
+	}
+
+	[AvaloniaFact]
+	public void ReportFailure_NotConnectedFault_UnderRussianCulture_LocalizesInOperationSlot()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			_panel.ReportFailure(new NotConnectedError());
+		}
+
+		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
+		entry.Message.Should().Be("Нет соединения с ПЛК");
+	}
+
+	[AvaloniaFact]
+	public void ReportFailure_RecipeActiveFault_UnderRussianCulture_LocalizesInOperationSlot()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			_panel.ReportFailure(new RecipeActiveError());
+		}
+
+		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
+		entry.Message.Should().Be("Рецепт выполняется на ПЛК");
+	}
+
+	[AvaloniaFact]
+	public void ReportFailure_PlcCommandFailedFault_UnderRussianCulture_LocalizesInOperationSlot()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			_panel.ReportFailure(new PlcCommandFailedError());
+		}
+
+		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
+		entry.Message.Should().Be("Ошибка команды ПЛК");
 	}
 
 	[AvaloniaFact]

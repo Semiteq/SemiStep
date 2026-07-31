@@ -223,6 +223,8 @@ public sealed class PlcTransactionExecutorTests
 
 		result.IsFailed.Should().BeTrue(
 			"after exhausting all retry attempts the result must be failed");
+		result.HasError<WriteVerificationFailedError>().Should().BeTrue(
+			"the failure reason must be a typed WriteVerificationFailedError");
 		result.Errors.Should().ContainSingle(e =>
 			e.Message.Contains("verification failed", StringComparison.OrdinalIgnoreCase));
 	}
@@ -267,6 +269,20 @@ public sealed class PlcTransactionExecutorTests
 		result.IsFailed.Should().BeTrue("writing to a disconnected PLC must return a failed result");
 		result.HasError<NotConnectedError>().Should().BeTrue(
 			"the failure reason must be a NotConnectedError");
+	}
+
+	[Fact]
+	public async Task ReadRecipeFromPlcAsync_ManagingAreaNotCommitted_ReturnsRecipeNotCommittedError()
+	{
+		var (executor, _) = BuildExecutor();
+
+		// The default transport returns all-zero managing-area bytes, so Committed decodes to false.
+		var result = await executor.ReadRecipeFromPlcAsync(TestContext.Current.CancellationToken);
+
+		result.IsFailed.Should().BeTrue(
+			"reading a recipe the PLC has not committed must fail");
+		result.HasError<RecipeNotCommittedError>().Should().BeTrue(
+			"the failure reason must be a typed RecipeNotCommittedError");
 	}
 
 	[Fact]

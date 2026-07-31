@@ -117,7 +117,12 @@ internal sealed class PlcExecutionMonitor(
 						return;
 					}
 
-					_logger.LogWarning("Execution monitor poll error: {Message}", result.Errors[0].Message);
+					if (!result.Errors.OfType<PlcCommandFailedError>().Any())
+					{
+						_logger.LogWarning(
+							"Execution monitor poll error: {Message}", result.Errors[0].Message);
+					}
+
 					continue;
 				}
 

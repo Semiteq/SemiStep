@@ -3,6 +3,7 @@ using System.Linq;
 
 using FluentResults;
 
+using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Clipboard.Errors;
@@ -24,6 +25,7 @@ public static class ReasonLocalizer
 	{
 		var text = reason switch
 		{
+			ConnectionLostError => Resources.ErrorConnectionLost,
 			OwnedByAnotherInstanceError error => Format(
 				Resources.ErrorOwnedByAnotherInstance,
 				error.Holder.UserName,

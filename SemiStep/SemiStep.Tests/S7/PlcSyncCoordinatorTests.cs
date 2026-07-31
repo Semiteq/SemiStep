@@ -238,6 +238,7 @@ public sealed class PlcSyncCoordinatorTests
 
 		faults.Should().ContainSingle(
 			"a runtime connection loss must emit exactly one fault on the Faults channel");
+		faults[0].Should().BeOfType<ConnectionLostError>();
 		faults[0].Message.ToLowerInvariant().Should().Contain("connection");
 	}
 

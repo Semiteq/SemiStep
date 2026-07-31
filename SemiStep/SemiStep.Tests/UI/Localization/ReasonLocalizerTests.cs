@@ -6,6 +6,7 @@ using FluentAssertions;
 
 using FluentResults;
 
+using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis.Warnings;
@@ -53,6 +54,27 @@ public sealed class ReasonLocalizerTests
 	public void Localize_OwnedByAnotherInstance_UnderEnglishCulture_MatchesOriginalMessage()
 	{
 		var error = OwnedByAnother();
+
+		using (ResourcesCultureScope.Use("en"))
+		{
+			ReasonLocalizer.Localize(error).Should().Be(error.Message);
+		}
+	}
+
+	[Fact]
+	public void Localize_ConnectionLost_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new ConnectionLostError())
+				.Should().Be("Соединение с ПЛК потеряно");
+		}
+	}
+
+	[Fact]
+	public void Localize_ConnectionLost_UnderEnglishCulture_MatchesOriginalMessage()
+	{
+		var error = new ConnectionLostError();
 
 		using (ResourcesCultureScope.Use("en"))
 		{

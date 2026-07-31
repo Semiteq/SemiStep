@@ -448,6 +448,9 @@
   <data name="EditorDefaultFont" xml:space="preserve">
     <value>(Default)</value>
   </data>
+  <data name="ErrorConnectionLost" xml:space="preserve">
+    <value>PLC connection lost</value>
+  </data>
   <data name="ErrorOwnedByAnotherInstance" xml:space="preserve">
     <value>PLC sync is owned by another instance (user {0}, since {1:HH:mm} UTC).</value>
   </data>

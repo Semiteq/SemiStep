@@ -22,6 +22,11 @@ public static class ResultReportingExtensions
 		panel.ReportError(context is null ? message : $"{context}: {message}");
 	}
 
+	public static void ReportFailure(this MessagePanelViewModel panel, IError error)
+	{
+		panel.ReportError(ReasonLocalizer.Localize(error));
+	}
+
 	public static void ReportWarnings(this MessagePanelViewModel panel, IResultBase result)
 	{
 		var message = Join(result.Successes.OfType<Warning>().Select(ReasonLocalizer.Localize));

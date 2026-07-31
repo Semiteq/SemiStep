@@ -527,7 +527,7 @@ public sealed class RecipeCoordinator : IDisposable
 			}
 
 			_logger.LogWarning("PLC fault: {Message}", error.Message);
-			_messagePanel.ReportError(error.Message);
+			_messagePanel.ReportFailure(error);
 		}
 	}
 

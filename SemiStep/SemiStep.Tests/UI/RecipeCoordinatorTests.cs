@@ -8,10 +8,12 @@ using FluentResults;
 
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.State;
+using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Recipes;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
+using SemiStep.Tests.UI.Localization;
 
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.Localization;
@@ -374,7 +376,9 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Session.Reset();
 		_fixture.MessagePanel.Entries.Should().BeEmpty("a fresh empty recipe has no structural defects");
 
-		_fixture.PlcSyncService.PushFault(new Error("PLC connection lost"));
+		using var cultureScope = ResourcesCultureScope.Use("en");
+
+		_fixture.PlcSyncService.PushFault(new ConnectionLostError());
 
 		_fixture.MessagePanel.Entries.Should().ContainSingle(
 			"a PLC fault must surface as a transient operation message in the panel");

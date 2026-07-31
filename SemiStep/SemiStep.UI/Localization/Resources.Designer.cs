@@ -294,6 +294,8 @@ public class Resources
 
 	public static string EditorDefaultFont => ResourceManager.GetString("EditorDefaultFont", resourceCulture) ?? string.Empty;
 
+	public static string ErrorConnectionLost => ResourceManager.GetString("ErrorConnectionLost", resourceCulture) ?? string.Empty;
+
 	public static string ErrorOwnedByAnotherInstance => ResourceManager.GetString("ErrorOwnedByAnotherInstance", resourceCulture) ?? string.Empty;
 
 	public static string ErrorFormulaComputationFailed => ResourceManager.GetString("ErrorFormulaComputationFailed", resourceCulture) ?? string.Empty;

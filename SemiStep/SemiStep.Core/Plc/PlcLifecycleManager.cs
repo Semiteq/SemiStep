@@ -13,6 +13,8 @@ namespace SemiStep.Core.Plc;
 
 public sealed class PlcLifecycleManager : IDisposable
 {
+	internal const string SyncEnableCancelledMessage = "PLC sync enable cancelled";
+
 	private readonly IS7Connection _connection;
 	private readonly IS7ExecutionStream _executionStream;
 	private readonly ImportedRecipeValidator _importedRecipeValidator;
@@ -120,12 +122,14 @@ public sealed class PlcLifecycleManager : IDisposable
 
 		_ownershipLease = ownershipResult.Value;
 
+		var lifeToken = _lifetimeCts.Token;
+
 		try
 		{
 			_syncService.SetSyncEnabled(true);
 			await _connection.ConnectAsync(config.Connection);
 
-			var versionResult = await ValidateProtocolVersionAsync();
+			var versionResult = await ValidateProtocolVersionAsync(lifeToken);
 			if (versionResult.IsFailed)
 			{
 				await FailProtocolVersionHandshakeAsync();
@@ -134,18 +138,22 @@ public sealed class PlcLifecycleManager : IDisposable
 
 			return Result.Ok();
 		}
+		catch (OperationCanceledException) when (lifeToken.IsCancellationRequested)
+		{
+			RollbackSyncEnable();
+			return Result.Fail(SyncEnableCancelledMessage);
+		}
 		catch (Exception ex)
 		{
-			_syncService.SetSyncEnabled(false);
-			ReleaseOwnershipLease();
+			RollbackSyncEnable();
 			_logger.LogWarning("Enabling PLC sync failed: {Message}", ex.Message);
 			return Result.Fail(ex.Message);
 		}
 	}
 
-	private async Task<Result> ValidateProtocolVersionAsync()
+	private async Task<Result> ValidateProtocolVersionAsync(CancellationToken ct)
 	{
-		var versionResult = await _reader.ReadProtocolVersionAsync();
+		var versionResult = await _reader.ReadProtocolVersionAsync(ct);
 		if (versionResult.IsFailed)
 		{
 			return versionResult.ToResult();
@@ -162,9 +170,14 @@ public sealed class PlcLifecycleManager : IDisposable
 
 	private async Task FailProtocolVersionHandshakeAsync()
 	{
+		RollbackSyncEnable();
+		await _connection.DisconnectAsync();
+	}
+
+	private void RollbackSyncEnable()
+	{
 		_syncService.SetSyncEnabled(false);
 		ReleaseOwnershipLease();
-		await _connection.DisconnectAsync();
 	}
 
 	public async Task DisableSync()
@@ -284,12 +297,18 @@ public sealed class PlcLifecycleManager : IDisposable
 
 	private async Task PerformReconnectReconciliationAsync(CancellationToken cancellationToken)
 	{
-		if (cancellationToken.IsCancellationRequested)
+		try
 		{
-			return;
+			await ReconcileWithPlcAsync(cancellationToken);
 		}
+		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+		{
+		}
+	}
 
-		var versionResult = await ValidateProtocolVersionAsync();
+	private async Task ReconcileWithPlcAsync(CancellationToken cancellationToken)
+	{
+		var versionResult = await ValidateProtocolVersionAsync(cancellationToken);
 		if (versionResult.IsFailed)
 		{
 			_logger.LogWarning(
@@ -299,17 +318,7 @@ public sealed class PlcLifecycleManager : IDisposable
 			return;
 		}
 
-		if (cancellationToken.IsCancellationRequested)
-		{
-			return;
-		}
-
-		var managingAreaResult = await _reader.ReadManagingAreaAsync();
-
-		if (cancellationToken.IsCancellationRequested)
-		{
-			return;
-		}
+		var managingAreaResult = await _reader.ReadManagingAreaAsync(cancellationToken);
 
 		if (managingAreaResult.IsFailed)
 		{
@@ -326,12 +335,7 @@ public sealed class PlcLifecycleManager : IDisposable
 			return;
 		}
 
-		var plcRecipeResult = await _reader.ReadRecipeFromPlcAsync();
-
-		if (cancellationToken.IsCancellationRequested)
-		{
-			return;
-		}
+		var plcRecipeResult = await _reader.ReadRecipeFromPlcAsync(cancellationToken);
 
 		if (plcRecipeResult.IsFailed)
 		{
@@ -347,7 +351,7 @@ public sealed class PlcLifecycleManager : IDisposable
 
 		if (localRecipe.Steps.Count == 0 && plcRecipe.Steps.Count > 0)
 		{
-			await ApplyReconnectPlcRecipeAsync(plcRecipe, cancellationToken);
+			await ApplyReconnectPlcRecipeAsync(plcRecipe);
 			return;
 		}
 
@@ -365,7 +369,7 @@ public sealed class PlcLifecycleManager : IDisposable
 		NotifyLocalRecipe();
 	}
 
-	private async Task ApplyReconnectPlcRecipeAsync(Recipe plcRecipe, CancellationToken cancellationToken)
+	private async Task ApplyReconnectPlcRecipeAsync(Recipe plcRecipe)
 	{
 		var callback = _reconnectApplyCallback;
 		if (callback is null)
@@ -383,11 +387,6 @@ public sealed class PlcLifecycleManager : IDisposable
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Reconnect apply callback threw");
-			return;
-		}
-
-		if (cancellationToken.IsCancellationRequested)
-		{
 			return;
 		}
 

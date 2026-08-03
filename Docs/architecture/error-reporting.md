@@ -165,7 +165,8 @@ headline is what the operator reads while the exception rides the cause for futu
 Still free-text (deferred to a later wave): the style-editor and the five formula-internal free-text inners (null expression,
 evaluation exception, non-finite, Int32/float overflow), which stay English under `ru` because their inner
 is wrapped in a plain `new Error(text)`. (PLC is now typed — see "PLC faults localize by type" below —
-except the two deliberately-deferred producers noted there.)
+except the short protocol-version read and the codec decode failures, which stay English by design as noted
+there; the enable-catch cancellation message is also plain English, settled by slice 6c.)
 
 ### PLC faults localize by type
 
@@ -191,15 +192,17 @@ into the result chain and a `_logger.Log(ex, …)` line at the catch (writes at 
 as `RecipeLoadFailedError`. `PlcTransactionExecutor`'s five read/write catches raise it; the exception type
 survives on `Reasons` for future consumers.
 
-**Producers that stay English by design (deferred):** `PlcTransactionExecutor`'s short
+**Producers that stay English by design:** `PlcTransactionExecutor`'s short
 protocol-version read (`"…returned {n} bytes, expected {m}"`) is a malformed-wire diagnostic edge, not an
-operator-actionable fault; `PlcLifecycleManager`'s enable catch is a connect/cancellation concern that
-belongs with the cancellation pass (slice 6c). A third: the codec decode failures (`ExecutionStateCodec`
+operator-actionable fault (still deferred to a future wave). `PlcLifecycleManager`'s enable catch was
+settled by slice 6c: the genuine-cancel arm returns a plain internal `Result.Fail` for a shutdown race,
+deliberately un-typed so it stays out of the localization coverage gate, while the failure arm forwards
+`ex.Message` as before. A third, still deferred: the codec decode failures (`ExecutionStateCodec`
 and `ManagingAreaCodec` return a plain `new Error("…data length …")` on a short read) are still untyped, so
 when `PlcSyncExecutor` forwards them through `reportFault(activeResult.Errors[0])` a decode-Fail reaches the
 panel as raw English. This is a malformed-wire diagnostic edge like the short-version read, not an
-operator-actionable fault; typing the codec layer is out of scope for this wave. All three stay free-text
-until then.
+operator-actionable fault; typing the codec layer is out of scope for this wave. The two malformed-wire
+edges stay free-text until then.
 
 ### The published rule (public error surface)
 

@@ -66,6 +66,20 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 	/// </summary>
 	public bool ProtocolVersionReadShouldThrowCanceled { get; set; }
 
+	/// <summary>
+	/// When set, <see cref="ReadManagingAreaAsync"/> awaits this gate (observing the token) before
+	/// returning. Lets a test suspend reconnect reconciliation at the managing-area read and cancel
+	/// the token mid-wait to prove the read is interrupted rather than polled.
+	/// </summary>
+	public ReadGate? ManagingAreaReadGate { get; set; }
+
+	/// <summary>
+	/// When set, <see cref="ReadProtocolVersionAsync"/> awaits this gate (observing the token) before
+	/// returning. Lets a test suspend the <c>EnableSync</c> handshake at the version read and cancel
+	/// the token mid-wait to exercise the genuine-cancel branch.
+	/// </summary>
+	public ReadGate? ProtocolVersionReadGate { get; set; }
+
 	/// <summary>Raises <see cref="StateChanged"/> with the given state.</summary>
 	public void RaiseStateChanged(PlcConnectionState state)
 	{
@@ -104,20 +118,51 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 	/// <summary>Number of times <see cref="ReadManagingAreaAsync"/> was called.</summary>
 	public int ReadManagingAreaCallCount { get; private set; }
 
-	public Task<Result<PlcManagingAreaState>> ReadManagingAreaAsync()
+	/// <summary>Number of times <see cref="ReadRecipeFromPlcAsync"/> was called.</summary>
+	public int ReadRecipeFromPlcCallCount { get; private set; }
+
+	private readonly TaskCompletionSource _recipeReadReached = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+	/// <summary>Completes the first time <see cref="ReadRecipeFromPlcAsync"/> is entered.</summary>
+	public Task RecipeReadReached => _recipeReadReached.Task;
+
+	public Task<Result<PlcManagingAreaState>> ReadManagingAreaAsync(CancellationToken ct = default)
 	{
+		ct.ThrowIfCancellationRequested();
+
 		ReadManagingAreaCallCount++;
 
-		if (ManagingAreaToReturn is not null)
+		if (ManagingAreaReadGate is not null)
 		{
-			return Task.FromResult(Result.Ok(ManagingAreaToReturn));
+			return GateThenReadManagingAreaAsync(ManagingAreaReadGate, ct);
 		}
 
-		return Task.FromResult(Result.Fail<PlcManagingAreaState>("Not connected"));
+		return Task.FromResult(BuildManagingAreaResult());
 	}
 
-	public Task<Result<Recipe>> ReadRecipeFromPlcAsync()
+	private async Task<Result<PlcManagingAreaState>> GateThenReadManagingAreaAsync(ReadGate gate, CancellationToken ct)
 	{
+		await gate.WaitAsync(ct);
+		return BuildManagingAreaResult();
+	}
+
+	private Result<PlcManagingAreaState> BuildManagingAreaResult()
+	{
+		if (ManagingAreaToReturn is not null)
+		{
+			return Result.Ok(ManagingAreaToReturn);
+		}
+
+		return Result.Fail<PlcManagingAreaState>("Not connected");
+	}
+
+	public Task<Result<Recipe>> ReadRecipeFromPlcAsync(CancellationToken ct = default)
+	{
+		ct.ThrowIfCancellationRequested();
+
+		ReadRecipeFromPlcCallCount++;
+		_recipeReadReached.TrySetResult();
+
 		if (RecipeToReturn is not null)
 		{
 			return Task.FromResult(Result.Ok(RecipeToReturn));
@@ -126,14 +171,27 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 		return Task.FromResult(Result.Fail<Recipe>("Not connected"));
 	}
 
-	public Task<Result<int>> ReadProtocolVersionAsync()
+	public Task<Result<int>> ReadProtocolVersionAsync(CancellationToken ct = default)
 	{
+		ct.ThrowIfCancellationRequested();
+
 		if (ProtocolVersionReadShouldThrowCanceled)
 		{
 			throw new TaskCanceledException("Stub protocol version read timed out");
 		}
 
+		if (ProtocolVersionReadGate is not null)
+		{
+			return GateThenReadProtocolVersionAsync(ProtocolVersionReadGate, ct);
+		}
+
 		return Task.FromResult(ProtocolVersionToReturn);
+	}
+
+	private async Task<Result<int>> GateThenReadProtocolVersionAsync(ReadGate gate, CancellationToken ct)
+	{
+		await gate.WaitAsync(ct);
+		return ProtocolVersionToReturn;
 	}
 
 	public ValueTask DisposeAsync()

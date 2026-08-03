@@ -341,6 +341,59 @@ public sealed class PlcLifecycleManagerReconnectTests
 	}
 
 	[Fact]
+	public async Task StateChanged_Connected_WhenLifetimeCancelledMidRead_AbortsAtReadWithoutReadingRecipe()
+	{
+		var (plc, _, s7Service, _) = await BuildAsync();
+
+		// The broken (token-ignored) path would proceed past a committed managing area to the recipe read
+		// and the apply callback. Wire both so the divergence is observable: committed area + non-empty
+		// recipe + empty local session (session.Reset in BuildAsync) is the "adopt PLC recipe" shape.
+		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
+		s7Service.RecipeToReturn = BuildSingleStepRecipe();
+
+		var applyCallbackInvoked = false;
+		plc.RegisterReconnectApplyCallback(_ =>
+		{
+			applyCallbackInvoked = true;
+			return Task.FromResult(Result.Ok());
+		});
+
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
+		enableResult.IsSuccess.Should().BeTrue();
+
+		// Gate the managing-area read (the first read after the version check).
+		var managingAreaGate = new ReadGate();
+		s7Service.ManagingAreaReadGate = managingAreaGate;
+
+		s7Service.RaiseStateChanged(PlcConnectionState.Connected);
+
+		await managingAreaGate.Entered.WaitAsync(TestContext.Current.CancellationToken);
+
+		// Cancel the lifetime token mid-wait, then release the gate. A genuine cancel makes the gated
+		// read throw before it returns, so reconciliation never advances to the recipe read.
+		plc.Dispose();
+		managingAreaGate.Release();
+
+		// The discriminator: the downstream recipe read must NOT happen. A silently-ignored token would
+		// let the released managing-area read return and reconciliation would proceed to the recipe read
+		// (count 1); the working plumbing aborts at the read (count 0). Bounded wait: if the recipe read
+		// is ever reached it signals within microseconds; timing out means it was never reached.
+		var settleWindow = TimeSpan.FromMilliseconds(250);
+		var recipeReadReached = await Task.WhenAny(
+			s7Service.RecipeReadReached,
+			Task.Delay(settleWindow, TestContext.Current.CancellationToken))
+			== s7Service.RecipeReadReached;
+
+		recipeReadReached.Should().BeFalse(
+			"a cancelled lifetime token must abort reconciliation at the in-flight managing-area read, "
+			+ "never advancing to the downstream recipe read");
+		s7Service.ReadRecipeFromPlcCallCount.Should().Be(0,
+			"the recipe read is downstream of the managing-area read; a cancel at the read leaves it uncalled");
+		applyCallbackInvoked.Should().BeFalse(
+			"aborting at the managing-area read must not reach the apply callback");
+	}
+
+	[Fact]
 	public async Task RegisterReconnectApplyCallback_CalledTwice_Throws()
 	{
 		var (plc, _, _, _) = await BuildAsync();

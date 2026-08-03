@@ -114,9 +114,9 @@ internal sealed class S7Service(
 		_logger.LogInformation("Disconnected from PLC");
 	}
 
-	public async Task<Result<PlcManagingAreaState>> ReadManagingAreaAsync()
+	public async Task<Result<PlcManagingAreaState>> ReadManagingAreaAsync(CancellationToken ct = default)
 	{
-		var result = await transactionExecutor.ReadManagingAreaAsync();
+		var result = await transactionExecutor.ReadManagingAreaAsync(ct);
 		if (result.IsFailed)
 		{
 			_logger.LogWarning("Failed to read managing area from PLC: {Reason}", result.Errors.FirstOrDefault()?.Message ?? "(no message)");
@@ -125,9 +125,9 @@ internal sealed class S7Service(
 		return result;
 	}
 
-	public async Task<Result<Recipe>> ReadRecipeFromPlcAsync()
+	public async Task<Result<Recipe>> ReadRecipeFromPlcAsync(CancellationToken ct = default)
 	{
-		var result = await transactionExecutor.ReadRecipeFromPlcAsync();
+		var result = await transactionExecutor.ReadRecipeFromPlcAsync(ct);
 		if (result.IsFailed)
 		{
 			_logger.LogWarning("Failed to read recipe from PLC: {Reason}", result.Errors.FirstOrDefault()?.Message ?? "(no message)");
@@ -135,9 +135,9 @@ internal sealed class S7Service(
 		return result;
 	}
 
-	public async Task<Result<int>> ReadProtocolVersionAsync()
+	public async Task<Result<int>> ReadProtocolVersionAsync(CancellationToken ct = default)
 	{
-		var result = await transactionExecutor.ReadProtocolVersionAsync();
+		var result = await transactionExecutor.ReadProtocolVersionAsync(ct);
 		if (result.IsFailed)
 		{
 			_logger.LogWarning("Failed to read protocol version from PLC: {Reason}", result.Errors.FirstOrDefault()?.Message ?? "(no message)");

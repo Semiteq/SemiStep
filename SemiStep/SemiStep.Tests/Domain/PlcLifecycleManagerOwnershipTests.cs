@@ -188,6 +188,40 @@ public sealed class PlcLifecycleManagerOwnershipTests
 	}
 
 	[Fact]
+	public async Task EnableSync_WhenLifetimeCancelledMidVersionRead_TakesGenuineCancelBranch()
+	{
+		var (plc, s7Service, syncService, ownership) = await BuildAsync();
+
+		// Gate the version read so EnableSync suspends mid-await inside the handshake. Unlike the
+		// timeout sibling (ProtocolVersionReadShouldThrowCanceled), this read never throws on its own
+		// and never returns a value — it is interrupted by a genuine token cancel arriving mid-wait.
+		var versionGate = new ReadGate();
+		s7Service.ProtocolVersionReadGate = versionGate;
+
+		var enableTask = plc.EnableSync(PlcConfiguration.Default);
+
+		await versionGate.Entered.WaitAsync(TestContext.Current.CancellationToken);
+
+		// Dispose cancels the lifetime CTS the captured lifeToken observes; the gated WaitAsync throws
+		// OperationCanceledException with the token cancelled, so the genuine-cancel catch runs.
+		plc.Dispose();
+
+		var result = await enableTask.WaitAsync(TestContext.Current.CancellationToken);
+
+		result.IsFailed.Should().BeTrue(
+			"a lifetime cancel landing mid-handshake must fail EnableSync via the genuine-cancel branch");
+		result.Errors[0].Message.Should().Be(PlcLifecycleManager.SyncEnableCancelledMessage,
+			"the genuine-cancel branch must surface its own message, not the generic failure path's "
+			+ "forwarded exception message; this is the only observable state that discriminates the two catch arms");
+		ownership.LastLease.Should().NotBeNull();
+		ownership.LastLease!.DisposeCallCount.Should().Be(1,
+			"the genuine-cancel branch must release the ownership lease exactly once");
+		syncService.IsSyncEnabled.Should().BeFalse(
+			"the genuine-cancel branch must roll the sync flag back to disabled");
+		plc.IsSyncEnabled.Should().BeFalse();
+	}
+
+	[Fact]
 	public async Task Dispose_ReleasesLeaseExactlyOnce()
 	{
 		var (plc, _, _, ownership) = await BuildAsync();

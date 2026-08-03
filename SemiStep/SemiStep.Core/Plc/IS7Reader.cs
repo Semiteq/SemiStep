@@ -7,7 +7,7 @@ namespace SemiStep.Core.Plc;
 
 public interface IS7Reader
 {
-	Task<Result<PlcManagingAreaState>> ReadManagingAreaAsync();
-	Task<Result<Recipe>> ReadRecipeFromPlcAsync();
-	Task<Result<int>> ReadProtocolVersionAsync();
+	Task<Result<PlcManagingAreaState>> ReadManagingAreaAsync(CancellationToken ct = default);
+	Task<Result<Recipe>> ReadRecipeFromPlcAsync(CancellationToken ct = default);
+	Task<Result<int>> ReadProtocolVersionAsync(CancellationToken ct = default);
 }

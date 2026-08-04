@@ -3,6 +3,7 @@ using System.Linq;
 
 using FluentResults;
 
+using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Plc.Sync.Ownership;
@@ -30,6 +31,16 @@ public static class ReasonLocalizer
 			NotConnectedError => Resources.ErrorNotConnected,
 			ProtocolVersionMismatchError error => Format(
 				Resources.ErrorProtocolVersionMismatch, error.Actual, error.Expected),
+			GridStyleConfigMissingError => Resources.ErrorGridStyleConfigMissing,
+			GridStyleSectionMissingError error => Format(Resources.ErrorGridStyleSectionMissing, error.Section),
+			GridStyleOrientationInvalidError error => Format(
+				Resources.ErrorGridStyleOrientationInvalid, error.Value, error.ExpectedRows, error.ExpectedColumns),
+			GridStyleKeyMissingError error => Format(Resources.ErrorGridStyleKeyMissing, error.Section, error.Key),
+			GridStyleHexColorInvalidError error => Format(
+				Resources.ErrorGridStyleHexColorInvalid, error.Section, error.Key, error.Value),
+			GridStyleConfigNotFoundError error => Format(Resources.ErrorGridStyleConfigNotFound, error.FilePath),
+			GridStyleLoadFailedError error => Format(Resources.ErrorGridStyleLoadFailed, error.FileName),
+			GridStyleSaveFailedError error => Format(Resources.ErrorGridStyleSaveFailed, error.FileName),
 			RecipeActiveError => Resources.ErrorRecipeActive,
 			RecipeNotCommittedError => Resources.ErrorRecipeNotCommitted,
 			WriteVerificationFailedError error => Format(

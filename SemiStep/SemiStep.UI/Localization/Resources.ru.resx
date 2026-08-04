@@ -517,6 +517,30 @@
   <data name="ErrorRecipeSaveFailed" xml:space="preserve">
     <value>Не удалось сохранить рецепт в «{0}»</value>
   </data>
+  <data name="ErrorGridStyleConfigMissing" xml:space="preserve">
+    <value>Конфигурация стиля таблицы отсутствует (ui/grid_style.yaml).</value>
+  </data>
+  <data name="ErrorGridStyleSectionMissing" xml:space="preserve">
+    <value>В конфигурации стиля таблицы отсутствует раздел «{0}».</value>
+  </data>
+  <data name="ErrorGridStyleOrientationInvalid" xml:space="preserve">
+    <value>Недопустимое значение 'orientation' стиля таблицы: «{0}». Ожидается «{1}» или «{2}».</value>
+  </data>
+  <data name="ErrorGridStyleKeyMissing" xml:space="preserve">
+    <value>Параметр стиля таблицы «{0}.{1}» отсутствует или пуст.</value>
+  </data>
+  <data name="ErrorGridStyleHexColorInvalid" xml:space="preserve">
+    <value>Недопустимый цвет в «{0}.{1}»: «{2}». Ожидается формат «#RRGGBB» или «#AARRGGBB».</value>
+  </data>
+  <data name="ErrorGridStyleConfigNotFound" xml:space="preserve">
+    <value>Файл конфигурации стиля таблицы не найден: {0}</value>
+  </data>
+  <data name="ErrorGridStyleLoadFailed" xml:space="preserve">
+    <value>Не удалось загрузить {0}</value>
+  </data>
+  <data name="ErrorGridStyleSaveFailed" xml:space="preserve">
+    <value>Не удалось сохранить {0}</value>
+  </data>
   <data name="ErrorPropertyValueTypeMismatch" xml:space="preserve">
     <value>Ожидалось значение типа {0}, получено {1} для «{2}»</value>
   </data>

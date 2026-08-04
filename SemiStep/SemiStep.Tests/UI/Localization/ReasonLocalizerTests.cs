@@ -6,6 +6,7 @@ using FluentAssertions;
 
 using FluentResults;
 
+using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Plc.Sync.Ownership;
@@ -590,6 +591,114 @@ public sealed class ReasonLocalizerTests
 			new ClipboardParseFailedError(),
 			new ColumnCountMismatchError(2, 4, 5),
 			new NoValidStepsError()
+		];
+
+		using (ResourcesCultureScope.Use("en"))
+		{
+			foreach (var sample in samples)
+			{
+				ReasonLocalizer.Localize(sample).Should().Be(sample.Message);
+			}
+		}
+	}
+
+	[Fact]
+	public void Localize_GridStyleConfigMissing_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new GridStyleConfigMissingError())
+				.Should().Be("Конфигурация стиля таблицы отсутствует (ui/grid_style.yaml).");
+		}
+	}
+
+	[Fact]
+	public void Localize_GridStyleSectionMissing_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new GridStyleSectionMissingError("colors"))
+				.Should().Be("В конфигурации стиля таблицы отсутствует раздел «colors».");
+		}
+	}
+
+	[Fact]
+	public void Localize_GridStyleOrientationInvalid_UnderRussianCulture_ComposesValueAndExpected()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new GridStyleOrientationInvalidError("x", "rows_as_steps", "columns_as_steps"))
+				.Should().Be(
+					"Недопустимое значение 'orientation' стиля таблицы: «x». "
+					+ "Ожидается «rows_as_steps» или «columns_as_steps».");
+		}
+	}
+
+	[Fact]
+	public void Localize_GridStyleKeyMissing_UnderRussianCulture_ComposesSectionAndKey()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new GridStyleKeyMissingError("colors.cells", "depth_0"))
+				.Should().Be("Параметр стиля таблицы «colors.cells.depth_0» отсутствует или пуст.");
+		}
+	}
+
+	[Fact]
+	public void Localize_GridStyleHexColorInvalid_UnderRussianCulture_ComposesSectionKeyAndValue()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new GridStyleHexColorInvalidError("colors.cells", "depth_0", "zzz"))
+				.Should().Be(
+					"Недопустимый цвет в «colors.cells.depth_0»: «zzz». "
+					+ "Ожидается формат «#RRGGBB» или «#AARRGGBB».");
+		}
+	}
+
+	[Fact]
+	public void Localize_GridStyleConfigNotFound_UnderRussianCulture_RendersRussianSentence()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new GridStyleConfigNotFoundError(@"C:\config\ui\grid_style.yaml"))
+				.Should().Be(@"Файл конфигурации стиля таблицы не найден: C:\config\ui\grid_style.yaml");
+		}
+	}
+
+	[Fact]
+	public void Localize_GridStyleLoadFailed_UnderRussianCulture_RendersRussianHeadline()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new GridStyleLoadFailedError("grid_style.yaml"))
+				.Should().Be("Не удалось загрузить grid_style.yaml");
+		}
+	}
+
+	[Fact]
+	public void Localize_GridStyleSaveFailed_UnderRussianCulture_RendersRussianHeadline()
+	{
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			ReasonLocalizer.Localize(new GridStyleSaveFailedError("grid_style.yaml"))
+				.Should().Be("Не удалось сохранить grid_style.yaml");
+		}
+	}
+
+	[Fact]
+	public void Localize_GridStyleErrors_UnderEnglishCulture_MatchOriginalMessage()
+	{
+		IError[] samples =
+		[
+			new GridStyleConfigMissingError(),
+			new GridStyleSectionMissingError("colors"),
+			new GridStyleOrientationInvalidError("x", "rows_as_steps", "columns_as_steps"),
+			new GridStyleKeyMissingError("colors.cells", "depth_0"),
+			new GridStyleHexColorInvalidError("colors.cells", "depth_0", "zzz"),
+			new GridStyleConfigNotFoundError(@"C:\config\ui\grid_style.yaml"),
+			new GridStyleLoadFailedError("grid_style.yaml"),
+			new GridStyleSaveFailedError("grid_style.yaml")
 		];
 
 		using (ResourcesCultureScope.Use("en"))

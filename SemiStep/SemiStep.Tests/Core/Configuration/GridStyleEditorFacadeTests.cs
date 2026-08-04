@@ -1,6 +1,9 @@
 ﻿using FluentAssertions;
 
+using FluentResults;
+
 using SemiStep.Core.Configuration;
+using SemiStep.Core.Configuration.Loaders;
 using SemiStep.Tests.Config.Helpers;
 using SemiStep.Tests.Helpers;
 
@@ -89,6 +92,42 @@ public sealed class GridStyleEditorFacadeTests
 
 		var after = await File.ReadAllTextAsync(filePath, token);
 		after.Should().Be(before);
+	}
+
+	[Fact]
+	public async Task Load_UnparseableYaml_CarriesOriginalExceptionOnCausedBy()
+	{
+		using var tempDir = new TempDirectory();
+		var uiDir = Path.Combine(tempDir.Path, "ui");
+		Directory.CreateDirectory(uiDir);
+		await File.WriteAllTextAsync(
+			Path.Combine(uiDir, "grid_style.yaml"),
+			": : : not valid yaml @@@ {[",
+			TestContext.Current.CancellationToken);
+
+		var result = await GridStyleLoader.LoadAsync(tempDir.Path);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().ContainSingle().Which.Should().BeOfType<GridStyleLoadFailedError>();
+		var exceptional = result.Errors.SelectMany(error => error.Reasons).OfType<ExceptionalError>().ToList();
+		exceptional.Should().ContainSingle();
+		exceptional[0].Exception.Should().NotBeNull();
+	}
+
+	[Fact]
+	public void Save_WriteFailure_CarriesOriginalExceptionOnCausedBy()
+	{
+		using var tempDir = new TempDirectory();
+		var configDirAsFile = Path.Combine(tempDir.Path, "not-a-directory");
+		File.WriteAllText(configDirAsFile, string.Empty);
+
+		var result = new GridStyleWriter().Save(configDirAsFile, GridStyleOptions.Default);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().ContainSingle().Which.Should().BeOfType<GridStyleSaveFailedError>();
+		var exceptional = result.Errors.SelectMany(error => error.Reasons).OfType<ExceptionalError>().ToList();
+		exceptional.Should().ContainSingle();
+		exceptional[0].Exception.Should().NotBeNull();
 	}
 
 	private static TempDirectory CopyShippedConfig(string equipment)

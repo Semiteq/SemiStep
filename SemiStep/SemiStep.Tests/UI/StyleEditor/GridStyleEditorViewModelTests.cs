@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Text.RegularExpressions;
 
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
@@ -15,7 +16,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 using ReactiveUI;
 
 using SemiStep.Core.Configuration;
+using SemiStep.Tests.Config.Helpers;
 using SemiStep.Tests.Helpers;
+using SemiStep.Tests.UI.Localization;
 using SemiStep.UI.Localization;
 using SemiStep.UI.StyleEditor;
 
@@ -274,7 +277,7 @@ public sealed class GridStyleEditorViewModelTests
 
 		await ExecuteSwallowing(viewModel.SaveCommand);
 
-		viewModel.ErrorMessage.Should().Be($"{Resources.SaveFailed}: disk gone");
+		viewModel.ErrorMessage.Should().Be(Resources.SaveFailed);
 		var logged = logger.Entries.Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
 		logged.Exception.Should().BeSameAs(failure);
@@ -293,10 +296,84 @@ public sealed class GridStyleEditorViewModelTests
 
 		viewModel.ReportSaveException(failure);
 
-		viewModel.ErrorMessage.Should().Be($"{Resources.SaveFailed}: boom");
+		viewModel.ErrorMessage.Should().Be(Resources.SaveFailed);
 		var logged = logger.Entries.Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
 		logged.Exception.Should().BeSameAs(failure);
+	}
+
+	[AvaloniaFact]
+	public async Task LoadAsync_WhenLoaderFailsWithCausedByException_LogsItAtWarning()
+	{
+		var logger = new RecordingLogger<GridStyleEditorViewModel>();
+		var failure = new InvalidOperationException("yaml parse failed");
+		var viewModel = new GridStyleEditorViewModel(
+			new CausedByFailingFacade(loadResult: Result.Fail(
+				new GridStyleLoadFailedError("grid_style.yaml").CausedBy(failure))),
+			ConfigDir,
+			GridStyleOptions.Default,
+			logger);
+
+		await viewModel.LoadAsync();
+
+		var logged = logger.Entries.Should().ContainSingle().Subject;
+		logged.Level.Should().Be(LogLevel.Warning);
+		logged.Exception.Should().BeSameAs(failure);
+	}
+
+	[AvaloniaFact]
+	public async Task SaveCommand_WhenWriterFailsWithCausedByException_LogsItAtWarning()
+	{
+		var logger = new RecordingLogger<GridStyleEditorViewModel>();
+		var failure = new IOException("disk full");
+		var viewModel = new GridStyleEditorViewModel(
+			new CausedByFailingFacade(saveResult: Result.Fail(
+				new GridStyleSaveFailedError("grid_style.yaml").CausedBy(failure))),
+			ConfigDir,
+			GridStyleOptions.Default,
+			logger);
+
+		viewModel.CanSave.Should().BeTrue("the seeded default draft is valid, so SaveCommand can execute");
+
+		await viewModel.SaveCommand.Execute();
+
+		var logged = logger.Entries.Should().ContainSingle().Subject;
+		logged.Level.Should().Be(LogLevel.Warning);
+		logged.Exception.Should().BeSameAs(failure);
+	}
+
+	[AvaloniaFact]
+	public async Task LoadAsync_MalformedHexColor_UnderRussianCulture_RendersRussianErrorMessage()
+	{
+		using var tempDir = CopyShippedConfigWithInvalidColor();
+		var viewModel = new GridStyleEditorViewModel(
+			new GridStyleEditorFacade(),
+			tempDir.Path,
+			GridStyleOptions.Default,
+			NullLogger<GridStyleEditorViewModel>.Instance);
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			await viewModel.LoadAsync();
+		}
+
+		viewModel.ErrorMessage.Should().Be(
+			"Недопустимый цвет в «colors.cells.changed_selected»: «zzz». "
+			+ "Ожидается формат «#RRGGBB» или «#AARRGGBB».");
+	}
+
+	private static TempDirectory CopyShippedConfigWithInvalidColor()
+	{
+		var source = ShippedConfigLocator.GetConfigDirectory("MBE");
+		var tempDir = new TempDirectory();
+		var uiDir = Path.Combine(tempDir.Path, "ui");
+		Directory.CreateDirectory(uiDir);
+
+		var original = File.ReadAllText(Path.Combine(source, "ui", "grid_style.yaml"));
+		var corrupted = Regex.Replace(original, "changed_selected:\\s*\"#[0-9A-Fa-f]+\"", "changed_selected: \"zzz\"");
+		File.WriteAllText(Path.Combine(uiDir, "grid_style.yaml"), corrupted);
+
+		return tempDir;
 	}
 
 	private static GridStyleEditorViewModel CreateViewModel(GridStyleOptions source)
@@ -335,6 +412,26 @@ public sealed class GridStyleEditorViewModelTests
 		public Result Save(string configDir, GridStyleOptions options)
 		{
 			throw failure;
+		}
+	}
+
+	private sealed class CausedByFailingFacade(
+		Result<GridStyleOptions>? loadResult = null,
+		Result? saveResult = null) : IGridStyleEditorFacade
+	{
+		public Task<Result<GridStyleOptions>> Load(string configDir)
+		{
+			return Task.FromResult(loadResult ?? Result.Ok(GridStyleOptions.Default));
+		}
+
+		public Result Validate(GridStyleOptions options)
+		{
+			return Result.Ok();
+		}
+
+		public Result Save(string configDir, GridStyleOptions options)
+		{
+			return saveResult ?? Result.Ok();
 		}
 	}
 }

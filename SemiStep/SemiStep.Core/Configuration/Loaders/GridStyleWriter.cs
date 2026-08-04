@@ -36,7 +36,7 @@ internal sealed class GridStyleWriter
 		}
 		catch (Exception ex)
 		{
-			return Result.Fail($"Failed to save {Path.GetFileName(filePath)}: {ex.Message}");
+			return Result.Fail(new GridStyleSaveFailedError(Path.GetFileName(filePath)).CausedBy(ex));
 		}
 	}
 

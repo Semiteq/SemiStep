@@ -6,6 +6,7 @@ using FluentAssertions;
 
 using FluentResults;
 
+using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Plc.Sync.Ownership;
@@ -37,6 +38,22 @@ public sealed class CoreErrorLocalizationCoverageTests
 			new NotConnectedError(),
 		[typeof(ProtocolVersionMismatchError)] =
 			new ProtocolVersionMismatchError(2, 1),
+		[typeof(GridStyleConfigMissingError)] =
+			new GridStyleConfigMissingError(),
+		[typeof(GridStyleSectionMissingError)] =
+			new GridStyleSectionMissingError("colors"),
+		[typeof(GridStyleOrientationInvalidError)] =
+			new GridStyleOrientationInvalidError("x", "rows_as_steps", "columns_as_steps"),
+		[typeof(GridStyleKeyMissingError)] =
+			new GridStyleKeyMissingError("colors.cells", "depth_0"),
+		[typeof(GridStyleHexColorInvalidError)] =
+			new GridStyleHexColorInvalidError("colors.cells", "depth_0", "zzz"),
+		[typeof(GridStyleConfigNotFoundError)] =
+			new GridStyleConfigNotFoundError("config/ui/grid_style.yaml"),
+		[typeof(GridStyleLoadFailedError)] =
+			new GridStyleLoadFailedError("grid_style.yaml"),
+		[typeof(GridStyleSaveFailedError)] =
+			new GridStyleSaveFailedError("grid_style.yaml"),
 		[typeof(RecipeActiveError)] =
 			new RecipeActiveError(),
 		[typeof(RecipeNotCommittedError)] =

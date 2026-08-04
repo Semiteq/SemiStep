@@ -166,8 +166,8 @@ public sealed class GridStyleEditorWindowOwnerRoutingTests : IAsyncLifetime
 		editor.OnSaveCompleted(true);
 		Dispatcher.UIThread.RunJobs();
 
-		viewModel.ErrorMessage.Should().StartWith(
-			Resources.SaveFailed + ":",
+		viewModel.ErrorMessage.Should().Be(
+			Resources.SaveFailed,
 			"the fault must surface on the editor's own error surface instead of crashing the app");
 	}
 

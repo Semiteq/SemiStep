@@ -190,7 +190,8 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 		var result = await _gridStyleEditorFacade.Load(_configDir);
 		if (result.IsFailed)
 		{
-			ErrorMessage = string.Join("; ", result.Errors.Select(error => error.Message));
+			ErrorMessage = string.Join("; ", result.Errors.Select(ReasonLocalizer.Localize));
+			LogCausedByExceptions(result, "Grid style load failed");
 			return;
 		}
 
@@ -294,7 +295,8 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 		var result = _gridStyleEditorFacade.Save(_configDir, BuildRecord());
 		if (result.IsFailed)
 		{
-			ErrorMessage = string.Join("; ", result.Errors.Select(error => error.Message));
+			ErrorMessage = string.Join("; ", result.Errors.Select(ReasonLocalizer.Localize));
+			LogCausedByExceptions(result, "Grid style save failed");
 			return false;
 		}
 
@@ -305,7 +307,15 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 	internal void ReportSaveException(Exception exception)
 	{
 		_logger.LogError(exception, "Style editor save failed");
-		ErrorMessage = $"{Resources.SaveFailed}: {exception.Message}";
+		ErrorMessage = Resources.SaveFailed;
+	}
+
+	private void LogCausedByExceptions(IResultBase result, string message)
+	{
+		foreach (var exceptional in result.Errors.SelectMany(error => error.Reasons).OfType<ExceptionalError>())
+		{
+			_logger.LogWarning(exceptional.Exception, "{Message}", message);
+		}
 	}
 
 	private void Seed(GridStyleOptions options)

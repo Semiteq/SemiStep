@@ -20,14 +20,14 @@ internal static class GridStyleLoader
 
 		if (!Directory.Exists(uiDir))
 		{
-			return Result.Fail<GridStyleOptionsDto?>($"Grid style config not found: {uiDir}");
+			return Result.Fail<GridStyleOptionsDto?>(new GridStyleConfigNotFoundError(uiDir));
 		}
 
 		var filePath = Path.Combine(uiDir, "grid_style.yaml");
 
 		if (!File.Exists(filePath))
 		{
-			return Result.Fail<GridStyleOptionsDto?>($"Grid style config not found: {filePath}");
+			return Result.Fail<GridStyleOptionsDto?>(new GridStyleConfigNotFoundError(filePath));
 		}
 
 		try
@@ -38,7 +38,7 @@ internal static class GridStyleLoader
 		}
 		catch (Exception ex)
 		{
-			return Result.Fail($"Failed to load {Path.GetFileName(filePath)}: {ex.Message}");
+			return Result.Fail(new GridStyleLoadFailedError(Path.GetFileName(filePath)).CausedBy(ex));
 		}
 	}
 }

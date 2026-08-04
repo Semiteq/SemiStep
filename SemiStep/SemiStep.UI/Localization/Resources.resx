@@ -517,6 +517,30 @@
   <data name="ErrorRecipeSaveFailed" xml:space="preserve">
     <value>Failed to save recipe to '{0}'</value>
   </data>
+  <data name="ErrorGridStyleConfigMissing" xml:space="preserve">
+    <value>Grid style configuration is missing (ui/grid_style.yaml).</value>
+  </data>
+  <data name="ErrorGridStyleSectionMissing" xml:space="preserve">
+    <value>Grid style configuration is missing '{0}' section.</value>
+  </data>
+  <data name="ErrorGridStyleOrientationInvalid" xml:space="preserve">
+    <value>Grid style 'orientation' has unknown value: '{0}'. Expected '{1}' or '{2}'.</value>
+  </data>
+  <data name="ErrorGridStyleKeyMissing" xml:space="preserve">
+    <value>Grid style '{0}.{1}' is missing or empty.</value>
+  </data>
+  <data name="ErrorGridStyleHexColorInvalid" xml:space="preserve">
+    <value>Grid style '{0}.{1}' has invalid hex color: '{2}'. Expected format: '#RRGGBB' or '#AARRGGBB'.</value>
+  </data>
+  <data name="ErrorGridStyleConfigNotFound" xml:space="preserve">
+    <value>Grid style config not found: {0}</value>
+  </data>
+  <data name="ErrorGridStyleLoadFailed" xml:space="preserve">
+    <value>Failed to load {0}</value>
+  </data>
+  <data name="ErrorGridStyleSaveFailed" xml:space="preserve">
+    <value>Failed to save {0}</value>
+  </data>
   <data name="ErrorPropertyValueTypeMismatch" xml:space="preserve">
     <value>Expected {0} value but got {1} for '{2}'</value>
   </data>

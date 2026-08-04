@@ -16,12 +16,12 @@ internal static class GridStyleValidator
 	{
 		if (dto is null)
 		{
-			return Result.Fail("Grid style configuration is missing (ui/grid_style.yaml).");
+			return Result.Fail(new GridStyleConfigMissingError());
 		}
 
 		if (dto.Colors is null)
 		{
-			return Result.Fail("Grid style configuration is missing 'colors' section.");
+			return Result.Fail(new GridStyleSectionMissingError("colors"));
 		}
 
 		var errors = new List<IError>();
@@ -182,9 +182,10 @@ internal static class GridStyleValidator
 			return;
 		}
 
-		errors.Add(new Error(
-			$"Grid style 'orientation' has unknown value: '{orientation}'. " +
-			$"Expected '{GridOrientationValues.RowsAsSteps}' or '{GridOrientationValues.ColumnsAsSteps}'."));
+		errors.Add(new GridStyleOrientationInvalidError(
+			orientation,
+			GridOrientationValues.RowsAsSteps,
+			GridOrientationValues.ColumnsAsSteps));
 	}
 
 	private static void ValidateSection(
@@ -194,7 +195,7 @@ internal static class GridStyleValidator
 	{
 		if (keys is null)
 		{
-			errors.Add(new Error($"Grid style configuration is missing '{sectionPath}' section."));
+			errors.Add(new GridStyleSectionMissingError(sectionPath));
 			return;
 		}
 
@@ -229,15 +230,13 @@ internal static class GridStyleValidator
 	{
 		if (string.IsNullOrWhiteSpace(value))
 		{
-			errors.Add(new Error($"Grid style '{sectionPath}.{keyName}' is missing or empty."));
+			errors.Add(new GridStyleKeyMissingError(sectionPath, keyName));
 			return;
 		}
 
 		if (!_hexColorRegex.IsMatch(value))
 		{
-			errors.Add(new Error(
-				$"Grid style '{sectionPath}.{keyName}' has invalid hex color: '{value}'. " +
-				"Expected format: '#RRGGBB' or '#AARRGGBB'."));
+			errors.Add(new GridStyleHexColorInvalidError(sectionPath, keyName, value));
 		}
 	}
 }

@@ -340,6 +340,22 @@ public class Resources
 
 	public static string ErrorRecipeSaveFailed => ResourceManager.GetString("ErrorRecipeSaveFailed", resourceCulture) ?? string.Empty;
 
+	public static string ErrorGridStyleConfigMissing => ResourceManager.GetString("ErrorGridStyleConfigMissing", resourceCulture) ?? string.Empty;
+
+	public static string ErrorGridStyleSectionMissing => ResourceManager.GetString("ErrorGridStyleSectionMissing", resourceCulture) ?? string.Empty;
+
+	public static string ErrorGridStyleOrientationInvalid => ResourceManager.GetString("ErrorGridStyleOrientationInvalid", resourceCulture) ?? string.Empty;
+
+	public static string ErrorGridStyleKeyMissing => ResourceManager.GetString("ErrorGridStyleKeyMissing", resourceCulture) ?? string.Empty;
+
+	public static string ErrorGridStyleHexColorInvalid => ResourceManager.GetString("ErrorGridStyleHexColorInvalid", resourceCulture) ?? string.Empty;
+
+	public static string ErrorGridStyleConfigNotFound => ResourceManager.GetString("ErrorGridStyleConfigNotFound", resourceCulture) ?? string.Empty;
+
+	public static string ErrorGridStyleLoadFailed => ResourceManager.GetString("ErrorGridStyleLoadFailed", resourceCulture) ?? string.Empty;
+
+	public static string ErrorGridStyleSaveFailed => ResourceManager.GetString("ErrorGridStyleSaveFailed", resourceCulture) ?? string.Empty;
+
 	public static string ErrorPropertyValueTypeMismatch => ResourceManager.GetString("ErrorPropertyValueTypeMismatch", resourceCulture) ?? string.Empty;
 
 	public static string ErrorUnsupportedPropertySystemType => ResourceManager.GetString("ErrorUnsupportedPropertySystemType", resourceCulture) ?? string.Empty;

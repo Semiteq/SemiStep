@@ -1,5 +1,7 @@
 ﻿using System.Globalization;
 
+using FluentResults;
+
 using Microsoft.Extensions.DependencyInjection;
 
 using SemiStep.Core.Configuration.Facade;
@@ -84,6 +86,11 @@ public static class Program
 			foreach (var error in errors)
 			{
 				Log.Error("Configuration error: {Error}", error);
+			}
+
+			foreach (var exceptional in result.Errors.SelectMany(e => e.Reasons).OfType<ExceptionalError>())
+			{
+				Log.Error(exceptional.Exception, "Configuration load exception");
 			}
 
 			return StartupOutcome.Failed(errors);

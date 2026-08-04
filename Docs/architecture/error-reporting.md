@@ -162,9 +162,46 @@ survives in the log through `CsvService`'s existing `_logger.LogWarning(..., ex.
 coordinator log joiner reads only the top-level `.Message` and does not walk `CausedBy`, so the localized
 headline is what the operator reads while the exception rides the cause for future consumers).
 
-Still free-text (deferred to a later wave): the style-editor and the five formula-internal free-text inners (null expression,
+### The style-editor surface localizes by type
+
+The in-app grid-style editor (`GridStyleEditorViewModel`) localizes its entire `ErrorMessage` surface by
+type. Its two `Result`-join sites (`LoadAsync`, `Save`) route each error through `ReasonLocalizer.Localize`
+rather than joining raw `.Message` strings, so both the validation failures and the file-I/O failures render
+in the current culture. Eight typed producers back it (all in `SemiStep.Core/Configuration/`):
+
+- **Validation** (`GridStyleValidator`): `GridStyleConfigMissingError`, `GridStyleSectionMissingError`,
+  `GridStyleOrientationInvalidError`, `GridStyleKeyMissingError`, `GridStyleHexColorInvalidError`. The
+  orientation error carries its two expected values as properties (`ExpectedRows`/`ExpectedColumns`) rather
+  than referencing the `internal GridOrientationValues` constants, which `ReasonLocalizer` (in `SemiStep.UI`)
+  cannot see.
+- **File I/O** (`GridStyleLoader`/`GridStyleWriter`): `GridStyleConfigNotFoundError` (a leaf), plus the two
+  **Rule-B envelopes** `GridStyleLoadFailedError`/`GridStyleSaveFailedError` (headline only, `.CausedBy(ex)`,
+  the `: {ex.Message}` tail dropped from the sentence).
+
+**Two diagnostics sinks for the Rule-B envelopes.** The loader/writer are logger-less internal helpers, so
+the dropped `ex.Message` is logged at each consumer, and the `ExceptionalError` is nested under `CausedBy`
+(walk one level: `result.Errors.SelectMany(e => e.Reasons).OfType<ExceptionalError>()`):
+
+- **Editor consumer** — `GridStyleEditorViewModel.LoadAsync`/`Save` log each nested `ExceptionalError` at
+  `LogWarning` after setting the localized `ErrorMessage`.
+- **Startup consumer** — `GridStyleLoader`/`GridStyleValidator` are also on the startup config-load path
+  (`ConfigFacade.LoadAndValidateAsync`, consumed by `Program.cs`), which logs the same nested
+  `ExceptionalError` so a YAML parse detail is not lost at launch.
+
+`SaveCommand.ThrownExceptions` (a command-pipeline throw, before any file is written) is distinct: it commits
+to `Resources.SaveFailed` alone (no `grid_style.yaml` in the wording, since no file was touched), with the raw
+exception kept in the log — see the modal-dialog note under "Command-exception pipe".
+
+With this surface typed, the editor no longer shows mixed languages (English loader error next to Russian
+validator error). The **startup** config load — which reads YAML to *establish* the UI culture, so no culture
+exists yet — is now the sole English-by-design surface among the config/recipe/editor operator surfaces
+(the PLC layer keeps two malformed-wire diagnostic edges English by design — the short protocol-version
+read and the codec decode failures — noted in "PLC faults localize by type" below).
+
+Still free-text (deferred to a later wave): the five formula-internal free-text inners (null expression,
 evaluation exception, non-finite, Int32/float overflow), which stay English under `ru` because their inner
-is wrapped in a plain `new Error(text)`. (PLC is now typed — see "PLC faults localize by type" below —
+is wrapped in a plain `new Error(text)`. (The style-editor surface is now typed — see "The style-editor
+surface localizes by type" below. PLC is now typed — see "PLC faults localize by type" below —
 except the short protocol-version read and the codec decode failures, which stay English by design as noted
 there; the enable-catch cancellation message is also plain English, settled by slice 6c.)
 

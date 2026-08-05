@@ -38,7 +38,7 @@ public sealed class GridStyleEditorFacade : IGridStyleEditorFacade
 		return GridStyleValidator.Validate(GridStyleDtoMapper.Map(options));
 	}
 
-	public Result Save(string configDir, GridStyleOptions options)
+	public async Task<Result> Save(string configDir, GridStyleOptions options)
 	{
 		var validation = Validate(options);
 		if (validation.IsFailed)
@@ -46,6 +46,6 @@ public sealed class GridStyleEditorFacade : IGridStyleEditorFacade
 			return validation;
 		}
 
-		return _gridStyleWriter.Save(configDir, options);
+		return await _gridStyleWriter.SaveAsync(configDir, options);
 	}
 }

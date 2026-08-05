@@ -17,7 +17,7 @@ internal sealed class GridStyleWriter
 
 	private static readonly UTF8Encoding _utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
-	public Result Save(string configDirectory, GridStyleOptions options)
+	public async Task<Result> SaveAsync(string configDirectory, GridStyleOptions options)
 	{
 		var uiDir = Path.Combine(configDirectory, "ui");
 		var filePath = Path.Combine(uiDir, "grid_style.yaml");
@@ -26,11 +26,11 @@ internal sealed class GridStyleWriter
 		{
 			Directory.CreateDirectory(uiDir);
 
-			var header = ReadLeadingCommentBlock(filePath);
+			var header = await ReadLeadingCommentBlockAsync(filePath);
 			var body = _serializer.Serialize(GridStyleDtoMapper.Map(options));
 			var content = Normalize(header + body);
 
-			WriteAtomic(uiDir, filePath, content);
+			await WriteAtomicAsync(uiDir, filePath, content);
 
 			return Result.Ok();
 		}
@@ -40,14 +40,14 @@ internal sealed class GridStyleWriter
 		}
 	}
 
-	private static string ReadLeadingCommentBlock(string filePath)
+	private static async Task<string> ReadLeadingCommentBlockAsync(string filePath)
 	{
 		if (!File.Exists(filePath))
 		{
 			return string.Empty;
 		}
 
-		var lines = File.ReadAllLines(filePath);
+		var lines = await File.ReadAllLinesAsync(filePath);
 		var headerLines = new List<string>();
 
 		foreach (var line in lines)
@@ -76,11 +76,11 @@ internal sealed class GridStyleWriter
 		return content.Replace("\r\n", "\n").Replace("\r", "\n");
 	}
 
-	private static void WriteAtomic(string uiDir, string filePath, string content)
+	private static async Task WriteAtomicAsync(string uiDir, string filePath, string content)
 	{
 		var tempPath = Path.Combine(uiDir, $".grid_style.{Guid.NewGuid():N}.tmp");
 
-		File.WriteAllText(tempPath, content, _utf8NoBom);
+		await File.WriteAllTextAsync(tempPath, content, _utf8NoBom);
 
 		try
 		{

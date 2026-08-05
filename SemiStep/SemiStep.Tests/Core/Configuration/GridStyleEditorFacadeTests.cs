@@ -48,7 +48,7 @@ public sealed class GridStyleEditorFacadeTests
 
 		var original = (await facade.Load(tempDir.Path)).Value;
 
-		facade.Save(tempDir.Path, original).IsSuccess.Should().BeTrue();
+		(await facade.Save(tempDir.Path, original)).IsSuccess.Should().BeTrue();
 
 		var reloaded = (await facade.Load(tempDir.Path)).Value;
 
@@ -61,7 +61,7 @@ public sealed class GridStyleEditorFacadeTests
 		using var tempDir = new TempDirectory();
 		var facade = new GridStyleEditorFacade();
 
-		facade.Save(tempDir.Path, GridStyleOptionsTestData.Distinct()).IsSuccess.Should().BeTrue();
+		(await facade.Save(tempDir.Path, GridStyleOptionsTestData.Distinct())).IsSuccess.Should().BeTrue();
 
 		var reloaded = (await facade.Load(tempDir.Path)).Value;
 
@@ -101,7 +101,7 @@ public sealed class GridStyleEditorFacadeTests
 			with
 		{ ExecutionDepth0Color = "not-a-color" };
 
-		facade.Save(tempDir.Path, invalid).IsFailed.Should().BeTrue();
+		(await facade.Save(tempDir.Path, invalid)).IsFailed.Should().BeTrue();
 
 		var after = await File.ReadAllTextAsync(filePath, token);
 		after.Should().Be(before);
@@ -128,13 +128,13 @@ public sealed class GridStyleEditorFacadeTests
 	}
 
 	[Fact]
-	public void Save_WriteFailure_CarriesOriginalExceptionOnCausedBy()
+	public async Task Save_WriteFailure_CarriesOriginalExceptionOnCausedBy()
 	{
 		using var tempDir = new TempDirectory();
 		var configDirAsFile = Path.Combine(tempDir.Path, "not-a-directory");
 		File.WriteAllText(configDirAsFile, string.Empty);
 
-		var result = new GridStyleWriter().Save(configDirAsFile, GridStyleOptions.Default);
+		var result = await new GridStyleWriter().SaveAsync(configDirAsFile, GridStyleOptions.Default);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().ContainSingle().Which.Should().BeOfType<GridStyleSaveFailedError>();

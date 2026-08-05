@@ -12,5 +12,5 @@ public interface IGridStyleEditorFacade
 
 	Result Validate(GridStyleOptions options);
 
-	Result Save(string configDir, GridStyleOptions options);
+	Task<Result> Save(string configDir, GridStyleOptions options);
 }

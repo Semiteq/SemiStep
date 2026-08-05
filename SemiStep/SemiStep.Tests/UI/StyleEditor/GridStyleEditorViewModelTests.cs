@@ -509,7 +509,7 @@ public sealed class GridStyleEditorViewModelTests
 			return Result.Ok();
 		}
 
-		public Result Save(string configDir, GridStyleOptions options)
+		public Task<Result> Save(string configDir, GridStyleOptions options)
 		{
 			throw failure;
 		}
@@ -529,9 +529,9 @@ public sealed class GridStyleEditorViewModelTests
 			return Result.Ok();
 		}
 
-		public Result Save(string configDir, GridStyleOptions options)
+		public Task<Result> Save(string configDir, GridStyleOptions options)
 		{
-			return saveResult ?? Result.Ok();
+			return Task.FromResult(saveResult ?? Result.Ok());
 		}
 	}
 }

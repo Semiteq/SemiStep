@@ -230,14 +230,19 @@ GridStyleEditorWindow
 
 - **Facade.** `GridStyleEditorFacade` is the only public Core seam for the editor:
   `Load(configDir)` → `Result<GridStyleOptions>`, `Validate(GridStyleOptions)` → `Result`,
-  `Save(configDir, GridStyleOptions)` → `Result`. The loader, validator, writer, and the ~12 DTOs stay
-  `internal`. The UI never touches Core internals directly. (Layering: the config stays in
-  `SemiStep.Core`, settled by review; the editor reaches it only through this facade.)
+  `Save(configDir, GridStyleOptions)` → `Task<Result>`. `Save` is async and runs the file write off the
+  UI thread (mirroring `Load`); the editor's `SaveCommand` awaits it. `Validate` stays synchronous —
+  `RecomputeCanSave` calls it per keystroke, and it is an in-memory pass with no I/O. The loader,
+  validator, writer, and the ~12 DTOs stay `internal`. The UI never touches Core internals directly.
+  (Layering: the config stays in `SemiStep.Core`, settled by review; the editor reaches it only through
+  this facade.)
 - **Writer.** `GridStyleWriter` maps the record back to the DTO (`GridStyleDtoMapper`), serializes with
   the underscored naming convention, re-prepends the file's leading comment block (the header), then
   normalizes to LF and writes UTF-8 no-BOM via a temp-then-move atomic replace in the same `ui/` dir.
-  Every color DTO property carries `[YamlMember(ScalarStyle = ScalarStyle.DoubleQuoted)]` so hex values
-  emit quoted and quoting stays uniform.
+  The temp write and the header read are async (`WriteAllTextAsync` / `ReadAllLinesAsync`); the final
+  `File.Move` stays synchronous — there is no async move, and it is a fast metadata rename inside the
+  same try/catch. Every color DTO property carries `[YamlMember(ScalarStyle = ScalarStyle.DoubleQuoted)]`
+  so hex values emit quoted and quoting stays uniform.
 
 The editor edits the **merged** record (defaults already applied), so `Save` writes a
 fully-populated file — every key is emitted, no omitted-key preservation. That is acceptable for a

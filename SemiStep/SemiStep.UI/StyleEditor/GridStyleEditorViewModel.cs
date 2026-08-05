@@ -62,8 +62,8 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 		_source = source;
 		_logger = logger;
 
-		SaveCommand = ReactiveCommand.Create(
-			Save,
+		SaveCommand = ReactiveCommand.CreateFromTask(
+			SaveAsync,
 			this.WhenAnyValue(viewModel => viewModel.CanSave));
 
 		// Modal editor: a save fault must surface on the editor's own ErrorMessage, not the
@@ -284,7 +284,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 		};
 	}
 
-	private bool Save()
+	private async Task<bool> SaveAsync()
 	{
 		if (!CanSave)
 		{
@@ -292,7 +292,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 			return false;
 		}
 
-		var result = _gridStyleEditorFacade.Save(_configDir, BuildRecord());
+		var result = await _gridStyleEditorFacade.Save(_configDir, BuildRecord());
 		if (result.IsFailed)
 		{
 			ErrorMessage = string.Join("; ", result.Errors.Select(ReasonLocalizer.Localize));

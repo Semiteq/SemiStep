@@ -48,7 +48,7 @@ public sealed class GridStyleEditorViewModelTests
 
 		foreach (var property in properties)
 		{
-			var recordValue = RecordField(property).GetValue(fixture);
+			var recordValue = LeafValue(fixture, RecordPath(property));
 			var actual = property.GetValue(viewModel);
 			var because = $"property {property.Name} must be seeded from the fixture";
 
@@ -95,7 +95,7 @@ public sealed class GridStyleEditorViewModelTests
 			property.SetValue(viewModel, Perturb(property, seededValue));
 			var built = viewModel.BuildRecord();
 
-			var mappedField = RecordField(property).Name;
+			var mappedField = RecordPath(property);
 			var changedFields = ChangedRecordFields(baseline, built);
 			changedFields.Should().BeEquivalentTo(
 				new[] { mappedField },
@@ -119,8 +119,8 @@ public sealed class GridStyleEditorViewModelTests
 
 		var expected = source with
 		{
-			CellFontSize = 18,
-			SelectionBackgroundColor = "#123456"
+			Fonts = source.Fonts with { CellFontSize = 18 },
+			Selection = source.Selection with { Background = "#123456" }
 		};
 		record.Should().Be(expected);
 	}
@@ -132,7 +132,7 @@ public sealed class GridStyleEditorViewModelTests
 
 		viewModel.StatusBarFontSize = 14.6m;
 
-		viewModel.BuildRecord().StatusBarFontSize.Should().Be(15);
+		viewModel.BuildRecord().StatusBar.FontSize.Should().Be(15);
 	}
 
 	[AvaloniaTheory]
@@ -174,14 +174,21 @@ public sealed class GridStyleEditorViewModelTests
 	[AvaloniaFact]
 	public void Seed_PopulatesFontFamilyWeightAndItalic_FromRecord()
 	{
-		var source = GridStyleOptions.Default with
+		var defaults = GridStyleOptions.Default;
+		var source = defaults with
 		{
-			FontFamily = "Cascadia Code",
-			HeaderFontWeight = 600,
-			HeaderItalic = true,
-			CellFontWeight = 500,
-			StatusBarTimerLabelFontSize = 18,
-			StatusBarTimerLabelItalic = true
+			Fonts = defaults.Fonts with
+			{
+				FontFamily = "Cascadia Code",
+				HeaderFontWeight = 600,
+				HeaderItalic = true,
+				CellFontWeight = 500
+			},
+			StatusBar = defaults.StatusBar with
+			{
+				TimerLabelFontSize = 18,
+				TimerLabelItalic = true
+			}
 		};
 		var viewModel = CreateViewModel(source);
 
@@ -206,16 +213,17 @@ public sealed class GridStyleEditorViewModelTests
 
 		var record = viewModel.BuildRecord();
 
-		record.FontFamily.Should().Be("Consolas");
-		record.HeaderFontWeight.Should().Be(900);
-		record.CellItalic.Should().BeTrue();
-		record.StatusBarTimerValueFontWeight.Should().Be(300);
+		record.Fonts.FontFamily.Should().Be("Consolas");
+		record.Fonts.HeaderFontWeight.Should().Be(900);
+		record.Fonts.CellItalic.Should().BeTrue();
+		record.StatusBar.TimerValueWeight.Should().Be(300);
 	}
 
 	[AvaloniaFact]
 	public void AvailableFontWeights_IncludeSeededWeights_NotInCuratedList()
 	{
-		var source = GridStyleOptions.Default with { HeaderFontWeight = 333 };
+		var defaults = GridStyleOptions.Default;
+		var source = defaults with { Fonts = defaults.Fonts with { HeaderFontWeight = 333 } };
 		var viewModel = CreateViewModel(source);
 
 		viewModel.AvailableFontWeights.Should().Contain(option => option.Value == 333);
@@ -224,7 +232,8 @@ public sealed class GridStyleEditorViewModelTests
 	[AvaloniaFact]
 	public void AvailableFontFamilies_StartWithDefaultSentinel_AndIncludeSeededFamily()
 	{
-		var source = GridStyleOptions.Default with { FontFamily = "No Such Installed Font 12345" };
+		var defaults = GridStyleOptions.Default;
+		var source = defaults with { Fonts = defaults.Fonts with { FontFamily = "No Such Installed Font 12345" } };
 		var viewModel = CreateViewModel(source);
 
 		viewModel.AvailableFontFamilies[0].Value.Should().Be("");
@@ -280,7 +289,7 @@ public sealed class GridStyleEditorViewModelTests
 
 		viewModel.SelectionBackground = Color.Parse("#A1B2C3");
 
-		viewModel.BuildRecord().SelectionBackgroundColor.Should().Be("#A1B2C3");
+		viewModel.BuildRecord().Selection.Background.Should().Be("#A1B2C3");
 	}
 
 	[AvaloniaFact]
@@ -290,7 +299,7 @@ public sealed class GridStyleEditorViewModelTests
 
 		viewModel.SelectionBackground = Color.FromArgb(0x80, 0x11, 0x22, 0x33);
 
-		viewModel.BuildRecord().SelectionBackgroundColor.Should().Be("#80112233");
+		viewModel.BuildRecord().Selection.Background.Should().Be("#80112233");
 	}
 
 	[AvaloniaFact]
@@ -435,14 +444,111 @@ public sealed class GridStyleEditorViewModelTests
 			.ToList();
 	}
 
-	private static PropertyInfo RecordField(PropertyInfo viewModelProperty)
-	{
-		var fieldName = viewModelProperty.PropertyType == typeof(Color)
-			? viewModelProperty.Name + "Color"
-			: viewModelProperty.Name;
+	// Hand-maintained VM-property -> nested record leaf path. NOT derived: several leaf names diverge
+	// from the VM property name (StatusBarFontWeight -> StatusBar.Weight, ValidationPanelError ->
+	// ValidationPanel.ErrorColor, every Color drops its trailing "Color"), so a mistyped entry surfaces
+	// as a red guard test rather than a silent pass. Every entry is cross-checked against the group records.
+	private static readonly IReadOnlyDictionary<string, string> _viewModelToRecordPath =
+		new Dictionary<string, string>
+		{
+			["FontFamily"] = "Fonts.FontFamily",
+			["HeaderFontSize"] = "Fonts.HeaderFontSize",
+			["HeaderFontWeight"] = "Fonts.HeaderFontWeight",
+			["HeaderItalic"] = "Fonts.HeaderItalic",
+			["CellFontSize"] = "Fonts.CellFontSize",
+			["CellFontWeight"] = "Fonts.CellFontWeight",
+			["CellItalic"] = "Fonts.CellItalic",
+			["CellPaddingLeft"] = "Layout.CellPaddingLeft",
+			["CellPaddingTop"] = "Layout.CellPaddingTop",
+			["CellPaddingRight"] = "Layout.CellPaddingRight",
+			["CellPaddingBottom"] = "Layout.CellPaddingBottom",
+			["RowHeight"] = "Layout.RowHeight",
+			["SelectionBackground"] = "Selection.Background",
+			["SelectionForeground"] = "Selection.Foreground",
+			["CellChanged"] = "ChangedCells.Changed",
+			["CellChangedSelected"] = "ChangedCells.ChangedSelected",
+			["ReadOnlyCellDepth0"] = "ReadOnlyCells.Depth0",
+			["ReadOnlyCellDepth1"] = "ReadOnlyCells.Depth1",
+			["ReadOnlyCellDepth2"] = "ReadOnlyCells.Depth2",
+			["ReadOnlyCellDepth3"] = "ReadOnlyCells.Depth3",
+			["ReadOnlyCellDepth0Past"] = "ReadOnlyCells.Depth0Past",
+			["ReadOnlyCellDepth1Past"] = "ReadOnlyCells.Depth1Past",
+			["ReadOnlyCellDepth2Past"] = "ReadOnlyCells.Depth2Past",
+			["ReadOnlyCellDepth3Past"] = "ReadOnlyCells.Depth3Past",
+			["ReadOnlyCellSelected"] = "ReadOnlyCells.Selected",
+			["ReadOnlyCellForeground"] = "ReadOnlyCells.Foreground",
+			["DisabledCellDepth0"] = "DisabledCells.Depth0",
+			["DisabledCellDepth1"] = "DisabledCells.Depth1",
+			["DisabledCellDepth2"] = "DisabledCells.Depth2",
+			["DisabledCellDepth3"] = "DisabledCells.Depth3",
+			["DisabledCellDepth0Past"] = "DisabledCells.Depth0Past",
+			["DisabledCellDepth1Past"] = "DisabledCells.Depth1Past",
+			["DisabledCellDepth2Past"] = "DisabledCells.Depth2Past",
+			["DisabledCellDepth3Past"] = "DisabledCells.Depth3Past",
+			["DisabledCellSelected"] = "DisabledCells.Selected",
+			["DisabledCellForeground"] = "DisabledCells.Foreground",
+			["ExecutionDepth0"] = "Execution.Depth0",
+			["ExecutionDepth1"] = "Execution.Depth1",
+			["ExecutionDepth2"] = "Execution.Depth2",
+			["ExecutionDepth3"] = "Execution.Depth3",
+			["ExecutionDepth0Past"] = "Execution.Depth0Past",
+			["ExecutionDepth1Past"] = "Execution.Depth1Past",
+			["ExecutionDepth2Past"] = "Execution.Depth2Past",
+			["ExecutionDepth3Past"] = "Execution.Depth3Past",
+			["ExecutionCurrentStepMarker"] = "Execution.CurrentStepMarker",
+			["StatusBarBackground"] = "StatusBar.Background",
+			["StatusBarForeground"] = "StatusBar.Foreground",
+			["StatusBarPadding"] = "StatusBar.Padding",
+			["StatusBarItemSpacing"] = "StatusBar.ItemSpacing",
+			["StatusBarFontSize"] = "StatusBar.FontSize",
+			["StatusBarFontWeight"] = "StatusBar.Weight",
+			["StatusBarItalic"] = "StatusBar.Italic",
+			["StatusBarTimerLabelFontSize"] = "StatusBar.TimerLabelFontSize",
+			["StatusBarTimerLabelFontWeight"] = "StatusBar.TimerLabelWeight",
+			["StatusBarTimerLabelItalic"] = "StatusBar.TimerLabelItalic",
+			["StatusBarTimerValueFontSize"] = "StatusBar.TimerValueFontSize",
+			["StatusBarTimerValueFontWeight"] = "StatusBar.TimerValueWeight",
+			["StatusBarTimerValueItalic"] = "StatusBar.TimerValueItalic",
+			["ValidationPanelBackground"] = "ValidationPanel.Background",
+			["ValidationPanelForeground"] = "ValidationPanel.Foreground",
+			["ValidationPanelError"] = "ValidationPanel.ErrorColor",
+			["ValidationPanelWarning"] = "ValidationPanel.WarningColor",
+			["ValidationPanelMaxHeight"] = "ValidationPanel.MaxHeight",
+			["GridLine"] = "Chrome.GridLine",
+			["Info"] = "Chrome.Info",
+			["Connected"] = "Chrome.Connected",
+			["Disconnected"] = "Chrome.Disconnected",
+			["LocalMode"] = "Chrome.LocalMode",
+			["Connecting"] = "Chrome.Connecting",
+			["PanelBackground"] = "Chrome.PanelBackground",
+			["PanelHeaderBackground"] = "Chrome.PanelHeaderBackground",
+			["SubtleBorder"] = "Chrome.SubtleBorder",
+			["Separator"] = "Chrome.Separator",
+			["SecondaryForeground"] = "Chrome.SecondaryForeground",
+			["GridBorder"] = "Chrome.GridBorder",
+			["GridBackground"] = "Chrome.GridBackground",
+			["HeaderForeground"] = "Chrome.HeaderForeground",
+		};
 
-		return typeof(GridStyleOptions).GetProperty(fieldName)
-			?? throw new InvalidOperationException($"No GridStyleOptions field maps to {viewModelProperty.Name}");
+	private static string RecordPath(PropertyInfo viewModelProperty)
+	{
+		return _viewModelToRecordPath.TryGetValue(viewModelProperty.Name, out var path)
+			? path
+			: throw new InvalidOperationException($"No GridStyleOptions path maps to {viewModelProperty.Name}");
+	}
+
+	private static object? LeafValue(GridStyleOptions record, string dottedPath)
+	{
+		object current = record;
+		foreach (var segment in dottedPath.Split('.'))
+		{
+			var property = current.GetType().GetProperty(segment)
+				?? throw new InvalidOperationException($"No record property '{segment}' on {current.GetType().Name}");
+			current = property.GetValue(current)
+				?? throw new InvalidOperationException($"Record property '{segment}' was null");
+		}
+
+		return current;
 	}
 
 	// Color perturbation stays opaque so ToHex changes; weights are unvalidated ints so any value round-trips.
@@ -477,12 +583,42 @@ public sealed class GridStyleEditorViewModelTests
 		throw new InvalidOperationException($"No perturbation defined for {property.Name} ({property.PropertyType})");
 	}
 
+	// Typed recursive leaf walk: a string/primitive/enum property is a LEAF compared at its dotted path;
+	// a record group RECURSES. Keeps root-level Orientation (an enum) a first-class leaf, so a BuildRecord
+	// bug that also flips Orientation cannot slip the exact-one-leaf perturbation assertion.
 	private static IReadOnlyList<string> ChangedRecordFields(GridStyleOptions baseline, GridStyleOptions candidate)
 	{
-		return typeof(GridStyleOptions).GetProperties()
-			.Where(property => !Equals(property.GetValue(baseline), property.GetValue(candidate)))
-			.Select(property => property.Name)
-			.ToList();
+		var changed = new List<string>();
+		CollectChangedLeaves(baseline, candidate, prefix: null, changed);
+		return changed;
+	}
+
+	private static void CollectChangedLeaves(object baseline, object candidate, string? prefix, List<string> changed)
+	{
+		// Instance-only: the static GridStyleOptions.Default property would otherwise recurse into itself.
+		foreach (var property in baseline.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+		{
+			var baselineValue = property.GetValue(baseline);
+			var candidateValue = property.GetValue(candidate);
+			var path = prefix is null ? property.Name : $"{prefix}.{property.Name}";
+
+			if (IsLeaf(property.PropertyType))
+			{
+				if (!Equals(baselineValue, candidateValue))
+				{
+					changed.Add(path);
+				}
+			}
+			else
+			{
+				CollectChangedLeaves(baselineValue!, candidateValue!, path, changed);
+			}
+		}
+	}
+
+	private static bool IsLeaf(Type type)
+	{
+		return type.IsPrimitive || type.IsEnum || type == typeof(string);
 	}
 
 	private static async Task ExecuteSwallowing(ReactiveCommand<Unit, bool> command)

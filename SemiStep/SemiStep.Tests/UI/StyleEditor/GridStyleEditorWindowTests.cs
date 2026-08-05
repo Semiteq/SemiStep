@@ -37,7 +37,7 @@ public sealed class GridStyleEditorWindowTests
 			NullLogger<GridStyleEditorViewModel>.Instance);
 
 		viewModel.SelectionBackground = Color.Parse("#123456");
-		viewModel.CellFontSize = loaded.CellFontSize + 1;
+		viewModel.CellFontSize = loaded.Fonts.CellFontSize + 1;
 
 		viewModel.CanSave.Should().BeTrue();
 		var saved = await viewModel.SaveCommand.Execute();
@@ -46,8 +46,8 @@ public sealed class GridStyleEditorWindowTests
 		viewModel.ErrorMessage.Should().BeNull();
 
 		var reloaded = (await facade.Load(configDir)).Value;
-		reloaded.SelectionBackgroundColor.Should().Be("#123456");
-		reloaded.CellFontSize.Should().Be(loaded.CellFontSize + 1);
+		reloaded.Selection.Background.Should().Be("#123456");
+		reloaded.Fonts.CellFontSize.Should().Be(loaded.Fonts.CellFontSize + 1);
 	}
 
 	[AvaloniaFact]

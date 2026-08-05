@@ -22,14 +22,14 @@ internal static class ExecutionPaletteInstaller
 		ArgumentNullException.ThrowIfNull(gridStyle);
 
 		// Depth0 brushes (the "outside any loop" tint) are installed but not yet consumed by any selector.
-		resources[ExecRowDepth0BrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth0Color);
-		resources[ExecRowDepth1BrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth1Color);
-		resources[ExecRowDepth2BrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth2Color);
-		resources[ExecRowDepth3BrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth3Color);
-		resources[ExecRowDepth0PastBrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth0PastColor);
-		resources[ExecRowDepth1PastBrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth1PastColor);
-		resources[ExecRowDepth2PastBrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth2PastColor);
-		resources[ExecRowDepth3PastBrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionDepth3PastColor);
-		resources[CurrentStepMarkerBrushKey] = PaletteBrushFactory.From(gridStyle.ExecutionCurrentStepMarkerColor);
+		resources[ExecRowDepth0BrushKey] = PaletteBrushFactory.From(gridStyle.Execution.Depth0);
+		resources[ExecRowDepth1BrushKey] = PaletteBrushFactory.From(gridStyle.Execution.Depth1);
+		resources[ExecRowDepth2BrushKey] = PaletteBrushFactory.From(gridStyle.Execution.Depth2);
+		resources[ExecRowDepth3BrushKey] = PaletteBrushFactory.From(gridStyle.Execution.Depth3);
+		resources[ExecRowDepth0PastBrushKey] = PaletteBrushFactory.From(gridStyle.Execution.Depth0Past);
+		resources[ExecRowDepth1PastBrushKey] = PaletteBrushFactory.From(gridStyle.Execution.Depth1Past);
+		resources[ExecRowDepth2PastBrushKey] = PaletteBrushFactory.From(gridStyle.Execution.Depth2Past);
+		resources[ExecRowDepth3PastBrushKey] = PaletteBrushFactory.From(gridStyle.Execution.Depth3Past);
+		resources[CurrentStepMarkerBrushKey] = PaletteBrushFactory.From(gridStyle.Execution.CurrentStepMarker);
 	}
 }

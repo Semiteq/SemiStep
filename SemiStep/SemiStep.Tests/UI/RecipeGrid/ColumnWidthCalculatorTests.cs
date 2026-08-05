@@ -35,13 +35,13 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	private const int LargeHeaderFontSize = 28;
 
 	private static int ContentChrome =>
-		(int)Math.Ceiling(GridStyleOptions.Default.CellFontSize * ChromeFontMultiple);
+		(int)Math.Ceiling(GridStyleOptions.Default.Fonts.CellFontSize * ChromeFontMultiple);
 
 	private static int HeaderFloorChrome =>
-		(int)Math.Ceiling(GridStyleOptions.Default.HeaderFontSize * ChromeFontMultiple);
+		(int)Math.Ceiling(GridStyleOptions.Default.Fonts.HeaderFontSize * ChromeFontMultiple);
 
 	private static int MinColumnWidthFloor =>
-		(int)Math.Ceiling(GridStyleOptions.Default.CellFontSize * MinColumnWidthEms);
+		(int)Math.Ceiling(GridStyleOptions.Default.Fonts.CellFontSize * MinColumnWidthEms);
 
 	private readonly UIFixture _fixture = new();
 	private ColumnWidthCalculator _calculator = null!;
@@ -100,7 +100,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var pixelWidth = GetPixelWidth(_calculator.CalculateColumnWidth(taskColumn));
 
 		var wholeHeaderWidth = (int)Math.Ceiling(
-			MeasureText(header, GridStyleOptions.Default.HeaderFontSize, FontWeight.Bold) + HeaderFloorChrome);
+			MeasureText(header, GridStyleOptions.Default.Fonts.HeaderFontSize, FontWeight.Bold) + HeaderFloorChrome);
 
 		pixelWidth.Should().BeLessThan(wholeHeaderWidth,
 			"the floor is the longest WORD, never the whole single-line header");
@@ -111,8 +111,8 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	{
 		var word = "Начальное";
 
-		var boldHeaderFont = MeasureText(word, GridStyleOptions.Default.HeaderFontSize, FontWeight.Bold);
-		var normalCellFont = MeasureText(word, GridStyleOptions.Default.CellFontSize, FontWeight.Normal);
+		var boldHeaderFont = MeasureText(word, GridStyleOptions.Default.Fonts.HeaderFontSize, FontWeight.Bold);
+		var normalCellFont = MeasureText(word, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal);
 
 		boldHeaderFont.Should().BeGreaterThan(normalCellFont,
 			"the header-word floor must be measured bold at HeaderFontSize, not at the cell font");
@@ -124,7 +124,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var header = "An extremely long header label that would otherwise widen this column";
 
 		var longestWordFloor = LongestHeaderWordFloor(header);
-		var wholeHeaderWidth = MeasureText(header, GridStyleOptions.Default.HeaderFontSize, FontWeight.Bold)
+		var wholeHeaderWidth = MeasureText(header, GridStyleOptions.Default.Fonts.HeaderFontSize, FontWeight.Bold)
 			+ HeaderFloorChrome;
 
 		longestWordFloor.Should().BeLessThan(wholeHeaderWidth / 2,
@@ -159,7 +159,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 			durationProperty.Max!.Value.ToString(CultureInfo.InvariantCulture),
 			durationProperty.FormatKind,
 			durationProperty.Units);
-		var contentWidth = MeasureText(representative, GridStyleOptions.Default.CellFontSize, FontWeight.Normal);
+		var contentWidth = MeasureText(representative, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal);
 
 		pixelWidth.Should().BeGreaterThan((int)contentWidth,
 			"the column must fully cover the formatted Max representative");
@@ -183,7 +183,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var pixelWidth = GetPixelWidth(_calculator.CalculateColumnWidth(stringColumn));
 
 		var cappedRepresentative = new string('0', StringSampleCap);
-		var cappedContentWidth = MeasureText(cappedRepresentative, GridStyleOptions.Default.CellFontSize, FontWeight.Normal);
+		var cappedContentWidth = MeasureText(cappedRepresentative, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal);
 
 		pixelWidth.Should().BeGreaterThan((int)cappedContentWidth,
 			"the column must fully cover the capped sample");
@@ -191,7 +191,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 
 		var fullLengthRepresentative = new string('0', stringProperty.MaxLength!.Value);
 		var fullLengthWidth = (int)Math.Ceiling(
-			MeasureText(fullLengthRepresentative, GridStyleOptions.Default.CellFontSize, FontWeight.Normal) + ContentChrome);
+			MeasureText(fullLengthRepresentative, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal) + ContentChrome);
 		pixelWidth.Should().BeLessThan(fullLengthWidth,
 			"the cap must keep the column far below the full MaxLength width");
 	}
@@ -309,7 +309,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void Chrome_ScalesWithFont_ChromeRemainderGrowsBeyondContentScaling()
 	{
-		var smallCellFont = GridStyleOptions.Default.CellFontSize;
+		var smallCellFont = GridStyleOptions.Default.Fonts.CellFontSize;
 		var largeCellFont = LargeCellFontSize;
 		var durationColumn = _fixture.RecipeMetadataRegistry.GetColumn("step_duration").Value;
 
@@ -317,7 +317,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 			_fixture.RecipeMetadataRegistry, GridStyleOptions.Default);
 		var largeFontCalculator = new ColumnWidthCalculator(
 			_fixture.RecipeMetadataRegistry,
-			GridStyleOptions.Default with { CellFontSize = largeCellFont, HeaderFontSize = LargeHeaderFontSize });
+			GridStyleOptions.Default with { Fonts = GridStyleOptions.Default.Fonts with { CellFontSize = largeCellFont, HeaderFontSize = LargeHeaderFontSize } });
 
 		var smallFontWidth = GetPixelWidth(smallFontCalculator.CalculateColumnWidth(durationColumn));
 		var largeFontWidth = GetPixelWidth(largeFontCalculator.CalculateColumnWidth(durationColumn));
@@ -343,13 +343,17 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		// The headless text shaper measures by glyph count and size only, so weight/family/italic
 		// produce identical widths; assert the role typefaces the measurement uses instead, which
 		// fails if a regression drops family/weight/italic from the measured Typeface.
-		var style = GridStyleOptions.Default with
+		var defaults = GridStyleOptions.Default;
+		var style = defaults with
 		{
-			FontFamily = "Courier New",
-			CellFontWeight = 600,
-			CellItalic = true,
-			HeaderFontWeight = 900,
-			HeaderItalic = false
+			Fonts = defaults.Fonts with
+			{
+				FontFamily = "Courier New",
+				CellFontWeight = 600,
+				CellItalic = true,
+				HeaderFontWeight = 900,
+				HeaderItalic = false
+			}
 		};
 		var calculator = new ColumnWidthCalculator(_fixture.RecipeMetadataRegistry, style);
 
@@ -404,7 +408,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void ComboChrome_StaysConstantAcrossFonts_WhileContentChromeGrows()
 	{
-		var smallCellFont = GridStyleOptions.Default.CellFontSize;
+		var smallCellFont = GridStyleOptions.Default.Fonts.CellFontSize;
 		var largeCellFont = LargeCellFontSize;
 		var representative = new string('0', StringSampleCap);
 		var sampleProperty = TestPropertyTypeDefinitionBuilder.CreateString("sample", StringSampleCap);
@@ -429,7 +433,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 
 		var smallFontCalculator = new ColumnWidthCalculator(registry, GridStyleOptions.Default);
 		var largeFontCalculator = new ColumnWidthCalculator(
-			registry, GridStyleOptions.Default with { CellFontSize = largeCellFont, HeaderFontSize = LargeHeaderFontSize });
+			registry, GridStyleOptions.Default with { Fonts = GridStyleOptions.Default.Fonts with { CellFontSize = largeCellFont, HeaderFontSize = LargeHeaderFontSize } });
 
 		var smallComboWidth = GetPixelWidth(smallFontCalculator.CalculateColumnWidth(comboColumn));
 		var largeComboWidth = GetPixelWidth(largeFontCalculator.CalculateColumnWidth(comboColumn));
@@ -462,7 +466,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 			property.FormatKind,
 			property.Units);
 
-		return MeasureText(representative, GridStyleOptions.Default.CellFontSize, FontWeight.Normal);
+		return MeasureText(representative, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal);
 	}
 
 	private static double LongestHeaderWordFloor(string header)
@@ -477,7 +481,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var maxWordWidth = 0.0;
 		foreach (var word in words)
 		{
-			var wordWidth = MeasureText(word, GridStyleOptions.Default.HeaderFontSize, FontWeight.Bold);
+			var wordWidth = MeasureText(word, GridStyleOptions.Default.Fonts.HeaderFontSize, FontWeight.Bold);
 			if (wordWidth > maxWordWidth)
 			{
 				maxWordWidth = wordWidth;
@@ -492,7 +496,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var maxWidth = 0.0;
 		foreach (var action in _fixture.RecipeMetadataRegistry.GetAllActions())
 		{
-			var width = MeasureText(action.UiName, GridStyleOptions.Default.CellFontSize, FontWeight.Normal);
+			var width = MeasureText(action.UiName, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal);
 			if (width > maxWidth)
 			{
 				maxWidth = width;

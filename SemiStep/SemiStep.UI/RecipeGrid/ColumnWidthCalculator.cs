@@ -29,12 +29,12 @@ public sealed class ColumnWidthCalculator(
 	private const int ComboBoxChromeWidth = 38;
 
 	// See Docs/architecture/recipe-grid-column-sizing.md
-	private int ContentChrome => (int)Math.Ceiling(gridStyle.CellFontSize * ChromeFontMultiple);
+	private int ContentChrome => (int)Math.Ceiling(gridStyle.Fonts.CellFontSize * ChromeFontMultiple);
 
-	private int HeaderFloorChrome => (int)Math.Ceiling(gridStyle.HeaderFontSize * ChromeFontMultiple);
+	private int HeaderFloorChrome => (int)Math.Ceiling(gridStyle.Fonts.HeaderFontSize * ChromeFontMultiple);
 
 	// The numbering column (ColumnBuilder) uses it as its MinWidth, so do not lower it.
-	public int MinColumnWidth => (int)Math.Ceiling(gridStyle.CellFontSize * MinColumnWidthEms);
+	public int MinColumnWidth => (int)Math.Ceiling(gridStyle.Fonts.CellFontSize * MinColumnWidthEms);
 
 	public DataGridLength CalculateColumnWidth(GridColumnDefinition columnDef)
 	{
@@ -198,24 +198,24 @@ public sealed class ColumnWidthCalculator(
 	// Empty family means "grid default": measure with the chrome font so the width matches the
 	// rendered cell, which also falls back to the chrome font.
 	private FontFamily MeasureFontFamily =>
-		string.IsNullOrWhiteSpace(gridStyle.FontFamily) ? GridFonts.DefaultFamily : new FontFamily(gridStyle.FontFamily);
+		string.IsNullOrWhiteSpace(gridStyle.Fonts.FontFamily) ? GridFonts.DefaultFamily : new FontFamily(gridStyle.Fonts.FontFamily);
 
 	// The single typeface the cell-role measurement uses, threading the configured family, weight, and
 	// italic so the measured width tracks the rendered cell. Exposed for the measurement-threading test.
 	internal Typeface CellTypeface =>
-		new(MeasureFontFamily, gridStyle.CellItalic ? FontStyle.Italic : FontStyle.Normal, (FontWeight)gridStyle.CellFontWeight);
+		new(MeasureFontFamily, gridStyle.Fonts.CellItalic ? FontStyle.Italic : FontStyle.Normal, (FontWeight)gridStyle.Fonts.CellFontWeight);
 
 	internal Typeface HeaderTypeface =>
-		new(MeasureFontFamily, gridStyle.HeaderItalic ? FontStyle.Italic : FontStyle.Normal, (FontWeight)gridStyle.HeaderFontWeight);
+		new(MeasureFontFamily, gridStyle.Fonts.HeaderItalic ? FontStyle.Italic : FontStyle.Normal, (FontWeight)gridStyle.Fonts.HeaderFontWeight);
 
 	private double MeasureContent(string text)
 	{
-		return MeasureText(text, CellTypeface, gridStyle.CellFontSize);
+		return MeasureText(text, CellTypeface, gridStyle.Fonts.CellFontSize);
 	}
 
 	private double MeasureHeaderWord(string word)
 	{
-		return MeasureText(word, HeaderTypeface, gridStyle.HeaderFontSize);
+		return MeasureText(word, HeaderTypeface, gridStyle.Fonts.HeaderFontSize);
 	}
 
 	private static double MeasureText(string text, Typeface typeface, double fontSize)

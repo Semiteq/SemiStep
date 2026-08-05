@@ -65,7 +65,8 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void NumberingColumn_EmptyFamily_UsesChromeFontDefault()
 	{
-		var grid = BuildGrid(GridStyleOptions.Default with { FontFamily = "" });
+		var emptyFamily = GridStyleOptions.Default;
+		var grid = BuildGrid(emptyFamily with { Fonts = emptyFamily.Fonts with { FontFamily = "" } });
 
 		var numberingColumn = (DataGridTextColumn)grid.Columns[0];
 
@@ -112,7 +113,8 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void EmptyFamily_UsesChromeFontDefault()
 	{
-		var factory = new TextCellFactory(GridStyleOptions.Default with { FontFamily = "" });
+		var emptyFamily = GridStyleOptions.Default;
+		var factory = new TextCellFactory(emptyFamily with { Fonts = emptyFamily.Fonts with { FontFamily = "" } });
 		var columnDef = _fixture.RecipeMetadataRegistry.GetColumn("task").Value;
 
 		var column = (DataGridTemplateColumn)factory.CreateEditableColumn(columnDef, new DataGridLength(100), maxLength: null);
@@ -125,15 +127,19 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 
 	private GridStyleOptions NonDefaultStyle()
 	{
-		return GridStyleOptions.Default with
+		var defaults = GridStyleOptions.Default;
+		return defaults with
 		{
-			FontFamily = ConfiguredFamily,
-			HeaderFontSize = ConfiguredHeaderSize,
-			HeaderFontWeight = ConfiguredHeaderWeight,
-			HeaderItalic = true,
-			CellFontSize = ConfiguredCellSize,
-			CellFontWeight = ConfiguredCellWeight,
-			CellItalic = true,
+			Fonts = defaults.Fonts with
+			{
+				FontFamily = ConfiguredFamily,
+				HeaderFontSize = ConfiguredHeaderSize,
+				HeaderFontWeight = ConfiguredHeaderWeight,
+				HeaderItalic = true,
+				CellFontSize = ConfiguredCellSize,
+				CellFontWeight = ConfiguredCellWeight,
+				CellItalic = true,
+			},
 		};
 	}
 

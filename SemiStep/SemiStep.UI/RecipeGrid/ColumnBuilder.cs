@@ -32,7 +32,7 @@ public sealed class ColumnBuilder(
 
 	public void BuildColumns(DataGrid grid)
 	{
-		grid.RowHeight = gridStyle.RowHeight;
+		grid.RowHeight = gridStyle.Layout.RowHeight;
 		// The numbering column is a DataGridTextColumn with no FontFeatures property; tabular figures
 		// reach its generated cells through the inherited grid-level value set here.
 		grid.SetValue(TextElement.FontFeaturesProperty, GridFonts.TabularFigures);
@@ -53,17 +53,17 @@ public sealed class ColumnBuilder(
 			Header = "No",
 			HeaderTemplate = _wrappingHeaderTemplate,
 			Binding = new Binding("StepNumber"),
-			FontSize = gridStyle.CellFontSize,
-			FontWeight = (FontWeight)gridStyle.CellFontWeight,
-			FontStyle = gridStyle.CellItalic ? FontStyle.Italic : FontStyle.Normal,
+			FontSize = gridStyle.Fonts.CellFontSize,
+			FontWeight = (FontWeight)gridStyle.Fonts.CellFontWeight,
+			FontStyle = gridStyle.Fonts.CellItalic ? FontStyle.Italic : FontStyle.Normal,
 			IsReadOnly = true,
 			Width = DataGridLength.Auto,
 			MinWidth = _widthCalculator.MinColumnWidth,
 			CanUserSort = false
 		};
-		column.FontFamily = string.IsNullOrWhiteSpace(gridStyle.FontFamily)
+		column.FontFamily = string.IsNullOrWhiteSpace(gridStyle.Fonts.FontFamily)
 			? GridFonts.DefaultFamily
-			: new FontFamily(gridStyle.FontFamily);
+			: new FontFamily(gridStyle.Fonts.FontFamily);
 
 		column.CellStyleClasses.Add(StepNumberColumnClass);
 		grid.Columns.Add(column);

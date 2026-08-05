@@ -155,37 +155,46 @@ public sealed class TransposedCellBackgroundConverterTests
 	// different brush instance and the reference check fails loudly.
 	private static GridStyleOptions BuildDistinctPaletteGridStyle()
 	{
-		return GridStyleOptions.Default with
+		var defaults = GridStyleOptions.Default;
+		return defaults with
 		{
-			GridBackgroundColor = "#101010",
-			SelectionBackgroundColor = "#202020",
-			CellChangedColor = "#303030",
-			CellChangedSelectedColor = "#404040",
-			ReadOnlyCellSelectedColor = "#505050",
-			DisabledCellSelectedColor = "#606060",
-			ExecutionDepth1Color = "#110000",
-			ExecutionDepth2Color = "#120000",
-			ExecutionDepth3Color = "#130000",
-			ExecutionDepth0PastColor = "#140000",
-			ExecutionDepth1PastColor = "#150000",
-			ExecutionDepth2PastColor = "#160000",
-			ExecutionDepth3PastColor = "#170000",
-			ReadOnlyCellDepth0Color = "#210000",
-			ReadOnlyCellDepth1Color = "#220000",
-			ReadOnlyCellDepth2Color = "#230000",
-			ReadOnlyCellDepth3Color = "#240000",
-			ReadOnlyCellDepth0PastColor = "#250000",
-			ReadOnlyCellDepth1PastColor = "#260000",
-			ReadOnlyCellDepth2PastColor = "#270000",
-			ReadOnlyCellDepth3PastColor = "#280000",
-			DisabledCellDepth0Color = "#310000",
-			DisabledCellDepth1Color = "#320000",
-			DisabledCellDepth2Color = "#330000",
-			DisabledCellDepth3Color = "#340000",
-			DisabledCellDepth0PastColor = "#350000",
-			DisabledCellDepth1PastColor = "#360000",
-			DisabledCellDepth2PastColor = "#370000",
-			DisabledCellDepth3PastColor = "#380000",
+			Chrome = defaults.Chrome with { GridBackground = "#101010" },
+			Selection = defaults.Selection with { Background = "#202020" },
+			ChangedCells = new ChangedCellColors(
+				Changed: "#303030",
+				ChangedSelected: "#404040"),
+			ReadOnlyCells = new DepthPalette(
+				Depth0: "#210000",
+				Depth1: "#220000",
+				Depth2: "#230000",
+				Depth3: "#240000",
+				Depth0Past: "#250000",
+				Depth1Past: "#260000",
+				Depth2Past: "#270000",
+				Depth3Past: "#280000",
+				Selected: "#505050",
+				Foreground: defaults.ReadOnlyCells.Foreground),
+			DisabledCells = new DepthPalette(
+				Depth0: "#310000",
+				Depth1: "#320000",
+				Depth2: "#330000",
+				Depth3: "#340000",
+				Depth0Past: "#350000",
+				Depth1Past: "#360000",
+				Depth2Past: "#370000",
+				Depth3Past: "#380000",
+				Selected: "#606060",
+				Foreground: defaults.DisabledCells.Foreground),
+			Execution = defaults.Execution with
+			{
+				Depth1 = "#110000",
+				Depth2 = "#120000",
+				Depth3 = "#130000",
+				Depth0Past = "#140000",
+				Depth1Past = "#150000",
+				Depth2Past = "#160000",
+				Depth3Past = "#170000",
+			},
 		};
 	}
 }

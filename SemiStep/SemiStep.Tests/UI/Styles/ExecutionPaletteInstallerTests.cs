@@ -20,15 +20,16 @@ public sealed class ExecutionPaletteInstallerTests
 	{
 		var gridStyle = GridStyleOptions.Default with
 		{
-			ExecutionDepth0Color = "#FFFFFF",
-			ExecutionDepth1Color = "#E8F3FF",
-			ExecutionDepth2Color = "#D0E7FF",
-			ExecutionDepth3Color = "#A8D0FF",
-			ExecutionDepth0PastColor = "#F0F0F0",
-			ExecutionDepth1PastColor = "#DCE5EE",
-			ExecutionDepth2PastColor = "#C4D2E0",
-			ExecutionDepth3PastColor = "#9CB4CC",
-			ExecutionCurrentStepMarkerColor = "#FF8800",
+			Execution = new ExecutionPalette(
+				Depth0: "#FFFFFF",
+				Depth1: "#E8F3FF",
+				Depth2: "#D0E7FF",
+				Depth3: "#A8D0FF",
+				Depth0Past: "#F0F0F0",
+				Depth1Past: "#DCE5EE",
+				Depth2Past: "#C4D2E0",
+				Depth3Past: "#9CB4CC",
+				CurrentStepMarker: "#FF8800"),
 		};
 		var resources = new ResourceDictionary();
 

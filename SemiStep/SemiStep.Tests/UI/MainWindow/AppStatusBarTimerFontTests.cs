@@ -44,12 +44,16 @@ public sealed class AppStatusBarTimerFontTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void Timer_LabelAndValueTextBlocks_RenderAtTheirSeparateRoleSizes()
 	{
-		var statusBar = ShowStatusBar(GridStyleOptions.Default with
+		var defaults = GridStyleOptions.Default;
+		var statusBar = ShowStatusBar(defaults with
 		{
-			StatusBarTimerLabelFontSize = (int)TimerLabelFontSize,
-			StatusBarTimerLabelFontWeight = 400,
-			StatusBarTimerValueFontSize = (int)TimerValueFontSize,
-			StatusBarTimerValueFontWeight = 700
+			StatusBar = defaults.StatusBar with
+			{
+				TimerLabelFontSize = (int)TimerLabelFontSize,
+				TimerLabelWeight = 400,
+				TimerValueFontSize = (int)TimerValueFontSize,
+				TimerValueWeight = 700
+			}
 		});
 
 		var labels = statusBar.GetVisualDescendants()

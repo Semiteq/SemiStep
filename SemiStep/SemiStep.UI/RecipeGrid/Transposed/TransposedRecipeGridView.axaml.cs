@@ -328,15 +328,15 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 			: new TransposedColumnCellsPool(
 				surface.ParameterDescriptors,
 				new TransposedCellTemplateFactory(surface, _editCoordinator),
-				surface.GridStyle.RowHeight);
+				surface.GridStyle.Layout.RowHeight);
 	}
 
 	private void ApplyGridStyle(GridStyleOptions gridStyle)
 	{
-		Resources[CellHeightResourceKey] = gridStyle.RowHeight;
+		Resources[CellHeightResourceKey] = gridStyle.Layout.RowHeight;
 		Resources[MarkerSlotHeightResourceKey] = CurrentStepMarkerHeight;
 		Resources[StepColumnWidthResourceKey] =
-			Math.Max(MinimumStepColumnWidth, gridStyle.CellFontSize * FontSizeToColumnWidthFactor);
+			Math.Max(MinimumStepColumnWidth, gridStyle.Fonts.CellFontSize * FontSizeToColumnWidthFactor);
 
 		GridFontApplier.ApplyCellFont(StepListBox, gridStyle);
 		GridFontApplier.ApplyHeaderFont(ParameterNameColumn, gridStyle);

@@ -27,7 +27,7 @@ public sealed class GridStyleEditorFacadeTests
 		var result = await new GridStyleEditorFacade().Load(tempDir.Path);
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.SelectionBackgroundColor.Should().NotBeNullOrWhiteSpace();
+		result.Value.Selection.Background.Should().NotBeNullOrWhiteSpace();
 	}
 
 	[Fact]
@@ -82,7 +82,8 @@ public sealed class GridStyleEditorFacadeTests
 	[Fact]
 	public void Validate_MalformedColor_ReturnsFail()
 	{
-		var invalid = GridStyleOptions.Default with { ExecutionDepth0Color = "not-a-color" };
+		var defaults = GridStyleOptions.Default;
+		var invalid = defaults with { Execution = defaults.Execution with { Depth0 = "not-a-color" } };
 
 		new GridStyleEditorFacade().Validate(invalid).IsFailed.Should().BeTrue();
 	}
@@ -97,9 +98,10 @@ public sealed class GridStyleEditorFacadeTests
 		var token = TestContext.Current.CancellationToken;
 		var before = await File.ReadAllTextAsync(filePath, token);
 
-		var invalid = (await facade.Load(tempDir.Path)).Value
+		var loadedForInvalid = (await facade.Load(tempDir.Path)).Value;
+		var invalid = loadedForInvalid
 			with
-		{ ExecutionDepth0Color = "not-a-color" };
+		{ Execution = loadedForInvalid.Execution with { Depth0 = "not-a-color" } };
 
 		(await facade.Save(tempDir.Path, invalid)).IsFailed.Should().BeTrue();
 

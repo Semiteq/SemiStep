@@ -85,7 +85,7 @@ public sealed class GridStyleWriterTests
 
 		var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
 		content.Should().Contain("\"#");
-		content.Should().Contain($"\"{options.SelectionBackgroundColor}\"");
+		content.Should().Contain($"\"{options.Selection.Background}\"");
 
 		var unquotedHex = Regex.Matches(content, @":\s*#[0-9A-Fa-f]+");
 		unquotedHex.Should().BeEmpty(
@@ -102,7 +102,8 @@ public sealed class GridStyleWriterTests
 		var token = TestContext.Current.CancellationToken;
 
 		var before = await File.ReadAllBytesAsync(filePath, token);
-		var options = await LoadOptions(tempDir.Path) with { CellFontSize = 20 };
+		var loaded = await LoadOptions(tempDir.Path);
+		var options = loaded with { Fonts = loaded.Fonts with { CellFontSize = 20 } };
 
 		Result result;
 
@@ -139,7 +140,8 @@ public sealed class GridStyleWriterTests
 	{
 		using var tempDir = CopyShippedConfig("MBE");
 		var filePath = GridStyleFilePath(tempDir.Path);
-		var options = await LoadOptions(tempDir.Path) with { CellPaddingLeft = 6.5 };
+		var loaded = await LoadOptions(tempDir.Path);
+		var options = loaded with { Layout = loaded.Layout with { CellPaddingLeft = 6.5 } };
 
 		var previousCulture = CultureInfo.CurrentCulture;
 		try

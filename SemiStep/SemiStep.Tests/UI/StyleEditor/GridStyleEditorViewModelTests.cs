@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 using Avalonia.Headless.XUnit;
@@ -31,36 +33,77 @@ namespace SemiStep.Tests.UI.StyleEditor;
 public sealed class GridStyleEditorViewModelTests
 {
 	private const string ConfigDir = @"C:\does-not-exist";
+	private const int SurfacedEditablePropertyCount = 77;
 
 	[AvaloniaFact]
-	public void Seed_PopulatesColorAndNumericProps_FromRecord()
+	public void Seed_PopulatesEverySurfacedProperty_FromDistinctFixture()
 	{
-		var source = GridStyleOptions.Default with
+		var fixture = GridStyleOptionsTestData.Distinct();
+		var viewModel = CreateViewModel(fixture);
+
+		var properties = EditableProperties();
+		properties.Should().HaveCount(
+			SurfacedEditablePropertyCount,
+			"the fixture must exercise every surfaced editable property");
+
+		foreach (var property in properties)
 		{
-			StatusBarFontSize = 15,
-			StatusBarTimerValueFontSize = 30
-		};
-		var viewModel = CreateViewModel(source);
+			var recordValue = RecordField(property).GetValue(fixture);
+			var actual = property.GetValue(viewModel);
+			var because = $"property {property.Name} must be seeded from the fixture";
 
-		viewModel.CellFontSize.Should().Be(source.CellFontSize);
-		viewModel.RowHeight.Should().Be((decimal)source.RowHeight);
-		viewModel.ValidationPanelMaxHeight.Should().Be((decimal)source.ValidationPanelMaxHeight);
-		viewModel.StatusBarFontSize.Should().Be(15);
-		viewModel.StatusBarTimerValueFontSize.Should().Be(30);
-
-		viewModel.SelectionBackground.Should().Be(Color.Parse(source.SelectionBackgroundColor));
-		viewModel.HeaderForeground.Should().Be(Color.Parse(source.HeaderForegroundColor));
+			if (property.PropertyType == typeof(Color))
+			{
+				actual.Should().Be(HexColor.Parse((string)recordValue!), because);
+			}
+			else if (property.PropertyType == typeof(decimal?))
+			{
+				// The record's int font sizes and double paddings box under reflection; a direct
+				// (decimal) cast on a boxed int throws, so normalize both sides via Convert.ToDecimal.
+				Convert.ToDecimal(actual).Should().Be(Convert.ToDecimal(recordValue), because);
+			}
+			else
+			{
+				actual.Should().Be(recordValue, because);
+			}
+		}
 	}
 
 	[AvaloniaFact]
-	public void Seed_RoundTripsShippedHexValues_Losslessly()
+	public void Seed_ThenBuildRecord_PreservesEveryFieldDistinctly()
 	{
-		var source = GridStyleOptions.Default;
-		var viewModel = CreateViewModel(source);
+		var viewModel = CreateViewModel(GridStyleOptionsTestData.Distinct());
 
-		var record = viewModel.BuildRecord();
+		viewModel.BuildRecord().Should().Be(GridStyleOptionsTestData.Distinct());
+	}
 
-		record.Should().Be(source);
+	[AvaloniaFact]
+	public void BuildRecord_PerturbingEachProperty_ChangesOnlyThatMappedField()
+	{
+		var viewModel = CreateViewModel(GridStyleOptionsTestData.Distinct());
+
+		var properties = EditableProperties();
+		properties.Should().HaveCount(
+			SurfacedEditablePropertyCount,
+			"the perturbation guard must cover every surfaced editable property");
+
+		foreach (var property in properties)
+		{
+			var seededValue = property.GetValue(viewModel);
+			var baseline = viewModel.BuildRecord();
+
+			property.SetValue(viewModel, Perturb(property, seededValue));
+			var built = viewModel.BuildRecord();
+
+			var mappedField = RecordField(property).Name;
+			var changedFields = ChangedRecordFields(baseline, built);
+			changedFields.Should().BeEquivalentTo(
+				new[] { mappedField },
+				$"editing {property.Name} must change exactly the {mappedField} record field");
+
+			// Restore the seeded value rather than reconstruct the VM: each ctor enumerates system fonts.
+			property.SetValue(viewModel, seededValue);
+		}
 	}
 
 	[AvaloniaFact]
@@ -383,6 +426,63 @@ public sealed class GridStyleEditorViewModelTests
 			ConfigDir,
 			source,
 			NullLogger<GridStyleEditorViewModel>.Instance);
+	}
+
+	private static IReadOnlyList<PropertyInfo> EditableProperties()
+	{
+		return typeof(GridStyleEditorViewModel).GetProperties()
+			.Where(property => property.GetMethod?.IsPublic == true && property.SetMethod?.IsPublic == true)
+			.ToList();
+	}
+
+	private static PropertyInfo RecordField(PropertyInfo viewModelProperty)
+	{
+		var fieldName = viewModelProperty.PropertyType == typeof(Color)
+			? viewModelProperty.Name + "Color"
+			: viewModelProperty.Name;
+
+		return typeof(GridStyleOptions).GetProperty(fieldName)
+			?? throw new InvalidOperationException($"No GridStyleOptions field maps to {viewModelProperty.Name}");
+	}
+
+	// Color perturbation stays opaque so ToHex changes; weights are unvalidated ints so any value round-trips.
+	private static object? Perturb(PropertyInfo property, object? current)
+	{
+		if (property.PropertyType == typeof(Color))
+		{
+			var color = (Color)current!;
+			return Color.FromArgb(255, (byte)(color.R ^ 1), color.G, color.B);
+		}
+
+		if (property.PropertyType == typeof(decimal?))
+		{
+			return (decimal?)current + 1;
+		}
+
+		if (property.PropertyType == typeof(int))
+		{
+			return (int)current! + 100;
+		}
+
+		if (property.PropertyType == typeof(bool))
+		{
+			return !(bool)current!;
+		}
+
+		if (property.PropertyType == typeof(string))
+		{
+			return (string)current! + " Perturbed";
+		}
+
+		throw new InvalidOperationException($"No perturbation defined for {property.Name} ({property.PropertyType})");
+	}
+
+	private static IReadOnlyList<string> ChangedRecordFields(GridStyleOptions baseline, GridStyleOptions candidate)
+	{
+		return typeof(GridStyleOptions).GetProperties()
+			.Where(property => !Equals(property.GetValue(baseline), property.GetValue(candidate)))
+			.Select(property => property.Name)
+			.ToList();
 	}
 
 	private static async Task ExecuteSwallowing(ReactiveCommand<Unit, bool> command)

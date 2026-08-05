@@ -56,6 +56,19 @@ public sealed class GridStyleEditorFacadeTests
 	}
 
 	[Fact]
+	public async Task SaveThenLoad_DistinctFixture_PreservesEveryMappedField()
+	{
+		using var tempDir = new TempDirectory();
+		var facade = new GridStyleEditorFacade();
+
+		facade.Save(tempDir.Path, GridStyleOptionsTestData.Distinct()).IsSuccess.Should().BeTrue();
+
+		var reloaded = (await facade.Load(tempDir.Path)).Value;
+
+		reloaded.Should().Be(GridStyleOptionsTestData.Distinct());
+	}
+
+	[Fact]
 	public async Task Validate_ShippedRecord_ReturnsOk()
 	{
 		using var tempDir = CopyShippedConfig("MBE");

@@ -1,8 +1,8 @@
 ﻿namespace SemiStep.Core.Configuration;
 
 public sealed record StatusBarStyle(
-	string Background,
-	string Foreground,
+	StyleColor Background,
+	StyleColor Foreground,
 	double Padding,
 	double ItemSpacing,
 	int FontSize,

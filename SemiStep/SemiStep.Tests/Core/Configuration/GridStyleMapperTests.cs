@@ -18,44 +18,44 @@ public sealed class GridStyleMapperTests
 	{
 		var dto = BuildCompleteDto();
 
-		var options = GridStyleMapper.Map(dto);
+		var options = GridStyleMapper.Map(dto).Value;
 
-		options.Selection.Background.Should().Be("#ABCDEF");
-		options.Selection.Foreground.Should().Be("#FEDCBA");
-		options.ChangedCells.Changed.Should().Be("#0ABBCD");
-		options.ChangedCells.ChangedSelected.Should().Be("#0DCCEF");
+		options.Selection.Background.Should().Be(StyleColor.Parse("#ABCDEF"));
+		options.Selection.Foreground.Should().Be(StyleColor.Parse("#FEDCBA"));
+		options.ChangedCells.Changed.Should().Be(StyleColor.Parse("#0ABBCD"));
+		options.ChangedCells.ChangedSelected.Should().Be(StyleColor.Parse("#0DCCEF"));
 
-		options.ReadOnlyCells.Depth0.Should().Be("#11111B");
-		options.ReadOnlyCells.Depth1.Should().Be("#22222B");
-		options.ReadOnlyCells.Depth2.Should().Be("#33333B");
-		options.ReadOnlyCells.Depth3.Should().Be("#44444B");
-		options.ReadOnlyCells.Depth0Past.Should().Be("#55555B");
-		options.ReadOnlyCells.Depth1Past.Should().Be("#66666B");
-		options.ReadOnlyCells.Depth2Past.Should().Be("#77777B");
-		options.ReadOnlyCells.Depth3Past.Should().Be("#88888B");
-		options.ReadOnlyCells.Selected.Should().Be("#99999B");
-		options.ReadOnlyCells.Foreground.Should().Be("#AAAAAC");
+		options.ReadOnlyCells.Depth0.Should().Be(StyleColor.Parse("#11111B"));
+		options.ReadOnlyCells.Depth1.Should().Be(StyleColor.Parse("#22222B"));
+		options.ReadOnlyCells.Depth2.Should().Be(StyleColor.Parse("#33333B"));
+		options.ReadOnlyCells.Depth3.Should().Be(StyleColor.Parse("#44444B"));
+		options.ReadOnlyCells.Depth0Past.Should().Be(StyleColor.Parse("#55555B"));
+		options.ReadOnlyCells.Depth1Past.Should().Be(StyleColor.Parse("#66666B"));
+		options.ReadOnlyCells.Depth2Past.Should().Be(StyleColor.Parse("#77777B"));
+		options.ReadOnlyCells.Depth3Past.Should().Be(StyleColor.Parse("#88888B"));
+		options.ReadOnlyCells.Selected.Should().Be(StyleColor.Parse("#99999B"));
+		options.ReadOnlyCells.Foreground.Should().Be(StyleColor.Parse("#AAAAAC"));
 
-		options.DisabledCells.Depth0.Should().Be("#11111A");
-		options.DisabledCells.Depth1.Should().Be("#22222A");
-		options.DisabledCells.Depth2.Should().Be("#33333A");
-		options.DisabledCells.Depth3.Should().Be("#44444A");
-		options.DisabledCells.Depth0Past.Should().Be("#55555A");
-		options.DisabledCells.Depth1Past.Should().Be("#66666A");
-		options.DisabledCells.Depth2Past.Should().Be("#77777A");
-		options.DisabledCells.Depth3Past.Should().Be("#88888A");
-		options.DisabledCells.Selected.Should().Be("#99999A");
-		options.DisabledCells.Foreground.Should().Be("#AAAAAB");
+		options.DisabledCells.Depth0.Should().Be(StyleColor.Parse("#11111A"));
+		options.DisabledCells.Depth1.Should().Be(StyleColor.Parse("#22222A"));
+		options.DisabledCells.Depth2.Should().Be(StyleColor.Parse("#33333A"));
+		options.DisabledCells.Depth3.Should().Be(StyleColor.Parse("#44444A"));
+		options.DisabledCells.Depth0Past.Should().Be(StyleColor.Parse("#55555A"));
+		options.DisabledCells.Depth1Past.Should().Be(StyleColor.Parse("#66666A"));
+		options.DisabledCells.Depth2Past.Should().Be(StyleColor.Parse("#77777A"));
+		options.DisabledCells.Depth3Past.Should().Be(StyleColor.Parse("#88888A"));
+		options.DisabledCells.Selected.Should().Be(StyleColor.Parse("#99999A"));
+		options.DisabledCells.Foreground.Should().Be(StyleColor.Parse("#AAAAAB"));
 
-		options.Execution.Depth0.Should().Be("#111111");
-		options.Execution.Depth1.Should().Be("#222222");
-		options.Execution.Depth2.Should().Be("#333333");
-		options.Execution.Depth3.Should().Be("#444444");
-		options.Execution.Depth0Past.Should().Be("#555555");
-		options.Execution.Depth1Past.Should().Be("#666666");
-		options.Execution.Depth2Past.Should().Be("#777777");
-		options.Execution.Depth3Past.Should().Be("#888888");
-		options.Execution.CurrentStepMarker.Should().Be("#999999");
+		options.Execution.Depth0.Should().Be(StyleColor.Parse("#111111"));
+		options.Execution.Depth1.Should().Be(StyleColor.Parse("#222222"));
+		options.Execution.Depth2.Should().Be(StyleColor.Parse("#333333"));
+		options.Execution.Depth3.Should().Be(StyleColor.Parse("#444444"));
+		options.Execution.Depth0Past.Should().Be(StyleColor.Parse("#555555"));
+		options.Execution.Depth1Past.Should().Be(StyleColor.Parse("#666666"));
+		options.Execution.Depth2Past.Should().Be(StyleColor.Parse("#777777"));
+		options.Execution.Depth3Past.Should().Be(StyleColor.Parse("#888888"));
+		options.Execution.CurrentStepMarker.Should().Be(StyleColor.Parse("#999999"));
 	}
 
 	[Fact]
@@ -79,21 +79,21 @@ public sealed class GridStyleMapperTests
 			HeaderForeground = "#000000"
 		};
 
-		var options = GridStyleMapper.Map(dto);
+		var options = GridStyleMapper.Map(dto).Value;
 
-		options.Chrome.Info.Should().Be("#1976D2");
-		options.Chrome.Connected.Should().Be("#44BB44");
-		options.Chrome.Disconnected.Should().Be("#FF4444");
-		options.Chrome.LocalMode.Should().Be("#6C707E");
-		options.Chrome.Connecting.Should().Be("#FFAF0F");
-		options.Chrome.PanelBackground.Should().Be("#F8F8F8");
-		options.Chrome.PanelHeaderBackground.Should().Be("#EEEEEE");
-		options.Chrome.SubtleBorder.Should().Be("#D0D0D0");
-		options.Chrome.Separator.Should().Be("#C0C0C0");
-		options.Chrome.SecondaryForeground.Should().Be("#888888");
-		options.Chrome.GridBorder.Should().Be("#808080");
-		options.Chrome.GridBackground.Should().Be("#FFFFFF");
-		options.Chrome.HeaderForeground.Should().Be("#000000");
+		options.Chrome.Info.Should().Be(StyleColor.Parse("#1976D2"));
+		options.Chrome.Connected.Should().Be(StyleColor.Parse("#44BB44"));
+		options.Chrome.Disconnected.Should().Be(StyleColor.Parse("#FF4444"));
+		options.Chrome.LocalMode.Should().Be(StyleColor.Parse("#6C707E"));
+		options.Chrome.Connecting.Should().Be(StyleColor.Parse("#FFAF0F"));
+		options.Chrome.PanelBackground.Should().Be(StyleColor.Parse("#F8F8F8"));
+		options.Chrome.PanelHeaderBackground.Should().Be(StyleColor.Parse("#EEEEEE"));
+		options.Chrome.SubtleBorder.Should().Be(StyleColor.Parse("#D0D0D0"));
+		options.Chrome.Separator.Should().Be(StyleColor.Parse("#C0C0C0"));
+		options.Chrome.SecondaryForeground.Should().Be(StyleColor.Parse("#888888"));
+		options.Chrome.GridBorder.Should().Be(StyleColor.Parse("#808080"));
+		options.Chrome.GridBackground.Should().Be(StyleColor.Parse("#FFFFFF"));
+		options.Chrome.HeaderForeground.Should().Be(StyleColor.Parse("#000000"));
 	}
 
 	[Fact]
@@ -101,7 +101,7 @@ public sealed class GridStyleMapperTests
 	{
 		var dto = BuildCompleteDto();
 
-		var options = GridStyleMapper.Map(dto);
+		var options = GridStyleMapper.Map(dto).Value;
 
 		options.Chrome.Info.Should().Be(GridStyleOptions.Default.Chrome.Info);
 		options.Chrome.LocalMode.Should().Be(GridStyleOptions.Default.Chrome.LocalMode);
@@ -111,11 +111,12 @@ public sealed class GridStyleMapperTests
 	}
 
 	[Fact]
-	public void Map_NullDto_ReturnsDefaults()
+	public void Map_NullDto_FailsWithConfigMissing()
 	{
-		var options = GridStyleMapper.Map(null);
+		var result = GridStyleMapper.Map(null);
 
-		options.Should().Be(GridStyleOptions.Default);
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().ContainSingle().Which.Should().BeOfType<GridStyleConfigMissingError>();
 	}
 
 	[Fact]
@@ -124,7 +125,7 @@ public sealed class GridStyleMapperTests
 		var dto = BuildCompleteDto();
 		dto.Colors!.Cells!.Changed = null;
 
-		var options = GridStyleMapper.Map(dto);
+		var options = GridStyleMapper.Map(dto).Value;
 
 		options.ChangedCells.Changed.Should().Be(GridStyleOptions.Default.ChangedCells.Changed);
 	}
@@ -146,7 +147,7 @@ public sealed class GridStyleMapperTests
 			TimerValueItalic = true
 		};
 
-		var options = GridStyleMapper.Map(dto);
+		var options = GridStyleMapper.Map(dto).Value;
 
 		options.StatusBar.FontSize.Should().Be(16);
 		options.StatusBar.Weight.Should().Be(500);
@@ -174,7 +175,7 @@ public sealed class GridStyleMapperTests
 			CellItalic = true
 		};
 
-		var options = GridStyleMapper.Map(dto);
+		var options = GridStyleMapper.Map(dto).Value;
 
 		options.Fonts.FontFamily.Should().Be("Cascadia Mono");
 		options.Fonts.HeaderFontSize.Should().Be(20);
@@ -190,7 +191,7 @@ public sealed class GridStyleMapperTests
 	{
 		var dto = BuildCompleteDto();
 
-		var options = GridStyleMapper.Map(dto);
+		var options = GridStyleMapper.Map(dto).Value;
 
 		options.Fonts.FontFamily.Should().Be(GridStyleOptions.Default.Fonts.FontFamily);
 		options.Fonts.HeaderFontSize.Should().Be(14);
@@ -264,7 +265,7 @@ public sealed class GridStyleMapperTests
 	public void Map_OptionsToDto_WritesLocalModeChromeColor()
 	{
 		var defaults = GridStyleOptions.Default;
-		var options = defaults with { Chrome = defaults.Chrome with { LocalMode = "#123456" } };
+		var options = defaults with { Chrome = defaults.Chrome with { LocalMode = StyleColor.Parse("#123456") } };
 
 		var dto = GridStyleDtoMapper.Map(options);
 
@@ -275,7 +276,7 @@ public sealed class GridStyleMapperTests
 	public void Map_OptionsToDto_WritesConnectingChromeColor()
 	{
 		var defaults = GridStyleOptions.Default;
-		var options = defaults with { Chrome = defaults.Chrome with { Connecting = "#123456" } };
+		var options = defaults with { Chrome = defaults.Chrome with { Connecting = StyleColor.Parse("#123456") } };
 
 		var dto = GridStyleDtoMapper.Map(options);
 

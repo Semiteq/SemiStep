@@ -1,8 +1,6 @@
 # Grid Style Configuration
 # Color formats supported:
-#   - #RGB        (e.g., #FFF)
 #   - #RRGGBB     (e.g., #FFFFFF)
-#   - #ARGB       (e.g., #0FFF for transparent white)
 #   - #AARRGGBB   (e.g., #00FFFFFF for fully transparent white)
 # Alpha: 00 = fully transparent, FF = fully opaque
 

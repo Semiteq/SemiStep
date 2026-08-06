@@ -21,15 +21,15 @@ public sealed class ExecutionPaletteInstallerTests
 		var gridStyle = GridStyleOptions.Default with
 		{
 			Execution = new ExecutionPalette(
-				Depth0: "#FFFFFF",
-				Depth1: "#E8F3FF",
-				Depth2: "#D0E7FF",
-				Depth3: "#A8D0FF",
-				Depth0Past: "#F0F0F0",
-				Depth1Past: "#DCE5EE",
-				Depth2Past: "#C4D2E0",
-				Depth3Past: "#9CB4CC",
-				CurrentStepMarker: "#FF8800"),
+				Depth0: StyleColor.Parse("#FFFFFF"),
+				Depth1: StyleColor.Parse("#E8F3FF"),
+				Depth2: StyleColor.Parse("#D0E7FF"),
+				Depth3: StyleColor.Parse("#A8D0FF"),
+				Depth0Past: StyleColor.Parse("#F0F0F0"),
+				Depth1Past: StyleColor.Parse("#DCE5EE"),
+				Depth2Past: StyleColor.Parse("#C4D2E0"),
+				Depth3Past: StyleColor.Parse("#9CB4CC"),
+				CurrentStepMarker: StyleColor.Parse("#FF8800")),
 		};
 		var resources = new ResourceDictionary();
 

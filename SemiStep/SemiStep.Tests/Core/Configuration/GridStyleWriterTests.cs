@@ -163,7 +163,9 @@ public sealed class GridStyleWriterTests
 	{
 		var result = await GridStyleLoader.LoadAsync(configDir);
 		result.IsSuccess.Should().BeTrue();
-		return GridStyleMapper.Map(result.Value);
+		var mapResult = GridStyleMapper.Map(result.Value);
+		mapResult.IsSuccess.Should().BeTrue();
+		return mapResult.Value;
 	}
 
 	private static TempDirectory CopyShippedConfig(string equipment)

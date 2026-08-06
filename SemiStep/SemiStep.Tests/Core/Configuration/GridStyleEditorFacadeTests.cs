@@ -27,7 +27,7 @@ public sealed class GridStyleEditorFacadeTests
 		var result = await new GridStyleEditorFacade().Load(tempDir.Path);
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Selection.Background.Should().NotBeNullOrWhiteSpace();
+		result.Value.Selection.Background.ToString().Should().StartWith("#");
 	}
 
 	[Fact]
@@ -77,36 +77,6 @@ public sealed class GridStyleEditorFacadeTests
 		var loaded = (await facade.Load(tempDir.Path)).Value;
 
 		facade.Validate(loaded).IsSuccess.Should().BeTrue();
-	}
-
-	[Fact]
-	public void Validate_MalformedColor_ReturnsFail()
-	{
-		var defaults = GridStyleOptions.Default;
-		var invalid = defaults with { Execution = defaults.Execution with { Depth0 = "not-a-color" } };
-
-		new GridStyleEditorFacade().Validate(invalid).IsFailed.Should().BeTrue();
-	}
-
-	[Fact]
-	public async Task Save_InvalidRecord_FailsValidationGuardBeforeWriting()
-	{
-		using var tempDir = CopyShippedConfig("MBE");
-		var facade = new GridStyleEditorFacade();
-		var filePath = Path.Combine(tempDir.Path, "ui", "grid_style.yaml");
-
-		var token = TestContext.Current.CancellationToken;
-		var before = await File.ReadAllTextAsync(filePath, token);
-
-		var loadedForInvalid = (await facade.Load(tempDir.Path)).Value;
-		var invalid = loadedForInvalid
-			with
-		{ Execution = loadedForInvalid.Execution with { Depth0 = "not-a-color" } };
-
-		(await facade.Save(tempDir.Path, invalid)).IsFailed.Should().BeTrue();
-
-		var after = await File.ReadAllTextAsync(filePath, token);
-		after.Should().Be(before);
 	}
 
 	[Fact]

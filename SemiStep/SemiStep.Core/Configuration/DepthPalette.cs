@@ -1,13 +1,13 @@
 ﻿namespace SemiStep.Core.Configuration;
 
 public sealed record DepthPalette(
-	string Depth0,
-	string Depth1,
-	string Depth2,
-	string Depth3,
-	string Depth0Past,
-	string Depth1Past,
-	string Depth2Past,
-	string Depth3Past,
-	string Selected,
-	string Foreground);
+	StyleColor Depth0,
+	StyleColor Depth1,
+	StyleColor Depth2,
+	StyleColor Depth3,
+	StyleColor Depth0Past,
+	StyleColor Depth1Past,
+	StyleColor Depth2Past,
+	StyleColor Depth3Past,
+	StyleColor Selected,
+	StyleColor Foreground);

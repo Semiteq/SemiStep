@@ -41,7 +41,7 @@ are the deliberate exception: `GridStyleLoader.LoadAsync` reads exactly one file
 unambiguous: one config-dir maps to one style file. If styles were ever split across `ui/*.yaml`,
 write-back would have no single target, so single-file is intentional.
 
-The file header documents the accepted hex formats (`#RGB`, `#RRGGBB`, `#ARGB`, `#AARRGGBB`); the
+The file header documents the accepted hex formats (`#RRGGBB`, `#AARRGGBB`); the
 writer preserves that header on save.
 
 ## The load pipeline
@@ -49,20 +49,25 @@ writer preserves that header on save.
 ```
 grid_style.yaml
   → GridStyleOptionsDto            (internal DTOs, snake_case [YamlMember], one per section)
-  → GridStyleValidator.Validate    (hex-format check; see "Known gap" below)
-  → GridStyleMapper.Map            (DTO → record, applies defaults)
+  → GridStyleMapper.Map            (DTO → record, aggregated per-key validation, applies defaults)
   → GridStyleOptions               (immutable record, SemiStep.Core, Avalonia-free)
   → AppConfiguration.GridStyle     (bundled by ConfigFacade)
   → DI singleton                   (UiDi.AddUi: AppConfiguration.GridStyle registered as GridStyleOptions)
 ```
 
-`ConfigFacade` loads the DTO, runs `GridStyleValidator`, calls `GridStyleMapper.Map`, and bundles the
-resulting `GridStyleOptions` record into `AppConfiguration`. `UiDi.AddUi` registers
+`ConfigFacade` loads the DTO, calls `GridStyleMapper.Map`, which validates and maps in one pass, and
+bundles the resulting `GridStyleOptions` record into `AppConfiguration`. `UiDi.AddUi` registers
 `AppConfiguration.GridStyle` as a `GridStyleOptions` singleton, so every consumer (the installers, the
 column factories, `ColumnWidthCalculator`) injects the same typed record.
 
 `GridStyleOptions` is an immutable record with a `Default` fallback used only by tests; the `#000000`
 cell-palette placeholders in `Default` are never rendered in production.
+
+**Interim (slice 4).** Colors are now the typed `StyleColor` value (channels `A`/`R`/`G`/`B`) end to
+end in the record; hex is a string only at the two I/O edges. Validation lives inside the load mapper —
+`GridStyleMapper.Map` returns a `Result<GridStyleOptions>` and accumulates every per-key error in one
+pass. The standalone `GridStyleValidator` and the editor's `HexColor` helper are gone. The full doc
+rewrite (and removal of the now-obsolete "Known gap" section) lands in slice 5.
 
 ## Record shape: nested per group (interim, slice 3)
 
@@ -70,8 +75,8 @@ cell-palette placeholders in `Default` are never rendered in production.
 per-group records (`Fonts`, `Layout`, `Selection`, `ChangedCells`, `ReadOnlyCells`, `DisabledCells`,
 `Execution`, `StatusBar`, `ValidationPanel`, `Chrome`) plus the root-level `Orientation`. `ReadOnlyCells`
 and `DisabledCells` share one `DepthPalette` type. Consumers read short nested paths — `gridStyle.Fonts.CellFontSize`,
-`gridStyle.ReadOnlyCells.Depth1`, `gridStyle.Chrome.GridLine` — instead of the old flat fields. Colors stay
-`string` in this shape; typing them as `StyleColor` is slice 4.
+`gridStyle.ReadOnlyCells.Depth1`, `gridStyle.Chrome.GridLine` — instead of the old flat fields. Colors were
+`string` at slice 3; slice 4 typed them as `StyleColor` (see the interim note above).
 
 **The YAML file, the DTOs, and `GridStyleValidator` are unchanged** by this slice: the file on disk is
 byte-identical, the DTO layer keeps its nested snake_case shape and per-key error reporting, and the load
@@ -83,8 +88,8 @@ show a flat path (for example `GridStyleOptions.FontFamily`) now live under thei
 **Note for slice 4.** The error-path key `colors.grid_line` and the record path `Chrome.GridLine`
 deliberately diverge: `grid_line` is a loose field in the `colors:` DTO section (beside `grid_border` /
 `grid_background`), but the one-level record folds it into `Chrome` so the root carries no lone `string`.
-Slice 4 moves `GridStyleValidator`'s per-key checks into the load mapper; that mapper-resident validation
-**must keep emitting the `colors.grid_line` key**, not rename it to `chrome.grid_line`. The key names the
+Slice 4 moved those per-key checks into the load mapper (`GridStyleMapper.Map`); that mapper-resident
+validation keeps emitting the `colors.grid_line` key, not `chrome.grid_line`. The key names the
 YAML path the operator edits, not the record path.
 
 ## Resources projection
@@ -128,8 +133,8 @@ orientation: rows_as_steps   # canonical (rows = steps); or columns_as_steps (tr
 ```
 
 - **Values.** `rows_as_steps` (canonical) or `columns_as_steps` (transposed). An absent key
-  defaults to `rows_as_steps`, so existing files load unchanged. `GridStyleValidator` rejects
-  any other string with a config error naming both accepted values.
+  defaults to `rows_as_steps`, so existing files load unchanged. The load mapper
+  (`GridStyleMapper.Map`) rejects any other string with a config error naming both accepted values.
 - **Typed model.** The record carries a Core enum, `GridStyleOptions.Orientation`
   (`GridOrientation.RowsAsSteps | ColumnsAsSteps`), not the raw string. Parsing and
   serialization go through `GridOrientationValues` (`Configuration/Dto/`); an absent DTO value
@@ -237,9 +242,10 @@ GridStyleEditorWindow
 
 - **ViewModel.** Seeds a mutable draft from the loaded record (a separate copy, never the DI
   singleton). Colors are exposed as `Color` for the `ColorPicker`; sizes as `decimal?` for
-  `NumericUpDown`. Hex↔`Color` goes through an explicit `HexColor.ToHex` / `HexColor.Parse`, not
-  `Color.ToString()`. `CanSave` is gated by **both** the facade's color validation **and** VM-side
-  numeric range checks (font/padding/row-height/spacing/panel-height bounds). The editor surfaces
+  `NumericUpDown`. Channel↔`Color` conversion goes through `StyleColorConversions`
+  (`ToMediaColor` / `ToStyleColor`, in `SemiStep.UI/Styles`), not `Color.ToString()`. `CanSave` is gated
+  by VM-side numeric range checks alone (font/padding/row-height/spacing/panel-height bounds); an invalid
+  color is unrepresentable in the typed record, so the facade no longer color-validates on save. The editor surfaces
   effectively the whole record: all ~54 colors, 13 numerics, plus the font controls — one global
   font-family `ComboBox`, and a per-role weight `ComboBox` (curated 300–900 list) and italic
   `CheckBox`. The window groups these into two cards: **Fonts** (the family row plus a size / weight /
@@ -254,9 +260,11 @@ GridStyleEditorWindow
 - **Facade.** `GridStyleEditorFacade` is the only public Core seam for the editor:
   `Load(configDir)` → `Result<GridStyleOptions>`, `Validate(GridStyleOptions)` → `Result`,
   `Save(configDir, GridStyleOptions)` → `Task<Result>`. `Save` is async and runs the file write off the
-  UI thread (mirroring `Load`); the editor's `SaveCommand` awaits it. `Validate` stays synchronous —
-  `RecomputeCanSave` calls it per keystroke, and it is an in-memory pass with no I/O. The loader,
-  validator, writer, and the ~12 DTOs stay `internal`. The UI never touches Core internals directly.
+  UI thread (mirroring `Load`); the editor's `SaveCommand` awaits it. `Validate` is a vacuous
+  `Result.Ok()` pass-through — color validation now lives in the load mapper, so it validates nothing;
+  `RecomputeCanSave` still calls it per keystroke but `CanSave` turns on the numeric-range checks alone.
+  The method stays on the interface until slice 5 trims it. The loader, writer, and the ~12 DTOs stay
+  `internal`. The UI never touches Core internals directly.
   (Layering: the config stays in `SemiStep.Core`, settled by review; the editor reaches it only through
   this facade.)
 - **Writer.** `GridStyleWriter` maps the record back to the DTO (`GridStyleDtoMapper`), serializes with

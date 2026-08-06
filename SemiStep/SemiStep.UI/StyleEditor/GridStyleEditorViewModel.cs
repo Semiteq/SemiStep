@@ -12,6 +12,7 @@ using ReactiveUI;
 
 using SemiStep.Core.Configuration;
 using SemiStep.UI.Localization;
+using SemiStep.UI.Styles;
 
 namespace SemiStep.UI.StyleEditor;
 
@@ -219,46 +220,46 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 				CellPaddingBottom: ToDouble(CellPaddingBottom, _source.Layout.CellPaddingBottom),
 				RowHeight: ToDouble(RowHeight, _source.Layout.RowHeight)),
 			Selection: new SelectionColors(
-				Background: HexColor.ToHex(SelectionBackground),
-				Foreground: HexColor.ToHex(SelectionForeground)),
+				Background: SelectionBackground.ToStyleColor(),
+				Foreground: SelectionForeground.ToStyleColor()),
 			ChangedCells: new ChangedCellColors(
-				Changed: HexColor.ToHex(CellChanged),
-				ChangedSelected: HexColor.ToHex(CellChangedSelected)),
+				Changed: CellChanged.ToStyleColor(),
+				ChangedSelected: CellChangedSelected.ToStyleColor()),
 			ReadOnlyCells: new DepthPalette(
-				Depth0: HexColor.ToHex(ReadOnlyCellDepth0),
-				Depth1: HexColor.ToHex(ReadOnlyCellDepth1),
-				Depth2: HexColor.ToHex(ReadOnlyCellDepth2),
-				Depth3: HexColor.ToHex(ReadOnlyCellDepth3),
-				Depth0Past: HexColor.ToHex(ReadOnlyCellDepth0Past),
-				Depth1Past: HexColor.ToHex(ReadOnlyCellDepth1Past),
-				Depth2Past: HexColor.ToHex(ReadOnlyCellDepth2Past),
-				Depth3Past: HexColor.ToHex(ReadOnlyCellDepth3Past),
-				Selected: HexColor.ToHex(ReadOnlyCellSelected),
-				Foreground: HexColor.ToHex(ReadOnlyCellForeground)),
+				Depth0: ReadOnlyCellDepth0.ToStyleColor(),
+				Depth1: ReadOnlyCellDepth1.ToStyleColor(),
+				Depth2: ReadOnlyCellDepth2.ToStyleColor(),
+				Depth3: ReadOnlyCellDepth3.ToStyleColor(),
+				Depth0Past: ReadOnlyCellDepth0Past.ToStyleColor(),
+				Depth1Past: ReadOnlyCellDepth1Past.ToStyleColor(),
+				Depth2Past: ReadOnlyCellDepth2Past.ToStyleColor(),
+				Depth3Past: ReadOnlyCellDepth3Past.ToStyleColor(),
+				Selected: ReadOnlyCellSelected.ToStyleColor(),
+				Foreground: ReadOnlyCellForeground.ToStyleColor()),
 			DisabledCells: new DepthPalette(
-				Depth0: HexColor.ToHex(DisabledCellDepth0),
-				Depth1: HexColor.ToHex(DisabledCellDepth1),
-				Depth2: HexColor.ToHex(DisabledCellDepth2),
-				Depth3: HexColor.ToHex(DisabledCellDepth3),
-				Depth0Past: HexColor.ToHex(DisabledCellDepth0Past),
-				Depth1Past: HexColor.ToHex(DisabledCellDepth1Past),
-				Depth2Past: HexColor.ToHex(DisabledCellDepth2Past),
-				Depth3Past: HexColor.ToHex(DisabledCellDepth3Past),
-				Selected: HexColor.ToHex(DisabledCellSelected),
-				Foreground: HexColor.ToHex(DisabledCellForeground)),
+				Depth0: DisabledCellDepth0.ToStyleColor(),
+				Depth1: DisabledCellDepth1.ToStyleColor(),
+				Depth2: DisabledCellDepth2.ToStyleColor(),
+				Depth3: DisabledCellDepth3.ToStyleColor(),
+				Depth0Past: DisabledCellDepth0Past.ToStyleColor(),
+				Depth1Past: DisabledCellDepth1Past.ToStyleColor(),
+				Depth2Past: DisabledCellDepth2Past.ToStyleColor(),
+				Depth3Past: DisabledCellDepth3Past.ToStyleColor(),
+				Selected: DisabledCellSelected.ToStyleColor(),
+				Foreground: DisabledCellForeground.ToStyleColor()),
 			Execution: new ExecutionPalette(
-				Depth0: HexColor.ToHex(ExecutionDepth0),
-				Depth1: HexColor.ToHex(ExecutionDepth1),
-				Depth2: HexColor.ToHex(ExecutionDepth2),
-				Depth3: HexColor.ToHex(ExecutionDepth3),
-				Depth0Past: HexColor.ToHex(ExecutionDepth0Past),
-				Depth1Past: HexColor.ToHex(ExecutionDepth1Past),
-				Depth2Past: HexColor.ToHex(ExecutionDepth2Past),
-				Depth3Past: HexColor.ToHex(ExecutionDepth3Past),
-				CurrentStepMarker: HexColor.ToHex(ExecutionCurrentStepMarker)),
+				Depth0: ExecutionDepth0.ToStyleColor(),
+				Depth1: ExecutionDepth1.ToStyleColor(),
+				Depth2: ExecutionDepth2.ToStyleColor(),
+				Depth3: ExecutionDepth3.ToStyleColor(),
+				Depth0Past: ExecutionDepth0Past.ToStyleColor(),
+				Depth1Past: ExecutionDepth1Past.ToStyleColor(),
+				Depth2Past: ExecutionDepth2Past.ToStyleColor(),
+				Depth3Past: ExecutionDepth3Past.ToStyleColor(),
+				CurrentStepMarker: ExecutionCurrentStepMarker.ToStyleColor()),
 			StatusBar: new StatusBarStyle(
-				Background: HexColor.ToHex(StatusBarBackground),
-				Foreground: HexColor.ToHex(StatusBarForeground),
+				Background: StatusBarBackground.ToStyleColor(),
+				Foreground: StatusBarForeground.ToStyleColor(),
 				Padding: ToDouble(StatusBarPadding, _source.StatusBar.Padding),
 				ItemSpacing: ToDouble(StatusBarItemSpacing, _source.StatusBar.ItemSpacing),
 				FontSize: ToInt(StatusBarFontSize, _source.StatusBar.FontSize),
@@ -271,26 +272,26 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 				TimerValueWeight: StatusBarTimerValueFontWeight,
 				TimerValueItalic: StatusBarTimerValueItalic),
 			ValidationPanel: new ValidationPanelStyle(
-				Background: HexColor.ToHex(ValidationPanelBackground),
-				Foreground: HexColor.ToHex(ValidationPanelForeground),
-				ErrorColor: HexColor.ToHex(ValidationPanelError),
-				WarningColor: HexColor.ToHex(ValidationPanelWarning),
+				Background: ValidationPanelBackground.ToStyleColor(),
+				Foreground: ValidationPanelForeground.ToStyleColor(),
+				ErrorColor: ValidationPanelError.ToStyleColor(),
+				WarningColor: ValidationPanelWarning.ToStyleColor(),
 				MaxHeight: ToDouble(ValidationPanelMaxHeight, _source.ValidationPanel.MaxHeight)),
 			Chrome: new ChromeColors(
-				Info: HexColor.ToHex(Info),
-				Connected: HexColor.ToHex(Connected),
-				Disconnected: HexColor.ToHex(Disconnected),
-				LocalMode: HexColor.ToHex(LocalMode),
-				Connecting: HexColor.ToHex(Connecting),
-				PanelBackground: HexColor.ToHex(PanelBackground),
-				PanelHeaderBackground: HexColor.ToHex(PanelHeaderBackground),
-				SubtleBorder: HexColor.ToHex(SubtleBorder),
-				Separator: HexColor.ToHex(Separator),
-				SecondaryForeground: HexColor.ToHex(SecondaryForeground),
-				GridBorder: HexColor.ToHex(GridBorder),
-				GridBackground: HexColor.ToHex(GridBackground),
-				HeaderForeground: HexColor.ToHex(HeaderForeground),
-				GridLine: HexColor.ToHex(GridLine)),
+				Info: Info.ToStyleColor(),
+				Connected: Connected.ToStyleColor(),
+				Disconnected: Disconnected.ToStyleColor(),
+				LocalMode: LocalMode.ToStyleColor(),
+				Connecting: Connecting.ToStyleColor(),
+				PanelBackground: PanelBackground.ToStyleColor(),
+				PanelHeaderBackground: PanelHeaderBackground.ToStyleColor(),
+				SubtleBorder: SubtleBorder.ToStyleColor(),
+				Separator: Separator.ToStyleColor(),
+				SecondaryForeground: SecondaryForeground.ToStyleColor(),
+				GridBorder: GridBorder.ToStyleColor(),
+				GridBackground: GridBackground.ToStyleColor(),
+				HeaderForeground: HeaderForeground.ToStyleColor(),
+				GridLine: GridLine.ToStyleColor()),
 			Orientation: _source.Orientation);
 	}
 
@@ -361,59 +362,59 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 		AvailableFontFamilies = BuildFontFamilies(options.Fonts.FontFamily);
 		AvailableFontWeights = BuildFontWeights(options);
 
-		SelectionBackground = HexColor.Parse(options.Selection.Background);
-		SelectionForeground = HexColor.Parse(options.Selection.Foreground);
-		CellChanged = HexColor.Parse(options.ChangedCells.Changed);
-		CellChangedSelected = HexColor.Parse(options.ChangedCells.ChangedSelected);
-		DisabledCellDepth0 = HexColor.Parse(options.DisabledCells.Depth0);
-		DisabledCellDepth1 = HexColor.Parse(options.DisabledCells.Depth1);
-		DisabledCellDepth2 = HexColor.Parse(options.DisabledCells.Depth2);
-		DisabledCellDepth3 = HexColor.Parse(options.DisabledCells.Depth3);
-		DisabledCellDepth0Past = HexColor.Parse(options.DisabledCells.Depth0Past);
-		DisabledCellDepth1Past = HexColor.Parse(options.DisabledCells.Depth1Past);
-		DisabledCellDepth2Past = HexColor.Parse(options.DisabledCells.Depth2Past);
-		DisabledCellDepth3Past = HexColor.Parse(options.DisabledCells.Depth3Past);
-		DisabledCellSelected = HexColor.Parse(options.DisabledCells.Selected);
-		DisabledCellForeground = HexColor.Parse(options.DisabledCells.Foreground);
-		ReadOnlyCellDepth0 = HexColor.Parse(options.ReadOnlyCells.Depth0);
-		ReadOnlyCellDepth1 = HexColor.Parse(options.ReadOnlyCells.Depth1);
-		ReadOnlyCellDepth2 = HexColor.Parse(options.ReadOnlyCells.Depth2);
-		ReadOnlyCellDepth3 = HexColor.Parse(options.ReadOnlyCells.Depth3);
-		ReadOnlyCellDepth0Past = HexColor.Parse(options.ReadOnlyCells.Depth0Past);
-		ReadOnlyCellDepth1Past = HexColor.Parse(options.ReadOnlyCells.Depth1Past);
-		ReadOnlyCellDepth2Past = HexColor.Parse(options.ReadOnlyCells.Depth2Past);
-		ReadOnlyCellDepth3Past = HexColor.Parse(options.ReadOnlyCells.Depth3Past);
-		ReadOnlyCellSelected = HexColor.Parse(options.ReadOnlyCells.Selected);
-		ReadOnlyCellForeground = HexColor.Parse(options.ReadOnlyCells.Foreground);
-		GridLine = HexColor.Parse(options.Chrome.GridLine);
-		StatusBarBackground = HexColor.Parse(options.StatusBar.Background);
-		StatusBarForeground = HexColor.Parse(options.StatusBar.Foreground);
-		ValidationPanelBackground = HexColor.Parse(options.ValidationPanel.Background);
-		ValidationPanelForeground = HexColor.Parse(options.ValidationPanel.Foreground);
-		ValidationPanelError = HexColor.Parse(options.ValidationPanel.ErrorColor);
-		ValidationPanelWarning = HexColor.Parse(options.ValidationPanel.WarningColor);
-		ExecutionDepth0 = HexColor.Parse(options.Execution.Depth0);
-		ExecutionDepth1 = HexColor.Parse(options.Execution.Depth1);
-		ExecutionDepth2 = HexColor.Parse(options.Execution.Depth2);
-		ExecutionDepth3 = HexColor.Parse(options.Execution.Depth3);
-		ExecutionDepth0Past = HexColor.Parse(options.Execution.Depth0Past);
-		ExecutionDepth1Past = HexColor.Parse(options.Execution.Depth1Past);
-		ExecutionDepth2Past = HexColor.Parse(options.Execution.Depth2Past);
-		ExecutionDepth3Past = HexColor.Parse(options.Execution.Depth3Past);
-		ExecutionCurrentStepMarker = HexColor.Parse(options.Execution.CurrentStepMarker);
-		Info = HexColor.Parse(options.Chrome.Info);
-		Connected = HexColor.Parse(options.Chrome.Connected);
-		Disconnected = HexColor.Parse(options.Chrome.Disconnected);
-		LocalMode = HexColor.Parse(options.Chrome.LocalMode);
-		Connecting = HexColor.Parse(options.Chrome.Connecting);
-		PanelBackground = HexColor.Parse(options.Chrome.PanelBackground);
-		PanelHeaderBackground = HexColor.Parse(options.Chrome.PanelHeaderBackground);
-		SubtleBorder = HexColor.Parse(options.Chrome.SubtleBorder);
-		Separator = HexColor.Parse(options.Chrome.Separator);
-		SecondaryForeground = HexColor.Parse(options.Chrome.SecondaryForeground);
-		GridBorder = HexColor.Parse(options.Chrome.GridBorder);
-		GridBackground = HexColor.Parse(options.Chrome.GridBackground);
-		HeaderForeground = HexColor.Parse(options.Chrome.HeaderForeground);
+		SelectionBackground = options.Selection.Background.ToMediaColor();
+		SelectionForeground = options.Selection.Foreground.ToMediaColor();
+		CellChanged = options.ChangedCells.Changed.ToMediaColor();
+		CellChangedSelected = options.ChangedCells.ChangedSelected.ToMediaColor();
+		DisabledCellDepth0 = options.DisabledCells.Depth0.ToMediaColor();
+		DisabledCellDepth1 = options.DisabledCells.Depth1.ToMediaColor();
+		DisabledCellDepth2 = options.DisabledCells.Depth2.ToMediaColor();
+		DisabledCellDepth3 = options.DisabledCells.Depth3.ToMediaColor();
+		DisabledCellDepth0Past = options.DisabledCells.Depth0Past.ToMediaColor();
+		DisabledCellDepth1Past = options.DisabledCells.Depth1Past.ToMediaColor();
+		DisabledCellDepth2Past = options.DisabledCells.Depth2Past.ToMediaColor();
+		DisabledCellDepth3Past = options.DisabledCells.Depth3Past.ToMediaColor();
+		DisabledCellSelected = options.DisabledCells.Selected.ToMediaColor();
+		DisabledCellForeground = options.DisabledCells.Foreground.ToMediaColor();
+		ReadOnlyCellDepth0 = options.ReadOnlyCells.Depth0.ToMediaColor();
+		ReadOnlyCellDepth1 = options.ReadOnlyCells.Depth1.ToMediaColor();
+		ReadOnlyCellDepth2 = options.ReadOnlyCells.Depth2.ToMediaColor();
+		ReadOnlyCellDepth3 = options.ReadOnlyCells.Depth3.ToMediaColor();
+		ReadOnlyCellDepth0Past = options.ReadOnlyCells.Depth0Past.ToMediaColor();
+		ReadOnlyCellDepth1Past = options.ReadOnlyCells.Depth1Past.ToMediaColor();
+		ReadOnlyCellDepth2Past = options.ReadOnlyCells.Depth2Past.ToMediaColor();
+		ReadOnlyCellDepth3Past = options.ReadOnlyCells.Depth3Past.ToMediaColor();
+		ReadOnlyCellSelected = options.ReadOnlyCells.Selected.ToMediaColor();
+		ReadOnlyCellForeground = options.ReadOnlyCells.Foreground.ToMediaColor();
+		GridLine = options.Chrome.GridLine.ToMediaColor();
+		StatusBarBackground = options.StatusBar.Background.ToMediaColor();
+		StatusBarForeground = options.StatusBar.Foreground.ToMediaColor();
+		ValidationPanelBackground = options.ValidationPanel.Background.ToMediaColor();
+		ValidationPanelForeground = options.ValidationPanel.Foreground.ToMediaColor();
+		ValidationPanelError = options.ValidationPanel.ErrorColor.ToMediaColor();
+		ValidationPanelWarning = options.ValidationPanel.WarningColor.ToMediaColor();
+		ExecutionDepth0 = options.Execution.Depth0.ToMediaColor();
+		ExecutionDepth1 = options.Execution.Depth1.ToMediaColor();
+		ExecutionDepth2 = options.Execution.Depth2.ToMediaColor();
+		ExecutionDepth3 = options.Execution.Depth3.ToMediaColor();
+		ExecutionDepth0Past = options.Execution.Depth0Past.ToMediaColor();
+		ExecutionDepth1Past = options.Execution.Depth1Past.ToMediaColor();
+		ExecutionDepth2Past = options.Execution.Depth2Past.ToMediaColor();
+		ExecutionDepth3Past = options.Execution.Depth3Past.ToMediaColor();
+		ExecutionCurrentStepMarker = options.Execution.CurrentStepMarker.ToMediaColor();
+		Info = options.Chrome.Info.ToMediaColor();
+		Connected = options.Chrome.Connected.ToMediaColor();
+		Disconnected = options.Chrome.Disconnected.ToMediaColor();
+		LocalMode = options.Chrome.LocalMode.ToMediaColor();
+		Connecting = options.Chrome.Connecting.ToMediaColor();
+		PanelBackground = options.Chrome.PanelBackground.ToMediaColor();
+		PanelHeaderBackground = options.Chrome.PanelHeaderBackground.ToMediaColor();
+		SubtleBorder = options.Chrome.SubtleBorder.ToMediaColor();
+		Separator = options.Chrome.Separator.ToMediaColor();
+		SecondaryForeground = options.Chrome.SecondaryForeground.ToMediaColor();
+		GridBorder = options.Chrome.GridBorder.ToMediaColor();
+		GridBackground = options.Chrome.GridBackground.ToMediaColor();
+		HeaderForeground = options.Chrome.HeaderForeground.ToMediaColor();
 
 		_seeding = false;
 		RecomputeCanSave();

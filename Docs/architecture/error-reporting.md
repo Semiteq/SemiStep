@@ -169,7 +169,7 @@ type. Its two `Result`-join sites (`LoadAsync`, `Save`) route each error through
 rather than joining raw `.Message` strings, so both the validation failures and the file-I/O failures render
 in the current culture. Eight typed producers back it (all in `SemiStep.Core/Configuration/`):
 
-- **Validation** (`GridStyleValidator`): `GridStyleConfigMissingError`, `GridStyleSectionMissingError`,
+- **Validation** (`GridStyleMapper`): `GridStyleConfigMissingError`, `GridStyleSectionMissingError`,
   `GridStyleOrientationInvalidError`, `GridStyleKeyMissingError`, `GridStyleHexColorInvalidError`. The
   orientation error carries its two expected values as properties (`ExpectedRows`/`ExpectedColumns`) rather
   than referencing the `internal GridOrientationValues` constants, which `ReasonLocalizer` (in `SemiStep.UI`)
@@ -184,7 +184,7 @@ the dropped `ex.Message` is logged at each consumer, and the `ExceptionalError` 
 
 - **Editor consumer** — `GridStyleEditorViewModel.LoadAsync`/`Save` log each nested `ExceptionalError` at
   `LogWarning` after setting the localized `ErrorMessage`.
-- **Startup consumer** — `GridStyleLoader`/`GridStyleValidator` are also on the startup config-load path
+- **Startup consumer** — `GridStyleLoader`/`GridStyleMapper` are also on the startup config-load path
   (`ConfigFacade.LoadAndValidateAsync`, consumed by `Program.cs`), which logs the same nested
   `ExceptionalError` so a YAML parse detail is not lost at launch.
 

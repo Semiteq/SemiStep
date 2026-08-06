@@ -25,7 +25,7 @@ public static class ConfigFacade
 
 		var (properties, columns, groups, actions, gridStyle, connection, appUi) = loadResult.Value;
 
-		var gridStyleResult = GridStyleValidator.Validate(gridStyle);
+		var gridStyleResult = GridStyleMapper.Map(gridStyle);
 		if (gridStyleResult.IsFailed)
 		{
 			return Propagate(gridStyleResult, loadResult);
@@ -43,7 +43,7 @@ public static class ConfigFacade
 			return Propagate(defaultsResult, loadResult, xrefResult);
 		}
 
-		var mapResult = MapToDomain(properties, columns, groups, actions, gridStyle, connection, appUi);
+		var mapResult = MapToDomain(properties, columns, groups, actions, gridStyleResult.Value, connection, appUi);
 
 		if (mapResult.IsFailed)
 		{
@@ -118,7 +118,7 @@ public static class ConfigFacade
 		List<Dto.ColumnDto> columns,
 		Dictionary<string, Dictionary<int, string>> groups,
 		List<Dto.ActionDto> actions,
-		Dto.GridStyleOptionsDto? gridStyle,
+		GridStyleOptions gridStyle,
 		Dto.ConnectionDto? connection,
 		Dto.AppUiOptionsDto? appUi)
 	{
@@ -152,15 +152,13 @@ public static class ConfigFacade
 			mappedActions.Add(action.Id, action);
 		}
 
-		var mappedGridStyle = GridStyleMapper.Map(gridStyle);
-
 		var plcConfiguration = ConnectionMapper.Map(connection);
 
 		var appUiOptions = AppUiOptionsMapper.Map(appUi);
 
 		return Result.Ok(new AppConfiguration(
 			mappedProperties, mappedColumns, mappedGroups,
-			mappedActions, mappedGridStyle, plcConfiguration, appUiOptions));
+			mappedActions, gridStyle, plcConfiguration, appUiOptions));
 	}
 
 	private sealed record LoadedSections(

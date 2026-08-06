@@ -1,7 +1,10 @@
-﻿using FluentAssertions;
+﻿using System.Linq;
 
+using FluentAssertions;
+
+using SemiStep.Core.Configuration;
 using SemiStep.Core.Configuration.Dto;
-using SemiStep.Core.Configuration.Validation;
+using SemiStep.Core.Configuration.Mapping;
 
 using Xunit;
 
@@ -17,7 +20,7 @@ public sealed class GridStyleColorsValidationTests
 	{
 		var dto = CreateValidDto();
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsSuccess.Should().BeTrue();
 	}
@@ -25,7 +28,7 @@ public sealed class GridStyleColorsValidationTests
 	[Fact]
 	public void Validate_NullDto_Fails()
 	{
-		var result = GridStyleValidator.Validate(null);
+		var result = GridStyleMapper.Map(null);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains("missing"));
@@ -36,7 +39,7 @@ public sealed class GridStyleColorsValidationTests
 	{
 		var dto = new GridStyleOptionsDto();
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains("colors"));
@@ -57,7 +60,7 @@ public sealed class GridStyleColorsValidationTests
 			}
 		};
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains("colors.cells.execution"));
@@ -78,7 +81,7 @@ public sealed class GridStyleColorsValidationTests
 			}
 		};
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains("colors.cells.disabled"));
@@ -99,10 +102,27 @@ public sealed class GridStyleColorsValidationTests
 			}
 		};
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains("colors.cells.readonly"));
+	}
+
+	[Fact]
+	public void Validate_NullCells_FailsWithExactlyThreeSectionErrors()
+	{
+		var dto = CreateValidDto();
+		dto.Colors!.Cells = null;
+
+		var result = GridStyleMapper.Map(dto);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().OnlyContain(error => error is GridStyleSectionMissingError);
+		result.Errors
+			.Cast<GridStyleSectionMissingError>()
+			.Select(error => error.Section)
+			.Should()
+			.BeEquivalentTo("colors.cells.execution", "colors.cells.readonly", "colors.cells.disabled");
 	}
 
 	public static TheoryData<string> DisabledKeyNames =>
@@ -136,7 +156,7 @@ public sealed class GridStyleColorsValidationTests
 		var dto = CreateValidDto();
 		ClearDisabledKey(dto, keyName);
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains($"'colors.cells.disabled.{keyName}'"));
@@ -149,7 +169,7 @@ public sealed class GridStyleColorsValidationTests
 		var dto = CreateValidDto();
 		ClearReadOnlyKey(dto, keyName);
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains($"'colors.cells.readonly.{keyName}'"));
@@ -162,7 +182,7 @@ public sealed class GridStyleColorsValidationTests
 		var dto = CreateValidDto();
 		ClearKey(dto, keyName);
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains($"'colors.cells.execution.{keyName}'"));
@@ -178,7 +198,7 @@ public sealed class GridStyleColorsValidationTests
 		var dto = CreateValidDto();
 		dto.Colors!.Cells!.Execution!.Depth0 = badHex;
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
@@ -191,7 +211,7 @@ public sealed class GridStyleColorsValidationTests
 		var dto = CreateValidDto();
 		dto.Colors!.Cells!.Execution!.Depth0 = "";
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.execution.depth_0'"));
@@ -205,7 +225,7 @@ public sealed class GridStyleColorsValidationTests
 		dto.Colors!.Cells!.Execution!.Depth1 = null;
 		dto.Colors!.Cells!.Execution!.CurrentStepMarker = "#GG";
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().HaveCountGreaterThanOrEqualTo(3);
@@ -225,7 +245,7 @@ public sealed class GridStyleColorsValidationTests
 		var dto = CreateValidDto();
 		dto.Colors!.Cells!.Execution!.Depth0 = hex;
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsSuccess.Should().BeTrue();
 	}
@@ -241,7 +261,7 @@ public sealed class GridStyleColorsValidationTests
 			HeaderForeground = "#000000"
 		};
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsSuccess.Should().BeTrue();
 	}
@@ -255,7 +275,7 @@ public sealed class GridStyleColorsValidationTests
 			GridBorder = "not-a-color"
 		};
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
@@ -272,7 +292,7 @@ public sealed class GridStyleColorsValidationTests
 			Foreground = "#202020"
 		};
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsSuccess.Should().BeTrue();
 	}
@@ -289,7 +309,7 @@ public sealed class GridStyleColorsValidationTests
 			Foreground = keyName == "foreground" ? "not-a-color" : "#202020"
 		};
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
@@ -303,7 +323,7 @@ public sealed class GridStyleColorsValidationTests
 		dto.Colors!.Cells!.Changed = "#FFCC80";
 		dto.Colors!.Cells!.ChangedSelected = "#EFD3A4";
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsSuccess.Should().BeTrue();
 	}
@@ -317,7 +337,7 @@ public sealed class GridStyleColorsValidationTests
 		dto.Colors!.Cells!.Changed = keyName == "changed" ? "not-a-color" : "#FFCC80";
 		dto.Colors!.Cells!.ChangedSelected = keyName == "changed_selected" ? "not-a-color" : "#EFD3A4";
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
@@ -330,7 +350,7 @@ public sealed class GridStyleColorsValidationTests
 		var dto = CreateValidDto();
 		dto.Colors!.GridLine = "#CCCCCC";
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsSuccess.Should().BeTrue();
 	}
@@ -341,7 +361,7 @@ public sealed class GridStyleColorsValidationTests
 		var dto = CreateValidDto();
 		dto.Colors!.GridLine = "not-a-color";
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
@@ -358,7 +378,7 @@ public sealed class GridStyleColorsValidationTests
 			Foreground = "#111111"
 		};
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsSuccess.Should().BeTrue();
 	}
@@ -375,7 +395,7 @@ public sealed class GridStyleColorsValidationTests
 			Foreground = keyName == "foreground" ? "not-a-color" : "#111111"
 		};
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
@@ -394,7 +414,7 @@ public sealed class GridStyleColorsValidationTests
 			WarningColor = "#F57C00"
 		};
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsSuccess.Should().BeTrue();
 	}
@@ -415,7 +435,7 @@ public sealed class GridStyleColorsValidationTests
 			WarningColor = keyName == "warning_color" ? "not-a-color" : "#F57C00"
 		};
 
-		var result = GridStyleValidator.Validate(dto);
+		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>

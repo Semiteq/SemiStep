@@ -4,7 +4,6 @@ using SemiStep.Core.Configuration;
 using SemiStep.Core.Configuration.Dto;
 using SemiStep.Core.Configuration.Loaders;
 using SemiStep.Core.Configuration.Mapping;
-using SemiStep.Core.Configuration.Validation;
 using SemiStep.Tests.Config.Helpers;
 using SemiStep.Tests.Helpers;
 
@@ -52,7 +51,7 @@ public sealed class GridStyleOrientationTests
 		var loadResult = await GridStyleLoader.LoadAsync(tempDir.Path);
 		loadResult.IsSuccess.Should().BeTrue();
 
-		var validation = GridStyleValidator.Validate(loadResult.Value);
+		var validation = GridStyleMapper.Map(loadResult.Value);
 
 		validation.IsFailed.Should().BeTrue();
 		validation.Errors.Should().Contain(error =>
@@ -118,8 +117,9 @@ public sealed class GridStyleOrientationTests
 	{
 		var loadResult = await GridStyleLoader.LoadAsync(configDir);
 		loadResult.IsSuccess.Should().BeTrue();
-		GridStyleValidator.Validate(loadResult.Value).IsSuccess.Should().BeTrue();
-		return GridStyleMapper.Map(loadResult.Value);
+		var mapResult = GridStyleMapper.Map(loadResult.Value);
+		mapResult.IsSuccess.Should().BeTrue();
+		return mapResult.Value;
 	}
 
 	private static TempDirectory CopyShippedConfig(string equipment)

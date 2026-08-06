@@ -46,7 +46,7 @@ public sealed class GridStyleEditorWindowTests
 		viewModel.ErrorMessage.Should().BeNull();
 
 		var reloaded = (await facade.Load(configDir)).Value;
-		reloaded.Selection.Background.Should().Be("#123456");
+		reloaded.Selection.Background.ToString().Should().Be("#123456");
 		reloaded.Fonts.CellFontSize.Should().Be(loaded.Fonts.CellFontSize + 1);
 	}
 

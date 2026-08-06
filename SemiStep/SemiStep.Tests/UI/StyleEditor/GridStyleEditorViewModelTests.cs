@@ -23,6 +23,7 @@ using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Localization;
 using SemiStep.UI.Localization;
 using SemiStep.UI.StyleEditor;
+using SemiStep.UI.Styles;
 
 using Xunit;
 
@@ -54,7 +55,7 @@ public sealed class GridStyleEditorViewModelTests
 
 			if (property.PropertyType == typeof(Color))
 			{
-				actual.Should().Be(HexColor.Parse((string)recordValue!), because);
+				actual.Should().Be(((StyleColor)recordValue!).ToMediaColor(), because);
 			}
 			else if (property.PropertyType == typeof(decimal?))
 			{
@@ -120,7 +121,7 @@ public sealed class GridStyleEditorViewModelTests
 		var expected = source with
 		{
 			Fonts = source.Fonts with { CellFontSize = 18 },
-			Selection = source.Selection with { Background = "#123456" }
+			Selection = source.Selection with { Background = StyleColor.Parse("#123456") }
 		};
 		record.Should().Be(expected);
 	}
@@ -289,7 +290,7 @@ public sealed class GridStyleEditorViewModelTests
 
 		viewModel.SelectionBackground = Color.Parse("#A1B2C3");
 
-		viewModel.BuildRecord().Selection.Background.Should().Be("#A1B2C3");
+		viewModel.BuildRecord().Selection.Background.ToString().Should().Be("#A1B2C3");
 	}
 
 	[AvaloniaFact]
@@ -299,7 +300,7 @@ public sealed class GridStyleEditorViewModelTests
 
 		viewModel.SelectionBackground = Color.FromArgb(0x80, 0x11, 0x22, 0x33);
 
-		viewModel.BuildRecord().Selection.Background.Should().Be("#80112233");
+		viewModel.BuildRecord().Selection.Background.ToString().Should().Be("#80112233");
 	}
 
 	[AvaloniaFact]
@@ -618,7 +619,7 @@ public sealed class GridStyleEditorViewModelTests
 
 	private static bool IsLeaf(Type type)
 	{
-		return type.IsPrimitive || type.IsEnum || type == typeof(string);
+		return type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(StyleColor);
 	}
 
 	private static async Task ExecuteSwallowing(ReactiveCommand<Unit, bool> command)

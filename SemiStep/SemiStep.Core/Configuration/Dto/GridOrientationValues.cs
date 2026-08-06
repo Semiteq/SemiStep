@@ -5,7 +5,7 @@ internal static class GridOrientationValues
 	public const string RowsAsSteps = "rows_as_steps";
 	public const string ColumnsAsSteps = "columns_as_steps";
 
-	// GridStyleValidator rejects unknown values before this parser runs; throwing here is
+	// GridStyleMapper rejects unknown values before this parser runs; throwing here is
 	// defense-in-depth against a future path that maps an unvalidated DTO.
 	public static GridOrientation Parse(string? value)
 	{

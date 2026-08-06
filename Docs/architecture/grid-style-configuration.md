@@ -64,6 +64,29 @@ column factories, `ColumnWidthCalculator`) injects the same typed record.
 `GridStyleOptions` is an immutable record with a `Default` fallback used only by tests; the `#000000`
 cell-palette placeholders in `Default` are never rendered in production.
 
+## Record shape: nested per group (interim, slice 3)
+
+`GridStyleOptions` is no longer a flat 78-field record. It is a one-level nested root that composes ~10
+per-group records (`Fonts`, `Layout`, `Selection`, `ChangedCells`, `ReadOnlyCells`, `DisabledCells`,
+`Execution`, `StatusBar`, `ValidationPanel`, `Chrome`) plus the root-level `Orientation`. `ReadOnlyCells`
+and `DisabledCells` share one `DepthPalette` type. Consumers read short nested paths — `gridStyle.Fonts.CellFontSize`,
+`gridStyle.ReadOnlyCells.Depth1`, `gridStyle.Chrome.GridLine` — instead of the old flat fields. Colors stay
+`string` in this shape; typing them as `StyleColor` is slice 4.
+
+**The YAML file, the DTOs, and `GridStyleValidator` are unchanged** by this slice: the file on disk is
+byte-identical, the DTO layer keeps its nested snake_case shape and per-key error reporting, and the load
+mapper owns the small DTO-tree-to-group walk. `SaveThenLoad_DistinctFixture` proves the nested record still
+round-trips losslessly through the unchanged file format. Property references elsewhere in this doc that still
+show a flat path (for example `GridStyleOptions.FontFamily`) now live under their group
+(`GridStyleOptions.Fonts.FontFamily`); those spellings are corrected in the slice-5 doc rewrite.
+
+**Note for slice 4.** The error-path key `colors.grid_line` and the record path `Chrome.GridLine`
+deliberately diverge: `grid_line` is a loose field in the `colors:` DTO section (beside `grid_border` /
+`grid_background`), but the one-level record folds it into `Chrome` so the root carries no lone `string`.
+Slice 4 moves `GridStyleValidator`'s per-key checks into the load mapper; that mapper-resident validation
+**must keep emitting the `colors.grid_line` key**, not rename it to `chrome.grid_line`. The key names the
+YAML path the operator edits, not the record path.
+
 ## Resources projection
 
 The typed record is projected into `Application.Resources` at startup so XAML can bind styles via

@@ -19,66 +19,77 @@ public sealed class CellPaletteInstallerTests
 	[AvaloniaFact]
 	public void Install_PopulatesAllCellBrushes_WithExpectedColors()
 	{
-		var gridStyle = GridStyleOptions.Default with
+		var defaults = GridStyleOptions.Default;
+		var gridStyle = defaults with
 		{
-			ReadOnlyCellDepth0Color = "#D8D8D8",
-			ReadOnlyCellDepth1Color = "#CCD5E0",
-			ReadOnlyCellDepth2Color = "#B8C3D1",
-			ReadOnlyCellDepth3Color = "#94A2B3",
-			ReadOnlyCellDepth0PastColor = "#C8C8C8",
-			ReadOnlyCellDepth1PastColor = "#BCC4CE",
-			ReadOnlyCellDepth2PastColor = "#ACB7C2",
-			ReadOnlyCellDepth3PastColor = "#8590A0",
-			ReadOnlyCellSelectedColor = "#6B95C0",
-			ReadOnlyCellForegroundColor = "#606060",
-			DisabledCellDepth0Color = "#E0E0E0",
-			DisabledCellDepth1Color = "#D5DEEA",
-			DisabledCellDepth2Color = "#C2CEDB",
-			DisabledCellDepth3Color = "#9DABBC",
-			DisabledCellDepth0PastColor = "#D0D0D0",
-			DisabledCellDepth1PastColor = "#C5CDD8",
-			DisabledCellDepth2PastColor = "#B5C0CC",
-			DisabledCellDepth3PastColor = "#909AAA",
-			DisabledCellSelectedColor = "#89B4D7",
-			DisabledCellForegroundColor = "#808080",
-			SelectionBackgroundColor = "#CCE4F7",
-			SelectionForegroundColor = "#202020",
-			CellChangedColor = "#FFCC80",
-			CellChangedSelectedColor = "#EFD3A4",
-			GridLineColor = "#CCCCCC",
-			StatusBarBackgroundColor = "#F0F0F0",
-			StatusBarForegroundColor = "#111111",
-			StatusBarPadding = 5,
-			StatusBarItemSpacing = 10,
-			FontFamily = "Arial",
-			StatusBarFontSize = 14,
-			StatusBarFontWeight = 700,
-			StatusBarItalic = true,
-			StatusBarTimerLabelFontSize = 16,
-			StatusBarTimerLabelFontWeight = 500,
-			StatusBarTimerLabelItalic = true,
-			StatusBarTimerValueFontSize = 28,
-			StatusBarTimerValueFontWeight = 600,
-			StatusBarTimerValueItalic = false,
-			CellFontSize = 12,
-			ValidationPanelBackgroundColor = "#FBFBFB",
-			ValidationPanelForegroundColor = "#222222",
-			ValidationPanelErrorColor = "#D32F2F",
-			ValidationPanelWarningColor = "#F57C00",
-			ValidationPanelMaxHeight = 100,
-			InfoColor = "#1976D2",
-			ConnectedColor = "#44BB44",
-			DisconnectedColor = "#FF4444",
-			LocalModeColor = "#6C707E",
-			ConnectingColor = "#FFAF0F",
-			PanelBackgroundColor = "#F8F8F8",
-			PanelHeaderBackgroundColor = "#EEEEEE",
-			SubtleBorderColor = "#D0D0D0",
-			SeparatorColor = "#C0C0C0",
-			SecondaryForegroundColor = "#888888",
-			GridBorderColor = "#808080",
-			GridBackgroundColor = "#FFFFFF",
-			HeaderForegroundColor = "#000000",
+			Fonts = defaults.Fonts with
+			{
+				FontFamily = "Arial",
+				CellFontSize = 12,
+			},
+			Selection = new SelectionColors(
+				Background: "#CCE4F7",
+				Foreground: "#202020"),
+			ChangedCells = new ChangedCellColors(
+				Changed: "#FFCC80",
+				ChangedSelected: "#EFD3A4"),
+			ReadOnlyCells = new DepthPalette(
+				Depth0: "#D8D8D8",
+				Depth1: "#CCD5E0",
+				Depth2: "#B8C3D1",
+				Depth3: "#94A2B3",
+				Depth0Past: "#C8C8C8",
+				Depth1Past: "#BCC4CE",
+				Depth2Past: "#ACB7C2",
+				Depth3Past: "#8590A0",
+				Selected: "#6B95C0",
+				Foreground: "#606060"),
+			DisabledCells = new DepthPalette(
+				Depth0: "#E0E0E0",
+				Depth1: "#D5DEEA",
+				Depth2: "#C2CEDB",
+				Depth3: "#9DABBC",
+				Depth0Past: "#D0D0D0",
+				Depth1Past: "#C5CDD8",
+				Depth2Past: "#B5C0CC",
+				Depth3Past: "#909AAA",
+				Selected: "#89B4D7",
+				Foreground: "#808080"),
+			StatusBar = new StatusBarStyle(
+				Background: "#F0F0F0",
+				Foreground: "#111111",
+				Padding: 5,
+				ItemSpacing: 10,
+				FontSize: 14,
+				Weight: 700,
+				Italic: true,
+				TimerLabelFontSize: 16,
+				TimerLabelWeight: 500,
+				TimerLabelItalic: true,
+				TimerValueFontSize: 28,
+				TimerValueWeight: 600,
+				TimerValueItalic: false),
+			ValidationPanel = new ValidationPanelStyle(
+				Background: "#FBFBFB",
+				Foreground: "#222222",
+				ErrorColor: "#D32F2F",
+				WarningColor: "#F57C00",
+				MaxHeight: 100),
+			Chrome = new ChromeColors(
+				Info: "#1976D2",
+				Connected: "#44BB44",
+				Disconnected: "#FF4444",
+				LocalMode: "#6C707E",
+				Connecting: "#FFAF0F",
+				PanelBackground: "#F8F8F8",
+				PanelHeaderBackground: "#EEEEEE",
+				SubtleBorder: "#D0D0D0",
+				Separator: "#C0C0C0",
+				SecondaryForeground: "#888888",
+				GridBorder: "#808080",
+				GridBackground: "#FFFFFF",
+				HeaderForeground: "#000000",
+				GridLine: "#CCCCCC"),
 		};
 		var resources = new ResourceDictionary();
 
@@ -133,7 +144,7 @@ public sealed class CellPaletteInstallerTests
 		resources[CellPaletteInstaller.StatusBarItemSpacingKey].Should().Be(10d);
 		resources[CellPaletteInstaller.StatusBarFontSizeKey].Should().Be(14d);
 		resources[CellPaletteInstaller.ValidationPanelMaxHeightKey].Should().Be(100d);
-		resources[CellPaletteInstaller.RowHeightKey].Should().Be(gridStyle.RowHeight);
+		resources[CellPaletteInstaller.RowHeightKey].Should().Be(gridStyle.Layout.RowHeight);
 
 		resources[CellPaletteInstaller.AppFontFamilyKey].Should().BeOfType<FontFamily>()
 			.Which.Name.Should().Be("Arial");
@@ -154,7 +165,8 @@ public sealed class CellPaletteInstallerTests
 	[AvaloniaFact]
 	public void Install_EmptyFontFamily_InstallsThemeDefaultFamily()
 	{
-		var gridStyle = GridStyleOptions.Default with { FontFamily = "" };
+		var defaults = GridStyleOptions.Default;
+		var gridStyle = defaults with { Fonts = defaults.Fonts with { FontFamily = "" } };
 		var resources = new ResourceDictionary();
 
 		CellPaletteInstaller.Install(resources, gridStyle);

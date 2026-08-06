@@ -107,10 +107,10 @@ internal sealed class TransposedCellTemplateFactory(
 		{
 			VerticalAlignment = VerticalAlignment.Center,
 			Padding = new Thickness(
-				gridStyle.CellPaddingLeft,
-				gridStyle.CellPaddingTop,
-				gridStyle.CellPaddingRight,
-				gridStyle.CellPaddingBottom),
+				gridStyle.Layout.CellPaddingLeft,
+				gridStyle.Layout.CellPaddingTop,
+				gridStyle.Layout.CellPaddingRight,
+				gridStyle.Layout.CellPaddingBottom),
 			TextAlignment = TextAlignment.Center,
 		};
 		if (stretch)
@@ -196,10 +196,10 @@ internal sealed class TransposedCellTemplateFactory(
 			BorderThickness = new Thickness(0),
 			Background = Brushes.Transparent,
 			Padding = new Thickness(
-				gridStyle.CellPaddingLeft,
-				gridStyle.CellPaddingTop,
-				gridStyle.CellPaddingRight,
-				gridStyle.CellPaddingBottom),
+				gridStyle.Layout.CellPaddingLeft,
+				gridStyle.Layout.CellPaddingTop,
+				gridStyle.Layout.CellPaddingRight,
+				gridStyle.Layout.CellPaddingBottom),
 			TextAlignment = TextAlignment.Center,
 		};
 		GridFontApplier.ApplyCellFont(textBox, gridStyle);

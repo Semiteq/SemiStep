@@ -13,12 +13,12 @@ internal static class GridFontApplier
 {
 	public static void ApplyHeaderFont(Control control, GridStyleOptions gridStyle)
 	{
-		Apply(control, gridStyle.FontFamily, gridStyle.HeaderFontSize, gridStyle.HeaderFontWeight, gridStyle.HeaderItalic);
+		Apply(control, gridStyle.Fonts.FontFamily, gridStyle.Fonts.HeaderFontSize, gridStyle.Fonts.HeaderFontWeight, gridStyle.Fonts.HeaderItalic);
 	}
 
 	public static void ApplyCellFont(Control control, GridStyleOptions gridStyle)
 	{
-		Apply(control, gridStyle.FontFamily, gridStyle.CellFontSize, gridStyle.CellFontWeight, gridStyle.CellItalic);
+		Apply(control, gridStyle.Fonts.FontFamily, gridStyle.Fonts.CellFontSize, gridStyle.Fonts.CellFontWeight, gridStyle.Fonts.CellItalic);
 	}
 
 	private static void Apply(Control control, string fontFamily, int fontSize, int fontWeight, bool italic)

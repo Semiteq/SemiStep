@@ -51,10 +51,10 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 			{
 				VerticalAlignment = VerticalAlignment.Center,
 				Padding = new Thickness(
-					gridStyle.CellPaddingLeft,
-					gridStyle.CellPaddingTop,
-					gridStyle.CellPaddingRight,
-					gridStyle.CellPaddingBottom),
+					gridStyle.Layout.CellPaddingLeft,
+					gridStyle.Layout.CellPaddingTop,
+					gridStyle.Layout.CellPaddingRight,
+					gridStyle.Layout.CellPaddingBottom),
 				TextAlignment = TextAlignment.Center,
 			};
 			GridFontApplier.ApplyCellFont(textBlock, gridStyle);
@@ -81,10 +81,10 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 			{
 				VerticalAlignment = VerticalAlignment.Center,
 				Padding = new Thickness(
-					gridStyle.CellPaddingLeft,
-					gridStyle.CellPaddingTop,
-					gridStyle.CellPaddingRight,
-					gridStyle.CellPaddingBottom),
+					gridStyle.Layout.CellPaddingLeft,
+					gridStyle.Layout.CellPaddingTop,
+					gridStyle.Layout.CellPaddingRight,
+					gridStyle.Layout.CellPaddingBottom),
 				TextAlignment = TextAlignment.Center,
 			};
 			GridFontApplier.ApplyCellFont(textBlock, gridStyle);
@@ -133,10 +133,10 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 				MinHeight = 0,
 				BorderThickness = new Thickness(0),
 				Padding = new Thickness(
-					gridStyle.CellPaddingLeft,
-					gridStyle.CellPaddingTop,
-					gridStyle.CellPaddingRight,
-					gridStyle.CellPaddingBottom),
+					gridStyle.Layout.CellPaddingLeft,
+					gridStyle.Layout.CellPaddingTop,
+					gridStyle.Layout.CellPaddingRight,
+					gridStyle.Layout.CellPaddingBottom),
 				TextAlignment = TextAlignment.Center,
 			};
 			GridFontApplier.ApplyCellFont(textBox, gridStyle);

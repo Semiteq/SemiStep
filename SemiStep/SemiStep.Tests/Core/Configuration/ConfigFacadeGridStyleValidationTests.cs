@@ -20,8 +20,8 @@ public sealed class ConfigFacadeGridStyleValidationTests
 		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.GridStyle.ExecutionDepth0Color.Should().StartWith("#");
-		result.Value.GridStyle.ExecutionCurrentStepMarkerColor.Should().StartWith("#");
+		result.Value.GridStyle.Execution.Depth0.Should().StartWith("#");
+		result.Value.GridStyle.Execution.CurrentStepMarker.Should().StartWith("#");
 	}
 
 	[Fact]

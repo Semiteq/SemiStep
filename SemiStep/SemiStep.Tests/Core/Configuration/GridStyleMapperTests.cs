@@ -20,42 +20,42 @@ public sealed class GridStyleMapperTests
 
 		var options = GridStyleMapper.Map(dto);
 
-		options.SelectionBackgroundColor.Should().Be("#ABCDEF");
-		options.SelectionForegroundColor.Should().Be("#FEDCBA");
-		options.CellChangedColor.Should().Be("#0ABBCD");
-		options.CellChangedSelectedColor.Should().Be("#0DCCEF");
+		options.Selection.Background.Should().Be("#ABCDEF");
+		options.Selection.Foreground.Should().Be("#FEDCBA");
+		options.ChangedCells.Changed.Should().Be("#0ABBCD");
+		options.ChangedCells.ChangedSelected.Should().Be("#0DCCEF");
 
-		options.ReadOnlyCellDepth0Color.Should().Be("#11111B");
-		options.ReadOnlyCellDepth1Color.Should().Be("#22222B");
-		options.ReadOnlyCellDepth2Color.Should().Be("#33333B");
-		options.ReadOnlyCellDepth3Color.Should().Be("#44444B");
-		options.ReadOnlyCellDepth0PastColor.Should().Be("#55555B");
-		options.ReadOnlyCellDepth1PastColor.Should().Be("#66666B");
-		options.ReadOnlyCellDepth2PastColor.Should().Be("#77777B");
-		options.ReadOnlyCellDepth3PastColor.Should().Be("#88888B");
-		options.ReadOnlyCellSelectedColor.Should().Be("#99999B");
-		options.ReadOnlyCellForegroundColor.Should().Be("#AAAAAC");
+		options.ReadOnlyCells.Depth0.Should().Be("#11111B");
+		options.ReadOnlyCells.Depth1.Should().Be("#22222B");
+		options.ReadOnlyCells.Depth2.Should().Be("#33333B");
+		options.ReadOnlyCells.Depth3.Should().Be("#44444B");
+		options.ReadOnlyCells.Depth0Past.Should().Be("#55555B");
+		options.ReadOnlyCells.Depth1Past.Should().Be("#66666B");
+		options.ReadOnlyCells.Depth2Past.Should().Be("#77777B");
+		options.ReadOnlyCells.Depth3Past.Should().Be("#88888B");
+		options.ReadOnlyCells.Selected.Should().Be("#99999B");
+		options.ReadOnlyCells.Foreground.Should().Be("#AAAAAC");
 
-		options.DisabledCellDepth0Color.Should().Be("#11111A");
-		options.DisabledCellDepth1Color.Should().Be("#22222A");
-		options.DisabledCellDepth2Color.Should().Be("#33333A");
-		options.DisabledCellDepth3Color.Should().Be("#44444A");
-		options.DisabledCellDepth0PastColor.Should().Be("#55555A");
-		options.DisabledCellDepth1PastColor.Should().Be("#66666A");
-		options.DisabledCellDepth2PastColor.Should().Be("#77777A");
-		options.DisabledCellDepth3PastColor.Should().Be("#88888A");
-		options.DisabledCellSelectedColor.Should().Be("#99999A");
-		options.DisabledCellForegroundColor.Should().Be("#AAAAAB");
+		options.DisabledCells.Depth0.Should().Be("#11111A");
+		options.DisabledCells.Depth1.Should().Be("#22222A");
+		options.DisabledCells.Depth2.Should().Be("#33333A");
+		options.DisabledCells.Depth3.Should().Be("#44444A");
+		options.DisabledCells.Depth0Past.Should().Be("#55555A");
+		options.DisabledCells.Depth1Past.Should().Be("#66666A");
+		options.DisabledCells.Depth2Past.Should().Be("#77777A");
+		options.DisabledCells.Depth3Past.Should().Be("#88888A");
+		options.DisabledCells.Selected.Should().Be("#99999A");
+		options.DisabledCells.Foreground.Should().Be("#AAAAAB");
 
-		options.ExecutionDepth0Color.Should().Be("#111111");
-		options.ExecutionDepth1Color.Should().Be("#222222");
-		options.ExecutionDepth2Color.Should().Be("#333333");
-		options.ExecutionDepth3Color.Should().Be("#444444");
-		options.ExecutionDepth0PastColor.Should().Be("#555555");
-		options.ExecutionDepth1PastColor.Should().Be("#666666");
-		options.ExecutionDepth2PastColor.Should().Be("#777777");
-		options.ExecutionDepth3PastColor.Should().Be("#888888");
-		options.ExecutionCurrentStepMarkerColor.Should().Be("#999999");
+		options.Execution.Depth0.Should().Be("#111111");
+		options.Execution.Depth1.Should().Be("#222222");
+		options.Execution.Depth2.Should().Be("#333333");
+		options.Execution.Depth3.Should().Be("#444444");
+		options.Execution.Depth0Past.Should().Be("#555555");
+		options.Execution.Depth1Past.Should().Be("#666666");
+		options.Execution.Depth2Past.Should().Be("#777777");
+		options.Execution.Depth3Past.Should().Be("#888888");
+		options.Execution.CurrentStepMarker.Should().Be("#999999");
 	}
 
 	[Fact]
@@ -81,19 +81,19 @@ public sealed class GridStyleMapperTests
 
 		var options = GridStyleMapper.Map(dto);
 
-		options.InfoColor.Should().Be("#1976D2");
-		options.ConnectedColor.Should().Be("#44BB44");
-		options.DisconnectedColor.Should().Be("#FF4444");
-		options.LocalModeColor.Should().Be("#6C707E");
-		options.ConnectingColor.Should().Be("#FFAF0F");
-		options.PanelBackgroundColor.Should().Be("#F8F8F8");
-		options.PanelHeaderBackgroundColor.Should().Be("#EEEEEE");
-		options.SubtleBorderColor.Should().Be("#D0D0D0");
-		options.SeparatorColor.Should().Be("#C0C0C0");
-		options.SecondaryForegroundColor.Should().Be("#888888");
-		options.GridBorderColor.Should().Be("#808080");
-		options.GridBackgroundColor.Should().Be("#FFFFFF");
-		options.HeaderForegroundColor.Should().Be("#000000");
+		options.Chrome.Info.Should().Be("#1976D2");
+		options.Chrome.Connected.Should().Be("#44BB44");
+		options.Chrome.Disconnected.Should().Be("#FF4444");
+		options.Chrome.LocalMode.Should().Be("#6C707E");
+		options.Chrome.Connecting.Should().Be("#FFAF0F");
+		options.Chrome.PanelBackground.Should().Be("#F8F8F8");
+		options.Chrome.PanelHeaderBackground.Should().Be("#EEEEEE");
+		options.Chrome.SubtleBorder.Should().Be("#D0D0D0");
+		options.Chrome.Separator.Should().Be("#C0C0C0");
+		options.Chrome.SecondaryForeground.Should().Be("#888888");
+		options.Chrome.GridBorder.Should().Be("#808080");
+		options.Chrome.GridBackground.Should().Be("#FFFFFF");
+		options.Chrome.HeaderForeground.Should().Be("#000000");
 	}
 
 	[Fact]
@@ -103,11 +103,11 @@ public sealed class GridStyleMapperTests
 
 		var options = GridStyleMapper.Map(dto);
 
-		options.InfoColor.Should().Be(GridStyleOptions.Default.InfoColor);
-		options.LocalModeColor.Should().Be(GridStyleOptions.Default.LocalModeColor);
-		options.ConnectingColor.Should().Be(GridStyleOptions.Default.ConnectingColor);
-		options.GridBorderColor.Should().Be(GridStyleOptions.Default.GridBorderColor);
-		options.HeaderForegroundColor.Should().Be(GridStyleOptions.Default.HeaderForegroundColor);
+		options.Chrome.Info.Should().Be(GridStyleOptions.Default.Chrome.Info);
+		options.Chrome.LocalMode.Should().Be(GridStyleOptions.Default.Chrome.LocalMode);
+		options.Chrome.Connecting.Should().Be(GridStyleOptions.Default.Chrome.Connecting);
+		options.Chrome.GridBorder.Should().Be(GridStyleOptions.Default.Chrome.GridBorder);
+		options.Chrome.HeaderForeground.Should().Be(GridStyleOptions.Default.Chrome.HeaderForeground);
 	}
 
 	[Fact]
@@ -126,7 +126,7 @@ public sealed class GridStyleMapperTests
 
 		var options = GridStyleMapper.Map(dto);
 
-		options.CellChangedColor.Should().Be(GridStyleOptions.Default.CellChangedColor);
+		options.ChangedCells.Changed.Should().Be(GridStyleOptions.Default.ChangedCells.Changed);
 	}
 
 	[Fact]
@@ -148,15 +148,15 @@ public sealed class GridStyleMapperTests
 
 		var options = GridStyleMapper.Map(dto);
 
-		options.StatusBarFontSize.Should().Be(16);
-		options.StatusBarFontWeight.Should().Be(500);
-		options.StatusBarItalic.Should().BeTrue();
-		options.StatusBarTimerLabelFontSize.Should().Be(18);
-		options.StatusBarTimerLabelFontWeight.Should().Be(600);
-		options.StatusBarTimerLabelItalic.Should().BeTrue();
-		options.StatusBarTimerValueFontSize.Should().Be(32);
-		options.StatusBarTimerValueFontWeight.Should().Be(800);
-		options.StatusBarTimerValueItalic.Should().BeTrue();
+		options.StatusBar.FontSize.Should().Be(16);
+		options.StatusBar.Weight.Should().Be(500);
+		options.StatusBar.Italic.Should().BeTrue();
+		options.StatusBar.TimerLabelFontSize.Should().Be(18);
+		options.StatusBar.TimerLabelWeight.Should().Be(600);
+		options.StatusBar.TimerLabelItalic.Should().BeTrue();
+		options.StatusBar.TimerValueFontSize.Should().Be(32);
+		options.StatusBar.TimerValueWeight.Should().Be(800);
+		options.StatusBar.TimerValueItalic.Should().BeTrue();
 	}
 
 	[Fact]
@@ -176,13 +176,13 @@ public sealed class GridStyleMapperTests
 
 		var options = GridStyleMapper.Map(dto);
 
-		options.FontFamily.Should().Be("Cascadia Mono");
-		options.HeaderFontSize.Should().Be(20);
-		options.HeaderFontWeight.Should().Be(800);
-		options.HeaderItalic.Should().BeTrue();
-		options.CellFontSize.Should().Be(15);
-		options.CellFontWeight.Should().Be(300);
-		options.CellItalic.Should().BeTrue();
+		options.Fonts.FontFamily.Should().Be("Cascadia Mono");
+		options.Fonts.HeaderFontSize.Should().Be(20);
+		options.Fonts.HeaderFontWeight.Should().Be(800);
+		options.Fonts.HeaderItalic.Should().BeTrue();
+		options.Fonts.CellFontSize.Should().Be(15);
+		options.Fonts.CellFontWeight.Should().Be(300);
+		options.Fonts.CellItalic.Should().BeTrue();
 	}
 
 	[Fact]
@@ -192,45 +192,52 @@ public sealed class GridStyleMapperTests
 
 		var options = GridStyleMapper.Map(dto);
 
-		options.FontFamily.Should().Be(GridStyleOptions.Default.FontFamily);
-		options.HeaderFontSize.Should().Be(14);
-		options.HeaderFontWeight.Should().Be(700);
-		options.HeaderItalic.Should().BeFalse();
-		options.CellFontSize.Should().Be(12);
-		options.CellFontWeight.Should().Be(400);
-		options.CellItalic.Should().BeFalse();
-		options.StatusBarFontSize.Should().Be(12);
-		options.StatusBarFontWeight.Should().Be(400);
-		options.StatusBarItalic.Should().BeFalse();
-		options.StatusBarTimerLabelFontSize.Should().Be(14);
-		options.StatusBarTimerLabelFontWeight.Should().Be(400);
-		options.StatusBarTimerLabelItalic.Should().BeFalse();
-		options.StatusBarTimerValueFontSize.Should().Be(24);
-		options.StatusBarTimerValueFontWeight.Should().Be(400);
-		options.StatusBarTimerValueItalic.Should().BeFalse();
+		options.Fonts.FontFamily.Should().Be(GridStyleOptions.Default.Fonts.FontFamily);
+		options.Fonts.HeaderFontSize.Should().Be(14);
+		options.Fonts.HeaderFontWeight.Should().Be(700);
+		options.Fonts.HeaderItalic.Should().BeFalse();
+		options.Fonts.CellFontSize.Should().Be(12);
+		options.Fonts.CellFontWeight.Should().Be(400);
+		options.Fonts.CellItalic.Should().BeFalse();
+		options.StatusBar.FontSize.Should().Be(12);
+		options.StatusBar.Weight.Should().Be(400);
+		options.StatusBar.Italic.Should().BeFalse();
+		options.StatusBar.TimerLabelFontSize.Should().Be(14);
+		options.StatusBar.TimerLabelWeight.Should().Be(400);
+		options.StatusBar.TimerLabelItalic.Should().BeFalse();
+		options.StatusBar.TimerValueFontSize.Should().Be(24);
+		options.StatusBar.TimerValueWeight.Should().Be(400);
+		options.StatusBar.TimerValueItalic.Should().BeFalse();
 	}
 
 	[Fact]
 	public void Map_OptionsToDto_WritesEveryFontField()
 	{
-		var options = GridStyleOptions.Default with
+		var defaults = GridStyleOptions.Default;
+		var options = defaults with
 		{
-			FontFamily = "Cascadia Mono",
-			HeaderFontSize = 20,
-			HeaderFontWeight = 800,
-			HeaderItalic = true,
-			CellFontSize = 15,
-			CellFontWeight = 300,
-			CellItalic = true,
-			StatusBarFontSize = 18,
-			StatusBarFontWeight = 500,
-			StatusBarItalic = true,
-			StatusBarTimerLabelFontSize = 19,
-			StatusBarTimerLabelFontWeight = 600,
-			StatusBarTimerLabelItalic = true,
-			StatusBarTimerValueFontSize = 30,
-			StatusBarTimerValueFontWeight = 800,
-			StatusBarTimerValueItalic = true
+			Fonts = defaults.Fonts with
+			{
+				FontFamily = "Cascadia Mono",
+				HeaderFontSize = 20,
+				HeaderFontWeight = 800,
+				HeaderItalic = true,
+				CellFontSize = 15,
+				CellFontWeight = 300,
+				CellItalic = true
+			},
+			StatusBar = defaults.StatusBar with
+			{
+				FontSize = 18,
+				Weight = 500,
+				Italic = true,
+				TimerLabelFontSize = 19,
+				TimerLabelWeight = 600,
+				TimerLabelItalic = true,
+				TimerValueFontSize = 30,
+				TimerValueWeight = 800,
+				TimerValueItalic = true
+			}
 		};
 
 		var dto = GridStyleDtoMapper.Map(options);
@@ -256,7 +263,8 @@ public sealed class GridStyleMapperTests
 	[Fact]
 	public void Map_OptionsToDto_WritesLocalModeChromeColor()
 	{
-		var options = GridStyleOptions.Default with { LocalModeColor = "#123456" };
+		var defaults = GridStyleOptions.Default;
+		var options = defaults with { Chrome = defaults.Chrome with { LocalMode = "#123456" } };
 
 		var dto = GridStyleDtoMapper.Map(options);
 
@@ -266,7 +274,8 @@ public sealed class GridStyleMapperTests
 	[Fact]
 	public void Map_OptionsToDto_WritesConnectingChromeColor()
 	{
-		var options = GridStyleOptions.Default with { ConnectingColor = "#123456" };
+		var defaults = GridStyleOptions.Default;
+		var options = defaults with { Chrome = defaults.Chrome with { Connecting = "#123456" } };
 
 		var dto = GridStyleDtoMapper.Map(options);
 

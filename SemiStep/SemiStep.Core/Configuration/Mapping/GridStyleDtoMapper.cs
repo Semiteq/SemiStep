@@ -10,113 +10,113 @@ internal static class GridStyleDtoMapper
 		{
 			Fonts = new GridStyleFontsDto
 			{
-				Family = options.FontFamily,
-				HeaderSize = options.HeaderFontSize,
-				HeaderWeight = options.HeaderFontWeight,
-				HeaderItalic = options.HeaderItalic,
-				CellSize = options.CellFontSize,
-				CellWeight = options.CellFontWeight,
-				CellItalic = options.CellItalic
+				Family = options.Fonts.FontFamily,
+				HeaderSize = options.Fonts.HeaderFontSize,
+				HeaderWeight = options.Fonts.HeaderFontWeight,
+				HeaderItalic = options.Fonts.HeaderItalic,
+				CellSize = options.Fonts.CellFontSize,
+				CellWeight = options.Fonts.CellFontWeight,
+				CellItalic = options.Fonts.CellItalic
 			},
 			Layout = new GridStyleLayoutDto
 			{
-				CellPaddingLeft = options.CellPaddingLeft,
-				CellPaddingTop = options.CellPaddingTop,
-				CellPaddingRight = options.CellPaddingRight,
-				CellPaddingBottom = options.CellPaddingBottom,
-				RowHeight = options.RowHeight
+				CellPaddingLeft = options.Layout.CellPaddingLeft,
+				CellPaddingTop = options.Layout.CellPaddingTop,
+				CellPaddingRight = options.Layout.CellPaddingRight,
+				CellPaddingBottom = options.Layout.CellPaddingBottom,
+				RowHeight = options.Layout.RowHeight
 			},
 			Colors = new GridStyleColorsDto
 			{
 				Selection = new GridStyleSelectionColorsDto
 				{
-					Background = options.SelectionBackgroundColor,
-					Foreground = options.SelectionForegroundColor
+					Background = options.Selection.Background,
+					Foreground = options.Selection.Foreground
 				},
 				Cells = new GridStyleCellColorsDto
 				{
-					Changed = options.CellChangedColor,
-					ChangedSelected = options.CellChangedSelectedColor,
+					Changed = options.ChangedCells.Changed,
+					ChangedSelected = options.ChangedCells.ChangedSelected,
 					ReadOnly = new GridStyleReadOnlyCellColorsDto
 					{
-						Depth0 = options.ReadOnlyCellDepth0Color,
-						Depth1 = options.ReadOnlyCellDepth1Color,
-						Depth2 = options.ReadOnlyCellDepth2Color,
-						Depth3 = options.ReadOnlyCellDepth3Color,
-						Depth0Past = options.ReadOnlyCellDepth0PastColor,
-						Depth1Past = options.ReadOnlyCellDepth1PastColor,
-						Depth2Past = options.ReadOnlyCellDepth2PastColor,
-						Depth3Past = options.ReadOnlyCellDepth3PastColor,
-						Selected = options.ReadOnlyCellSelectedColor,
-						Foreground = options.ReadOnlyCellForegroundColor
+						Depth0 = options.ReadOnlyCells.Depth0,
+						Depth1 = options.ReadOnlyCells.Depth1,
+						Depth2 = options.ReadOnlyCells.Depth2,
+						Depth3 = options.ReadOnlyCells.Depth3,
+						Depth0Past = options.ReadOnlyCells.Depth0Past,
+						Depth1Past = options.ReadOnlyCells.Depth1Past,
+						Depth2Past = options.ReadOnlyCells.Depth2Past,
+						Depth3Past = options.ReadOnlyCells.Depth3Past,
+						Selected = options.ReadOnlyCells.Selected,
+						Foreground = options.ReadOnlyCells.Foreground
 					},
 					Disabled = new GridStyleDisabledCellColorsDto
 					{
-						Depth0 = options.DisabledCellDepth0Color,
-						Depth1 = options.DisabledCellDepth1Color,
-						Depth2 = options.DisabledCellDepth2Color,
-						Depth3 = options.DisabledCellDepth3Color,
-						Depth0Past = options.DisabledCellDepth0PastColor,
-						Depth1Past = options.DisabledCellDepth1PastColor,
-						Depth2Past = options.DisabledCellDepth2PastColor,
-						Depth3Past = options.DisabledCellDepth3PastColor,
-						Selected = options.DisabledCellSelectedColor,
-						Foreground = options.DisabledCellForegroundColor
+						Depth0 = options.DisabledCells.Depth0,
+						Depth1 = options.DisabledCells.Depth1,
+						Depth2 = options.DisabledCells.Depth2,
+						Depth3 = options.DisabledCells.Depth3,
+						Depth0Past = options.DisabledCells.Depth0Past,
+						Depth1Past = options.DisabledCells.Depth1Past,
+						Depth2Past = options.DisabledCells.Depth2Past,
+						Depth3Past = options.DisabledCells.Depth3Past,
+						Selected = options.DisabledCells.Selected,
+						Foreground = options.DisabledCells.Foreground
 					},
 					Execution = new GridStyleExecutionColorsDto
 					{
-						Depth0 = options.ExecutionDepth0Color,
-						Depth1 = options.ExecutionDepth1Color,
-						Depth2 = options.ExecutionDepth2Color,
-						Depth3 = options.ExecutionDepth3Color,
-						Depth0Past = options.ExecutionDepth0PastColor,
-						Depth1Past = options.ExecutionDepth1PastColor,
-						Depth2Past = options.ExecutionDepth2PastColor,
-						Depth3Past = options.ExecutionDepth3PastColor,
-						CurrentStepMarker = options.ExecutionCurrentStepMarkerColor
+						Depth0 = options.Execution.Depth0,
+						Depth1 = options.Execution.Depth1,
+						Depth2 = options.Execution.Depth2,
+						Depth3 = options.Execution.Depth3,
+						Depth0Past = options.Execution.Depth0Past,
+						Depth1Past = options.Execution.Depth1Past,
+						Depth2Past = options.Execution.Depth2Past,
+						Depth3Past = options.Execution.Depth3Past,
+						CurrentStepMarker = options.Execution.CurrentStepMarker
 					}
 				},
-				GridLine = options.GridLineColor
+				GridLine = options.Chrome.GridLine
 			},
 			StatusBar = new StatusBarStyleDto
 			{
-				Background = options.StatusBarBackgroundColor,
-				Foreground = options.StatusBarForegroundColor,
-				Padding = options.StatusBarPadding,
-				ItemSpacing = options.StatusBarItemSpacing,
-				FontSize = options.StatusBarFontSize,
-				Weight = options.StatusBarFontWeight,
-				Italic = options.StatusBarItalic,
-				TimerLabelFontSize = options.StatusBarTimerLabelFontSize,
-				TimerLabelWeight = options.StatusBarTimerLabelFontWeight,
-				TimerLabelItalic = options.StatusBarTimerLabelItalic,
-				TimerValueFontSize = options.StatusBarTimerValueFontSize,
-				TimerValueWeight = options.StatusBarTimerValueFontWeight,
-				TimerValueItalic = options.StatusBarTimerValueItalic
+				Background = options.StatusBar.Background,
+				Foreground = options.StatusBar.Foreground,
+				Padding = options.StatusBar.Padding,
+				ItemSpacing = options.StatusBar.ItemSpacing,
+				FontSize = options.StatusBar.FontSize,
+				Weight = options.StatusBar.Weight,
+				Italic = options.StatusBar.Italic,
+				TimerLabelFontSize = options.StatusBar.TimerLabelFontSize,
+				TimerLabelWeight = options.StatusBar.TimerLabelWeight,
+				TimerLabelItalic = options.StatusBar.TimerLabelItalic,
+				TimerValueFontSize = options.StatusBar.TimerValueFontSize,
+				TimerValueWeight = options.StatusBar.TimerValueWeight,
+				TimerValueItalic = options.StatusBar.TimerValueItalic
 			},
 			ValidationPanel = new ValidationPanelStyleDto
 			{
-				Background = options.ValidationPanelBackgroundColor,
-				Foreground = options.ValidationPanelForegroundColor,
-				ErrorColor = options.ValidationPanelErrorColor,
-				WarningColor = options.ValidationPanelWarningColor,
-				MaxHeight = options.ValidationPanelMaxHeight
+				Background = options.ValidationPanel.Background,
+				Foreground = options.ValidationPanel.Foreground,
+				ErrorColor = options.ValidationPanel.ErrorColor,
+				WarningColor = options.ValidationPanel.WarningColor,
+				MaxHeight = options.ValidationPanel.MaxHeight
 			},
 			Chrome = new GridStyleChromeColorsDto
 			{
-				Info = options.InfoColor,
-				Connected = options.ConnectedColor,
-				Disconnected = options.DisconnectedColor,
-				LocalMode = options.LocalModeColor,
-				Connecting = options.ConnectingColor,
-				PanelBackground = options.PanelBackgroundColor,
-				PanelHeaderBackground = options.PanelHeaderBackgroundColor,
-				SubtleBorder = options.SubtleBorderColor,
-				Separator = options.SeparatorColor,
-				SecondaryForeground = options.SecondaryForegroundColor,
-				GridBorder = options.GridBorderColor,
-				GridBackground = options.GridBackgroundColor,
-				HeaderForeground = options.HeaderForegroundColor
+				Info = options.Chrome.Info,
+				Connected = options.Chrome.Connected,
+				Disconnected = options.Chrome.Disconnected,
+				LocalMode = options.Chrome.LocalMode,
+				Connecting = options.Chrome.Connecting,
+				PanelBackground = options.Chrome.PanelBackground,
+				PanelHeaderBackground = options.Chrome.PanelHeaderBackground,
+				SubtleBorder = options.Chrome.SubtleBorder,
+				Separator = options.Chrome.Separator,
+				SecondaryForeground = options.Chrome.SecondaryForeground,
+				GridBorder = options.Chrome.GridBorder,
+				GridBackground = options.Chrome.GridBackground,
+				HeaderForeground = options.Chrome.HeaderForeground
 			},
 			Orientation = GridOrientationValues.Serialize(options.Orientation)
 		};

@@ -63,34 +63,32 @@ column factories, `ColumnWidthCalculator`) injects the same typed record.
 `GridStyleOptions` is an immutable record with a `Default` fallback used only by tests; the `#000000`
 cell-palette placeholders in `Default` are never rendered in production.
 
-**Interim (slice 4).** Colors are now the typed `StyleColor` value (channels `A`/`R`/`G`/`B`) end to
-end in the record; hex is a string only at the two I/O edges. Validation lives inside the load mapper —
-`GridStyleMapper.Map` returns a `Result<GridStyleOptions>` and accumulates every per-key error in one
-pass. The standalone `GridStyleValidator` and the editor's `HexColor` helper are gone. The full doc
-rewrite (and removal of the now-obsolete "Known gap" section) lands in slice 5.
+Colors are the typed `StyleColor` value (channels `A`/`R`/`G`/`B`) end to end in the record; hex is a
+string only at the two I/O edges. Validation lives inside the load mapper: `GridStyleMapper.Map` returns
+a `Result<GridStyleOptions>` and accumulates every per-key error in one pass, so a single load reports
+every missing or invalid key at once instead of failing on the first. There is no standalone color
+validator — the parse and its format check sit at the one place the hex string enters the record.
 
-## Record shape: nested per group (interim, slice 3)
+## Record shape: nested per group
 
-`GridStyleOptions` is no longer a flat 78-field record. It is a one-level nested root that composes ~10
-per-group records (`Fonts`, `Layout`, `Selection`, `ChangedCells`, `ReadOnlyCells`, `DisabledCells`,
-`Execution`, `StatusBar`, `ValidationPanel`, `Chrome`) plus the root-level `Orientation`. `ReadOnlyCells`
-and `DisabledCells` share one `DepthPalette` type. Consumers read short nested paths — `gridStyle.Fonts.CellFontSize`,
-`gridStyle.ReadOnlyCells.Depth1`, `gridStyle.Chrome.GridLine` — instead of the old flat fields. Colors were
-`string` at slice 3; slice 4 typed them as `StyleColor` (see the interim note above).
+`GridStyleOptions` is a one-level nested root record. It composes ten per-group records (`Fonts`,
+`Layout`, `Selection`, `ChangedCells`, `ReadOnlyCells`, `DisabledCells`, `Execution`, `StatusBar`,
+`ValidationPanel`, `Chrome`) plus the root-level `Orientation`. `ReadOnlyCells` and `DisabledCells` share
+one `DepthPalette` type. Consumers read short nested paths — `gridStyle.Fonts.CellFontSize`,
+`gridStyle.ReadOnlyCells.Depth1`, `gridStyle.Chrome.GridLine`. Every group record is positional, so
+construction is compile-checked: an omitted component is a CS7036 build error.
 
-**The YAML file, the DTOs, and `GridStyleValidator` are unchanged** by this slice: the file on disk is
-byte-identical, the DTO layer keeps its nested snake_case shape and per-key error reporting, and the load
-mapper owns the small DTO-tree-to-group walk. `SaveThenLoad_DistinctFixture` proves the nested record still
-round-trips losslessly through the unchanged file format. Property references elsewhere in this doc that still
-show a flat path (for example `GridStyleOptions.FontFamily`) now live under their group
-(`GridStyleOptions.Fonts.FontFamily`); those spellings are corrected in the slice-5 doc rewrite.
+The nesting mirrors how the record is consumed — each reader takes one group (fonts, a palette, the
+chrome block), never the whole record as a flat field list (see the resources projection and font-model
+sections). The YAML file and the DTO layer keep their own nested snake_case shape with per-key error
+reporting, and the load mapper owns the DTO-tree-to-group walk. `SaveThenLoad_DistinctFixture` proves the
+nested record round-trips losslessly through the file format.
 
-**Note for slice 4.** The error-path key `colors.grid_line` and the record path `Chrome.GridLine`
-deliberately diverge: `grid_line` is a loose field in the `colors:` DTO section (beside `grid_border` /
-`grid_background`), but the one-level record folds it into `Chrome` so the root carries no lone `string`.
-Slice 4 moved those per-key checks into the load mapper (`GridStyleMapper.Map`); that mapper-resident
-validation keeps emitting the `colors.grid_line` key, not `chrome.grid_line`. The key names the
-YAML path the operator edits, not the record path.
+The error-path key `colors.grid_line` and the record path `Chrome.GridLine` deliberately diverge:
+`grid_line` is a loose field in the `colors:` DTO section (beside `grid_border` / `grid_background`), but
+the one-level record folds it into `Chrome` so the root carries no lone color field. The mapper-resident
+validation emits the `colors.grid_line` key, not `chrome.grid_line`: the key names the YAML path the
+operator edits, not the record path.
 
 ## Resources projection
 
@@ -146,9 +144,9 @@ orientation: rows_as_steps   # canonical (rows = steps); or columns_as_steps (tr
 - **Writer round-trip.** `GridStyleDtoMapper` serializes from the enum, so it always emits a
   valid value: a style-editor save preserves the field, and a save over a file that never had
   it writes the explicit `orientation: rows_as_steps`. The editor does not surface orientation
-  as a control; `BuildRecord`'s `with`-rebuild over the seeded record carries it through. The
-  DTO property is declared last so serialized output keeps `fonts:` as the first key (pinned
-  by test).
+  as a control; the editor's `BuildRecord` constructs the record positionally and carries the field
+  straight from `_source.Orientation` (the seeded copy). The DTO property is declared last so
+  serialized output keeps `fonts:` as the first key (pinned by test).
 - **Shipped configs.** RIE ships `orientation: columns_as_steps` (transposed by default);
   MOCVD and MBE omit the key and start canonical.
 
@@ -169,7 +167,7 @@ The earlier single `StatusBarTimerFontSize` (one size for both label and value) 
 two timer roles, so the caption and the countdown can carry independent fonts. With the shipped config
 the label renders at 14 and the value at 24 — they no longer share one size.
 
-- **Family** is a single `string` on the record (`GridStyleOptions.FontFamily`). The default is `""`,
+- **Family** is a single `string` on the record (`GridStyleOptions.Fonts.FontFamily`). The default is `""`,
   meaning "grid default": consumers fall back to `GridFonts.DefaultFamily`
   (`"Segoe UI Variable Text, Segoe UI"`, the same proportional Segoe as the app chrome) and render with
   `GridFonts.TabularFigures` (the `tnum` feature) so digit columns stay aligned. A non-empty value sets
@@ -235,35 +233,39 @@ The in-app editor is the write path back to the same file:
 
 ```
 GridStyleEditorWindow
-  → GridStyleEditorViewModel    (mutable draft: Color per color, decimal? per size)
+  → GridStyleEditorViewModel    (per-group ReactiveObject drafts: Color per color, decimal? per size)
   → GridStyleEditorFacade       (the single public Core seam)
   → GridStyleWriter             (record → DTO, serialize, atomic write)
 ```
 
-- **ViewModel.** Seeds a mutable draft from the loaded record (a separate copy, never the DI
-  singleton). Colors are exposed as `Color` for the `ColorPicker`; sizes as `decimal?` for
-  `NumericUpDown`. Channel↔`Color` conversion goes through `StyleColorConversions`
-  (`ToMediaColor` / `ToStyleColor`, in `SemiStep.UI/Styles`), not `Color.ToString()`. `CanSave` is gated
-  by VM-side numeric range checks alone (font/padding/row-height/spacing/panel-height bounds); an invalid
-  color is unrepresentable in the typed record, so the facade no longer color-validates on save. The editor surfaces
-  effectively the whole record: all ~54 colors, 13 numerics, plus the font controls — one global
-  font-family `ComboBox`, and a per-role weight `ComboBox` (curated 300–900 list) and italic
-  `CheckBox`. The window groups these into two cards: **Fonts** (the family row plus a size / weight /
-  italic row per role) and **Layout** (paddings, row height, status padding/spacing, panel height).
-  The family/weight pickers always include the seeded value even when it is outside the offered list,
-  so a hand-edited family or weight round-trips losslessly. `BuildRecord` rebuilds the record
-  with `with` over the seeded source, so the mechanism still preserves any field that happened not to
-  be surfaced.
+- **ViewModel.** A thin parent exposes each of the ten record groups as a per-group `ReactiveObject`
+  draft (`Fonts`, `Layout`, `Selection`, …, `Chrome`), seeded from a mutable copy of the loaded record
+  (a separate copy, never the DI singleton). A draft's property initializers are the seed — each leaf
+  reads its same-named source component — and its `Build()` calls the group record's positional
+  constructor, so a dropped field is a compile error (CS7036), not a silent revert. Colors are exposed
+  as `Color` for the `ColorPicker`; sizes as `decimal?` for `NumericUpDown`. Channel↔`Color` conversion
+  goes through `StyleColorConversions` (`ToMediaColor` / `ToStyleColor`, in `SemiStep.UI/Styles`), not
+  `Color.ToString()`. The AXAML binds grouped `Group.Leaf` paths against the drafts, each resolved and
+  compile-checked by the window-level `x:DataType` (a stale or mistyped path fails the build with
+  AVLN2000). `CanSave` is gated by VM-side numeric range checks alone (font/padding/row-height/spacing/
+  panel-height bounds); an invalid color is unrepresentable in the typed record, so there is nothing
+  else to validate. The editor surfaces effectively the whole record: all ~54 colors, 13 numerics, plus
+  the font controls — one global font-family `ComboBox`, and a per-role weight `ComboBox` (curated
+  300–900 list) and italic `CheckBox`. The window groups these into two cards: **Fonts** (the family row
+  plus a size / weight / italic row per role) and **Layout** (paddings, row height, status padding/
+  spacing, panel height). The family/weight pickers always include the seeded value even when it is
+  outside the offered list, so a hand-edited family or weight round-trips losslessly. `BuildRecord`
+  constructs a new record positionally from the ten drafts' `Build()` calls, carrying the one unsurfaced
+  field `Orientation` straight from the seeded source.
 
 ![In-app grid style editor](../img/visual_style_window.png)
 
 - **Facade.** `GridStyleEditorFacade` is the only public Core seam for the editor:
-  `Load(configDir)` → `Result<GridStyleOptions>`, `Validate(GridStyleOptions)` → `Result`,
-  `Save(configDir, GridStyleOptions)` → `Task<Result>`. `Save` is async and runs the file write off the
-  UI thread (mirroring `Load`); the editor's `SaveCommand` awaits it. `Validate` is a vacuous
-  `Result.Ok()` pass-through — color validation now lives in the load mapper, so it validates nothing;
-  `RecomputeCanSave` still calls it per keystroke but `CanSave` turns on the numeric-range checks alone.
-  The method stays on the interface until slice 5 trims it. The loader, writer, and the ~12 DTOs stay
+  `Load(configDir)` → `Task<Result<GridStyleOptions>>` and `Save(configDir, GridStyleOptions)` →
+  `Task<Result>`. Both are async and run their file I/O off the UI thread; the editor's `SaveCommand`
+  awaits `Save`. The seam carries no validate step: color validation lives in the load mapper and
+  numeric ranges are checked VM-side, so there is nothing left for the editor to ask Core to validate
+  before a save. The loader, writer, and the ~12 DTOs stay
   `internal`. The UI never touches Core internals directly.
   (Layering: the config stays in `SemiStep.Core`, settled by review; the editor reaches it only through
   this facade.)
@@ -296,14 +298,3 @@ restart is the simplest correct behavior for v1.
 - **Removed fields.** Grid-line thickness, alternating-row background, and normal-row background were
   dropped from the model, DTOs, mapper, and shipped configs. Semi's `DataGrid` exposes no
   inner-gridline-thickness or alternating-row-background property, so they had no wire target.
-
-## Known gap
-
-`GridStyleValidator` currently format-checks only the execution / readonly / disabled cell palettes and
-the optional chrome section. These colors are **not** Core-validated: selection (background /
-foreground), changed-cell (`changed` / `changed_selected`), the grid line, the status-bar
-(background / foreground), and the validation-panel (background / foreground / error / warning). In
-practice the editor's `ColorPicker` constrains those to valid `Color` structs, so a malformed value
-cannot reach `Save` through the editor — but a hand-edited file could carry an invalid hex in those
-keys without the validator catching it. Noted honestly; closing the gap would mean extending
-`GridStyleValidator` to cover the remaining sections.

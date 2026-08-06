@@ -36,8 +36,8 @@ public sealed class GridStyleEditorWindowTests
 			loaded,
 			NullLogger<GridStyleEditorViewModel>.Instance);
 
-		viewModel.SelectionBackground = Color.Parse("#123456");
-		viewModel.CellFontSize = loaded.Fonts.CellFontSize + 1;
+		viewModel.Selection.Background = Color.Parse("#123456");
+		viewModel.Fonts.CellFontSize = loaded.Fonts.CellFontSize + 1;
 
 		viewModel.CanSave.Should().BeTrue();
 		var saved = await viewModel.SaveCommand.Execute();

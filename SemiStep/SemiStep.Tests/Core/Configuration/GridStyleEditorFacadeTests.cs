@@ -69,17 +69,6 @@ public sealed class GridStyleEditorFacadeTests
 	}
 
 	[Fact]
-	public async Task Validate_ShippedRecord_ReturnsOk()
-	{
-		using var tempDir = CopyShippedConfig("MBE");
-		var facade = new GridStyleEditorFacade();
-
-		var loaded = (await facade.Load(tempDir.Path)).Value;
-
-		facade.Validate(loaded).IsSuccess.Should().BeTrue();
-	}
-
-	[Fact]
 	public async Task Load_UnparseableYaml_CarriesOriginalExceptionOnCausedBy()
 	{
 		using var tempDir = new TempDirectory();

@@ -37,40 +37,6 @@ public sealed class GridStyleEditorViewModelTests
 	private const int SurfacedEditablePropertyCount = 77;
 
 	[AvaloniaFact]
-	public void Seed_PopulatesEverySurfacedProperty_FromDistinctFixture()
-	{
-		var fixture = GridStyleOptionsTestData.Distinct();
-		var viewModel = CreateViewModel(fixture);
-
-		var properties = EditableProperties();
-		properties.Should().HaveCount(
-			SurfacedEditablePropertyCount,
-			"the fixture must exercise every surfaced editable property");
-
-		foreach (var property in properties)
-		{
-			var recordValue = LeafValue(fixture, RecordPath(property));
-			var actual = property.GetValue(viewModel);
-			var because = $"property {property.Name} must be seeded from the fixture";
-
-			if (property.PropertyType == typeof(Color))
-			{
-				actual.Should().Be(((StyleColor)recordValue!).ToMediaColor(), because);
-			}
-			else if (property.PropertyType == typeof(decimal?))
-			{
-				// The record's int font sizes and double paddings box under reflection; a direct
-				// (decimal) cast on a boxed int throws, so normalize both sides via Convert.ToDecimal.
-				Convert.ToDecimal(actual).Should().Be(Convert.ToDecimal(recordValue), because);
-			}
-			else
-			{
-				actual.Should().Be(recordValue, because);
-			}
-		}
-	}
-
-	[AvaloniaFact]
 	public void Seed_ThenBuildRecord_PreservesEveryFieldDistinctly()
 	{
 		var viewModel = CreateViewModel(GridStyleOptionsTestData.Distinct());
@@ -79,31 +45,33 @@ public sealed class GridStyleEditorViewModelTests
 	}
 
 	[AvaloniaFact]
-	public void BuildRecord_PerturbingEachProperty_ChangesOnlyThatMappedField()
+	public void BuildRecord_PerturbingEachLeaf_ChangesOnlyThatMappedField()
 	{
 		var viewModel = CreateViewModel(GridStyleOptionsTestData.Distinct());
 
-		var properties = EditableProperties();
-		properties.Should().HaveCount(
+		var leaves = SurfacedLeaves(viewModel);
+		leaves.Should().HaveCount(
 			SurfacedEditablePropertyCount,
-			"the perturbation guard must cover every surfaced editable property");
+			"the perturbation guard must cover every surfaced editable leaf");
 
-		foreach (var property in properties)
+		foreach (var (groupName, draft, leaf) in leaves)
 		{
-			var seededValue = property.GetValue(viewModel);
+			var seededValue = leaf.GetValue(draft);
 			var baseline = viewModel.BuildRecord();
 
-			property.SetValue(viewModel, Perturb(property, seededValue));
+			leaf.SetValue(draft, Perturb(leaf, seededValue));
 			var built = viewModel.BuildRecord();
 
-			var mappedField = RecordPath(property);
+			// Derived, not mapped: the draft leaf name mirrors the record component name by design, so
+			// the record path is {GroupProperty}.{LeafProperty}. A name that diverges cannot hide — it
+			// makes this walk report a different path or the per-draft round-trip guard go red.
+			var mappedField = $"{groupName}.{leaf.Name}";
 			var changedFields = ChangedRecordFields(baseline, built);
 			changedFields.Should().BeEquivalentTo(
 				new[] { mappedField },
-				$"editing {property.Name} must change exactly the {mappedField} record field");
+				$"editing {mappedField} must change exactly that record field");
 
-			// Restore the seeded value rather than reconstruct the VM: each ctor enumerates system fonts.
-			property.SetValue(viewModel, seededValue);
+			leaf.SetValue(draft, seededValue);
 		}
 	}
 
@@ -113,8 +81,8 @@ public sealed class GridStyleEditorViewModelTests
 		var source = GridStyleOptions.Default;
 		var viewModel = CreateViewModel(source);
 
-		viewModel.CellFontSize = 18;
-		viewModel.SelectionBackground = Color.Parse("#123456");
+		viewModel.Fonts.CellFontSize = 18;
+		viewModel.Selection.Background = Color.Parse("#123456");
 
 		var record = viewModel.BuildRecord();
 
@@ -131,7 +99,7 @@ public sealed class GridStyleEditorViewModelTests
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		viewModel.StatusBarFontSize = 14.6m;
+		viewModel.StatusBar.FontSize = 14.6m;
 
 		viewModel.BuildRecord().StatusBar.FontSize.Should().Be(15);
 	}
@@ -143,7 +111,7 @@ public sealed class GridStyleEditorViewModelTests
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		viewModel.StatusBarFontSize = fontSize;
+		viewModel.StatusBar.FontSize = fontSize;
 
 		viewModel.CanSave.Should().BeFalse();
 	}
@@ -155,7 +123,7 @@ public sealed class GridStyleEditorViewModelTests
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		viewModel.StatusBarTimerValueFontSize = fontSize;
+		viewModel.StatusBar.TimerValueFontSize = fontSize;
 
 		viewModel.CanSave.Should().BeFalse();
 	}
@@ -167,7 +135,7 @@ public sealed class GridStyleEditorViewModelTests
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		viewModel.StatusBarTimerLabelFontSize = fontSize;
+		viewModel.StatusBar.TimerLabelFontSize = fontSize;
 
 		viewModel.CanSave.Should().BeFalse();
 	}
@@ -193,12 +161,12 @@ public sealed class GridStyleEditorViewModelTests
 		};
 		var viewModel = CreateViewModel(source);
 
-		viewModel.FontFamily.Should().Be("Cascadia Code");
-		viewModel.HeaderFontWeight.Should().Be(600);
-		viewModel.HeaderItalic.Should().BeTrue();
-		viewModel.CellFontWeight.Should().Be(500);
-		viewModel.StatusBarTimerLabelFontSize.Should().Be(18);
-		viewModel.StatusBarTimerLabelItalic.Should().BeTrue();
+		viewModel.Fonts.FontFamily.Should().Be("Cascadia Code");
+		viewModel.Fonts.HeaderFontWeight.Should().Be(600);
+		viewModel.Fonts.HeaderItalic.Should().BeTrue();
+		viewModel.Fonts.CellFontWeight.Should().Be(500);
+		viewModel.StatusBar.TimerLabelFontSize.Should().Be(18);
+		viewModel.StatusBar.TimerLabelItalic.Should().BeTrue();
 	}
 
 	[AvaloniaFact]
@@ -207,10 +175,10 @@ public sealed class GridStyleEditorViewModelTests
 		var source = GridStyleOptions.Default;
 		var viewModel = CreateViewModel(source);
 
-		viewModel.FontFamily = "Consolas";
-		viewModel.HeaderFontWeight = 900;
-		viewModel.CellItalic = true;
-		viewModel.StatusBarTimerValueFontWeight = 300;
+		viewModel.Fonts.FontFamily = "Consolas";
+		viewModel.Fonts.HeaderFontWeight = 900;
+		viewModel.Fonts.CellItalic = true;
+		viewModel.StatusBar.TimerValueWeight = 300;
 
 		var record = viewModel.BuildRecord();
 
@@ -258,7 +226,7 @@ public sealed class GridStyleEditorViewModelTests
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		viewModel.CellFontSize = fontSize;
+		viewModel.Fonts.CellFontSize = fontSize;
 
 		viewModel.CanSave.Should().BeFalse();
 	}
@@ -268,7 +236,7 @@ public sealed class GridStyleEditorViewModelTests
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		viewModel.RowHeight = null;
+		viewModel.Layout.RowHeight = null;
 
 		viewModel.CanSave.Should().BeFalse();
 	}
@@ -278,7 +246,7 @@ public sealed class GridStyleEditorViewModelTests
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		viewModel.RowHeight = GridStyleEditorViewModel.MaxRowHeight + 1;
+		viewModel.Layout.RowHeight = GridStyleEditorViewModel.MaxRowHeight + 1;
 
 		viewModel.CanSave.Should().BeFalse();
 	}
@@ -288,7 +256,7 @@ public sealed class GridStyleEditorViewModelTests
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		viewModel.SelectionBackground = Color.Parse("#A1B2C3");
+		viewModel.Selection.Background = Color.Parse("#A1B2C3");
 
 		viewModel.BuildRecord().Selection.Background.ToString().Should().Be("#A1B2C3");
 	}
@@ -298,7 +266,7 @@ public sealed class GridStyleEditorViewModelTests
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		viewModel.SelectionBackground = Color.FromArgb(0x80, 0x11, 0x22, 0x33);
+		viewModel.Selection.Background = Color.FromArgb(0x80, 0x11, 0x22, 0x33);
 
 		viewModel.BuildRecord().Selection.Background.ToString().Should().Be("#80112233");
 	}
@@ -307,12 +275,33 @@ public sealed class GridStyleEditorViewModelTests
 	public async Task LoadAsync_MissingConfigDir_SetsErrorMessageAndDoesNotReseed()
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
-		viewModel.CellFontSize = 18;
+		viewModel.Fonts.CellFontSize = 18;
 
 		await viewModel.LoadAsync();
 
 		viewModel.ErrorMessage.Should().NotBeNullOrWhiteSpace();
-		viewModel.CellFontSize.Should().Be(18);
+		viewModel.Fonts.CellFontSize.Should().Be(18);
+	}
+
+	[AvaloniaFact]
+	public async Task LoadAsync_Success_ReplacesDraftsAndRewiresCanSave()
+	{
+		var loaded = GridStyleOptionsTestData.Distinct();
+		var viewModel = new GridStyleEditorViewModel(
+			new CausedByFailingFacade(loadResult: Result.Ok(loaded)),
+			ConfigDir,
+			GridStyleOptions.Default,
+			NullLogger<GridStyleEditorViewModel>.Instance);
+
+		await viewModel.LoadAsync();
+
+		viewModel.Fonts.HeaderFontSize.Should().Be(loaded.Fonts.HeaderFontSize);
+
+		// The out-of-range edit lands on the NEW draft; CanSave flipping proves the re-seed rewired the
+		// subscriptions to it, not to the discarded default draft.
+		viewModel.Fonts.HeaderFontSize = 999;
+
+		viewModel.CanSave.Should().BeFalse();
 	}
 
 	[AvaloniaFact]
@@ -438,118 +427,39 @@ public sealed class GridStyleEditorViewModelTests
 			NullLogger<GridStyleEditorViewModel>.Instance);
 	}
 
-	private static IReadOnlyList<PropertyInfo> EditableProperties()
+	// Every surfaced leaf as (group property name on the VM, the live draft instance, the leaf property on
+	// that draft). The ten group properties are exactly the public VM properties whose type derives from
+	// ReactiveObject; each draft's leaves are its own declared public get/set properties. DeclaredOnly keeps
+	// the base ReactiveObject members out, yet keeps ChangedCellColorsDraft.Changed — the get/set color leaf
+	// that hides the base observable with `new` — because it is declared on the draft type.
+	private static IReadOnlyList<(string GroupName, object Draft, PropertyInfo Leaf)> SurfacedLeaves(
+		GridStyleEditorViewModel viewModel)
 	{
-		return typeof(GridStyleEditorViewModel).GetProperties()
-			.Where(property => property.GetMethod?.IsPublic == true && property.SetMethod?.IsPublic == true)
+		var groups = typeof(GridStyleEditorViewModel)
+			.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+			.Where(property => typeof(ReactiveObject).IsAssignableFrom(property.PropertyType))
 			.ToList();
-	}
 
-	// Hand-maintained VM-property -> nested record leaf path. NOT derived: several leaf names diverge
-	// from the VM property name (StatusBarFontWeight -> StatusBar.Weight, ValidationPanelError ->
-	// ValidationPanel.ErrorColor, every Color drops its trailing "Color"), so a mistyped entry surfaces
-	// as a red guard test rather than a silent pass. Every entry is cross-checked against the group records.
-	private static readonly IReadOnlyDictionary<string, string> _viewModelToRecordPath =
-		new Dictionary<string, string>
+		var leaves = new List<(string, object, PropertyInfo)>();
+		foreach (var group in groups)
 		{
-			["FontFamily"] = "Fonts.FontFamily",
-			["HeaderFontSize"] = "Fonts.HeaderFontSize",
-			["HeaderFontWeight"] = "Fonts.HeaderFontWeight",
-			["HeaderItalic"] = "Fonts.HeaderItalic",
-			["CellFontSize"] = "Fonts.CellFontSize",
-			["CellFontWeight"] = "Fonts.CellFontWeight",
-			["CellItalic"] = "Fonts.CellItalic",
-			["CellPaddingLeft"] = "Layout.CellPaddingLeft",
-			["CellPaddingTop"] = "Layout.CellPaddingTop",
-			["CellPaddingRight"] = "Layout.CellPaddingRight",
-			["CellPaddingBottom"] = "Layout.CellPaddingBottom",
-			["RowHeight"] = "Layout.RowHeight",
-			["SelectionBackground"] = "Selection.Background",
-			["SelectionForeground"] = "Selection.Foreground",
-			["CellChanged"] = "ChangedCells.Changed",
-			["CellChangedSelected"] = "ChangedCells.ChangedSelected",
-			["ReadOnlyCellDepth0"] = "ReadOnlyCells.Depth0",
-			["ReadOnlyCellDepth1"] = "ReadOnlyCells.Depth1",
-			["ReadOnlyCellDepth2"] = "ReadOnlyCells.Depth2",
-			["ReadOnlyCellDepth3"] = "ReadOnlyCells.Depth3",
-			["ReadOnlyCellDepth0Past"] = "ReadOnlyCells.Depth0Past",
-			["ReadOnlyCellDepth1Past"] = "ReadOnlyCells.Depth1Past",
-			["ReadOnlyCellDepth2Past"] = "ReadOnlyCells.Depth2Past",
-			["ReadOnlyCellDepth3Past"] = "ReadOnlyCells.Depth3Past",
-			["ReadOnlyCellSelected"] = "ReadOnlyCells.Selected",
-			["ReadOnlyCellForeground"] = "ReadOnlyCells.Foreground",
-			["DisabledCellDepth0"] = "DisabledCells.Depth0",
-			["DisabledCellDepth1"] = "DisabledCells.Depth1",
-			["DisabledCellDepth2"] = "DisabledCells.Depth2",
-			["DisabledCellDepth3"] = "DisabledCells.Depth3",
-			["DisabledCellDepth0Past"] = "DisabledCells.Depth0Past",
-			["DisabledCellDepth1Past"] = "DisabledCells.Depth1Past",
-			["DisabledCellDepth2Past"] = "DisabledCells.Depth2Past",
-			["DisabledCellDepth3Past"] = "DisabledCells.Depth3Past",
-			["DisabledCellSelected"] = "DisabledCells.Selected",
-			["DisabledCellForeground"] = "DisabledCells.Foreground",
-			["ExecutionDepth0"] = "Execution.Depth0",
-			["ExecutionDepth1"] = "Execution.Depth1",
-			["ExecutionDepth2"] = "Execution.Depth2",
-			["ExecutionDepth3"] = "Execution.Depth3",
-			["ExecutionDepth0Past"] = "Execution.Depth0Past",
-			["ExecutionDepth1Past"] = "Execution.Depth1Past",
-			["ExecutionDepth2Past"] = "Execution.Depth2Past",
-			["ExecutionDepth3Past"] = "Execution.Depth3Past",
-			["ExecutionCurrentStepMarker"] = "Execution.CurrentStepMarker",
-			["StatusBarBackground"] = "StatusBar.Background",
-			["StatusBarForeground"] = "StatusBar.Foreground",
-			["StatusBarPadding"] = "StatusBar.Padding",
-			["StatusBarItemSpacing"] = "StatusBar.ItemSpacing",
-			["StatusBarFontSize"] = "StatusBar.FontSize",
-			["StatusBarFontWeight"] = "StatusBar.Weight",
-			["StatusBarItalic"] = "StatusBar.Italic",
-			["StatusBarTimerLabelFontSize"] = "StatusBar.TimerLabelFontSize",
-			["StatusBarTimerLabelFontWeight"] = "StatusBar.TimerLabelWeight",
-			["StatusBarTimerLabelItalic"] = "StatusBar.TimerLabelItalic",
-			["StatusBarTimerValueFontSize"] = "StatusBar.TimerValueFontSize",
-			["StatusBarTimerValueFontWeight"] = "StatusBar.TimerValueWeight",
-			["StatusBarTimerValueItalic"] = "StatusBar.TimerValueItalic",
-			["ValidationPanelBackground"] = "ValidationPanel.Background",
-			["ValidationPanelForeground"] = "ValidationPanel.Foreground",
-			["ValidationPanelError"] = "ValidationPanel.ErrorColor",
-			["ValidationPanelWarning"] = "ValidationPanel.WarningColor",
-			["ValidationPanelMaxHeight"] = "ValidationPanel.MaxHeight",
-			["GridLine"] = "Chrome.GridLine",
-			["Info"] = "Chrome.Info",
-			["Connected"] = "Chrome.Connected",
-			["Disconnected"] = "Chrome.Disconnected",
-			["LocalMode"] = "Chrome.LocalMode",
-			["Connecting"] = "Chrome.Connecting",
-			["PanelBackground"] = "Chrome.PanelBackground",
-			["PanelHeaderBackground"] = "Chrome.PanelHeaderBackground",
-			["SubtleBorder"] = "Chrome.SubtleBorder",
-			["Separator"] = "Chrome.Separator",
-			["SecondaryForeground"] = "Chrome.SecondaryForeground",
-			["GridBorder"] = "Chrome.GridBorder",
-			["GridBackground"] = "Chrome.GridBackground",
-			["HeaderForeground"] = "Chrome.HeaderForeground",
-		};
-
-	private static string RecordPath(PropertyInfo viewModelProperty)
-	{
-		return _viewModelToRecordPath.TryGetValue(viewModelProperty.Name, out var path)
-			? path
-			: throw new InvalidOperationException($"No GridStyleOptions path maps to {viewModelProperty.Name}");
-	}
-
-	private static object? LeafValue(GridStyleOptions record, string dottedPath)
-	{
-		object current = record;
-		foreach (var segment in dottedPath.Split('.'))
-		{
-			var property = current.GetType().GetProperty(segment)
-				?? throw new InvalidOperationException($"No record property '{segment}' on {current.GetType().Name}");
-			current = property.GetValue(current)
-				?? throw new InvalidOperationException($"Record property '{segment}' was null");
+			var draft = group.GetValue(viewModel)
+				?? throw new InvalidOperationException($"Draft property {group.Name} was null");
+			foreach (var leaf in DraftLeaves(group.PropertyType))
+			{
+				leaves.Add((group.Name, draft, leaf));
+			}
 		}
 
-		return current;
+		return leaves;
+	}
+
+	private static IReadOnlyList<PropertyInfo> DraftLeaves(Type draftType)
+	{
+		return draftType
+			.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+			.Where(property => property.GetMethod?.IsPublic == true && property.SetMethod?.IsPublic == true)
+			.ToList();
 	}
 
 	// Color perturbation stays opaque so ToHex changes; weights are unvalidated ints so any value round-trips.
@@ -641,11 +551,6 @@ public sealed class GridStyleEditorViewModelTests
 			return Task.FromResult(Result.Ok(GridStyleOptions.Default));
 		}
 
-		public Result Validate(GridStyleOptions options)
-		{
-			return Result.Ok();
-		}
-
 		public Task<Result> Save(string configDir, GridStyleOptions options)
 		{
 			throw failure;
@@ -659,11 +564,6 @@ public sealed class GridStyleEditorViewModelTests
 		public Task<Result<GridStyleOptions>> Load(string configDir)
 		{
 			return Task.FromResult(loadResult ?? Result.Ok(GridStyleOptions.Default));
-		}
-
-		public Result Validate(GridStyleOptions options)
-		{
-			return Result.Ok();
 		}
 
 		public Task<Result> Save(string configDir, GridStyleOptions options)

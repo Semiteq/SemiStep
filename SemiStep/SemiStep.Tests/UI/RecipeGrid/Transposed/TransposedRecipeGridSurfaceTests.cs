@@ -343,7 +343,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.PropertyUpdated(99));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("PropertyUpdated"));
 	}
 
@@ -356,7 +356,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.StepRemoved(42));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepRemoved"));
 	}
 
@@ -371,7 +371,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 			new MutationSignal.StepsRemoved([0, 99]));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepsRemoved"));
 		_surface.StepColumns.Should().HaveCount(
 			2, "the removal is all-or-nothing: one bad index drops the whole signal");
@@ -393,7 +393,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.PropertyUpdated(1));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("PropertyUpdated"));
 	}
 
@@ -406,7 +406,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.StepAppended(99));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepAppended"));
 		_surface.StepColumns.Should().HaveCount(1);
 	}
@@ -420,7 +420,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.StepsInserted(0, 99));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepsInserted"));
 		_surface.StepColumns.Should().HaveCount(1);
 	}
@@ -441,7 +441,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.StepsInserted(1, 1));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepsInserted"));
 		_surface.StepColumns.Should().BeEmpty();
 	}
@@ -455,7 +455,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.StepActionChanged(99));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepActionChanged"));
 	}
 
@@ -559,7 +559,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.RemoveSteps([0, 2]);
 		_fixture.Coordinator.RemoveStep(0);
 
-		_logger.Entries.Should().NotContain(entry =>
+		_logger.Snapshot().Should().NotContain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("Stale"));
 	}
 

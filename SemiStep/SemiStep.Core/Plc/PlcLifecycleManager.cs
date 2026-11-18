@@ -23,6 +23,21 @@ public sealed class PlcLifecycleManager(
 {
 	internal const string SyncEnableCancelledMessage = "PLC sync enable cancelled";
 
+	internal const string ReconciliationStartedMessage =
+		"PLC reconciliation started: the connection reported Connected while sync is enabled.";
+
+	internal const string ReconciliationOutcomePrefix = "PLC reconciliation outcome ";
+
+	/// <summary>
+	/// Used alone where no PLC-side fact was established.
+	/// </summary>
+	private const string ShortOutcomeTemplate =
+		ReconciliationOutcomePrefix + "{Outcome}: local {LocalStepCount} steps (valid {LocalValid})";
+
+	private const string LongOutcomeTemplate =
+		ShortOutcomeTemplate
+		+ ", PLC {PlcStepCount} steps, committed {Committed}, conflict subscriber {HasConflictSubscriber}";
+
 	private readonly IS7Connection _connection = connection;
 	private readonly IS7ExecutionStream _executionStream = executionStream;
 	private readonly ImportedRecipeValidator _importedRecipeValidator = importedRecipeValidator;
@@ -267,8 +282,13 @@ public sealed class PlcLifecycleManager(
 		{
 			if (_disposed)
 			{
+				_logger.LogWarning(
+					"PLC reconciliation dropped: the lifecycle manager was disposed while the connection "
+					+ "state change was in flight.");
 				return;
 			}
+
+			_logger.LogInformation(ReconciliationStartedMessage);
 
 			var token = _lifetimeCts.Token;
 			_ = PerformReconnectReconciliationAsync(token).ContinueWith(
@@ -281,14 +301,22 @@ public sealed class PlcLifecycleManager(
 	{
 		try
 		{
-			await ReconcileWithPlcAsync(cancellationToken);
+			LogOutcome(await RunReconciliationAsync(cancellationToken));
 		}
 		catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
 		{
+			LogOutcome(BuildResultFromSession(PlcReconciliationOutcome.Cancelled));
+		}
+		catch (OperationCanceledException ex)
+		{
+			// Unfiltered: a filter mirroring the one above would leave the exception uncaught when
+			// Dispose cancels the lifetime token between the two filter evaluations, and the run
+			// would end with a begin line and no outcome line.
+			LogOutcome(BuildResultFromSession(PlcReconciliationOutcome.TimedOut), ex);
 		}
 	}
 
-	private async Task ReconcileWithPlcAsync(CancellationToken cancellationToken)
+	private async Task<PlcReconciliationResult> RunReconciliationAsync(CancellationToken cancellationToken)
 	{
 		var versionResult = await ValidateProtocolVersionAsync(cancellationToken);
 		if (versionResult.IsFailed)
@@ -297,7 +325,10 @@ public sealed class PlcLifecycleManager(
 				"Aborting reconnect reconciliation: protocol version validation failed: {Errors}",
 				string.Join("; ", versionResult.Errors.Select(e => e.Message)));
 			await FailProtocolVersionHandshakeAsync();
-			return;
+
+			return BuildResultFromSession(versionResult.HasError<ProtocolVersionMismatchError>()
+				? PlcReconciliationOutcome.ProtocolVersionMismatch
+				: PlcReconciliationOutcome.ProtocolVersionCheckFailed);
 		}
 
 		var managingAreaResult = await _reader.ReadManagingAreaAsync(cancellationToken);
@@ -307,16 +338,25 @@ public sealed class PlcLifecycleManager(
 			_logger.LogWarning(
 				"Could not read managing area during reconnect reconciliation: {Errors}",
 				string.Join("; ", managingAreaResult.Errors.Select(e => e.Message)));
-			NotifyLocalRecipe();
-			return;
+			var (pushedRecipe, pushedValid) = NotifyLocalRecipe();
+			return BuildResult(PlcReconciliationOutcome.ManagingAreaReadFailed, pushedRecipe, pushedValid, null, null);
 		}
 
-		if (!managingAreaResult.Value.Committed)
+		var committed = managingAreaResult.Value.Committed;
+
+		if (!committed)
 		{
-			NotifyLocalRecipe();
-			return;
+			var (pushedRecipe, pushedValid) = NotifyLocalRecipe();
+			return BuildResult(PlcReconciliationOutcome.NotCommitted, pushedRecipe, pushedValid, null, committed);
 		}
 
+		return await CompareWithPlcRecipeAsync(committed, cancellationToken);
+	}
+
+	private async Task<PlcReconciliationResult> CompareWithPlcRecipeAsync(
+		bool committed,
+		CancellationToken cancellationToken)
+	{
 		var plcRecipeResult = await _reader.ReadRecipeFromPlcAsync(cancellationToken);
 
 		if (plcRecipeResult.IsFailed)
@@ -324,20 +364,43 @@ public sealed class PlcLifecycleManager(
 			_logger.LogWarning(
 				"Could not read PLC recipe during reconciliation: {Errors}",
 				string.Join("; ", plcRecipeResult.Errors.Select(e => e.Message)));
-			NotifyLocalRecipe();
-			return;
+			var (pushedRecipe, pushedValid) = NotifyLocalRecipe();
+			return BuildResult(PlcReconciliationOutcome.RecipeReadFailed, pushedRecipe, pushedValid, null, committed);
 		}
 
 		var plcRecipe = plcRecipeResult.Value;
-		var localRecipe = _session.Current;
 
-		if (localRecipe.Steps.Count == 0 && plcRecipe.Steps.Count > 0)
+		// Both fields are read before the decision, and the pair is still not atomic: a UI-thread
+		// mutation between the two reads pairs the step count of one recipe with the validity of another.
+		var localRecipe = _session.Current;
+		var localValid = _session.IsValid;
+
+		return await ResolveRecipeDifferenceAsync(localRecipe, localValid, plcRecipe, committed);
+	}
+
+	private async Task<PlcReconciliationResult> ResolveRecipeDifferenceAsync(
+		Recipe localRecipe,
+		bool localValid,
+		Recipe plcRecipe,
+		bool committed)
+	{
+		var plcStepCount = plcRecipe.Steps.Count;
+
+		if (localRecipe.Steps.Count == 0 && plcStepCount > 0)
 		{
-			await ApplyReconnectPlcRecipeAsync(plcRecipe);
-			return;
+			var applied = await ApplyReconnectPlcRecipeAsync(plcRecipe);
+
+			// The snapshot, not the session: a successful apply has already replaced the session recipe
+			// with the PLC one, and logging that would report the PLC recipe as the local side.
+			return BuildResult(
+				applied ? PlcReconciliationOutcome.AppliedFromPlc : PlcReconciliationOutcome.ApplyFromPlcFailed,
+				localRecipe,
+				localValid,
+				plcStepCount,
+				committed);
 		}
 
-		if (plcRecipe.Steps.Count > 0 && !localRecipe.Equals(plcRecipe))
+		if (plcStepCount > 0 && !localRecipe.Equals(plcRecipe))
 		{
 			lock (_pendingLock)
 			{
@@ -345,20 +408,98 @@ public sealed class PlcLifecycleManager(
 			}
 
 			PlcRecipeConflictDetected?.Invoke(localRecipe, plcRecipe);
+
+			return BuildResult(
+				PlcReconciliationOutcome.ConflictRaised, localRecipe, localValid, plcStepCount, committed);
+		}
+
+		var (pushedRecipe, pushedValid) = NotifyLocalRecipe();
+
+		return BuildResult(
+			plcStepCount == 0 ? PlcReconciliationOutcome.PlcEmpty : PlcReconciliationOutcome.Identical,
+			pushedRecipe,
+			pushedValid,
+			plcStepCount,
+			committed);
+	}
+
+	private PlcReconciliationResult BuildResultFromSession(PlcReconciliationOutcome outcome)
+	{
+		return BuildResult(outcome, _session.Current, _session.IsValid, null, null);
+	}
+
+	private PlcReconciliationResult BuildResult(
+		PlcReconciliationOutcome outcome,
+		Recipe localRecipe,
+		bool localValid,
+		int? plcStepCount,
+		bool? committed)
+	{
+		return new PlcReconciliationResult(
+			outcome,
+			localRecipe.Steps.Count,
+			localValid,
+			plcStepCount,
+			committed,
+			PlcRecipeConflictDetected is not null);
+	}
+
+	private void LogOutcome(PlcReconciliationResult result, Exception? exception = null)
+	{
+		var level = ResolveOutcomeLevel(result.Outcome);
+
+		if (result.PlcStepCount is null && result.Committed is null)
+		{
+			_logger.Log(
+				level,
+				exception,
+				ShortOutcomeTemplate,
+				result.Outcome,
+				result.LocalStepCount,
+				result.LocalValid);
 			return;
 		}
 
-		NotifyLocalRecipe();
+		_logger.Log(
+			level,
+			exception,
+			LongOutcomeTemplate,
+			result.Outcome,
+			result.LocalStepCount,
+			result.LocalValid,
+			result.PlcStepCount,
+			result.Committed,
+			result.HasConflictSubscriber);
 	}
 
-	private async Task ApplyReconnectPlcRecipeAsync(Recipe plcRecipe)
+	private static LogLevel ResolveOutcomeLevel(PlcReconciliationOutcome outcome)
+	{
+		return outcome switch
+		{
+			PlcReconciliationOutcome.AppliedFromPlc => LogLevel.Information,
+			PlcReconciliationOutcome.ConflictRaised => LogLevel.Information,
+			PlcReconciliationOutcome.PlcEmpty => LogLevel.Information,
+			PlcReconciliationOutcome.Identical => LogLevel.Information,
+			PlcReconciliationOutcome.Cancelled => LogLevel.Information,
+			PlcReconciliationOutcome.ProtocolVersionMismatch => LogLevel.Warning,
+			PlcReconciliationOutcome.ProtocolVersionCheckFailed => LogLevel.Warning,
+			PlcReconciliationOutcome.ManagingAreaReadFailed => LogLevel.Warning,
+			PlcReconciliationOutcome.NotCommitted => LogLevel.Warning,
+			PlcReconciliationOutcome.RecipeReadFailed => LogLevel.Warning,
+			PlcReconciliationOutcome.ApplyFromPlcFailed => LogLevel.Warning,
+			PlcReconciliationOutcome.TimedOut => LogLevel.Warning,
+			_ => throw new ArgumentOutOfRangeException(nameof(outcome), outcome, "Unnamed reconciliation outcome")
+		};
+	}
+
+	private async Task<bool> ApplyReconnectPlcRecipeAsync(Recipe plcRecipe)
 	{
 		var callback = _reconnectApplyCallback;
 		if (callback is null)
 		{
 			_logger.LogWarning(
 				"Reconnect reconciliation discarded PLC recipe: no apply callback registered.");
-			return;
+			return false;
 		}
 
 		Result applyResult;
@@ -369,7 +510,7 @@ public sealed class PlcLifecycleManager(
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Reconnect apply callback threw");
-			return;
+			return false;
 		}
 
 		if (applyResult.IsFailed)
@@ -377,11 +518,22 @@ public sealed class PlcLifecycleManager(
 			_logger.LogWarning(
 				"PLC recipe analysis errors during reconnect: {Errors}",
 				string.Join("; ", applyResult.Errors.Select(e => e.Message)));
+			return false;
 		}
+
+		return true;
 	}
 
-	private void NotifyLocalRecipe()
+	/// <summary>
+	/// The UI thread can replace the session recipe at any moment, so a caller that read the session
+	/// again to log what it pushed would name a different recipe than the one the executor received.
+	/// </summary>
+	private (Recipe Recipe, bool Valid) NotifyLocalRecipe()
 	{
-		_syncService.NotifyRecipeChanged(_session.Current, _session.IsValid);
+		var localRecipe = _session.Current;
+		var localValid = _session.IsValid;
+		_syncService.NotifyRecipeChanged(localRecipe, localValid);
+
+		return (localRecipe, localValid);
 	}
 }

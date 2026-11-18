@@ -41,7 +41,7 @@ public sealed class ReactiveCommandReportingExtensionsTests
 			entry.Severity.Should().Be(MessageSeverity.Error);
 			entry.Message.Should().Be($"{context.Localized}: boom");
 
-			var logged = logger.Entries.Should().ContainSingle().Subject;
+			var logged = logger.Snapshot().Should().ContainSingle().Subject;
 			logged.Level.Should().Be(LogLevel.Error);
 			logged.Exception.Should().BeSameAs(failure);
 		}
@@ -67,7 +67,7 @@ public sealed class ReactiveCommandReportingExtensionsTests
 			await command.Execute();
 
 			panel.Entries.Should().BeEmpty();
-			logger.Entries.Should().BeEmpty();
+			logger.Snapshot().Should().BeEmpty();
 		}
 		finally
 		{

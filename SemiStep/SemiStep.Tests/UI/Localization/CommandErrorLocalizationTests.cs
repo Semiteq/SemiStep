@@ -41,7 +41,7 @@ public sealed class CommandErrorLocalizationTests
 			entry.Severity.Should().Be(MessageSeverity.Error);
 			entry.Message.Should().StartWith(context.Localized);
 
-			var logged = logger.Entries.Should().ContainSingle().Subject;
+			var logged = logger.Snapshot().Should().ContainSingle().Subject;
 			logged.Level.Should().Be(LogLevel.Error);
 			logged.Exception.Should().BeSameAs(failure);
 			logged.Message.Should().Be(context.Invariant);

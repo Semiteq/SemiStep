@@ -32,7 +32,7 @@ public sealed class GlobalExceptionBackstopTests
 			entry.Severity.Should().Be(MessageSeverity.Error);
 			entry.Message.Should().Be(GlobalExceptionBackstop.RecoverableUserMessage);
 
-			var logged = logger.Entries.Should().ContainSingle().Subject;
+			var logged = logger.Snapshot().Should().ContainSingle().Subject;
 			logged.Level.Should().Be(LogLevel.Error);
 			logged.Exception.Should().BeSameAs(failure);
 		}
@@ -50,7 +50,7 @@ public sealed class GlobalExceptionBackstopTests
 
 		GlobalExceptionBackstop.LogUnobserved(logger, failure);
 
-		var logged = logger.Entries.Should().ContainSingle().Subject;
+		var logged = logger.Snapshot().Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
 		logged.Exception.Should().BeSameAs(failure);
 	}
@@ -63,7 +63,7 @@ public sealed class GlobalExceptionBackstopTests
 
 		GlobalExceptionBackstop.LogFatal(logger, failure);
 
-		var logged = logger.Entries.Should().ContainSingle().Subject;
+		var logged = logger.Snapshot().Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Critical);
 		logged.Exception.Should().BeSameAs(failure);
 	}

@@ -56,7 +56,7 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 		_fixture.MessagePanel.Entries.Should().ContainSingle(
 			entry => entry.Severity == MessageSeverity.Error && entry.Message == $"{context.Localized}: boom");
 
-		var logged = _logger.Entries.Should().ContainSingle().Subject;
+		var logged = _logger.Snapshot().Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
 		logged.Exception.Should().BeSameAs(failure);
 	}
@@ -74,7 +74,7 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 		_fixture.MessagePanel.Entries.Should().ContainSingle(
 			entry => entry.Severity == MessageSeverity.Error && entry.Message == $"{context.Localized}: boom");
 
-		var logged = _logger.Entries.Should().ContainSingle().Subject;
+		var logged = _logger.Snapshot().Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
 		logged.Exception.Should().BeSameAs(failure);
 	}
@@ -104,7 +104,7 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 		_fixture.MessagePanel.Entries.Should().ContainSingle(
 			entry => entry.Severity == MessageSeverity.Error && entry.Message == $"{context.Localized}: boom");
 
-		var logged = _logger.Entries.Should().ContainSingle().Subject;
+		var logged = _logger.Snapshot().Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
 		logged.Exception.Should().BeSameAs(failure);
 	}

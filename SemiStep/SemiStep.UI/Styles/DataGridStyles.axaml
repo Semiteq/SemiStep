@@ -15,7 +15,7 @@
          floor fights the config-driven RowHeight (set in ColumnBuilder): the cell measures at 32 but is
          arranged into the shorter row, clipping the Stretch-aligned focus/current Rectangle into a broken
          box. Binding MinHeight to the same config value lets the focus/current border render cleanly on a
-         row of the configured height. See Docs/architecture/grid-style-configuration.md. -->
+         row of the configured height. See docs/architecture/grid-style-configuration.md. -->
     <Style Selector="DataGridRow">
         <Setter Property="MinHeight" Value="{DynamicResource GridRowHeight}" />
     </Style>
@@ -25,7 +25,7 @@
     </Style>
 
     <!-- Stretch is load-bearing: the Semi header panel aligns by it, and only Stretch gives the
-         wrapping header TextBlock the column width it needs. See Docs/architecture/recipe-grid-column-sizing.md. -->
+         wrapping header TextBlock the column width it needs. See docs/architecture/recipe-grid-column-sizing.md. -->
     <Style Selector="DataGridColumnHeader">
         <Setter Property="Foreground" Value="{DynamicResource HeaderForegroundBrush}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -45,7 +45,7 @@
     <Style Selector="DataGrid ComboBox">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <!-- left padding 6 to match the ComboBoxChromeWidth budget. See Docs/architecture/recipe-grid-column-sizing.md -->
+        <!-- left padding 6 to match the ComboBoxChromeWidth budget. See docs/architecture/recipe-grid-column-sizing.md -->
         <Setter Property="Padding" Value="6,0,0,0" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>

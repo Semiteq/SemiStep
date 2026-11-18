@@ -19,16 +19,16 @@ public sealed class ColumnWidthCalculator(
 	// so a wide string column does not dominate the available FullHD width.
 	private const int MaxStringSampleLength = 12;
 
-	// ceil(CellFontSize × 2.0); calibration of the prior 26 px. See Docs/architecture/recipe-grid-column-sizing.md
+	// ceil(CellFontSize × 2.0); calibration of the prior 26 px. See docs/architecture/recipe-grid-column-sizing.md
 	private const double ChromeFontMultiple = 2.0;
 
-	// em multiple calibrated to reproduce 72 at the default font. See Docs/architecture/recipe-grid-column-sizing.md
+	// em multiple calibrated to reproduce 72 at the default font. See docs/architecture/recipe-grid-column-sizing.md
 	private const double MinColumnWidthEms = 6.0;
 
-	// 32 chevron column + 6 left padding; fixed theme DIP. See Docs/architecture/recipe-grid-column-sizing.md
+	// 32 chevron column + 6 left padding; fixed theme DIP. See docs/architecture/recipe-grid-column-sizing.md
 	private const int ComboBoxChromeWidth = 38;
 
-	// See Docs/architecture/recipe-grid-column-sizing.md
+	// See docs/architecture/recipe-grid-column-sizing.md
 	private int ContentChrome => (int)Math.Ceiling(gridStyle.Fonts.CellFontSize * ChromeFontMultiple);
 
 	private int HeaderFloorChrome => (int)Math.Ceiling(gridStyle.Fonts.HeaderFontSize * ChromeFontMultiple);

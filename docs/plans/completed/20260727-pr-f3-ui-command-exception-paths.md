@@ -166,7 +166,7 @@ Mark `[x]` on completion; `➕` new tasks; `⚠️` blockers.
 ### Task 6: Verify + document
 
 **Files:**
-- Modify: `Docs/architecture/error-reporting.md`
+- Modify: `docs/architecture/error-reporting.md`
 
 - [x] full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — 1489 passed, 0 failed (8 explicit perf probes skipped).
 - [x] `dotnet build SemiStep.slnx` — 0 warnings, 0 errors

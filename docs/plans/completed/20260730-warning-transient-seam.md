@@ -66,12 +66,12 @@ touched.
 ## Task 2: Cover the seam + doc + verify
 
 **Files:**
-- Modify: `SemiStep/SemiStep.Tests/UI/Localization/ReasonLocalizerTests.cs`, a MessagePanel/report test home, `Docs/architecture/error-reporting.md`.
+- Modify: `SemiStep/SemiStep.Tests/UI/Localization/ReasonLocalizerTests.cs`, a MessagePanel/report test home, `docs/architecture/error-reporting.md`.
 
 - [x] `ReasonLocalizerTests`: ru render case `new RowCountMismatchWarning("recipe.csv", 5, 3)` → `Несоответствие количества строк в «recipe.csv»: метаданные указывают 5, фактически 3` (under `ResourcesCultureScope.Use("ru")`) + an en `Localize(sample).Should().Be(sample.Message)` pin.
 - [x] **Seam end-to-end**: a `Result` carrying a `RowCountMismatchWarning` reported via `panel.ReportWarnings(result)` under `ResourcesCultureScope.Use("ru")` puts the Russian text in the transient operation slot (assert the panel entry is Severity=Warning + the ru string). Add an empty-result case: `ReportWarnings` on a result with no warnings reports NOTHING (no transient entry). Home it in `SemiStep/SemiStep.Tests/UI/MessagePanelViewModelTests.cs` (the transient-slot tests live there) — NOT a `MessagePanelReportingTests`, which does not exist.
 - [x] fragment sweep: grep the Tests tree for `Row count mismatch` — confirm only `RecipeCoordinatorLoadRecipeTests` (raw `.Message`, unchanged) and the now-scoped `RecipeFileViewModelLoadResultTests` remain; nothing else asserts it unscoped.
-- [x] `Docs/architecture/error-reporting.md`: document the transient-warning seam — `ReportWarnings` is the warning-side twin of `ReportFailure` (both localize into the transient slot), distinct from `RefreshReasons` (snapshot-validity, already localizing). Note `RowCountMismatchWarning` as the first typed transient warning.
+- [x] `docs/architecture/error-reporting.md`: document the transient-warning seam — `ReportWarnings` is the warning-side twin of `ReportFailure` (both localize into the transient slot), distinct from `RefreshReasons` (snapshot-validity, already localizing). Note `RowCountMismatchWarning` as the first typed transient warning.
 - [x] full `dotnet build SemiStep.slnx` 0 warnings; full `dotnet test` green; `dotnet format`.
 
 ## Post-Completion

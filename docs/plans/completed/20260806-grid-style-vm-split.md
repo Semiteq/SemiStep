@@ -26,7 +26,7 @@ and the facade seam change.
   With typed `StyleColor` a color picker cannot produce an invalid color; nothing is left for a facade
   `Validate` to check. `CanSave` = numeric ranges only.
 - **Per-group `ReactiveObject` drafts**: initializer = seed, positional `Build()` = compile guard.
-- **`Docs/architecture/grid-style-configuration.md` rewritten as current-state**, including deleting the
+- **`docs/architecture/grid-style-configuration.md` rewritten as current-state**, including deleting the
   obsolete "Known gap" section (closed by slice 4's `OptionalColor` — every optional-section key IS
   format-checked when present) and all slice-2/3/4 interim notes.
 
@@ -263,7 +263,7 @@ before the guards are trusted — same protocol as slices 3/4.
 - The headless window tests (`GridStyleEditorWindowTests`, `GridStyleEditorWindowOwnerRoutingTests`,
   `MainWindowStyleEditorInteractionTests`) are green — the real window loads the renamed AXAML and drives
   the real save flow; the RU-culture load-error message test passes untouched.
-- `Docs/architecture/grid-style-configuration.md` describes the current state only: nested record,
+- `docs/architecture/grid-style-configuration.md` describes the current state only: nested record,
   `StyleColor`, mapper-resident validation, draft-based editor; no "interim", no "slice N", no
   "Known gap" section.
 - `dotnet build SemiStep.slnx` 0 warnings; full `dotnet test` green; `dotnet format` clean.
@@ -394,9 +394,9 @@ solution for any other leaf-property access; the build gate is the ground truth.
       - Mistype one AXAML path (`Fonts.HeaderSizeX`) → AVLN2000 build error. Revert.
       If the initializer miswire does NOT go red, the fixture or the round-trip is broken — re-open
       Task 2, do not paper over.
-- [x] Rewrite `Docs/architecture/grid-style-configuration.md` as current-state — strip ALL interim
+- [x] Rewrite `docs/architecture/grid-style-configuration.md` as current-state — strip ALL interim
       tenses; each item below is present in the doc today and must be individually resolved (verify none
-      is missed with `grep -n "slice\|interim\|Known gap\|with.*rebuild\|Validate" Docs/architecture/grid-style-configuration.md`
+      is missed with `grep -n "slice\|interim\|Known gap\|with.*rebuild\|Validate" docs/architecture/grid-style-configuration.md`
       returning only intentional survivors):
       - `**Interim (slice 4).**` paragraph (~lines 66–70): fold into the load-pipeline prose — typed
         `StyleColor`, mapper-resident aggregated validation described as the design, no slice numbers.
@@ -421,7 +421,7 @@ solution for any other leaf-property access; the build gate is the ground truth.
         `OptionalColor` format-checks every optional-section key (selection, changed cells, grid line,
         status bar, validation panel, chrome) when present; a hand-edited invalid hex in any key now
         fails the load with a per-key error.
-- [x] Update `Docs/plans/20260805-grid-style-debloat-roadmap.md` slice statuses: slices 3, 4, 5 → DONE
+- [x] Update `docs/plans/20260805-grid-style-debloat-roadmap.md` slice statuses: slices 3, 4, 5 → DONE
       (3: PR #177; 4: `grid-style-color-typing`; 5: this PR), and note #118 closes with slice 5.
 - [x] `dotnet build SemiStep.slnx` 0 warnings; full `dotnet test` green; `dotnet format`. One commit.
 

@@ -63,12 +63,12 @@ existing `ReportFailure(IResultBase)`/`ReportWarnings` seams are untouched.
 
 ## Task 2: Cover the seam + doc + verify
 
-**Files:** `ReasonLocalizerTests.cs`, a MessagePanel/report test home, `Docs/architecture/error-reporting.md`.
+**Files:** `ReasonLocalizerTests.cs`, a MessagePanel/report test home, `docs/architecture/error-reporting.md`.
 
 - [x] `ReasonLocalizerTests`: ru render case `new ConnectionLostError()` → the ru string (under `ResourcesCultureScope.Use("ru")`) + an en `Localize(sample).Should().Be(sample.Message)` pin (under its OWN `ResourcesCultureScope.Use("en")` — with `Resources.Culture` null the bare arm returns the ru satellite on this machine).
 - [x] **Seam unit cases** in `SemiStep/SemiStep.Tests/UI/ResultReportingExtensionsTests.cs` (the home of the existing `ReportFailure(result)` cases): `panel.ReportFailure(new ConnectionLostError())` under `ResourcesCultureScope.Use("ru")` puts the Russian text in the transient operation slot (Severity=Error); an untyped-fallthrough case `panel.ReportFailure((IError)new Error("x"))` reports `"x"` (an untyped error localizes to its `.Message`). If a panel-level end-to-end fits better, `MessagePanelReportingTests.cs` is the panel-transient home.
 - [x] fragment sweep: grep the Tests tree for `PLC connection lost` — confirm only the now-updated `RecipeCoordinatorTests` fault test references it, and it is culture-proof.
-- [x] `Docs/architecture/error-reporting.md`: document the transient single-error seam — `ReportFailure(IError)` is the single-error twin of `ReportFailure(IResultBase)`/`ReportWarnings`, localizing one transient error into the operation slot; note `OnPlcFault` now uses it and `ConnectionLostError` is the first typed PLC fault.
+- [x] `docs/architecture/error-reporting.md`: document the transient single-error seam — `ReportFailure(IError)` is the single-error twin of `ReportFailure(IResultBase)`/`ReportWarnings`, localizing one transient error into the operation slot; note `OnPlcFault` now uses it and `ConnectionLostError` is the first typed PLC fault.
 - [x] full `dotnet build SemiStep.slnx` 0 warnings; full `dotnet test` green; `dotnet format`.
 
 ## Post-Completion

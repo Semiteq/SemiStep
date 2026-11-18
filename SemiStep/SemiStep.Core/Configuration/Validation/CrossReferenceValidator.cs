@@ -104,7 +104,7 @@ internal static class CrossReferenceValidator
 		ValidateNoSharedColumnAcrossBranches(actions, actionsById, validationResults);
 	}
 
-	// Shared-column / OR-activation rule documented in Docs/architecture/nested-actions.md.
+	// Shared-column / OR-activation rule documented in docs/architecture/nested-actions.md.
 	private static void ValidateNoSharedColumnAcrossBranches(
 		List<ActionDto> actions,
 		Dictionary<int, ActionDto> actionsById,

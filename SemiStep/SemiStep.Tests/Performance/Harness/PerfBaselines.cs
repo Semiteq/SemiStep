@@ -14,22 +14,22 @@ public sealed class BaselineConfigException(string message) : Exception(message)
 {
 }
 
-// Loads Docs/perf/baselines.json and gates measured metrics against it; value/tolerance vs hand-set
-// budget: see Docs/perf/README.md, "Baseline vs budget split".
+// Loads docs/perf/baselines.json and gates measured metrics against it; value/tolerance vs hand-set
+// budget: see docs/perf/README.md, "Baseline vs budget split".
 public sealed class PerfBaselines
 {
 	// For a metric measured but absent from the committed file; budget stays null so the probe fails
 	// until a human sets it.
 	private const double DefaultTolerancePct = 20.0;
 
-	private const string BaselinesRelativePath = "Docs/perf/baselines.json";
+	private const string BaselinesRelativePath = "docs/perf/baselines.json";
 
 	// The exact commands a failing probe prints so re-baselining is copy-paste. The concrete <pid> path is
 	// printed by PerfActualsFixture on the failing run; the pattern here names where to look.
 	private const string CaptureAndCopyGuidance =
 		"To capture and promote a fresh baseline:\n"
 		+ "  1. dotnet run --project SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release -- -explicit only\n"
-		+ "  2. Copy-Item \"$env:TEMP\\semistep-perf-actuals-<pid>.json\" \"Docs/perf/baselines.json\"\n"
+		+ "  2. Copy-Item \"$env:TEMP\\semistep-perf-actuals-<pid>.json\" \"docs/perf/baselines.json\"\n"
 		+ "     (the failing run prints the concrete <pid> actuals path)";
 
 	private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -71,7 +71,7 @@ public sealed class PerfBaselines
 			{
 				throw new BaselineConfigException(
 					$"Metric '{name}' has budget {Format(budget)} below its baseline value {Format(dto.Value)}. "
-					+ "A budget is the absolute cap and must be >= value; fix Docs/perf/baselines.json by hand.");
+					+ "A budget is the absolute cap and must be >= value; fix docs/perf/baselines.json by hand.");
 			}
 
 			metrics[name] = new Metric(dto.Value, dto.TolerancePct, dto.Budget);
@@ -86,7 +86,7 @@ public sealed class PerfBaselines
 		{
 			return new BaselineComparison(
 				false,
-				$"Metric '{metricName}' is not present in Docs/perf/baselines.json. {CaptureAndCopyGuidance}");
+				$"Metric '{metricName}' is not present in docs/perf/baselines.json. {CaptureAndCopyGuidance}");
 		}
 
 		if (metric.Budget is not double budget)
@@ -94,7 +94,7 @@ public sealed class PerfBaselines
 			return new BaselineComparison(
 				false,
 				$"Metric '{metricName}' has no budget set (baseline value {Format(metric.Value)}). "
-				+ "You must set the budget by hand in Docs/perf/baselines.json: round up generously from the "
+				+ "You must set the budget by hand in docs/perf/baselines.json: round up generously from the "
 				+ "value (~1.5-2x) or derive it from an acceptance criterion.");
 		}
 

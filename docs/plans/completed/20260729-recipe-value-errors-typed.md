@@ -122,13 +122,13 @@ The ru column is a starting translation — review it in Rider before exec and c
 **Files:**
 - Modify: `SemiStep/SemiStep.Tests/UI/Localization/ReasonLocalizerTests.cs` (representative ru/en render cases).
 - Modify: `SemiStep/SemiStep.Tests/Domain/Unit/ImportedRecipeValidatorTests.cs` and/or `MessagePanelReportingTests.cs` (both-path end-to-end).
-- Modify: `Docs/architecture/error-reporting.md`.
+- Modify: `docs/architecture/error-reporting.md`.
 
 - [x] ru render cases in `ReasonLocalizerTests` for a representative subset spanning both batches (e.g. `ValueAboveMaximumError`, `StringTooLongError`, `ColumnNotFoundError`, `ValueNotInGroupError`) + one en case pinning `Localize(sample).Should().Be(sample.Message)` per the 4a convention (the coverage test already forces a case for ALL 13; these pin exact wording for the representative few).
 - [x] **Import path (decorated):** an `ImportedRecipeValidator` gate failure whose inner is a typed value error renders, under `ru`, as `AtStep`→`AtColumn`→localized-inner (e.g. Russian position + Russian range message). Extends the slice-3 end-to-end.
 - [x] **Interactive-edit path (undecorated):** a `RecipeSession.UpdateStepProperty` value failure surfaced through the panel renders the typed error localized under `ru` (standalone, no decorator).
 - [x] **Gate fragment-preservation sweep:** grep the Tests tree for the old English fragments (`is below minimum`, `not found`, `is not a valid member`, `Expected int value`, etc.); any assertion reading a raw `.Message` stays as-is (English-preserving); any assertion reading a LOCALIZED panel entry under ambient culture on this ru machine must be culture-scoped (`ResourcesCultureScope.Use("en")`) or switched to a type assertion — same rule as 4a (localized-panel → scope/type; raw `.Message` → leave).
-- [x] `Docs/architecture/error-reporting.md`: note that the recipe value producers (`PropertyValidator`, `RecipeMetadataRegistry`) now localize by type on both the decorated import path and the undecorated interactive-edit path.
+- [x] `docs/architecture/error-reporting.md`: note that the recipe value producers (`PropertyValidator`, `RecipeMetadataRegistry`) now localize by type on both the decorated import path and the undecorated interactive-edit path.
 - [x] full `dotnet build SemiStep.slnx` 0 warnings; full `dotnet test` green; `dotnet format`.
 
 ## Post-Completion

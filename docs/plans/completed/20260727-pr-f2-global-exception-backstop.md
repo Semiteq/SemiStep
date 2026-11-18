@@ -106,7 +106,7 @@ Mark `[x]` on completion; `➕` new tasks; `⚠️` blockers.
 ### Task 4: Verify + document
 
 **Files:**
-- Modify: `Docs/architecture/error-reporting.md`
+- Modify: `docs/architecture/error-reporting.md`
 
 - [x] full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — 1478 passed, 0 failed, 0 skipped (Performance probes are `Explicit`, not run)
 - [x] `dotnet build SemiStep.slnx` — 0 warnings, 0 errors

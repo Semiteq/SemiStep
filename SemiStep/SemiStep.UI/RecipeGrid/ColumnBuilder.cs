@@ -19,7 +19,7 @@ public sealed class ColumnBuilder(
 
 	// Assigned as the column's HeaderTemplate, not as a DataGridColumnHeader ContentTemplate setter:
 	// the header binds ContentTemplate from HeaderTemplate, so a style setter is overridden and the
-	// header would not wrap. See Docs/architecture/recipe-grid-column-sizing.md.
+	// header would not wrap. See docs/architecture/recipe-grid-column-sizing.md.
 	private readonly IDataTemplate _wrappingHeaderTemplate = BuildWrappingHeaderTemplate(gridStyle);
 
 	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(recipeMetadataRegistry, gridStyle);
@@ -100,7 +100,7 @@ public sealed class ColumnBuilder(
 		}
 		column.CellTheme = InapplicableCellTheme.Create(columnDef.Key);
 		// Pin absolute columns to their content width so a narrow window scrolls instead of clipping
-		// (the DataGrid otherwise shrinks columns to MinWidth). See Docs/architecture/recipe-grid-column-sizing.md.
+		// (the DataGrid otherwise shrinks columns to MinWidth). See docs/architecture/recipe-grid-column-sizing.md.
 		column.MinWidth = width.IsAbsolute ? width.Value : _widthCalculator.MinColumnWidth;
 		column.HeaderTemplate = _wrappingHeaderTemplate;
 

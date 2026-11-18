@@ -2,7 +2,7 @@
 
 // Single source of truth for every baseline metric name the probes report. Both the probes and the
 // always-on drift guard reference these constants, and the drift guard asserts this set equals the metric
-// keys in Docs/perf/baselines.json. That closes the silent-downgrade hole: renaming a metric here (without
+// keys in docs/perf/baselines.json. That closes the silent-downgrade hole: renaming a metric here (without
 // re-capturing the baseline) or dropping an entry from the committed file fails the normal suite instead of
 // quietly turning that gate into a record-only no-op.
 internal static class PerfMetricNames

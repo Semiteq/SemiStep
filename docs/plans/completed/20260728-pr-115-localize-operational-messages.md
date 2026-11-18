@@ -147,7 +147,7 @@ Mark `[x]` on completion; `➕` new tasks; `⚠️` blockers.
 ### Task 4: Verify + document
 
 **Files:**
-- Modify: `Docs/architecture/ui-localization.md` (the existing localization doc)
+- Modify: `docs/architecture/ui-localization.md` (the existing localization doc)
 
 - [x] full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — 1557 passed, 0 failed.
 - [x] `dotnet build SemiStep.slnx` — 0 warnings, 0 errors.

@@ -7,7 +7,7 @@ namespace SemiStep.UI.RecipeGrid;
 /// and subscribed to the coordinator, but only the originating surface's edit handlers adjust
 /// applicability and the changed-cell set; this helper derives the same adjustments from the
 /// old-vs-new step delta so the sibling surface's row stays in sync (see
-/// Docs/architecture/cell-change-highlight.md):
+/// docs/architecture/cell-change-highlight.md):
 /// a value change is a successful edit of that cell (clears its changed flag), an added key is
 /// a selector-seeded column (marks it changed), a removed key is a selector-dropped column
 /// (unmarks it), and any selector change shifts which columns are applicable.

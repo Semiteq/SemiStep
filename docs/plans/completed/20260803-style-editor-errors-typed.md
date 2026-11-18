@@ -118,13 +118,13 @@ a log line instead of the headline.
 
 ## Task 3: Cross-path tests + doc + verify
 
-**Files:** `ReasonLocalizerTests.cs`, the style-editor test home (`GridStyleEditorViewModelTests` / `GridStyleEditorFacadeTests`), `Docs/architecture/error-reporting.md` (and `grid-style-configuration.md` if it documents the error strings).
+**Files:** `ReasonLocalizerTests.cs`, the style-editor test home (`GridStyleEditorViewModelTests` / `GridStyleEditorFacadeTests`), `docs/architecture/error-reporting.md` (and `grid-style-configuration.md` if it documents the error strings).
 
 - [x] ru/en render cases for all 8 types (the field-carrying ones with representative args — `GridStyleHexColorInvalidError("colors.cells", "depth_0", "zzz")` → the composed ru; `GridStyleOrientationInvalidError` → the two expected values) + the en `Localize == .Message` pins (Rule-B ones: `Localize == base headline`, sans exception).
 - [x] **End-to-end payoff:** drive the editor's `LoadAsync`/`Save` with a malformed `grid_style.yaml` (or a facade result carrying a typed validation error) and assert the `ErrorMessage` renders Russian under `ru` — e.g. an invalid hex color surfaces `Недопустимый цвет в «…»: «zzz»…`. Read the existing `GridStyleEditorViewModelTests` fixture for the load/save harness (overlay a bad file per the invalid-config overlay pattern in CLAUDE.md).
 - [x] **CausedBy preservation:** a `GridStyleLoadFailedError`/`GridStyleSaveFailedError` retains its exception on `.Reasons` (the `ExceptionalError` from `CausedBy`) — assert the load/save-failed path carries the original exception.
 - [x] fragment sweep across the Tests tree for all Task 1/2 fragments; confirm only the flagged sites changed; report what moved.
-- [x] `Docs/architecture/error-reporting.md`: the style-editor error surface now localizes by type (validation + file I/O); note the two Rule-B envelopes (`CausedBy(ex)` + log, headline localizes) and that the **startup** config-load boundary remains the sole English-by-design surface (the editor surface no longer is). Update the "still free-text"/producer list.
+- [x] `docs/architecture/error-reporting.md`: the style-editor error surface now localizes by type (validation + file I/O); note the two Rule-B envelopes (`CausedBy(ex)` + log, headline localizes) and that the **startup** config-load boundary remains the sole English-by-design surface (the editor surface no longer is). Update the "still free-text"/producer list.
 - [x] full `dotnet build SemiStep.slnx` 0 warnings; full `dotnet test` green; `dotnet format`.
 
 ## Post-Completion

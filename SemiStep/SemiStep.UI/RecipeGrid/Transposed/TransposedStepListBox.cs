@@ -8,7 +8,7 @@ namespace SemiStep.UI.RecipeGrid.Transposed;
 ///
 /// Version-coupled to Avalonia 12.0.5: the overrides depend on the framework's <c>SetIfUnset</c> /
 /// <c>ValueStore.IsSet</c> semantics and the exact <c>ClearContainerForItemOverride</c> clearing set.
-/// Re-verify them on a framework upgrade. See <c>Docs/architecture/recipe-grid-surface.md</c> for the
+/// Re-verify them on a framework upgrade. See <c>docs/architecture/recipe-grid-surface.md</c> for the
 /// full mechanism.
 /// </summary>
 public sealed class TransposedStepListBox : ListBox

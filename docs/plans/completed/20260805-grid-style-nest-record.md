@@ -116,7 +116,7 @@ No source change — verification + doc only.
   - **Seed-populates** — delete a `Seed` line (a nullable numeric or an italic) → red. Revert.
   - **Save→load** — delete a `GridStyleDtoMapper` line (nullable object-initializer → compiles, drifts through the fallback) → `SaveThenLoad_DistinctFixture` red. Revert.
   - Record all three results in the progress log. If the perturbation cross-wire does NOT go red, the leaf walk is wrong — that's a Task-1 defect to fix (re-open Task 1), not something to paper over.
-- [x] Interim doc note in `Docs/architecture/grid-style-configuration.md`: the record is now nested per group (full rewrite is slice 5); YAML/DTO/validator unchanged. **Note for slice 4:** the error-path key `colors.grid_line` and the record path `Chrome.GridLine` deliberately diverge — slice 4's mapper-resident validation must keep emitting the `colors.grid_line` key, not rename it.
+- [x] Interim doc note in `docs/architecture/grid-style-configuration.md`: the record is now nested per group (full rewrite is slice 5); YAML/DTO/validator unchanged. **Note for slice 4:** the error-path key `colors.grid_line` and the record path `Chrome.GridLine` deliberately diverge — slice 4's mapper-resident validation must keep emitting the `colors.grid_line` key, not rename it.
 - [x] `dotnet build SemiStep.slnx` 0 warnings; full `dotnet test` green (incl. screenshot tests); `dotnet format`. (screenshot project pre-existing-broken at HEAD, excluded from slnx)
 
 ## Post-Completion

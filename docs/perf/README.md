@@ -14,7 +14,9 @@ this directory.
 ## Canonical commands
 
 The measurement facts are xunit v3 **explicit tests** (`Explicit = true`). A plain `dotnet test`
-never runs them; they run only when the test executable is invoked with `-explicit only`. An
+never runs them; they run only when the test executable is invoked with `-explicit only`.
+`SemiStep.Tests/xunit.runner.json` sets `failSkips`, so a test marked `Skip` fails the run, while
+an explicit test left out of a plain run counts as not run and fails nothing. An
 xunit v3 test project IS an executable, so `dotnet run` launches it and forwards the runner flags
 after `--`. The command is identical in PowerShell, bash, and CI:
 

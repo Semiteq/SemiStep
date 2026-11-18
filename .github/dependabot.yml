@@ -14,7 +14,6 @@ updates:
     schedule:
       interval: "monthly"
     groups:
-      "NuGet production updates":
-        dependency-type: "production"
-      "NuGet development updates":
-        dependency-type: "development"
+      "NuGet updates":
+        patterns:
+          - "*"

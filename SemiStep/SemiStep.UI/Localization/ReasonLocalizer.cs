@@ -103,8 +103,8 @@ public static class ReasonLocalizer
 				Resources.ErrorMaxLoopNestingDepthExceeded, error.MaxAllowed, error.ActualDepth),
 			IterationCountUnsupportedTypeError error => Format(
 				Resources.ErrorIterationCountUnsupportedType, error.Type, error.ActionKey),
-			UnmatchedEndForWarning warning => Format(Resources.WarningUnmatchedEndFor, warning.StepIndex),
-			UnclosedForLoopWarning warning => Format(Resources.WarningUnclosedForLoop, warning.StartIndex),
+			UnmatchedEndForWarning warning => Format(Resources.WarningUnmatchedEndFor, warning.StepNumber),
+			UnclosedForLoopWarning warning => Format(Resources.WarningUnclosedForLoop, warning.StepNumber),
 			RowCountMismatchWarning warning => Format(
 				Resources.WarningRowCountMismatch, warning.FilePath, warning.MetadataRows, warning.ActualRows),
 			_ => null

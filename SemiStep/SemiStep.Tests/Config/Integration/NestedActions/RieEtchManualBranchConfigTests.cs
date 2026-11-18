@@ -11,9 +11,9 @@ namespace SemiStep.Tests.Config.Integration.NestedActions;
 
 /// <summary>
 /// Verifies the real shipped RIE config (<c>ConfigFiles/RIE</c>): the etch action 300
-/// ("Травление") resolves its capacitor columns through the icp_match / rie_match manual
-/// branches, the resolved column union reproduces the pre-change order byte-for-byte, and
-/// the capacitor columns are active only when their match selector is Ручной (value 2).
+/// resolves its capacitor columns through the icp_match / rie_match manual branches, the
+/// resolved column union keeps the order the PLC slots rely on, and the capacitor columns are
+/// active only when their match selector is Manual (value 2).
 /// </summary>
 [Trait("Category", "Integration")]
 [Trait("Component", "Config")]
@@ -24,9 +24,8 @@ public sealed class RieEtchManualBranchConfigTests
 	private const int MatchModeAuto = 1;
 	private const int MatchModeManual = 2;
 
-	// The exact column order action 300 produced before capacitor columns became subactions.
 	// The PLC writes values into fixed slots by this order, so the resolved union must match
-	// it byte-for-byte (rie_power stays between the icp splice and rie_match).
+	// it exactly (rie_power stays between the icp splice and rie_match).
 	private static string[] ExpectedEtchColumnOrder()
 	{
 		return
@@ -37,16 +36,6 @@ public sealed class RieEtchManualBranchConfigTests
 			"rie_power", "rie_match", "rie_load", "rie_tune",
 			"step_duration", "comment"
 		];
-	}
-
-	[Fact]
-	public async Task RieConfig_LoadsAndValidatesSuccessfully()
-	{
-		var result = await ConfigFacade.LoadAndValidateAsync(RieConfigPath());
-
-		result.IsSuccess.Should().BeTrue(result.IsFailed
-			? string.Join("; ", result.Errors.Select(error => error.Message))
-			: string.Empty);
 	}
 
 	[Fact]

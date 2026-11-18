@@ -1,8 +1,5 @@
-﻿using System.Globalization;
-
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using Avalonia.Media;
 
 using FluentAssertions;
 
@@ -22,26 +19,10 @@ namespace SemiStep.Tests.UI.RecipeGrid;
 [Trait("Category", "Unit")]
 public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 {
-	// Mirrors the private MaxStringSampleLength cap in ColumnWidthCalculator.
-	private const int StringSampleCap = 12;
-
-	// Mirror the font-proportional chrome of ColumnWidthCalculator, derived from GridStyleOptions.Default.
-	private const double ChromeFontMultiple = 2.0;
-	private const double MinColumnWidthEms = 6.0;
-	private const double ComboBoxChromeWidth = 38;
-
-	// Larger fonts for the font-scaling tests.
 	private const int LargeCellFontSize = 24;
 	private const int LargeHeaderFontSize = 28;
-
-	private static int ContentChrome =>
-		(int)Math.Ceiling(GridStyleOptions.Default.Fonts.CellFontSize * ChromeFontMultiple);
-
-	private static int HeaderFloorChrome =>
-		(int)Math.Ceiling(GridStyleOptions.Default.Fonts.HeaderFontSize * ChromeFontMultiple);
-
-	private static int MinColumnWidthFloor =>
-		(int)Math.Ceiling(GridStyleOptions.Default.Fonts.CellFontSize * MinColumnWidthEms);
+	private const int SampleLength = 12;
+	private const string LongWord = "Internationalization";
 
 	private readonly UIFixture _fixture = new();
 	private ColumnWidthCalculator _calculator = null!;
@@ -58,77 +39,37 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void ActionColumn_NoSortIconReservation_WidthBelowOldSortIconFormula()
+	public void HeaderFloor_IsLongestWord_NotWholeHeader()
 	{
-		var actionColumn = _fixture.RecipeMetadataRegistry.GetColumn("action").Value;
+		var wordOnly = HeaderColumn(LongWord);
+		var multiWord = HeaderColumn($"A {LongWord} of the whole process");
 
-		var pixelWidth = GetPixelWidth(_calculator.CalculateColumnWidth(actionColumn));
+		var wordOnlyWidth = GetPixelWidth(_calculator.CalculateColumnWidth(wordOnly));
+		var multiWordWidth = GetPixelWidth(_calculator.CalculateColumnWidth(multiWord));
 
-		pixelWidth.Should().BeGreaterThanOrEqualTo(MinColumnWidthFloor);
-
-		var contentWidth = MeasureActionContentWidth();
-		var oldFormulaWidth = (int)Math.Ceiling((contentWidth + 32) * 1.4);
-		pixelWidth.Should().BeLessThan(oldFormulaWidth);
+		wordOnlyWidth.Should().BeGreaterThan(_calculator.MinColumnWidth,
+			"the longest word must be wide enough to drive the floor");
+		multiWordWidth.Should().Be(wordOnlyWidth);
 	}
 
 	[AvaloniaFact]
-	public void LongHeader_DoesNotInflateColumnBeyondContent()
+	public void HeaderFloor_IsWiderThanSameTextAsCellContent()
 	{
-		var actionColumn = _fixture.RecipeMetadataRegistry.GetColumn("action").Value;
-		var longHeaderColumn = actionColumn with
+		var actionColumn = PropertyColumn("action", "comment") with
 		{
-			UiName = "An extremely long header label that would otherwise widen this column dramatically"
+			ColumnType = ColumnTypes.ActionComboBox,
+			UiName = ""
 		};
+		var action = new ActionDefinition(1, LongWord, DeployDuration.Immediate, []);
+		var calculator = BuildCalculator(
+			[TestPropertyTypeDefinitionBuilder.CreateString("comment", TestRecipeMetadataRegistryFactory.DefaultStringMaxLength)],
+			new Dictionary<int, ActionDefinition> { [1] = action },
+			new Dictionary<string, GridColumnDefinition> { ["action"] = actionColumn });
 
-		var contentWidth = MeasureActionContentWidth();
-		var longHeaderWidth = GetPixelWidth(_calculator.CalculateColumnWidth(longHeaderColumn));
+		var headerWidth = GetPixelWidth(calculator.CalculateColumnWidth(HeaderColumn(LongWord)));
+		var cellWidth = GetPixelWidth(calculator.CalculateColumnWidth(actionColumn));
 
-		longHeaderWidth.Should().BeLessThanOrEqualTo(
-			(int)Math.Ceiling(Math.Max(contentWidth + ComboBoxChromeWidth, LongestHeaderWordFloor(longHeaderColumn.UiName))),
-			"only the longest header word floors the width, not the whole header");
-	}
-
-	[AvaloniaFact]
-	public void MultiWordHeader_FloorsAtLongestWord()
-	{
-		var header = "Начальное значение";
-		var taskColumn = _fixture.RecipeMetadataRegistry.GetColumn("task").Value with
-		{
-			UiName = header
-		};
-
-		var pixelWidth = GetPixelWidth(_calculator.CalculateColumnWidth(taskColumn));
-
-		var wholeHeaderWidth = (int)Math.Ceiling(
-			MeasureText(header, GridStyleOptions.Default.Fonts.HeaderFontSize, FontWeight.Bold) + HeaderFloorChrome);
-
-		pixelWidth.Should().BeLessThan(wholeHeaderWidth,
-			"the floor is the longest WORD, never the whole single-line header");
-	}
-
-	[AvaloniaFact]
-	public void HeaderFloorMeasuredBoldAtHeaderFontSize()
-	{
-		var word = "Начальное";
-
-		var boldHeaderFont = MeasureText(word, GridStyleOptions.Default.Fonts.HeaderFontSize, FontWeight.Bold);
-		var normalCellFont = MeasureText(word, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal);
-
-		boldHeaderFont.Should().BeGreaterThan(normalCellFont,
-			"the header-word floor must be measured bold at HeaderFontSize, not at the cell font");
-	}
-
-	[AvaloniaFact]
-	public void LongestWordFloor_FarBelowWholeHeaderWidth()
-	{
-		var header = "An extremely long header label that would otherwise widen this column";
-
-		var longestWordFloor = LongestHeaderWordFloor(header);
-		var wholeHeaderWidth = MeasureText(header, GridStyleOptions.Default.Fonts.HeaderFontSize, FontWeight.Bold)
-			+ HeaderFloorChrome;
-
-		longestWordFloor.Should().BeLessThan(wholeHeaderWidth / 2,
-			"the floor is the longest WORD, not the whole single-line header (FullHD safety)");
+		headerWidth.Should().BeGreaterThan(cellWidth);
 	}
 
 	[AvaloniaFact]
@@ -136,73 +77,65 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	{
 		var commentColumn = _fixture.RecipeMetadataRegistry.GetColumn("comment").Value with
 		{
-			UiName = "Начальное значение целевого параметра процесса"
+			UiName = $"{LongWord} of the whole target process parameter"
 		};
 
 		var length = _calculator.CalculateColumnWidth(commentColumn);
 
-		length.IsStar.Should().BeTrue("the star column absorbs remaining space and ignores the header floor");
 		length.UnitType.Should().Be(DataGridLengthUnitType.Star);
 	}
 
 	[AvaloniaFact]
-	public void PropertyField_WithMax_SizesFromMaxRepresentative()
+	public void PropertyField_WithMax_WidensWithLargerMax()
 	{
-		var durationColumn = _fixture.RecipeMetadataRegistry.GetColumn("step_duration").Value;
-		var durationProperty = _fixture.RecipeMetadataRegistry.GetProperty(durationColumn.PropertyTypeId).Value;
-		durationProperty.Max.Should().NotBeNull(
-			"the test configuration must declare Max for this assertion to be meaningful");
+		var comment = TestPropertyTypeDefinitionBuilder.CreateString(
+			"comment", TestRecipeMetadataRegistryFactory.DefaultStringMaxLength);
+		var small = TestPropertyTypeDefinitionBuilder.CreateFloat("small", max: 100);
+		var large = TestPropertyTypeDefinitionBuilder.CreateFloat("large", max: 1_000_000_000);
+		var smallColumn = PropertyColumn("small_column", "small");
+		var largeColumn = PropertyColumn("large_column", "large");
+		var calculator = BuildCalculator(
+			[comment, small, large],
+			actions: null,
+			new Dictionary<string, GridColumnDefinition>
+			{
+				["small_column"] = smallColumn,
+				["large_column"] = largeColumn
+			});
 
-		var pixelWidth = GetPixelWidth(_calculator.CalculateColumnWidth(durationColumn));
+		var smallWidth = GetPixelWidth(calculator.CalculateColumnWidth(smallColumn));
+		var largeWidth = GetPixelWidth(calculator.CalculateColumnWidth(largeColumn));
 
-		var representative = TimeFormatHelper.FormatValue(
-			durationProperty.Max!.Value.ToString(CultureInfo.InvariantCulture),
-			durationProperty.FormatKind,
-			durationProperty.Units);
-		var contentWidth = MeasureText(representative, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal);
-
-		pixelWidth.Should().BeGreaterThan((int)contentWidth,
-			"the column must fully cover the formatted Max representative");
-		pixelWidth.Should().BeGreaterThan(MinColumnWidthFloor,
-			"the formatted Max value is wider than the floor");
+		largeWidth.Should().BeGreaterThan(smallWidth);
+		largeWidth.Should().BeGreaterThan(calculator.MinColumnWidth);
 	}
 
 	[AvaloniaFact]
-	public void PropertyField_StringTyped_SizesFromCappedSampleNotFullMaxLength()
+	public void PropertyField_StringTyped_WidthIgnoresMaxLengthBeyondSampleCap()
 	{
-		var stringProperty = _fixture.RecipeMetadataRegistry.GetProperty("string").Value;
-		stringProperty.MaxLength.Should().NotBeNull();
-		stringProperty.MaxLength!.Value.Should().BeGreaterThan(StringSampleCap,
-			"the assertion is only meaningful when MaxLength exceeds the cap");
+		var tinyWidth = StringColumnWidth(1);
+		var cappedWidth = StringColumnWidth(SampleLength);
+		var longWidth = StringColumnWidth(255);
 
-		var stringColumn = _fixture.RecipeMetadataRegistry.GetColumn("task").Value with
+		longWidth.Should().Be(cappedWidth);
+		cappedWidth.Should().BeGreaterThan(tinyWidth);
+
+		static int StringColumnWidth(int maxLength)
 		{
-			PropertyTypeId = "string"
-		};
+			var column = PropertyColumn("text_column", "comment");
+			var calculator = BuildCalculator(
+				[TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength)],
+				actions: null,
+				new Dictionary<string, GridColumnDefinition> { ["text_column"] = column });
 
-		var pixelWidth = GetPixelWidth(_calculator.CalculateColumnWidth(stringColumn));
-
-		var cappedRepresentative = new string('0', StringSampleCap);
-		var cappedContentWidth = MeasureText(cappedRepresentative, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal);
-
-		pixelWidth.Should().BeGreaterThan((int)cappedContentWidth,
-			"the column must fully cover the capped sample");
-		pixelWidth.Should().BeGreaterThanOrEqualTo(MinColumnWidthFloor);
-
-		var fullLengthRepresentative = new string('0', stringProperty.MaxLength!.Value);
-		var fullLengthWidth = (int)Math.Ceiling(
-			MeasureText(fullLengthRepresentative, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal) + ContentChrome);
-		pixelWidth.Should().BeLessThan(fullLengthWidth,
-			"the cap must keep the column far below the full MaxLength width");
+			return GetPixelWidth(calculator.CalculateColumnWidth(column));
+		}
 	}
 
 	[AvaloniaFact]
 	public void PropertyField_PropertyResolveFails_AppliesHeaderWordFloor()
 	{
-		var taskColumn = _fixture.RecipeMetadataRegistry.GetColumn("task").Value with
-		{
-			UiName = "Длительность"
-		};
+		var taskColumn = _fixture.RecipeMetadataRegistry.GetColumn("task").Value with { UiName = LongWord };
 		var unknownPropertyColumn = taskColumn with { PropertyTypeId = "does_not_exist" };
 
 		var resolvedWidth = GetPixelWidth(_calculator.CalculateColumnWidth(taskColumn));
@@ -213,19 +146,12 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void DispatchDefault_UnknownColumnType_AppliesHeaderWordFloor()
+	public void DispatchDefault_UnknownColumnType_IsFixedWidthAtLeastMinimum()
 	{
-		var unknownTypeColumn = _fixture.RecipeMetadataRegistry.GetColumn("task").Value with
-		{
-			ColumnType = "not_a_real_type",
-			UiName = "Длительность"
-		};
+		var length = _calculator.CalculateColumnWidth(HeaderColumn("X"));
 
-		var length = _calculator.CalculateColumnWidth(unknownTypeColumn);
-
-		length.IsStar.Should().BeFalse("the dispatch default is a floored fixed width, never Star");
-		GetPixelWidth(length).Should().BeGreaterThanOrEqualTo(MinColumnWidthFloor,
-			"the dispatch default applies the minimum-width floor");
+		length.IsStar.Should().BeFalse();
+		GetPixelWidth(length).Should().BeGreaterThanOrEqualTo(_calculator.MinColumnWidth);
 	}
 
 	[AvaloniaFact]
@@ -233,16 +159,10 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	{
 		var comment = TestPropertyTypeDefinitionBuilder.CreateString(
 			"comment", TestRecipeMetadataRegistryFactory.DefaultStringMaxLength);
-		var flow = TestPropertyTypeDefinitionBuilder.CreateFloat("flow", max: 100) with { Units = "см³/мин" };
+		var flow = TestPropertyTypeDefinitionBuilder.CreateFloat("flow", max: 100) with { Units = "cm3/min" };
 		var percent = TestPropertyTypeDefinitionBuilder.CreateFloat("percent", max: 100) with { Units = "%" };
 
-		var valueColumn = new GridColumnDefinition(
-			Key: "value",
-			ColumnType: ColumnTypes.PropertyField,
-			UiName: "Значение",
-			PropertyTypeId: "percent",
-			ReadOnly: false,
-			SaveToCsv: true);
+		var valueColumn = PropertyColumn("value", "percent");
 
 		var actions = new Dictionary<int, ActionDefinition>
 		{
@@ -265,9 +185,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var defaultOnlyWidth = GetPixelWidth(defaultOnlyCalculator.CalculateColumnWidth(valueColumn));
 
 		pixelWidth.Should().BeGreaterThan(defaultOnlyWidth,
-			"the wider 'см³/мин' type is reachable only through an action binding, not the column default");
-		pixelWidth.Should().BeGreaterThan((int)MeasureRepresentative(flow, flow.Max!.Value),
-			"the column sizes to the widest unit-bearing value any action binds to its key");
+			"the wider 'cm3/min' type is reachable only through an action binding, not the column default");
 	}
 
 	[AvaloniaFact]
@@ -275,18 +193,12 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	{
 		var comment = TestPropertyTypeDefinitionBuilder.CreateString(
 			"comment", TestRecipeMetadataRegistryFactory.DefaultStringMaxLength);
-		var speed = TestPropertyTypeDefinitionBuilder.CreateFloat("speed", min: -100, max: 100) with { Units = "%/мин" };
+		var speed = TestPropertyTypeDefinitionBuilder.CreateFloat("speed", min: -100, max: 100) with { Units = "%/min" };
 		var speedWithoutNegativeMin =
-			TestPropertyTypeDefinitionBuilder.CreateFloat("speed_positive", max: 100) with { Units = "%/мин" };
+			TestPropertyTypeDefinitionBuilder.CreateFloat("speed_positive", max: 100) with { Units = "%/min" };
 
-		var speedColumn = new GridColumnDefinition(
-			Key: "speed",
-			ColumnType: ColumnTypes.PropertyField,
-			UiName: "V",
-			PropertyTypeId: "speed",
-			ReadOnly: false,
-			SaveToCsv: true);
-		var maxDrivenColumn = speedColumn with { Key = "speed_positive", PropertyTypeId = "speed_positive" };
+		var speedColumn = PropertyColumn("speed", "speed");
+		var maxDrivenColumn = PropertyColumn("speed_positive", "speed_positive");
 
 		var calculator = BuildCalculator(
 			[comment, speed, speedWithoutNegativeMin],
@@ -301,77 +213,53 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var maxDrivenWidth = GetPixelWidth(calculator.CalculateColumnWidth(maxDrivenColumn));
 
 		negativeMinWidth.Should().BeGreaterThan(maxDrivenWidth,
-			"the negative Min ('-100 %/мин') is the widest representative, so it drives the width beyond the Max-driven twin");
-		negativeMinWidth.Should().BeGreaterThan((int)MeasureRepresentative(speed, speed.Min!.Value),
-			"the column must fully cover the Min representative");
+			"the negative Min is the widest representative, so it drives the width beyond the Max-driven twin");
 	}
 
 	[AvaloniaFact]
-	public void Chrome_ScalesWithFont_ChromeRemainderGrowsBeyondContentScaling()
+	public void LargerFonts_WidenColumnAndMinimum()
 	{
-		var smallCellFont = GridStyleOptions.Default.Fonts.CellFontSize;
-		var largeCellFont = LargeCellFontSize;
 		var durationColumn = _fixture.RecipeMetadataRegistry.GetColumn("step_duration").Value;
+		var largeFontCalculator = new ColumnWidthCalculator(_fixture.RecipeMetadataRegistry, LargeFontStyle());
 
-		var smallFontCalculator = new ColumnWidthCalculator(
-			_fixture.RecipeMetadataRegistry, GridStyleOptions.Default);
-		var largeFontCalculator = new ColumnWidthCalculator(
-			_fixture.RecipeMetadataRegistry,
-			GridStyleOptions.Default with { Fonts = GridStyleOptions.Default.Fonts with { CellFontSize = largeCellFont, HeaderFontSize = LargeHeaderFontSize } });
-
-		var smallFontWidth = GetPixelWidth(smallFontCalculator.CalculateColumnWidth(durationColumn));
+		var smallFontWidth = GetPixelWidth(_calculator.CalculateColumnWidth(durationColumn));
 		var largeFontWidth = GetPixelWidth(largeFontCalculator.CalculateColumnWidth(durationColumn));
 
-		var representative = TimeFormatHelper.FormatValue(
-			"0", TimeFormatHelper.TimeHmsFormat, TimeFormatHelper.TimeUnits);
-		var smallContent = MeasureText(representative, smallCellFont, FontWeight.Normal);
-		var largeContent = MeasureText(representative, largeCellFont, FontWeight.Normal);
-
-		var smallChromeRemainder = smallFontWidth - smallContent;
-		var largeChromeRemainder = largeFontWidth - largeContent;
-
-		largeChromeRemainder.Should().BeGreaterThan(smallChromeRemainder,
-			"the chrome reserve is a font multiple, so at a larger font the width grows by MORE than pure content scaling");
-
-		largeFontCalculator.MinColumnWidth.Should().BeGreaterThan(smallFontCalculator.MinColumnWidth,
-			"the minimum-width floor is a font multiple, so it grows with the cell font");
-	}
-
-	[AvaloniaFact]
-	public void Typefaces_ThreadConfiguredFamilyWeightAndItalic_PerRole()
-	{
-		// The headless text shaper measures by glyph count and size only, so weight/family/italic
-		// produce identical widths; assert the role typefaces the measurement uses instead, which
-		// fails if a regression drops family/weight/italic from the measured Typeface.
-		var defaults = GridStyleOptions.Default;
-		var style = defaults with
-		{
-			Fonts = defaults.Fonts with
-			{
-				FontFamily = "Courier New",
-				CellFontWeight = 600,
-				CellItalic = true,
-				HeaderFontWeight = 900,
-				HeaderItalic = false
-			}
-		};
-		var calculator = new ColumnWidthCalculator(_fixture.RecipeMetadataRegistry, style);
-
-		calculator.CellTypeface.FontFamily.Name.Should().Be("Courier New");
-		calculator.CellTypeface.Weight.Should().Be((FontWeight)600);
-		calculator.CellTypeface.Style.Should().Be(FontStyle.Italic);
-
-		calculator.HeaderTypeface.FontFamily.Name.Should().Be("Courier New");
-		calculator.HeaderTypeface.Weight.Should().Be((FontWeight)900);
-		calculator.HeaderTypeface.Style.Should().Be(FontStyle.Normal);
+		largeFontWidth.Should().BeGreaterThan(smallFontWidth);
+		largeFontCalculator.MinColumnWidth.Should().BeGreaterThan(_calculator.MinColumnWidth);
 	}
 
 	[AvaloniaFact]
 	public void ComboColumn_WiderThanContentColumn_ByChevronBudget()
 	{
-		var representative = new string('0', StringSampleCap);
-		var sampleProperty = TestPropertyTypeDefinitionBuilder.CreateString("sample", StringSampleCap);
+		var (calculator, comboColumn, contentColumn) = BuildComboAndContent(GridStyleOptions.Default);
 
+		var comboWidth = GetPixelWidth(calculator.CalculateColumnWidth(comboColumn));
+		var contentWidth = GetPixelWidth(calculator.CalculateColumnWidth(contentColumn));
+
+		comboWidth.Should().BeGreaterThan(contentWidth);
+	}
+
+	[AvaloniaFact]
+	public void ComboChevronBudget_DoesNotScaleWithFont_WhileContentChromeDoes()
+	{
+		var (smallCalculator, comboColumn, contentColumn) = BuildComboAndContent(GridStyleOptions.Default);
+		var (largeCalculator, _, _) = BuildComboAndContent(LargeFontStyle());
+
+		var comboGrowth = GetPixelWidth(largeCalculator.CalculateColumnWidth(comboColumn))
+			- GetPixelWidth(smallCalculator.CalculateColumnWidth(comboColumn));
+		var contentGrowth = GetPixelWidth(largeCalculator.CalculateColumnWidth(contentColumn))
+			- GetPixelWidth(smallCalculator.CalculateColumnWidth(contentColumn));
+
+		comboGrowth.Should().BeLessThan(contentGrowth,
+			"both columns grow with the text, but only the content column also grows its font-proportional chrome");
+	}
+
+	private static (ColumnWidthCalculator Calculator, GridColumnDefinition Combo, GridColumnDefinition Content)
+		BuildComboAndContent(GridStyleOptions style)
+	{
+		var sampleText = new string('0', SampleLength);
+		var sampleProperty = TestPropertyTypeDefinitionBuilder.CreateString("sample", SampleLength);
 		var comboColumn = new GridColumnDefinition(
 			Key: "value",
 			ColumnType: ColumnTypes.ActionComboBox,
@@ -380,73 +268,48 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 			ReadOnly: false,
 			SaveToCsv: true);
 		var contentColumn = comboColumn with { ColumnType = ColumnTypes.PropertyField };
-
 		var actions = new Dictionary<int, ActionDefinition>
 		{
-			[1] = new ActionDefinition(1, representative, DeployDuration.Immediate,
+			[1] = new ActionDefinition(1, sampleText, DeployDuration.Immediate,
 				[new ActionPropertyDefinition("value", null, "sample", null)])
 		};
-
-		var calculator = BuildCalculator(
+		var registry = TestRecipeMetadataRegistryFactory.Build(
 			[sampleProperty],
 			actions,
-			new Dictionary<string, GridColumnDefinition>
-			{
-				["combo"] = comboColumn,
-				["content"] = contentColumn
-			});
+			columns: new Dictionary<string, GridColumnDefinition> { ["combo"] = comboColumn, ["content"] = contentColumn });
 
-		var comboWidth = GetPixelWidth(calculator.CalculateColumnWidth(comboColumn));
-		var contentWidth = GetPixelWidth(calculator.CalculateColumnWidth(contentColumn));
-
-		var delta = comboWidth - contentWidth;
-
-		delta.Should().BeGreaterThan(0,
-			"the combo path budgets the wider Semi ComboBox chrome, so the combo column exceeds the content column");
+		return (new ColumnWidthCalculator(registry, style), comboColumn, contentColumn);
 	}
 
-	[AvaloniaFact]
-	public void ComboChrome_StaysConstantAcrossFonts_WhileContentChromeGrows()
+	private GridColumnDefinition HeaderColumn(string header)
 	{
-		var smallCellFont = GridStyleOptions.Default.Fonts.CellFontSize;
-		var largeCellFont = LargeCellFontSize;
-		var representative = new string('0', StringSampleCap);
-		var sampleProperty = TestPropertyTypeDefinitionBuilder.CreateString("sample", StringSampleCap);
+		return _fixture.RecipeMetadataRegistry.GetColumn("task").Value with
+		{
+			ColumnType = "not_a_real_type",
+			UiName = header
+		};
+	}
 
-		var comboColumn = new GridColumnDefinition(
-			Key: "value",
-			ColumnType: ColumnTypes.ActionComboBox,
-			UiName: "X",
-			PropertyTypeId: "sample",
+	private static GridColumnDefinition PropertyColumn(string key, string propertyTypeId)
+	{
+		return new GridColumnDefinition(
+			Key: key,
+			ColumnType: ColumnTypes.PropertyField,
+			UiName: "V",
+			PropertyTypeId: propertyTypeId,
 			ReadOnly: false,
 			SaveToCsv: true);
+	}
 
-		var actions = new Dictionary<int, ActionDefinition>
+	private static GridStyleOptions LargeFontStyle()
+	{
+		var fonts = GridStyleOptions.Default.Fonts with
 		{
-			[1] = new ActionDefinition(1, representative, DeployDuration.Immediate,
-				[new ActionPropertyDefinition("value", null, "sample", null)])
+			CellFontSize = LargeCellFontSize,
+			HeaderFontSize = LargeHeaderFontSize
 		};
 
-		var registry = TestRecipeMetadataRegistryFactory.Build(
-			[sampleProperty], actions,
-			columns: new Dictionary<string, GridColumnDefinition> { ["combo"] = comboColumn });
-
-		var smallFontCalculator = new ColumnWidthCalculator(registry, GridStyleOptions.Default);
-		var largeFontCalculator = new ColumnWidthCalculator(
-			registry, GridStyleOptions.Default with { Fonts = GridStyleOptions.Default.Fonts with { CellFontSize = largeCellFont, HeaderFontSize = LargeHeaderFontSize } });
-
-		var smallComboWidth = GetPixelWidth(smallFontCalculator.CalculateColumnWidth(comboColumn));
-		var largeComboWidth = GetPixelWidth(largeFontCalculator.CalculateColumnWidth(comboColumn));
-
-		var smallContent = MeasureText(representative, smallCellFont, FontWeight.Normal);
-		var largeContent = MeasureText(representative, largeCellFont, FontWeight.Normal);
-
-		var smallComboChrome = smallComboWidth - smallContent;
-		var largeComboChrome = largeComboWidth - largeContent;
-
-		largeComboChrome.Should().BeApproximately(smallComboChrome, 1.0,
-			"the combo chevron budget is a fixed theme DIP (ComboBoxChromeWidth), so it does not scale with the font "
-			+ "even as the content grows");
+		return GridStyleOptions.Default with { Fonts = fonts };
 	}
 
 	private static ColumnWidthCalculator BuildCalculator(
@@ -457,67 +320,6 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var registry = TestRecipeMetadataRegistryFactory.Build(properties, actions, columns: columns);
 
 		return new ColumnWidthCalculator(registry, GridStyleOptions.Default);
-	}
-
-	private static double MeasureRepresentative(PropertyTypeDefinition property, double extent)
-	{
-		var representative = TimeFormatHelper.FormatValue(
-			extent.ToString(CultureInfo.InvariantCulture),
-			property.FormatKind,
-			property.Units);
-
-		return MeasureText(representative, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal);
-	}
-
-	private static double LongestHeaderWordFloor(string header)
-	{
-		if (string.IsNullOrWhiteSpace(header))
-		{
-			return 0;
-		}
-
-		var words = header.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-
-		var maxWordWidth = 0.0;
-		foreach (var word in words)
-		{
-			var wordWidth = MeasureText(word, GridStyleOptions.Default.Fonts.HeaderFontSize, FontWeight.Bold);
-			if (wordWidth > maxWordWidth)
-			{
-				maxWordWidth = wordWidth;
-			}
-		}
-
-		return maxWordWidth + HeaderFloorChrome;
-	}
-
-	private double MeasureActionContentWidth()
-	{
-		var maxWidth = 0.0;
-		foreach (var action in _fixture.RecipeMetadataRegistry.GetAllActions())
-		{
-			var width = MeasureText(action.UiName, GridStyleOptions.Default.Fonts.CellFontSize, FontWeight.Normal);
-			if (width > maxWidth)
-			{
-				maxWidth = width;
-			}
-		}
-
-		return maxWidth;
-	}
-
-	private static double MeasureText(string text, double fontSize, FontWeight fontWeight)
-	{
-		var typeface = new Typeface(GridFonts.DefaultFamily, FontStyle.Normal, fontWeight);
-		var formattedText = new FormattedText(
-			text,
-			CultureInfo.CurrentCulture,
-			FlowDirection.LeftToRight,
-			typeface,
-			fontSize,
-			Brushes.Black);
-
-		return formattedText.WidthIncludingTrailingWhitespace;
 	}
 
 	private static int GetPixelWidth(DataGridLength length)

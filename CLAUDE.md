@@ -39,6 +39,8 @@ directory and overlay only the differing files from `SemiStep.Tests/YamlConfigs/
 
 **Avalonia headless tests:** UI tests use `[AvaloniaFact]` / `[AvaloniaTheory]` (from `Avalonia.Headless.XUnit`) which wraps the full test lifecycle, including `IAsyncLifetime.InitializeAsync` and `DisposeAsync`, in the headless dispatcher. No manual `Dispatcher.UIThread.RunJobs(...)` or sync-over-async wrappers are needed. See `Docs/architecture/headless-ui-testing.md` for the exceptions (unawaited work, LIFO interaction handlers).
 
+**Error assertions:** tests check error types, severity and relations between outputs, not wording. See `Docs/architecture/error-reporting.md`, section "What tests assert on errors".
+
 ## Code Style
 
 ### General

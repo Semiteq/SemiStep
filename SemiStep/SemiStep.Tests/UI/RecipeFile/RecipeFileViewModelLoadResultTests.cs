@@ -1,8 +1,6 @@
-﻿using System.Globalization;
-using System.Reactive.Linq;
+﻿using System.Reactive.Linq;
 
 using Avalonia.Headless.XUnit;
-using Avalonia.Threading;
 
 using FluentAssertions;
 
@@ -10,9 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
-using SemiStep.Tests.UI.Localization;
 
-using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.RecipeFile;
 
@@ -58,16 +54,11 @@ public sealed class RecipeFileViewModelLoadResultTests : IAsyncLifetime
 		await _fixture.CsvService.SaveAsync(driver.Recipe, _tempFilePath);
 		await PatchRowCountAsync(actualRows: 1, wrongRows: 99);
 
-		using (ResourcesCultureScope.Use("en"))
-		{
-			await _recipeFile.LoadRecipeCommand.Execute();
-			Dispatcher.UIThread.RunJobs();
+		await _recipeFile.LoadRecipeCommand.Execute();
 
-			var entry = _fixture.MessagePanel.Entries.Should().ContainSingle().Subject;
-			entry.Severity.Should().Be(MessageSeverity.Warning,
-				"a hand-edited row-count mismatch must surface as a warning, not a plain success");
-			entry.Message.Should().Contain("Row count mismatch");
-		}
+		var entry = _fixture.MessagePanel.Entries.Should().ContainSingle().Subject;
+		entry.Severity.Should().Be(MessageSeverity.Warning,
+			"a hand-edited row-count mismatch must surface as a warning, not a plain success");
 	}
 
 	[AvaloniaFact]
@@ -78,12 +69,9 @@ public sealed class RecipeFileViewModelLoadResultTests : IAsyncLifetime
 		await _fixture.CsvService.SaveAsync(driver.Recipe, _tempFilePath);
 
 		await _recipeFile.LoadRecipeCommand.Execute();
-		Dispatcher.UIThread.RunJobs();
 
 		var entry = _fixture.MessagePanel.Entries.Should().ContainSingle().Subject;
 		entry.Severity.Should().Be(MessageSeverity.Info, "a clean load reports a plain success");
-		entry.Message.Should().Be(
-			string.Format(CultureInfo.InvariantCulture, Resources.LoadedFormat, Path.GetFileName(_tempFilePath)));
 	}
 
 	[AvaloniaFact]
@@ -99,12 +87,9 @@ public sealed class RecipeFileViewModelLoadResultTests : IAsyncLifetime
 		await _fixture.CsvService.SaveAsync(driver.Recipe, _tempFilePath);
 
 		await _recipeFile.LoadRecipeCommand.Execute();
-		Dispatcher.UIThread.RunJobs();
 
 		var entries = _fixture.MessagePanel.Entries;
 		entries[0].Severity.Should().Be(MessageSeverity.Info, "the operation slot holds the load success");
-		entries[0].Message.Should().Be(
-			string.Format(CultureInfo.InvariantCulture, Resources.LoadedFormat, Path.GetFileName(_tempFilePath)));
 		entries.Should().Contain(entry => entry.IsWarning,
 			"the unclosed-For structural warning belongs in the validation list");
 	}

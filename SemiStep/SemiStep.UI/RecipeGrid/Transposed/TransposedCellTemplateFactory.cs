@@ -281,7 +281,7 @@ internal sealed class TransposedCellTemplateFactory(
 			return;
 		}
 
-		var parsed = PropertyTimeEditingConverter.ParseForCommit(textBox.Text, cell.MaxLength.HasValue);
+		var parsed = PropertyTimeEditingConverter.ParseForCommit(textBox.Text, cell.FormatKind, cell.MaxLength.HasValue);
 		if (!ReferenceEquals(parsed, BindingOperations.DoNothing))
 		{
 			cell.Value = parsed;

@@ -17,7 +17,7 @@ namespace SemiStep.UI.Plc;
 public sealed class PlcMonitorViewModel : ReactiveObject, IDisposable
 {
 	private const string IdleStepText = "00:00:00";
-	private const string MissingSnapshotText = "—";
+	private const string MissingSnapshotText = "\u2014";
 
 	private readonly RecipeCoordinator _coordinator;
 	private readonly CompositeDisposable _disposables = [];

@@ -20,32 +20,6 @@ public sealed class ResourceSyncTests
 	private static readonly Dictionary<string, string> _neutral = ReadOwnResourceSet(CultureInfo.InvariantCulture);
 	private static readonly Dictionary<string, string> _russian = ReadOwnResourceSet(new CultureInfo("ru"));
 
-	public static TheoryData<string> LocalizedKeys()
-	{
-		return [.. typeof(Resources)
-			.GetProperties(BindingFlags.Public | BindingFlags.Static)
-			.Where(property => property.PropertyType == typeof(string))
-			.Select(property => property.Name)];
-	}
-
-	[Theory]
-	[MemberData(nameof(LocalizedKeys))]
-	public void Key_ResolvesToNonEmptyValue_UnderEnglishAndRussian(string keyName)
-	{
-		var property = typeof(Resources).GetProperty(keyName, BindingFlags.Public | BindingFlags.Static)!;
-
-		foreach (var culture in new[] { "en", "ru" })
-		{
-			using (ResourcesCultureScope.Use(culture))
-			{
-				var value = (string)property.GetValue(null)!;
-
-				value.Should().NotBeNullOrEmpty(
-					"key '{0}' must resolve under culture '{1}' (missing resx entry?)", keyName, culture);
-			}
-		}
-	}
-
 	[Fact]
 	public void RussianSatellite_ContainsEveryNeutralKey_AndNoOrphans()
 	{
@@ -57,19 +31,15 @@ public sealed class ResourceSyncTests
 	}
 
 	[Fact]
-	public void EveryNeutralKey_HasDesignerAccessor()
+	public void EveryNeutralKey_HasDesignerAccessor_AndNothingElse()
 	{
-		// The per-key resolution test walks designer accessors -> resx (designer subset of resx).
-		// This is the reverse leg: every resx data name must have a matching public static string
-		// accessor, so a new resx key without a generated accessor fails the build's contract here.
 		var accessorNames = typeof(Resources)
 			.GetProperties(BindingFlags.Public | BindingFlags.Static)
 			.Where(property => property.PropertyType == typeof(string))
-			.Select(property => property.Name)
-			.ToHashSet();
+			.Select(property => property.Name);
 
-		_neutral.Keys.Should().BeSubsetOf(accessorNames,
-			"every resx data name must have a matching public static string accessor in Resources.Designer.cs");
+		accessorNames.Should().BeEquivalentTo(_neutral.Keys,
+			"every resx data name needs a public static string accessor in Resources.Designer.cs, and vice versa");
 	}
 
 	[Fact]

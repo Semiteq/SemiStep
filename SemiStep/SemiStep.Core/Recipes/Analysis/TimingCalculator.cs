@@ -2,7 +2,7 @@
 
 internal static class TimingCalculator
 {
-	private static readonly PropertyId _durationProperty = new("step_duration");
+	private static readonly PropertyId _durationProperty = new(StepValueParser.StepDurationColumnKey);
 
 	public static (
 		IReadOnlyList<TimeSpan> StepStartTimes,

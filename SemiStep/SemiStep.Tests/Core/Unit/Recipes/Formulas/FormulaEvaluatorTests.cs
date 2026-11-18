@@ -9,6 +9,7 @@ using NCalc;
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas;
 using SemiStep.Core.Recipes.Formulas.Errors;
 using SemiStep.Core.Recipes.Helpers;
@@ -116,7 +117,7 @@ public sealed class FormulaEvaluatorTests
 	}
 
 	[Fact]
-	public void Recalculate_TargetOutOfRange_ErrorCarriesTargetAndDescriptiveMessage()
+	public void Recalculate_TargetOutOfRange_ErrorCarriesTargetAndMaximum()
 	{
 		var registry = BuildRegistry(stepDurationMax: 100d, taskMax: 1000000d);
 		var evaluator = BuildEvaluator(registry);
@@ -130,7 +131,7 @@ public sealed class FormulaEvaluatorTests
 		var error = result.Errors.OfType<FormulaComputationFailedError>().FirstOrDefault();
 		error.Should().NotBeNull();
 		error!.Target.Should().Be(StepDuration);
-		error.Message.Should().Contain("100");
+		error.Inner.Should().BeOfType<ValueAboveMaximumError>().Which.Max.Should().Be(100d);
 	}
 
 	[Fact]
@@ -153,7 +154,6 @@ public sealed class FormulaEvaluatorTests
 		var error = result.Errors.OfType<FormulaComputationFailedError>().FirstOrDefault();
 		error.Should().NotBeNull();
 		error!.Target.Should().Be("b");
-		error.Message.Should().Contain("NaN");
 	}
 
 	[Fact]
@@ -176,7 +176,6 @@ public sealed class FormulaEvaluatorTests
 		var error = result.Errors.OfType<FormulaComputationFailedError>().FirstOrDefault();
 		error.Should().NotBeNull();
 		error!.Target.Should().Be("b");
-		error.Message.Should().Contain("Infinity");
 	}
 
 	[Fact]

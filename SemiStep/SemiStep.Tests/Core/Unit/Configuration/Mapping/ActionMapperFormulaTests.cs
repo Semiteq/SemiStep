@@ -372,7 +372,7 @@ public sealed class ActionMapperFormulaTests
 		return new ActionDto
 		{
 			Id = 110,
-			UiName = "t°C плавно",
+			UiName = "temperature ramp",
 			DeployDuration = "longlasting",
 			Columns =
 			[

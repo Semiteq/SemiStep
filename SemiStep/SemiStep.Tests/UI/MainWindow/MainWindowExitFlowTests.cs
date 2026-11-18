@@ -10,7 +10,6 @@ using FluentAssertions;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
-using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.MessageService;
 using SemiStep.UI.ShutdownService;
@@ -105,10 +104,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		Dispatcher.UIThread.RunJobs();
 
 		_window.IsVisible.Should().BeTrue("a save exception must not discard the recipe by closing the window");
-		var errorEntry = _fixture.MessagePanel.Entries
-			.Should().ContainSingle(e => e.Severity == MessageSeverity.Error).Subject;
-		errorEntry.Message.Should().StartWith($"{Resources.SaveFailed}:");
-		errorEntry.Message.Should().Contain("disk detached");
+		_fixture.MessagePanel.Entries.Should().ContainSingle(e => e.Severity == MessageSeverity.Error);
 	}
 
 	[AvaloniaFact]
@@ -124,9 +120,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 
 			await window.ShowExitChoiceAsync();
 
-			var errorEntry = viewModel.MessagePanel.Entries
-				.Should().ContainSingle(e => e.Severity == MessageSeverity.Error).Subject;
-			errorEntry.Message.Should().StartWith(Resources.ExitFailed + ":");
+			viewModel.MessagePanel.Entries.Should().ContainSingle(e => e.Severity == MessageSeverity.Error);
 		}
 		finally
 		{
@@ -265,7 +259,6 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 
 		pickerGate.SetResult(_tempFilePath);
 		(await inFlightSave).Should().BeTrue("the original in-flight save completes on its own");
-		Dispatcher.UIThread.RunJobs();
 	}
 
 	[AvaloniaFact]

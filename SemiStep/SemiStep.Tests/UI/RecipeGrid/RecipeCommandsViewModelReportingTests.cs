@@ -7,16 +7,11 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Logging;
 
-using ReactiveUI;
-
 using SemiStep.Core.Recipes;
 
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
-using SemiStep.Tests.UI.Localization;
 
-using SemiStep.UI.Localization;
-using SemiStep.UI.MessageService;
 using SemiStep.UI.RecipeGrid;
 
 using Xunit;
@@ -50,20 +45,19 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public async Task AddStep_WhenCommandBodyThrows_ReportsSpecificContextAndLogs()
+	public async Task AddStep_WhenCommandBodyThrows_ReportsErrorAndLogsException()
 	{
 		var failure = new InvalidOperationException("boom");
 		_surface.SelectedStepIndex = -1;
 		_surface.RequestSelectionException = failure;
 
-		await ExecuteSwallowing(_commands.AddStepCommand);
+		var execute = async () => await _commands.AddStepCommand.Execute();
 
-		_fixture.MessagePanel.Entries.Should()
-			.Contain(e => e.IsError && e.Message.StartsWith($"{Resources.AddStepFailed}:") && e.Message.Contains("boom"));
+		(await execute.Should().ThrowAsync<InvalidOperationException>()).Which.Should().BeSameAs(failure);
+		_fixture.MessagePanel.Entries.Should().ContainSingle(e => e.IsError);
 
 		var logged = _logger.Entries.Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
-		logged.Message.Should().Be("Add step failed");
 		logged.Exception.Should().BeSameAs(failure);
 	}
 
@@ -72,51 +66,27 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 	{
 		_fixture.SeedRecipe(2);
 
-		var expected = _fixture.Coordinator.RemoveStep(99);
-		expected.IsFailed.Should().BeTrue();
-		var expectedMessage = expected.FormatErrors();
-
 		_surface.SelectedStepIndices = [99];
 
-		using (ResourcesCultureScope.Use("en"))
-		{
-			await ExecuteSwallowing(_commands.DeleteStepCommand);
+		await _commands.DeleteStepCommand.Execute();
 
-			_fixture.MessagePanel.Entries.Should()
-				.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
-		}
+		_fixture.MessagePanel.Entries.Should().ContainSingle(e => e.IsError);
 	}
 
 	[AvaloniaFact]
 	public async Task Undo_WhenNoHistory_ReportsFailedResultToPanel()
 	{
-		var expected = _fixture.Coordinator.Undo();
-		expected.IsFailed.Should().BeTrue();
-		var expectedMessage = expected.FormatErrors();
+		await _commands.UndoCommand.Execute();
 
-		using (ResourcesCultureScope.Use("en"))
-		{
-			await ExecuteSwallowing(_commands.UndoCommand);
-
-			_fixture.MessagePanel.Entries.Should()
-				.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
-		}
+		_fixture.MessagePanel.Entries.Should().ContainSingle(e => e.IsError);
 	}
 
 	[AvaloniaFact]
 	public async Task Redo_WhenNoHistory_ReportsFailedResultToPanel()
 	{
-		var expected = _fixture.Coordinator.Redo();
-		expected.IsFailed.Should().BeTrue();
-		var expectedMessage = expected.FormatErrors();
+		await _commands.RedoCommand.Execute();
 
-		using (ResourcesCultureScope.Use("en"))
-		{
-			await ExecuteSwallowing(_commands.RedoCommand);
-
-			_fixture.MessagePanel.Entries.Should()
-				.ContainSingle(e => e.IsError).Which.Message.Should().Be(expectedMessage);
-		}
+		_fixture.MessagePanel.Entries.Should().ContainSingle(e => e.IsError);
 	}
 
 	[AvaloniaFact]
@@ -125,21 +95,9 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 		_fixture.SeedRecipe(2);
 		_fixture.Coordinator.CanUndo.Should().BeTrue();
 
-		await ExecuteSwallowing(_commands.UndoCommand);
+		await _commands.UndoCommand.Execute();
 
 		_fixture.MessagePanel.Entries.Should().NotContain(e => e.IsError);
-	}
-
-	private static async Task ExecuteSwallowing(ReactiveCommand<Unit, Unit> command)
-	{
-		try
-		{
-			await command.Execute();
-		}
-		catch (Exception)
-		{
-			// The command routes the throw to ThrownExceptions; Execute also rethrows to the awaiter.
-		}
 	}
 
 	private sealed class StubRecipeGridSurface : IRecipeGridSurface

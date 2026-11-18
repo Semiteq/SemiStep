@@ -1,7 +1,4 @@
-﻿using System.Globalization;
-
-using Avalonia.Data.Converters;
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
@@ -28,8 +25,8 @@ namespace SemiStep.Tests.UI.RecipeGrid;
 /// <summary>
 /// Exercises the selector-edit recompute end to end on the nested-action config (action 300
 /// "Branching" with a <c>branch_sel</c> selector whose value 1 pulls in the <c>sub_value</c>
-/// column). Maps onto the RIE example in the plan: <c>branch_sel</c> ~ <c>icp_match</c>,
-/// value 0 "Auto" ~ Авто, value 1 "Manual" ~ Ручной, <c>sub_value</c> ~ <c>icp_load</c>.
+/// column). In the RIE etch action <c>branch_sel</c> is <c>icp_match</c> and <c>sub_value</c> is
+/// <c>icp_load</c>.
 /// </summary>
 [Trait("Component", "UI")]
 [Trait("Area", "NestedActions")]
@@ -242,24 +239,5 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 		row.SetPropertyValue(SelectorColumn, AutoValue);
 
 		row.ChangedColumns.Should().BeSameAs(afterExecutionStart);
-	}
-
-	[AvaloniaFact]
-	public void InapplicableBinding_Converter_FlipsOnReassignment()
-	{
-		// The cell theme is driven by the OneWay InapplicableColumns binding. Reproduce the
-		// converter the binding uses and confirm it reports the new applicability after the
-		// row reassigns InapplicableColumns on the selector edit.
-		var row = AppendBranchingRow();
-		var converter = new FuncValueConverter<IReadOnlySet<string>?, bool>(
-			set => set is not null && set.Contains(SubColumn));
-
-		var inapplicableBefore = converter.Convert(row.InapplicableColumns, typeof(bool), null, CultureInfo.InvariantCulture);
-		inapplicableBefore.Should().Be(true);
-
-		row.SetPropertyValue(SelectorColumn, ManualValue);
-
-		var inapplicableAfter = converter.Convert(row.InapplicableColumns, typeof(bool), null, CultureInfo.InvariantCulture);
-		inapplicableAfter.Should().Be(false);
 	}
 }

@@ -170,6 +170,24 @@ public sealed class CanonicalRecipeGridViewTests : IAsyncLifetime
 		view.IsEditing.Should().BeFalse();
 	}
 
+	[AvaloniaTheory]
+	[InlineData("comment", "12:30", "12:30")]
+	[InlineData(RecipeTestDriver.StepDurationColumn, "00:01:00", 60f)]
+	public void CommitEdit_ClockLikeText_ParsesOnlyInTimeColumn(string columnKey, string typed, object expectedValue)
+	{
+		var (_, dataGrid) = ShowViewWithControl();
+		var column = dataGrid.Columns.Single(candidate => (candidate.Tag as string) == columnKey);
+
+		DataGridTestHelper.SetCurrentCell(dataGrid, rowIndex: 0, column);
+		dataGrid.BeginEdit();
+		Dispatcher.UIThread.RunJobs();
+		dataGrid.GetVisualDescendants().OfType<TextBox>().Single(textBox => textBox.IsVisible).Text = typed;
+		dataGrid.CommitEdit();
+		Dispatcher.UIThread.RunJobs();
+
+		_surface.RecipeRows[0].GetPropertyValue(columnKey).Should().Be(expectedValue);
+	}
+
 	private DataGrid ShowView()
 	{
 		var (_, dataGrid) = ShowViewWithControl();

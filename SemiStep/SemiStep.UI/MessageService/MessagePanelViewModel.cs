@@ -223,12 +223,12 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 			|| _operationEntry is { Severity: MessageSeverity.Error or MessageSeverity.Warning };
 	}
 
-	internal static string FormatErrorCount(int count)
+	private static string FormatErrorCount(int count)
 	{
 		return string.Format(CultureInfo.InvariantCulture, Resources.MessagePanelErrorsFormat, count);
 	}
 
-	internal static string FormatWarningCount(int count)
+	private static string FormatWarningCount(int count)
 	{
 		return string.Format(CultureInfo.InvariantCulture, Resources.MessagePanelWarningsFormat, count);
 	}

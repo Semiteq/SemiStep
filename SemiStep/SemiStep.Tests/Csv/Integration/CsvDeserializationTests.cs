@@ -4,9 +4,9 @@ using FluentAssertions;
 
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard.Errors;
+using SemiStep.Core.Recipes.Errors;
+using SemiStep.Core.Recipes.Import.Errors;
 using SemiStep.Tests.Csv.Helpers;
-using SemiStep.Tests.UI.Localization;
-using SemiStep.UI.Localization;
 
 using Xunit;
 
@@ -39,30 +39,34 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 	}
 
 	[Fact]
-	public void Deserialize_InvalidActionId_ReturnsError()
+	public void Deserialize_InvalidActionId_FailsWithActionNotFoundAtRow()
 	{
 		var csv = "action;step_duration;task;comment\n99999;10;0;test\n";
 		var result = fixture.FileSerializer.Deserialize(csv);
 
-		result.IsFailed.Should().BeTrue();
+		var rowError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtRowError>().Subject;
+		rowError.RowNumber.Should().Be(2);
+		rowError.Inner.Should().BeOfType<ActionByIdNotFoundError>().Which.Id.Should().Be(99999);
 	}
 
 	[Fact]
-	public void Deserialize_EmptyActionColumn_ReturnsError()
+	public void Deserialize_EmptyActionColumn_FailsWithActionColumnEmptyAtRow()
 	{
 		var csv = "action;step_duration;task;comment\n;10;0;test\n";
 		var result = fixture.FileSerializer.Deserialize(csv);
 
-		result.IsFailed.Should().BeTrue();
+		var rowError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtRowError>().Subject;
+		rowError.RowNumber.Should().Be(2);
+		rowError.Inner.Should().BeOfType<ActionColumnEmptyError>();
 	}
 
 	[Fact]
-	public void Deserialize_HeaderMismatch_ReturnsError()
+	public void Deserialize_HeaderMismatch_FailsWithHeaderMismatch()
 	{
 		var csv = "wrong_header;bad_column\n10;5\n";
 		var result = fixture.FileSerializer.Deserialize(csv);
 
-		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().ContainSingle().Which.Should().BeOfType<CsvHeaderMismatchError>();
 	}
 
 	[Fact]
@@ -86,13 +90,11 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 		var result = fixture.ClipboardSerializer.DeserializeSteps(csv);
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Steps.Count.Should().Be(2);
-		result.Value.Steps[0].ActionKey.Should().Be(10);
-		result.Value.Steps[1].ActionKey.Should().Be(10);
+		result.Value.Steps.Should().BeEquivalentTo(steps, options => options.WithStrictOrdering());
 	}
 
 	[Fact]
-	public void ClipboardDeserialize_EmptyString_ReturnsNull()
+	public void ClipboardDeserialize_EmptyString_FailsWithNoValidSteps()
 	{
 		var result = fixture.ClipboardSerializer.DeserializeSteps("");
 
@@ -101,15 +103,17 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 	}
 
 	[Fact]
-	public void ClipboardDeserialize_InvalidData_ReturnsNull()
+	public void ClipboardDeserialize_NonIntegerAction_FailsWithActionValueNotIntegerAtRow()
 	{
 		var result = fixture.ClipboardSerializer.DeserializeSteps("not\tvalid\tcsv\tdata");
 
-		result.IsFailed.Should().BeTrue();
+		var rowError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtRowError>().Subject;
+		rowError.RowNumber.Should().Be(1);
+		rowError.Inner.Should().BeOfType<ActionValueNotIntegerError>();
 	}
 
 	[Fact]
-	public void ClipboardDeserialize_MalformedQuotedData_ReturnsNull()
+	public void ClipboardDeserialize_MalformedQuotedData_FailsWithColumnCountMismatch()
 	{
 		var malformed = "\"1\"\t\"\"\t\"\"\t\"\"\t\"\"\t\"\"\t\"\"\t\"\"\t\"\"\t\"\"\t\"\"\t\"\"";
 		var result = fixture.ClipboardSerializer.DeserializeSteps(malformed);
@@ -119,7 +123,7 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 	}
 
 	[Fact]
-	public void ClipboardDeserialize_UnescapedQuote_ReturnsClipboardParseFailed()
+	public void ClipboardDeserialize_UnescapedQuote_FailsWithParseFailure()
 	{
 		var unescapedQuote = "1\"0\t5.0";
 		var result = fixture.ClipboardSerializer.DeserializeSteps(unescapedQuote);
@@ -145,25 +149,23 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 		var tooManyColumns = "10\t5.0\t0\ttest\textra";
 		var result = fixture.ClipboardSerializer.DeserializeSteps(tooManyColumns);
 
-		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().ContainSingle()
-			.Which.Message.Should().Contain("Column count mismatch");
+		var mismatch = result.Errors.Should().ContainSingle().Which.Should().BeOfType<ColumnCountMismatchError>().Subject;
+		mismatch.RowNumber.Should().Be(1);
+		mismatch.Actual.Should().Be(5);
 	}
 
 	[Fact]
-	public void ClipboardDeserialize_NonParseableValue_UnderRussianCulture_ComposesLocalizedRowColumnValueChain()
+	public void ClipboardDeserialize_NonParseableValue_FailsWithRowColumnValueChain()
 	{
 		// Field order: action, step_duration, task (float), comment. Action 20 (For) declares the float
 		// "task" property.
 		var body = "20\t5.0\tabc\tc";
 		var result = fixture.ClipboardSerializer.DeserializeSteps(body);
 
-		result.IsFailed.Should().BeTrue();
-
-		using (ResourcesCultureScope.Use("ru"))
-		{
-			var localized = ReasonLocalizer.Localize(result.Errors[0]);
-			localized.Should().Contain("Строка 1: Столбец «task»: Не удалось разобрать «abc» как float");
-		}
+		var rowError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtRowError>().Subject;
+		rowError.RowNumber.Should().Be(1);
+		var columnError = rowError.Inner.Should().BeOfType<AtColumnError>().Subject;
+		columnError.ColumnKey.Should().Be("task");
+		columnError.Inner.Should().BeOfType<PropertyValueParseError>().Which.RawValue.Should().Be("abc");
 	}
 }

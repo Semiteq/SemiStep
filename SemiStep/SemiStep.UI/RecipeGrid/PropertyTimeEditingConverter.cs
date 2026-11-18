@@ -14,7 +14,7 @@ internal sealed class PropertyTimeEditingConverter(string formatKind, bool allow
 
 	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
 	{
-		return ParseForCommit(value, allowsEmpty);
+		return ParseForCommit(value, formatKind, allowsEmpty);
 	}
 
 	// Units-less display formatting shared with the transposed recyclable text editor, which drives
@@ -33,12 +33,17 @@ internal sealed class PropertyTimeEditingConverter(string formatKind, bool allow
 	// Commit-side parse shared with the transposed recyclable text editor, which owns the write in
 	// its LostFocus/KeyDown handlers (a MultiBinding has no ConvertBack). Returns
 	// BindingOperations.DoNothing when the edit must be rejected without touching the model.
-	public static object? ParseForCommit(object? value, bool allowsEmpty)
+	public static object? ParseForCommit(object? value, string? formatKind, bool allowsEmpty)
 	{
 		var text = value?.ToString()?.Trim();
 		if (string.IsNullOrEmpty(text))
 		{
 			return allowsEmpty ? string.Empty : BindingOperations.DoNothing;
+		}
+
+		if (!string.Equals(formatKind, TimeFormatHelper.TimeHmsFormat, StringComparison.OrdinalIgnoreCase))
+		{
+			return text;
 		}
 
 		var parsed = TimeFormatHelper.ParseValue(text);

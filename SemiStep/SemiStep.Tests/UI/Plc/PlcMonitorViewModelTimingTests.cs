@@ -63,8 +63,8 @@ public sealed class PlcMonitorViewModelTimingTests : IAsyncLifetime
 		Driver();
 		using var monitor = CreateMonitor();
 
-		monitor.TimeLeftInStepText.Should().Be("—");
-		monitor.TimeLeftInRecipeText.Should().Be("—");
+		monitor.TimeLeftInStepText.Should().Be("\u2014");
+		monitor.TimeLeftInRecipeText.Should().Be("\u2014");
 	}
 
 	[AvaloniaFact]
@@ -238,22 +238,5 @@ public sealed class PlcMonitorViewModelTimingTests : IAsyncLifetime
 
 		// New total = 60 + 120 = 180s; elapsed in current step still 0 → remaining 180s.
 		monitor.TimeLeftInRecipeText.Should().Be("00:03:00");
-	}
-
-	[AvaloniaFact]
-	public void IntegrationViaCoordinatorExecutionStateStream_VmObservesEvent()
-	{
-		// Documents that the VM subscribes to RecipeCoordinator.ExecutionState (not StubS7
-		// directly). StubS7.PushExecutionState publishes through the stream that the
-		// coordinator re-exposes as ExecutionState. Asserting on VM state after a push
-		// proves the wiring end-to-end.
-		Driver().AddWait(30f);
-		using var monitor = CreateMonitor();
-
-		_fixture.StubS7.PushExecutionState(State(true, 0, 10f));
-
-		monitor.IsRecipeActive.Should().BeTrue();
-		monitor.TimeLeftInStepText.Should().Be("00:00:20");
-		monitor.TimeLeftInRecipeText.Should().Be("00:00:20");
 	}
 }

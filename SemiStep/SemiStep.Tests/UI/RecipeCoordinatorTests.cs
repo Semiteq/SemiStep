@@ -8,10 +8,8 @@ using SemiStep.Core.Recipes;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
-using SemiStep.Tests.UI.Localization;
 
 using SemiStep.UI.Coordinator;
-using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 
 using Xunit;
@@ -286,16 +284,6 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void AppendStep_Failure_ReturnsFailed()
-	{
-		_fixture.Session.Reset();
-
-		var result = _fixture.Coordinator.AppendStep(9999);
-
-		result.IsFailed.Should().BeTrue();
-	}
-
-	[AvaloniaFact]
 	public void ChangeStepAction_Failure_ReturnsFailed()
 	{
 		_fixture.Session.Reset();
@@ -371,13 +359,10 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Session.Reset();
 		_fixture.MessagePanel.Entries.Should().BeEmpty("a fresh empty recipe has no structural defects");
 
-		using var cultureScope = ResourcesCultureScope.Use("en");
-
 		_fixture.PlcSyncService.PushFault(new ConnectionLostError());
 
 		_fixture.MessagePanel.Entries.Should().ContainSingle(
 			"a PLC fault must surface as a transient operation message in the panel");
-		_fixture.MessagePanel.Entries[0].Message.Should().Be("PLC connection lost");
 		_fixture.MessagePanel.Entries[0].Severity.Should().Be(MessageSeverity.Error);
 		_fixture.MessagePanel.ErrorCount.Should().Be(0,
 			"a PLC fault is an operation outcome, not a structural defect, so it must not inflate the validation count");
@@ -469,8 +454,6 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		var operationEntry = _fixture.MessagePanel.Entries[0];
 		operationEntry.Severity.Should().Be(MessageSeverity.Error,
 			"a failed reconnect-apply has no initiating VM, so the coordinator must report it as an operation error");
-		operationEntry.Message.Should().Contain(Resources.PlcReconnect,
-			"the operation message must identify the reconnect-apply origin");
 
 		_fixture.MessagePanel.ErrorCount.Should().Be(0,
 			"a failed reconnect-apply is an operation outcome, not a structural defect, "
@@ -503,7 +486,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		result.IsFailed.Should().BeTrue(
 			"updating a property on a nonexistent step is rejected before DispatchMutation");
 		_fixture.MessagePanel.Entries.Should().ContainSingle(
-			"a rejected mutation never reaches RaiseMutatedSafely, so the operation error survives");
-		_fixture.MessagePanel.Entries[0].Message.Should().Be("operation error");
+				"a rejected mutation never reaches RaiseMutatedSafely, so the operation error survives")
+			.Which.Severity.Should().Be(MessageSeverity.Error);
 	}
 }

@@ -13,24 +13,24 @@
 
 SemiStep — визуальное приложение для редактирования и исполнения технологических рецептов на промышленных установках роста и постростовой обработки на базе Siemens PLC. Работает независимо от SCADA-системы и взаимодействует с контроллером напрямую по протоколу S7. 
 
-[Документация](./Docs/readme.md)
+[Документация](./docs/readme.md)
 
 ## Примеры конфигураций
 
 YAML-конфигурация определяет внешний вид и поведение приложения для конкретной установки. Скриншоты ниже — три независимые конфигурации для разных типов процессов.
 
 <div align="center">
-    <img src="./Docs/img/mocvd_example.png" width="800" />
+    <img src="./docs/img/mocvd_example.png" width="800" />
     <p><em>Конфигурация для MOCVD (металлоорганическая газофазная эпитаксия)</em></p>
 </div>
 
 <div align="center">
-    <img src="./Docs/img/rie_example.png" width="800" />
+    <img src="./docs/img/rie_example.png" width="800" />
     <p><em>Конфигурация для RIE (реактивное ионное травление)</em></p>
 </div>
 
 <div align="center">
-    <img src="./Docs/img/mbe_example.png" width="800" />
+    <img src="./docs/img/mbe_example.png" width="800" />
     <p><em>Конфигурация для MBE (молекулярно-лучевая эпитаксия)</em></p>
 </div>
 

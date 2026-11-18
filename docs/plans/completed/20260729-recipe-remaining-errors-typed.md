@@ -140,12 +140,12 @@ resx key `Error<Name>`; en == current baked string; ru uses guillemets «» wher
 ## Task 3: Cross-path tests + doc + verify
 
 **Files:**
-- Modify: `ReasonLocalizerTests.cs`, `MessagePanelReportingTests.cs` (or the relevant end-to-end homes), `Docs/architecture/error-reporting.md`.
+- Modify: `ReasonLocalizerTests.cs`, `MessagePanelReportingTests.cs` (or the relevant end-to-end homes), `docs/architecture/error-reporting.md`.
 
 - [x] ru/en render cases in `ReasonLocalizerTests` for a representative subset of the 7 new types (e.g. `StepIndexOutOfRangeError`, `PropertyValueParseError`, `IterationCountUnsupportedTypeError`) + the en `Localize==Message` pin per convention.
 - [x] **Formula composition end-to-end:** a `FormulaComputationFailedError` wrapping a TYPED inner (e.g. `ValueAboveMaximumError`) renders, under `ru`, the Russian headline AND the Russian inner detail (proving the composition recurses) — this is the payoff of the refactor. Home it where the formula/panel tests live.
 - [x] **Fragment-preservation sweep:** grep the Tests tree for the new English fragments (`No state to undo`, `is out of range for recipe`, `Unknown property type`, `Cannot parse`, `Maximum loop nesting depth`, `unsupported type`, `Unknown action ID`, `Formula computation for target`). Raw-`.Message` assertions stay as-is; localized-panel assertions under ambient ru culture get `ResourcesCultureScope.Use("en")` or a type assertion. Report what changed (expect: the pinned :466 from Task 2, and any formula-render test).
-- [x] `Docs/architecture/error-reporting.md`: note the remaining recipe producers now localize by type, and that `FormulaComputationFailedError` composes its typed inner (add it to the positional-decorator / composition list alongside `AtStep`/`AtColumn`). **Also fix the stale member reference at ~:48** — that line names `FormulaComputationFailedError.Target`/`.Reason` as a structured-data example, but Task 2 removes `.Reason` (replaced by `.Inner`); change `.Reason` → `.Inner` (grep the doc for `.Reason` to catch any other occurrence).
+- [x] `docs/architecture/error-reporting.md`: note the remaining recipe producers now localize by type, and that `FormulaComputationFailedError` composes its typed inner (add it to the positional-decorator / composition list alongside `AtStep`/`AtColumn`). **Also fix the stale member reference at ~:48** — that line names `FormulaComputationFailedError.Target`/`.Reason` as a structured-data example, but Task 2 removes `.Reason` (replaced by `.Inner`); change `.Reason` → `.Inner` (grep the doc for `.Reason` to catch any other occurrence).
 - [x] full `dotnet build SemiStep.slnx` 0 warnings; full `dotnet test` green; `dotnet format`.
 
 ## Post-Completion

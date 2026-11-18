@@ -111,7 +111,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 	}
 
 	// FontSize explicit: the Semi ComboBox selection box does not inherit the grid font, so without it
-	// the text renders at the theme default and the chevron clips it. See Docs/architecture/recipe-grid-column-sizing.md.
+	// the text renders at the theme default and the chevron clips it. See docs/architecture/recipe-grid-column-sizing.md.
 	private ComboBox CreateStyledComboBox()
 	{
 		var comboBox = new ComboBox

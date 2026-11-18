@@ -20,7 +20,7 @@ conflict.
 
 ### The architecture (target, for context — not all built here)
 
-The published rule, recorded in `Docs/plans/20260727-error-reporting-pipe-roadmap.md`:
+The published rule, recorded in `docs/plans/20260727-error-reporting-pipe-roadmap.md`:
 
 > A public `Error` type exists **iff** a distinct localized operator sentence exists. Everything else is
 > internal and crosses the boundary only wrapped in an envelope type carrying an English `Detail`.
@@ -331,7 +331,7 @@ Mark `[x]` on completion; `➕` new tasks; `⚠️` blockers.
 ### Task 3: Verify + document
 
 **Files:**
-- Modify: `Docs/architecture/error-reporting.md` (and `ui-localization.md` if it already documents the
+- Modify: `docs/architecture/error-reporting.md` (and `ui-localization.md` if it already documents the
   panel path)
 
 - [x] full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`.

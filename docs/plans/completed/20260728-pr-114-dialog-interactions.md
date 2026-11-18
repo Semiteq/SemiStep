@@ -114,12 +114,12 @@ Mark `[x]` on completion; `➕` new tasks; `⚠️` blockers.
 ### Task 3: Verify + document
 
 **Files:**
-- Modify: `Docs/architecture/error-reporting.md` or the relevant architecture doc (whichever documents dialog/interaction conventions)
+- Modify: `docs/architecture/error-reporting.md` or the relevant architecture doc (whichever documents dialog/interaction conventions)
 
 - [x] full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj` — 1496 passed, 0 failed, 0 skipped (Performance explicit probes not run by default).
 - [x] `dotnet build SemiStep.slnx` — 0 warnings, 0 errors
 - [x] `dotnet format SemiStep.slnx` — no changes
-- [x] document the convention: VM-driven dialogs go through `Interaction`s registered in `WhenActivated` (like the file pickers); the VM does not depend on `Window`. Note that the exit-confirmation and restart-prompt dialogs remain legitimately view-side (window-lifecycle) — so F3's async-void guards on them stay and are not superseded here. Added `Docs/architecture/dialogs-and-interactions.md` (focused new doc, cross-linked from/to `error-reporting.md` and `exit-flow.md`); also corrected the stale `ExecuteExit` reference in `exit-flow.md`.
+- [x] document the convention: VM-driven dialogs go through `Interaction`s registered in `WhenActivated` (like the file pickers); the VM does not depend on `Window`. Note that the exit-confirmation and restart-prompt dialogs remain legitimately view-side (window-lifecycle) — so F3's async-void guards on them stay and are not superseded here. Added `docs/architecture/dialogs-and-interactions.md` (focused new doc, cross-linked from/to `error-reporting.md` and `exit-flow.md`); also corrected the stale `ExecuteExit` reference in `exit-flow.md`.
 - [x] mark this plan for archival at delivery (do NOT move it mid-run). (archival deferred to delivery/ship)
 
 ## Post-Completion

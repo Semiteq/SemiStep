@@ -16,7 +16,7 @@ using Xunit;
 namespace SemiStep.Tests.Performance;
 
 // Diagnostics, not a gate: drives the real headless transposed view through a fixed workload for a CPU
-// trace and asserts nothing (see Docs/perf/README.md, Diagnostic layer). Fixed iteration counts, never a
+// trace and asserts nothing (see docs/perf/README.md, Diagnostic layer). Fixed iteration counts, never a
 // fixed duration: a fixed-duration loop lets faster code do more iterations and erases the A/B signal.
 [Trait("Category", "Performance")]
 [Trait("Component", "UI")]

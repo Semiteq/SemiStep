@@ -330,7 +330,7 @@ The shipped file headers advertise `#RGB`/`#ARGB`, which the validator has alway
 wrong claim would survive editor rewrites indefinitely — fix the source files.
 
 **Files:** `ConfigFiles/MBE/ui/grid_style.yaml`, `ConfigFiles/MOCVD/ui/grid_style.yaml` (RIE ships no header; the
-test fixture header makes no format claims), `Docs/architecture/grid-style-configuration.md`.
+test fixture header makes no format claims), `docs/architecture/grid-style-configuration.md`.
 
 - [x] Replace the header block in both shipped configs — current lines 2–6:
 
@@ -352,7 +352,7 @@ test fixture header makes no format claims), `Docs/architecture/grid-style-confi
       # Alpha: 00 = fully transparent, FF = fully opaque
       ```
 
-- [x] `Docs/architecture/grid-style-configuration.md`: fix the sentence claiming the header documents
+- [x] `docs/architecture/grid-style-configuration.md`: fix the sentence claiming the header documents
       "`#RGB`, `#RRGGBB`, `#ARGB`, `#AARRGGBB`" (currently ~line 44) to the two accepted formats. Also correct the
       load-pipeline description this slice invalidated — chosen over a "diagram is stale" disclaimer because leaving
       a wrong diagram directly above a correcting note would contradict itself, and the fix is two lines: in the
@@ -370,7 +370,7 @@ test fixture header makes no format claims), `Docs/architecture/grid-style-confi
 **Next:** slice 5 — split the VM into per-group `ReactiveObject` drafts (initializer = seed, positional `Build()` =
 compile guard), shrink the parent VM to ~150 lines, group the AXAML binding paths (build-checked via `x:DataType`),
 trim `IGridStyleEditorFacade` (the vacuous `Validate` and the per-keystroke call go away — `CanSave` reduces to the
-VM-side numeric range checks), and rewrite `Docs/architecture/grid-style-configuration.md` as current-state. Slice 5
+VM-side numeric range checks), and rewrite `docs/architecture/grid-style-configuration.md` as current-state. Slice 5
 closes #118. Remaining slice-5 fork, still open: AXAML rename scope (big-bang grouped paths vs bridge properties)
 and whether the parent exposes drafts as properties or per-card `DataContext`.
 

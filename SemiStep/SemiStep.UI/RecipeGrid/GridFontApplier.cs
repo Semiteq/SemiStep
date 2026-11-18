@@ -8,7 +8,7 @@ namespace SemiStep.UI.RecipeGrid;
 
 // Grid fonts are assigned in code (not via the resource cascade). This applies the configured
 // family/weight/italic/size onto a control built by the cell and column factories so they all
-// honour the same empty-family rule. See Docs/architecture/grid-style-configuration.md.
+// honour the same empty-family rule. See docs/architecture/grid-style-configuration.md.
 internal static class GridFontApplier
 {
 	public static void ApplyHeaderFont(Control control, GridStyleOptions gridStyle)

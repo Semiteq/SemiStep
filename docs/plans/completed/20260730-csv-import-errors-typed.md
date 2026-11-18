@@ -103,12 +103,12 @@ The ru column is a first pass — review in Rider before exec.
 
 ## Task 3: Cross-path tests + doc + verify
 
-**Files:** `ReasonLocalizerTests.cs`, the CSV integration/panel test home, `Docs/architecture/error-reporting.md`.
+**Files:** `ReasonLocalizerTests.cs`, the CSV integration/panel test home, `docs/architecture/error-reporting.md`.
 
 - [x] ru/en render cases for a representative subset (`AtRowError` wrapping an `AtColumnError` wrapping a typed value error — the full compose; `CsvHeaderMismatchError`; `ActionValueNotIntegerError`) + the en `Localize==Message` pins.
 - [x] **Value-error end-to-end (the payoff):** a CSV body with an out-of-range cell, deserialized and surfaced via `ReportFailure` under `ru`, renders `Строка N: Столбец «k»: <Russian value error>` — proving the `AtRow`→`AtColumn`→typed-inner composition. Home it in `SemiStep.Tests/Csv/Integration/` (alongside `CsvPropertyValidationTests`); name the file at exec time.
 - [x] fragment sweep across the Tests tree for all Task 1/2 fragments; confirm the raw-`.Message` asserts stay green and only the flagged sites (unknown-action wording, the two exception-envelopes) changed; report what moved.
-- [x] `Docs/architecture/error-reporting.md`: note the CSV import producers now localize by type; add `AtRowError` to the positional-decorator/composition list (`AtStep`/`AtColumn`/`FormulaComputationFailed`); note the Rule-B exception-envelope pattern (`CausedBy(ex)`, headline localizes, detail to the log).
+- [x] `docs/architecture/error-reporting.md`: note the CSV import producers now localize by type; add `AtRowError` to the positional-decorator/composition list (`AtStep`/`AtColumn`/`FormulaComputationFailed`); note the Rule-B exception-envelope pattern (`CausedBy(ex)`, headline localizes, detail to the log).
 - [x] full `dotnet build SemiStep.slnx` 0 warnings; full `dotnet test` green; `dotnet format`.
 
 ## Post-Completion

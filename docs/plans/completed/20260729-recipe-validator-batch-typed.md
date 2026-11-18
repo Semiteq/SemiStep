@@ -172,7 +172,7 @@ Mark `[x]` on completion; `➕` new tasks; `⚠️` blockers.
 ### Task 3: Verify + document
 
 **Files:**
-- Modify: `Docs/architecture/error-reporting.md` (or `ui-localization.md`) — the decorator composition mode
+- Modify: `docs/architecture/error-reporting.md` (or `ui-localization.md`) — the decorator composition mode
 
 - [x] full suite: `dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj`; `dotnet build` 0 warnings; `dotnet format`.
 - [x] confirm coverage + parity tests green.

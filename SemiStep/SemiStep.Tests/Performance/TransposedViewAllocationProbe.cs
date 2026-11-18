@@ -9,7 +9,7 @@ using Xunit;
 namespace SemiStep.Tests.Performance;
 
 // Black-box scroll/recycle gates over framework-boundary signals. Explicit tests: commands and the gate
-// hierarchy live in Docs/perf/README.md.
+// hierarchy live in docs/perf/README.md.
 [Trait("Category", "Performance")]
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
@@ -38,7 +38,7 @@ public sealed class TransposedViewAllocationProbe(ITestOutputHelper output, Perf
 	private const int ParitySampleCount = 3;
 
 	// ~10% over the measured ~3.0x worst case while TransposedColumnCellsHost + pool remain; tightens to
-	// 2.0x after their deletion (see Docs/perf/README.md, gate hierarchy).
+	// 2.0x after their deletion (see docs/perf/README.md, gate hierarchy).
 	private const double ParityRatioLimit = 3.3;
 	private const double ParityRatioTargetAfterHostPoolDeletion = 2.0;
 

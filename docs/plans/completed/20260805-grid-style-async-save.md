@@ -59,9 +59,9 @@ async equivalents and the command awaits them.
 
 ## Task 2: Verify + doc
 
-**Files:** `Docs/architecture/grid-style-configuration.md`.
+**Files:** `docs/architecture/grid-style-configuration.md`.
 
-- [x] Confirm `GridStyleEditorWindow.axaml.cs` is untouched and its `OnSaveCompleted(bool)` + `ReportSaveException` fault path behave as before (the async command still yields `bool` and routes exceptions to `ThrownExceptions`). **Doc update is mandatory:** `Docs/architecture/grid-style-configuration.md:~233` states the facade seam as `Save(configDir, GridStyleOptions) → Result` — change it to `Task<Result>` and note `Save` is now async off the UI thread (mirroring `Load`), while `Validate` stays sync (per-keystroke). Note the `File.Move`-stays-sync atomic-write detail where the doc covers the writer.
+- [x] Confirm `GridStyleEditorWindow.axaml.cs` is untouched and its `OnSaveCompleted(bool)` + `ReportSaveException` fault path behave as before (the async command still yields `bool` and routes exceptions to `ThrownExceptions`). **Doc update is mandatory:** `docs/architecture/grid-style-configuration.md:~233` states the facade seam as `Save(configDir, GridStyleOptions) → Result` — change it to `Task<Result>` and note `Save` is now async off the UI thread (mirroring `Load`), while `Validate` stays sync (per-keystroke). Note the `File.Move`-stays-sync atomic-write detail where the doc covers the writer.
 - [x] full `dotnet build SemiStep.slnx` 0 warnings; full `dotnet test` green; `dotnet format`.
 
 ## Post-Completion

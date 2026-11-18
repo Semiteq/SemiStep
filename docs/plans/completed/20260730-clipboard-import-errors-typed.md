@@ -75,12 +75,12 @@ The ru column is a first pass — review in Rider before exec.
 
 ## Task 2: Cross-path tests + doc + verify
 
-**Files:** `ReasonLocalizerTests.cs`, the clipboard integration/panel test home, `Docs/architecture/error-reporting.md`.
+**Files:** `ReasonLocalizerTests.cs`, the clipboard integration/panel test home, `docs/architecture/error-reporting.md`.
 
 - [x] ru/en render cases: the 3 new types' ru render (literal Russian strings) + the en `Localize==Message` pin. (The reused types are already pinned by 5b.)
 - [x] **Value-error end-to-end (the payoff):** a TSV clipboard body with a **non-parseable** cell (e.g. `abc` in an int column — NOT out-of-range, which clipboard-deserialize does not check; see the Overview), deserialized via the real `ClipboardSerializer.DeserializeSteps` and surfaced through `ReportFailure` under `ru`, renders `Строка 1: Столбец «task»: Не удалось разобрать «abc» как float` — proving the `AtRow`→`AtColumn`→`PropertyValueParseError` composition works for the clipboard path. Use a TSV body like `10\t5.0\tabc\tc` (no header; field order action, step_duration, task, comment; first data row = row 1). Compute the exact expected string from the ru resx (`AtRowFormat`/`AtColumnFormat`/`ErrorPropertyValueParse`) — confirm the `task` column is float-typed in the standard config. Home it beside the existing `ClipboardDeserialize_*` cases in `SemiStep.Tests/Csv/Integration/CsvDeserializationTests.cs` (uses `CsvFixture` / `fixture.ClipboardSerializer`). [decision: action 10 (Wait) declares no `task` property, so the task column is skipped for it — used action `20` (For), which declares the float `task`, body `20\t5.0\tabc\tc`; expected string unchanged.]
 - [x] fragment sweep across the Tests tree for all Task 1 fragments; confirm raw-`.Message` asserts stay green and only the flagged sites changed; report what moved.
-- [x] `Docs/architecture/error-reporting.md`: note the clipboard import producers now localize by type (the CSV+clipboard ingress is now fully typed); the shared tabular-parse errors serve both. Keep it proportionate.
+- [x] `docs/architecture/error-reporting.md`: note the clipboard import producers now localize by type (the CSV+clipboard ingress is now fully typed); the shared tabular-parse errors serve both. Keep it proportionate.
 - [x] full `dotnet build SemiStep.slnx` 0 warnings; full `dotnet test` green; `dotnet format`.
 
 ## Post-Completion

@@ -15,7 +15,7 @@ dotnet format SemiStep.slnx                   # pre-commit hook enforces this
 
 The build treats warnings and the `.editorconfig` style, naming and quality rules as errors, so a
 new one fails CI instead of accumulating; whitespace formatting is not gated by the build. See
-`Docs/architecture/build-and-deployment.md`.
+`docs/architecture/build-and-deployment.md`.
 
 ## Test
 
@@ -31,15 +31,15 @@ Test traits: `[Trait("Component", "Core|Config|UI|Domain|Csv|S7")]`, `[Trait("Ar
 `[Trait("Category", "Unit|Integration|Performance")]` (Performance = xunit v3 explicit measurement probes,
 `[AvaloniaFact(Explicit = true)]` / `[Fact(Explicit = true)]`, NOT run by default `dotnet test`; run them via
 `dotnet run --project SemiStep/SemiStep.Tests/SemiStep.Tests.csproj -c Release -- -explicit only`
-(`-method "*Name*"` selective); see `Docs/perf/README.md` for the full harness, gate hierarchy, and
+(`-method "*Name*"` selective); see `docs/perf/README.md` for the full harness, gate hierarchy, and
 re-baseline procedure).
 
 Invalid config test cases use an overlay pattern: copy `SemiStep.Tests/YamlConfigs/Standard/` to a temp
 directory and overlay only the differing files from `SemiStep.Tests/YamlConfigs/Invalid/{CaseName}/`.
 
-**Avalonia headless tests:** UI tests use `[AvaloniaFact]` / `[AvaloniaTheory]` (from `Avalonia.Headless.XUnit`) which wraps the full test lifecycle, including `IAsyncLifetime.InitializeAsync` and `DisposeAsync`, in the headless dispatcher. No manual `Dispatcher.UIThread.RunJobs(...)` or sync-over-async wrappers are needed. See `Docs/architecture/headless-ui-testing.md` for the exceptions (unawaited work, LIFO interaction handlers).
+**Avalonia headless tests:** UI tests use `[AvaloniaFact]` / `[AvaloniaTheory]` (from `Avalonia.Headless.XUnit`) which wraps the full test lifecycle, including `IAsyncLifetime.InitializeAsync` and `DisposeAsync`, in the headless dispatcher. No manual `Dispatcher.UIThread.RunJobs(...)` or sync-over-async wrappers are needed. See `docs/architecture/headless-ui-testing.md` for the exceptions (unawaited work, LIFO interaction handlers).
 
-**Error assertions:** tests check error types, severity and relations between outputs, not wording. See `Docs/architecture/error-reporting.md`, section "What tests assert on errors".
+**Error assertions:** tests check error types, severity and relations between outputs, not wording. See `docs/architecture/error-reporting.md`, section "What tests assert on errors".
 
 ## Code Style
 
@@ -111,4 +111,4 @@ No abbreviations in names.
 
 ---
 
-This is project overview file, do not add specifics here. See the human readable docs in Docs\*. Keep the language of files as is.
+This is project overview file, do not add specifics here. See the human readable docs in docs\*. Keep the language of files as is.

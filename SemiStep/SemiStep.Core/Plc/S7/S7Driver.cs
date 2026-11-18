@@ -1,8 +1,8 @@
 ﻿using SemiStep.Core.Plc.Configuration;
 
-using S7NetCpuType = global::S7.Net.CpuType;
-using S7NetDataType = global::S7.Net.DataType;
-using S7NetPlc = global::S7.Net.Plc;
+using S7NetCpuType = S7.Net.CpuType;
+using S7NetDataType = S7.Net.DataType;
+using S7NetPlc = S7.Net.Plc;
 
 namespace SemiStep.Core.Plc.S7;
 

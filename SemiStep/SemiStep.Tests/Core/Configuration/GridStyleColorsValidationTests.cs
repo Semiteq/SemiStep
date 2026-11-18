@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-using FluentAssertions;
+﻿using FluentAssertions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Configuration.Dto;
@@ -126,28 +124,25 @@ public sealed class GridStyleColorsValidationTests
 	}
 
 	public static TheoryData<string> DisabledKeyNames =>
-		new()
-		{
+		[
 			"depth_0", "depth_1", "depth_2", "depth_3",
 			"depth_0_past", "depth_1_past", "depth_2_past", "depth_3_past",
 			"selected", "foreground"
-		};
+		];
 
 	public static TheoryData<string> ReadOnlyKeyNames =>
-		new()
-		{
+		[
 			"depth_0", "depth_1", "depth_2", "depth_3",
 			"depth_0_past", "depth_1_past", "depth_2_past", "depth_3_past",
 			"selected", "foreground"
-		};
+		];
 
 	public static TheoryData<string> ExecutionKeyNames =>
-		new()
-		{
+		[
 			"depth_0", "depth_1", "depth_2", "depth_3",
 			"depth_0_past", "depth_1_past", "depth_2_past", "depth_3_past",
 			"current_step_marker"
-		};
+		];
 
 	[Theory]
 	[MemberData(nameof(DisabledKeyNames))]

@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
@@ -137,7 +135,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		_fixture.Coordinator.RemoveSteps(new[] { 0, 2 });
+		_fixture.Coordinator.RemoveSteps([0, 2]);
 
 		_surface.RecipeRows.Should().HaveCount(1);
 	}
@@ -150,7 +148,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		_fixture.Coordinator.RemoveSteps(new[] { 0, 1 });
+		_fixture.Coordinator.RemoveSteps([0, 1]);
 
 		_surface.RecipeRows[0].StepNumber.Should().Be(1);
 	}
@@ -199,7 +197,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		_surface.UpdateSelection(new[] { 1 });
+		_surface.UpdateSelection([1]);
 
 		_surface.SelectedStepIndex.Should().Be(1);
 	}
@@ -210,7 +208,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		_surface.UpdateSelection(Array.Empty<int>());
+		_surface.UpdateSelection([]);
 
 		_surface.SelectedStepIndex.Should().Be(-1);
 	}
@@ -259,7 +257,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		bool? latest = null;
 		using var subscription = _surface.CanDeleteStep.Subscribe(value => latest = value);
 
-		_surface.UpdateSelection(new[] { 0 });
+		_surface.UpdateSelection([0]);
 
 		latest.Should().BeTrue();
 	}
@@ -271,7 +269,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_surface.UpdateSelection(new[] { 2, 0 });
+		_surface.UpdateSelection([2, 0]);
 
 		var steps = _surface.CollectSelectedSteps();
 
@@ -397,7 +395,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
 		var act = () => _surface.OnMutation(
-			new MutationSignal.StepsRemoved(ImmutableArray.Create(0, 99)));
+			new MutationSignal.StepsRemoved([0, 99]));
 
 		act.Should().NotThrow();
 		_logger.Entries.Should().Contain(entry =>
@@ -424,7 +422,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		_fixture.Coordinator.RemoveSteps(new[] { 0, 2 });
+		_fixture.Coordinator.RemoveSteps([0, 2]);
 
 		_logger.Entries.Should().NotContain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("Stale"));
@@ -460,7 +458,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var row = _surface.RecipeRows[0];
-		row.MarkChanged(new[] { RecipeTestDriver.StepDurationColumn });
+		row.MarkChanged([RecipeTestDriver.StepDurationColumn]);
 
 		row.SetPropertyValue(RecipeTestDriver.StepDurationColumn, "15");
 
@@ -473,7 +471,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var row = _surface.RecipeRows[0];
-		row.MarkChanged(new[] { RecipeTestDriver.StepDurationColumn });
+		row.MarkChanged([RecipeTestDriver.StepDurationColumn]);
 
 		// "999999" exceeds the duration property maximum, so UpdateStepProperty returns IsFailed and
 		// OnCellValueChanged takes the early-return before ClearChanged: a rejected edit keeps orange.

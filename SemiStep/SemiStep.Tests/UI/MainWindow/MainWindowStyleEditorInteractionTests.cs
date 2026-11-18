@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Reactive;
+﻿using System.Reactive;
 using System.Reactive.Linq;
 
 using Avalonia.Headless.XUnit;
@@ -13,8 +12,6 @@ using SemiStep.Core.Configuration;
 using SemiStep.Tests.Config.Helpers;
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
-
-using SemiStep.UI.MainWindow;
 using SemiStep.UI.StyleEditor;
 
 using Xunit;

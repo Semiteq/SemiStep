@@ -19,7 +19,7 @@ internal static class PlcConfigurationValidator
 		ValidateDataDb(config.Layout.StringDb, nameof(PlcProtocolLayout.StringDb), validationResults);
 		ValidateExecutionDb(config.Layout.ExecutionDb, validationResults);
 
-		return Result.Merge(validationResults.ToArray());
+		return Result.Merge([.. validationResults]);
 	}
 
 	private static void ValidateManagingDb(ManagingDbLayout layout, List<Result> validationResults)
@@ -33,10 +33,10 @@ internal static class PlcConfigurationValidator
 			(nameof(layout.RecipeLinesOffset), layout.RecipeLinesOffset, sizeof(int)),
 		};
 
-		foreach (var field in fields)
+		foreach (var (Name, Offset, Size) in fields)
 		{
-			ValidateNonNegativeOffset(field.Offset, LayoutName, field.Name, validationResults);
-			ValidateOffsetFits(layout.TotalSize, field.Offset, field.Size, LayoutName, field.Name, validationResults);
+			ValidateNonNegativeOffset(Offset, LayoutName, Name, validationResults);
+			ValidateOffsetFits(layout.TotalSize, Offset, Size, LayoutName, Name, validationResults);
 		}
 
 		ValidateNonNegativeOffset(layout.TotalSize, LayoutName, nameof(layout.TotalSize), validationResults);
@@ -86,10 +86,10 @@ internal static class PlcConfigurationValidator
 			(nameof(layout.ForLoopCount3Offset), layout.ForLoopCount3Offset, sizeof(int)),
 		};
 
-		foreach (var field in fields)
+		foreach (var (Name, Offset, Size) in fields)
 		{
-			ValidateNonNegativeOffset(field.Offset, LayoutName, field.Name, validationResults);
-			ValidateOffsetFits(layout.TotalSize, field.Offset, field.Size, LayoutName, field.Name, validationResults);
+			ValidateNonNegativeOffset(Offset, LayoutName, Name, validationResults);
+			ValidateOffsetFits(layout.TotalSize, Offset, Size, LayoutName, Name, validationResults);
 		}
 
 		ValidateNonNegativeOffset(layout.TotalSize, LayoutName, nameof(layout.TotalSize), validationResults);

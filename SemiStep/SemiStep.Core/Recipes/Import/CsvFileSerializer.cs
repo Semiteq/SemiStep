@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Globalization;
+﻿using System.Globalization;
 
 using CsvHelper;
 using CsvHelper.Configuration;
@@ -70,12 +69,7 @@ public sealed class CsvFileSerializer(
 			}
 		}
 
-		if (allErrors.Count > 0)
-		{
-			return Result.Fail(allErrors);
-		}
-
-		return Result.Ok(new Recipe(steps.ToImmutableList()));
+		return allErrors.Count > 0 ? (Result<Recipe>)Result.Fail(allErrors) : Result.Ok(new Recipe([.. steps]));
 	}
 
 	private Result ValidateHeader(string headerLine)
@@ -83,14 +77,11 @@ public sealed class CsvFileSerializer(
 		var actual = headerLine.Split(Separator, StringSplitOptions.TrimEntries);
 		var expected = converter.ColumnOrder;
 
-		if (!expected.SequenceEqual(actual))
-		{
-			return Result.Fail(new CsvHeaderMismatchError(
+		return !expected.SequenceEqual(actual)
+			? Result.Fail(new CsvHeaderMismatchError(
 				string.Join("; ", expected),
-				string.Join("; ", actual)));
-		}
-
-		return Result.Ok();
+				string.Join("; ", actual)))
+			: Result.Ok();
 	}
 
 	private static CsvWriter CreateWriter(TextWriter textWriter)

@@ -198,7 +198,7 @@ public sealed class RecipeGridHostTests : IAsyncLifetime
 		host.IsEditing.Should().BeFalse();
 
 		var durationColumn = dataGrid.Columns.Single(column =>
-			column.Tag as string == RecipeTestDriver.StepDurationColumn);
+			(column.Tag as string) == RecipeTestDriver.StepDurationColumn);
 		DataGridTestHelper.SetCurrentCell(dataGrid, rowIndex: 0, durationColumn);
 		dataGrid.BeginEdit();
 		Dispatcher.UIThread.RunJobs();
@@ -256,6 +256,6 @@ public sealed class RecipeGridHostTests : IAsyncLifetime
 		var dataGrid = host.GetVisualDescendants().OfType<DataGrid>().SingleOrDefault();
 		dataGrid.Should().NotBeNull();
 
-		return dataGrid!;
+		return dataGrid;
 	}
 }

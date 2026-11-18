@@ -53,7 +53,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			_fixture.ClickAwayBroadcaster,
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 
-		var act = () => surface.Initialize();
+		var act = surface.Initialize;
 
 		act.Should().Throw<InvalidOperationException>()
 			.WithMessage($"*Step 1*unknown action key*{RecipeTestDriver.WaitActionId}*");
@@ -70,7 +70,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			_fixture.ClickAwayBroadcaster,
 			NullLogger<TransposedRecipeGridSurface>.Instance);
 
-		var act = () => surface.Initialize();
+		var act = surface.Initialize;
 
 		act.Should().Throw<InvalidOperationException>()
 			.WithMessage($"*Step 1*unknown action key*{RecipeTestDriver.WaitActionId}*");
@@ -87,7 +87,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			_fixture.ClickAwayBroadcaster,
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 		var probeSignals = new List<MutationSignal>();
-		_fixture.Coordinator.Mutated += signal => probeSignals.Add(signal);
+		_fixture.Coordinator.Mutated += probeSignals.Add;
 
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
@@ -110,7 +110,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			_fixture.ClickAwayBroadcaster,
 			NullLogger<TransposedRecipeGridSurface>.Instance);
 		var probeSignals = new List<MutationSignal>();
-		_fixture.Coordinator.Mutated += signal => probeSignals.Add(signal);
+		_fixture.Coordinator.Mutated += probeSignals.Add;
 
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 

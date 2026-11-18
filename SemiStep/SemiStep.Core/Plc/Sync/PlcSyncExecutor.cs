@@ -18,7 +18,7 @@ internal sealed class PlcSyncExecutor(
 	Action<PlcSyncStatus> setStatus,
 	Action<DateTimeOffset> setLastSyncTime,
 	Action<IError> reportFault,
-	ILogger<PlcSyncExecutor> logger)
+	ILogger<PlcSyncExecutor> logger) : IDisposable
 {
 	internal const int DebounceDelayMilliseconds = 1000;
 

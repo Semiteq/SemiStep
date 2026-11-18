@@ -31,12 +31,7 @@ internal static class DefaultValueValidator
 			}
 		}
 
-		if (validationResults.Count == 0)
-		{
-			return Result.Ok();
-		}
-
-		return Result.Merge(validationResults.ToArray());
+		return validationResults.Count == 0 ? Result.Ok() : Result.Merge([.. validationResults]);
 	}
 
 	private static void ValidateActionColumn(

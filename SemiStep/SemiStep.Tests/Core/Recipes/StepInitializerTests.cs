@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿using System.Globalization;
+
+using FluentAssertions;
 
 using SemiStep.Core.Recipes;
 using SemiStep.Tests.Helpers;
@@ -83,15 +85,15 @@ public sealed class StepInitializerTests
 			id: RootId,
 			uiName: "Depth2Root",
 			deployDuration: DeployDuration.LongLasting,
-			properties: new List<ActionPropertyDefinition>
-			{
+			properties:
+			[
 				SelectorWithDefault(
 					"root_sel",
 					IntermediateEnabling,
 					(IntermediateEnabling, IntermediateSubactionId),
 					(2, SiblingSubactionId)),
 				Column("comment", "comment")
-			},
+			],
 			role: ActionRole.Action);
 
 		return TestRecipeMetadataRegistryFactory.Build(
@@ -136,7 +138,7 @@ public sealed class StepInitializerTests
 			Key: key,
 			GroupName: null,
 			PropertyTypeId: "enum",
-			DefaultValue: defaultValue.ToString(),
+			DefaultValue: defaultValue.ToString(CultureInfo.InvariantCulture),
 			Targets: map);
 	}
 }

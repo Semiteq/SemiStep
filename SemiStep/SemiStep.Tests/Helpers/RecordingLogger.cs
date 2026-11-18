@@ -4,7 +4,7 @@ namespace SemiStep.Tests.Helpers;
 
 public sealed class RecordingLogger<T> : ILogger<T>
 {
-	private readonly List<LogEntry> _entries = new();
+	private readonly List<LogEntry> _entries = [];
 
 	public IReadOnlyList<LogEntry> Entries => _entries;
 

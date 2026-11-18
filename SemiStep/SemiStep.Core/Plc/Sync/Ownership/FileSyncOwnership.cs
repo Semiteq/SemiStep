@@ -9,24 +9,17 @@ using SemiStep.Core.Plc.Configuration;
 
 namespace SemiStep.Core.Plc.Sync.Ownership;
 
-public sealed class FileSyncOwnership : IPlcSyncOwnership
+public sealed class FileSyncOwnership(string lockRoot, ILogger<FileSyncOwnership>? logger = null) : IPlcSyncOwnership
 {
 	private const string UnavailableMessage = "PLC sync is owned by another instance or the lock is unavailable.";
 	private const string OwnedByUnknownMessage = "PLC sync is owned by another instance.";
 
-	private readonly string _lockRoot;
-	private readonly ILogger<FileSyncOwnership> _logger;
-	private readonly SyncLockRootProvisioner _rootProvisioner = new();
+	private readonly string _lockRoot = lockRoot;
+	private readonly ILogger<FileSyncOwnership> _logger = logger ?? NullLogger<FileSyncOwnership>.Instance;
 
 	public FileSyncOwnership(ILogger<FileSyncOwnership> logger)
 		: this(DefaultLockRoot(), logger)
 	{
-	}
-
-	public FileSyncOwnership(string lockRoot, ILogger<FileSyncOwnership>? logger = null)
-	{
-		_lockRoot = lockRoot;
-		_logger = logger ?? NullLogger<FileSyncOwnership>.Instance;
 	}
 
 	public Result<ISyncOwnershipLease> TryAcquire(PlcConnectionSettings endpoint)
@@ -35,7 +28,7 @@ public sealed class FileSyncOwnership : IPlcSyncOwnership
 
 		try
 		{
-			_rootProvisioner.EnsureRoot(_lockRoot);
+			SyncLockRootProvisioner.EnsureRoot(_lockRoot);
 		}
 		catch (Exception exception) when (exception is UnauthorizedAccessException or IOException)
 		{
@@ -86,12 +79,9 @@ public sealed class FileSyncOwnership : IPlcSyncOwnership
 	{
 		var holder = TryReadOwner(lockFilePath);
 
-		if (holder is null)
-		{
-			return Result.Fail<ISyncOwnershipLease>(OwnedByUnknownMessage);
-		}
-
-		return Result.Fail<ISyncOwnershipLease>(new OwnedByAnotherInstanceError(holder));
+		return holder is null
+			? Result.Fail<ISyncOwnershipLease>(OwnedByUnknownMessage)
+			: Result.Fail<ISyncOwnershipLease>(new OwnedByAnotherInstanceError(holder));
 	}
 
 	private static OwnerInfo? TryReadOwner(string lockFilePath)
@@ -104,12 +94,7 @@ public sealed class FileSyncOwnership : IPlcSyncOwnership
 			using var memory = new MemoryStream();
 			reader.CopyTo(memory);
 
-			if (memory.Length == 0)
-			{
-				return null;
-			}
-
-			return JsonSerializer.Deserialize<OwnerInfo>(memory.ToArray());
+			return memory.Length == 0 ? null : JsonSerializer.Deserialize<OwnerInfo>(memory.ToArray());
 		}
 		catch (Exception exception) when (exception is IOException
 			or UnauthorizedAccessException

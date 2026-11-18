@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Globalization;
+﻿using System.Globalization;
 
 using Avalonia.Headless.XUnit;
 
@@ -99,7 +98,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		_fixture.Coordinator.RemoveSteps(new[] { 0, 2 });
+		_fixture.Coordinator.RemoveSteps([0, 2]);
 
 		_surface.StepColumns.Should().HaveCount(1);
 		_surface.StepColumns[0].Row.StepNumber.Should().Be(1);
@@ -191,7 +190,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_surface.UpdateSelection(new[] { 2 });
+		_surface.UpdateSelection([2]);
 		bool? latestCanDelete = null;
 		using var subscription = _surface.CanDeleteStep.Subscribe(value => latestCanDelete = value);
 		latestCanDelete.Should().BeTrue();
@@ -210,7 +209,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_surface.UpdateSelection(new[] { 0, 2 });
+		_surface.UpdateSelection([0, 2]);
 
 		_fixture.Coordinator.RemoveStep(2);
 
@@ -237,7 +236,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		var durationCell = GetCell(0, RecipeTestDriver.StepDurationColumn);
-		_surface.StepColumns[0].Row.MarkChanged(new[] { RecipeTestDriver.StepDurationColumn });
+		_surface.StepColumns[0].Row.MarkChanged([RecipeTestDriver.StepDurationColumn]);
 
 		// "999999" exceeds the duration maximum: the coordinator rejects the edit and the surface
 		// takes the early return before ClearChanged, so the orange highlight stays.
@@ -252,7 +251,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_surface.StepColumns[0].Row.MarkChanged(new[] { RecipeTestDriver.StepDurationColumn });
+		_surface.StepColumns[0].Row.MarkChanged([RecipeTestDriver.StepDurationColumn]);
 
 		_fixture.S7Service.PushExecutionState(
 			PlcExecutionInfo.Empty with { RecipeActive = true, ActualLine = 1 });
@@ -369,7 +368,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
 		var act = () => _surface.OnMutation(
-			new MutationSignal.StepsRemoved(ImmutableArray.Create(0, 99)));
+			new MutationSignal.StepsRemoved([0, 99]));
 
 		act.Should().NotThrow();
 		_logger.Entries.Should().Contain(entry =>
@@ -557,7 +556,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		_fixture.Coordinator.RemoveSteps(new[] { 0, 2 });
+		_fixture.Coordinator.RemoveSteps([0, 2]);
 		_fixture.Coordinator.RemoveStep(0);
 
 		_logger.Entries.Should().NotContain(entry =>

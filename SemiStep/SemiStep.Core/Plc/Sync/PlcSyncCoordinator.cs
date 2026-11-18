@@ -20,7 +20,6 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 	private PlcConnectionState _connectionState = PlcConnectionState.Disconnected;
 	private volatile bool _disposed;
 	private bool _isSyncEnabled;
-	private DateTimeOffset? _lastSyncTime;
 	private PlcSyncStatus _status = PlcSyncStatus.Idle;
 
 	public PlcSyncCoordinator(
@@ -82,14 +81,14 @@ internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 		{
 			lock (_lock)
 			{
-				return _lastSyncTime;
+				return field;
 			}
 		}
 		private set
 		{
 			lock (_lock)
 			{
-				_lastSyncTime = value;
+				field = value;
 			}
 		}
 	}

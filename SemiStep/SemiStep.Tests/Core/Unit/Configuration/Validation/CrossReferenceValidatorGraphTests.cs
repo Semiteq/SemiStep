@@ -195,7 +195,7 @@ public sealed class CrossReferenceValidatorGraphTests
 			Id = id,
 			UiName = uiName,
 			Role = "action",
-			Columns = columns.ToList()
+			Columns = [.. columns]
 		};
 	}
 
@@ -206,7 +206,7 @@ public sealed class CrossReferenceValidatorGraphTests
 			Id = id,
 			UiName = uiName,
 			Role = "subaction",
-			Columns = columns.ToList()
+			Columns = [.. columns]
 		};
 	}
 

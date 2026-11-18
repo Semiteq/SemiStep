@@ -319,7 +319,8 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 		var (_, stepListBox) = ShowView();
 
 		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
-		var capturedCell = (PropertyTextCellViewModel)editor.DataContext!;
+
+		_ = (PropertyTextCellViewModel)editor.DataContext!;
 		var rebindCell = (PropertyTextCellViewModel)FindTextPresenter(
 			stepListBox, 1, RecipeTestDriver.StepDurationColumn).DataContext!;
 
@@ -727,7 +728,7 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.UseTransposedColumnsPanel();
+		stepListBox.UseTransposedColumnsPanel();
 
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();

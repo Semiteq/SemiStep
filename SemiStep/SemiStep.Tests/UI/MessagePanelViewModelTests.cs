@@ -70,8 +70,10 @@ public sealed class MessagePanelViewModelTests
 	[AvaloniaFact]
 	public void ShowPanel_True_WhenHasEntriesAndVisible()
 	{
-		var panel = new MessagePanelViewModel();
-		panel.IsVisible = false;
+		var panel = new MessagePanelViewModel
+		{
+			IsVisible = false
+		};
 
 		panel.RefreshReasons([new Error("e")]);
 		panel.IsVisible = true;

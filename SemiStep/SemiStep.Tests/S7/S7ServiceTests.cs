@@ -82,7 +82,7 @@ public sealed class S7ServiceTests
 		driver.SetReadExceptionForDb(managingDbNumber, new IOException("simulated connection loss"));
 
 		var emittedStates = new List<PlcConnectionState>();
-		service.StateChanged += state => emittedStates.Add(state);
+		service.StateChanged += emittedStates.Add;
 
 		await service.ConnectAsync(PlcConnectionSettings.Default);
 
@@ -104,7 +104,7 @@ public sealed class S7ServiceTests
 		var (service, driver) = BuildService(configuration);
 
 		var emittedStates = new List<PlcConnectionState>();
-		service.StateChanged += state => emittedStates.Add(state);
+		service.StateChanged += emittedStates.Add;
 
 		await service.ConnectAsync(PlcConnectionSettings.Default);
 
@@ -133,7 +133,7 @@ public sealed class S7ServiceTests
 
 		// Record state changes only after DisconnectAsync completes.
 		var statesAfterDisconnect = new List<PlcConnectionState>();
-		service.StateChanged += state => statesAfterDisconnect.Add(state);
+		service.StateChanged += statesAfterDisconnect.Add;
 
 		// Configure the transport to throw so that any lingering keep-alive would
 		// trigger OnConnectionLost if it were still running.

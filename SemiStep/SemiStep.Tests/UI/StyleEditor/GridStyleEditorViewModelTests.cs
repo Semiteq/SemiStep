@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reactive;
+﻿using System.Reactive;
 using System.Reactive.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -23,7 +21,6 @@ using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Localization;
 using SemiStep.UI.Localization;
 using SemiStep.UI.StyleEditor;
-using SemiStep.UI.Styles;
 
 using Xunit;
 
@@ -68,7 +65,7 @@ public sealed class GridStyleEditorViewModelTests
 			var mappedField = $"{groupName}.{leaf.Name}";
 			var changedFields = ChangedRecordFields(baseline, built);
 			changedFields.Should().BeEquivalentTo(
-				new[] { mappedField },
+				[mappedField],
 				$"editing {mappedField} must change exactly that record field");
 
 			leaf.SetValue(draft, seededValue);
@@ -456,10 +453,9 @@ public sealed class GridStyleEditorViewModelTests
 
 	private static IReadOnlyList<PropertyInfo> DraftLeaves(Type draftType)
 	{
-		return draftType
+		return [.. draftType
 			.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-			.Where(property => property.GetMethod?.IsPublic == true && property.SetMethod?.IsPublic == true)
-			.ToList();
+			.Where(property => property.GetMethod?.IsPublic == true && property.SetMethod?.IsPublic == true)];
 	}
 
 	// Color perturbation stays opaque so ToHex changes; weights are unvalidated ints so any value round-trips.
@@ -481,17 +477,11 @@ public sealed class GridStyleEditorViewModelTests
 			return (int)current! + 100;
 		}
 
-		if (property.PropertyType == typeof(bool))
-		{
-			return !(bool)current!;
-		}
-
-		if (property.PropertyType == typeof(string))
-		{
-			return (string)current! + " Perturbed";
-		}
-
-		throw new InvalidOperationException($"No perturbation defined for {property.Name} ({property.PropertyType})");
+		return property.PropertyType == typeof(bool)
+			? !(bool)current!
+			: property.PropertyType == typeof(string)
+			? (object)((string)current! + " Perturbed")
+			: throw new InvalidOperationException($"No perturbation defined for {property.Name} ({property.PropertyType})");
 	}
 
 	// Typed recursive leaf walk: a string/primitive/enum property is a LEAF compared at its dotted path;

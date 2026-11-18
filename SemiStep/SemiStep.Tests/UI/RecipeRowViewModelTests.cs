@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+﻿using System.Globalization;
 
 using Avalonia.Headless.XUnit;
 
@@ -145,7 +145,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var receivedActionId = -1;
 		row.ActionChanged += id => receivedActionId = id;
 
-		row.SetPropertyValue("action", RecipeTestDriver.ForLoopActionId.ToString());
+		row.SetPropertyValue("action", RecipeTestDriver.ForLoopActionId.ToString(CultureInfo.InvariantCulture));
 
 		receivedActionId.Should().Be(RecipeTestDriver.ForLoopActionId);
 	}
@@ -193,7 +193,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var eventFired = false;
 		row.ActionChanged += _ => eventFired = true;
 
-		row.SetPropertyValue("action", RecipeTestDriver.WaitActionId.ToString());
+		row.SetPropertyValue("action", RecipeTestDriver.WaitActionId.ToString(CultureInfo.InvariantCulture));
 
 		eventFired.Should().BeFalse();
 	}
@@ -205,7 +205,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var receivedActionId = -1;
 		row.ActionChanged += id => receivedActionId = id;
 
-		row.SetPropertyValue("action", RecipeTestDriver.ForLoopActionId.ToString());
+		row.SetPropertyValue("action", RecipeTestDriver.ForLoopActionId.ToString(CultureInfo.InvariantCulture));
 
 		receivedActionId.Should().Be(RecipeTestDriver.ForLoopActionId);
 	}
@@ -343,8 +343,8 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 			id: 999,
 			uiName: "Phantom",
 			deployDuration: DeployDuration.Immediate,
-			properties: new[] { unresolvedGroupProperty });
-		var step = new Step(999, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
+			properties: [unresolvedGroupProperty]);
+		var step = new Step(999, []);
 		var inapplicableColumns = new HashSet<string>();
 
 		var row = new RecipeRowViewModel(1, step, actionWithUnresolvedGroup, _recipeMetadataRegistry, inapplicableColumns);
@@ -394,7 +394,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var row = CreateRow();
 		var before = row.ChangedColumns;
 
-		row.MarkChanged(new[] { "alpha", "beta" });
+		row.MarkChanged(["alpha", "beta"]);
 
 		row.ChangedColumns.Should().NotBeSameAs(before);
 		row.ChangedColumns.Should().BeEquivalentTo("alpha", "beta");
@@ -405,10 +405,10 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	public void ApplyChangedDelta_AddsAndRemoves()
 	{
 		var row = CreateRow();
-		row.MarkChanged(new[] { "alpha", "beta" });
+		row.MarkChanged(["alpha", "beta"]);
 		var before = row.ChangedColumns;
 
-		row.ApplyChangedDelta(new[] { "gamma" }, new[] { "alpha" });
+		row.ApplyChangedDelta(["gamma"], ["alpha"]);
 
 		row.ChangedColumns.Should().NotBeSameAs(before);
 		row.ChangedColumns.Should().BeEquivalentTo("beta", "gamma");
@@ -418,7 +418,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	public void ClearChanged_RemovesOneKey_WhenPresent()
 	{
 		var row = CreateRow();
-		row.MarkChanged(new[] { "alpha", "beta" });
+		row.MarkChanged(["alpha", "beta"]);
 		var before = row.ChangedColumns;
 
 		row.ClearChanged("alpha");
@@ -431,7 +431,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	public void ClearChanged_AbsentKey_IsNoOp_AndKeepsInstance()
 	{
 		var row = CreateRow();
-		row.MarkChanged(new[] { "alpha" });
+		row.MarkChanged(["alpha"]);
 		var before = row.ChangedColumns;
 
 		row.ClearChanged("missing");
@@ -444,7 +444,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	public void ClearAllChanged_EmptiesSet_WhenNonEmpty()
 	{
 		var row = CreateRow();
-		row.MarkChanged(new[] { "alpha", "beta" });
+		row.MarkChanged(["alpha", "beta"]);
 		var before = row.ChangedColumns;
 
 		row.ClearAllChanged();
@@ -468,7 +468,7 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	public void IsChanged_ReflectsMembership()
 	{
 		var row = CreateRow();
-		row.MarkChanged(new[] { "alpha" });
+		row.MarkChanged(["alpha"]);
 
 		row.IsChanged("alpha").Should().BeTrue();
 		row.IsChanged("beta").Should().BeFalse();

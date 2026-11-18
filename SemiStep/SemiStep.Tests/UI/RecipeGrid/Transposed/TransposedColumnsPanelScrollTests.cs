@@ -1,5 +1,4 @@
-﻿using Avalonia;
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -68,7 +67,7 @@ public sealed class TransposedColumnsPanelScrollTests : IAsyncLifetime
 		_surface.RequestSelection(farIndex);
 		Dispatcher.UIThread.RunJobs();
 
-		var container = (Control)stepListBox.ContainerFromIndex(farIndex)!;
+		var container = stepListBox.ContainerFromIndex(farIndex)!;
 		container.Should().NotBeNull("the selection request realizes the far column through ScrollIntoView");
 		container.Bounds.X.Should().BeApproximately(
 			farIndex * columnWidth, 0.5, "the eagerly realized column sits at its exact index rect");
@@ -99,7 +98,7 @@ public sealed class TransposedColumnsPanelScrollTests : IAsyncLifetime
 		_surface.RequestSelection(newLastIndex);
 		Dispatcher.UIThread.RunJobs();
 
-		var container = (Control)stepListBox.ContainerFromIndex(newLastIndex)!;
+		var container = stepListBox.ContainerFromIndex(newLastIndex)!;
 		container.Should().NotBeNull("auto-scroll to the appended column realizes it");
 		container.Bounds.X.Should().BeApproximately(
 			newLastIndex * columnWidth, 0.5, "the appended column sits at its exact last-index rect");
@@ -126,7 +125,7 @@ public sealed class TransposedColumnsPanelScrollTests : IAsyncLifetime
 		_surface.SelectedStepIndex.Should().Be(
 			TargetIndex, "each Right advanced the neighbour column, walking past the initial realized window");
 
-		var container = (Control)stepListBox.ContainerFromIndex(TargetIndex)!;
+		var container = stepListBox.ContainerFromIndex(TargetIndex)!;
 		container.Should().NotBeNull("the navigator realized the far target column via ScrollIntoView");
 		container.Bounds.X.Should().BeApproximately(
 			TargetIndex * columnWidth, 0.5, "the resolved neighbour column sits at its exact rect");
@@ -142,7 +141,7 @@ public sealed class TransposedColumnsPanelScrollTests : IAsyncLifetime
 		var stepListBox = ShowView();
 
 		stepListBox.SelectedIndex = 0;
-		((Control)stepListBox.ContainerFromIndex(0)!).Focus();
+		stepListBox.ContainerFromIndex(0)!.Focus();
 		Dispatcher.UIThread.RunJobs();
 
 		const int ExtendSteps = 15;
@@ -205,7 +204,7 @@ public sealed class TransposedColumnsPanelScrollTests : IAsyncLifetime
 		var view = new TransposedRecipeGridView { DataContext = _surface };
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.UseTransposedColumnsPanel();
+		stepListBox.UseTransposedColumnsPanel();
 
 		_window = new Window
 		{

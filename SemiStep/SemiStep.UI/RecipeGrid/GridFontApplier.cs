@@ -23,7 +23,7 @@ internal static class GridFontApplier
 
 	private static void Apply(Control control, string fontFamily, int fontSize, int fontWeight, bool italic)
 	{
-		control.SetValue(TextElement.FontSizeProperty, (double)fontSize);
+		control.SetValue(TextElement.FontSizeProperty, fontSize);
 		control.SetValue(TextElement.FontWeightProperty, (FontWeight)fontWeight);
 		control.SetValue(TextElement.FontStyleProperty, italic ? FontStyle.Italic : FontStyle.Normal);
 

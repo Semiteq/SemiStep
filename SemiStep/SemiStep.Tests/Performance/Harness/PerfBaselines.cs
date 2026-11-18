@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
+﻿using System.Globalization;
 using System.Text.Json;
 
 namespace SemiStep.Tests.Performance.Harness;
@@ -13,12 +10,8 @@ public sealed record BaselineComparison(bool Passed, string Message);
 // Thrown at load when the committed baselines file violates a structural invariant that no re-baseline may
 // silently repair (a budget below its own baseline value). Distinct from a compare failure, which is data
 // drift and surfaces through BaselineComparison.
-public sealed class BaselineConfigException : Exception
+public sealed class BaselineConfigException(string message) : Exception(message)
 {
-	public BaselineConfigException(string message)
-		: base(message)
-	{
-	}
 }
 
 // Loads Docs/perf/baselines.json and gates measured metrics against it; value/tolerance vs hand-set
@@ -72,7 +65,7 @@ public sealed class PerfBaselines
 			?? new BaselinesDocument();
 
 		var metrics = new Dictionary<string, Metric>(StringComparer.Ordinal);
-		foreach (var (name, dto) in document.Metrics ?? new Dictionary<string, MetricDto>())
+		foreach (var (name, dto) in document.Metrics ?? [])
 		{
 			if (dto.Budget is double budget && budget < dto.Value)
 			{
@@ -123,16 +116,13 @@ public sealed class PerfBaselines
 		}
 
 		var lowerLimit = metric.Value * (1.0 - (metric.TolerancePct / 100.0));
-		if (actual < lowerLimit)
-		{
-			return new BaselineComparison(
+		return actual < lowerLimit
+			? new BaselineComparison(
 				true,
 				$"Metric '{metricName}' improved past tolerance: actual={Format(actual)} is under baseline "
 				+ $"{Format(metric.Value)} -{Format(metric.TolerancePct)}% (limit {Format(lowerLimit)}). "
-				+ "The baseline is stale; consider re-baselining down.");
-		}
-
-		return new BaselineComparison(
+				+ "The baseline is stale; consider re-baselining down.")
+			: new BaselineComparison(
 			true,
 			$"Metric '{metricName}' within tolerance: actual={Format(actual)}, baseline={Format(metric.Value)}, "
 			+ $"tolerance={Format(metric.TolerancePct)}%, budget={Format(budget)}.");
@@ -152,7 +142,7 @@ public sealed class PerfBaselines
 		context.CapturedUtc = capturedUtc;
 
 		var merged = new SortedDictionary<string, MetricDto>(StringComparer.Ordinal);
-		foreach (var (name, dto) in document.Metrics ?? new Dictionary<string, MetricDto>())
+		foreach (var (name, dto) in document.Metrics ?? [])
 		{
 			merged[name] = new MetricDto
 			{
@@ -164,24 +154,19 @@ public sealed class PerfBaselines
 
 		foreach (var (name, value) in measured)
 		{
-			if (merged.TryGetValue(name, out var existing))
-			{
-				merged[name] = new MetricDto
+			merged[name] = merged.TryGetValue(name, out var existing)
+				? new MetricDto
 				{
 					Value = value,
 					TolerancePct = existing.TolerancePct,
 					Budget = existing.Budget
-				};
-			}
-			else
-			{
-				merged[name] = new MetricDto
+				}
+				: new MetricDto
 				{
 					Value = value,
 					TolerancePct = DefaultTolerancePct,
 					Budget = null
 				};
-			}
 		}
 
 		var result = new BaselinesDocument
@@ -214,23 +199,16 @@ public sealed class PerfBaselines
 	public static string ResolveBaselinesPath()
 	{
 		var searched = new List<string>();
-		var root = PerfRepoRoot.Find(searched);
-		if (root is null)
-		{
-			throw new FileNotFoundException(
+		var root = PerfRepoRoot.Find(searched) ?? throw new FileNotFoundException(
 				$"Could not locate the repo root (marker: a '.git' entry or a repo-root global.json). Searched:\n"
 				+ $"  {string.Join("\n  ", searched)}\n{CaptureAndCopyGuidance}");
-		}
 
 		var path = Path.Combine(root, BaselinesRelativePath.Replace('/', Path.DirectorySeparatorChar));
-		if (!File.Exists(path))
-		{
-			throw new FileNotFoundException(
+		return !File.Exists(path)
+			? throw new FileNotFoundException(
 				$"Repo root found at '{root}' but the baselines file is missing. Expected:\n  {path}\n"
-				+ CaptureAndCopyGuidance);
-		}
-
-		return path;
+				+ CaptureAndCopyGuidance)
+			: path;
 	}
 
 	private static string Format(double value)

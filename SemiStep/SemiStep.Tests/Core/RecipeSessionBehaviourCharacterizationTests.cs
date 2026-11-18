@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-using FluentAssertions;
+﻿using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -469,8 +467,8 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 			0,
 			TargetColumn,
 			"2",
-			columnsToDrop: new[] { CommentColumn },
-			columnsToSeed: new[] { DurationColumn });
+			columnsToDrop: [CommentColumn],
+			columnsToSeed: [DurationColumn]);
 
 		result.IsSuccess.Should().BeTrue();
 
@@ -494,8 +492,8 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 			0,
 			TargetColumn,
 			"2",
-			columnsToDrop: new[] { CommentColumn },
-			columnsToSeed: new[] { DurationColumn })
+			columnsToDrop: [CommentColumn],
+			columnsToSeed: [DurationColumn])
 			.IsSuccess.Should().BeTrue();
 
 		harness.Session.UndoCount.Should().Be(
@@ -516,8 +514,8 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 			0,
 			TargetColumn,
 			"2",
-			columnsToDrop: new[] { CommentColumn },
-			columnsToSeed: new[] { DurationColumn })
+			columnsToDrop: [CommentColumn],
+			columnsToSeed: [DurationColumn])
 			.IsSuccess.Should().BeTrue();
 
 		harness.Session.Undo().IsSuccess.Should().BeTrue();
@@ -540,8 +538,8 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 			0,
 			TargetColumn,
 			"not-a-number",
-			columnsToDrop: Array.Empty<string>(),
-			columnsToSeed: Array.Empty<string>());
+			columnsToDrop: [],
+			columnsToSeed: []);
 
 		result.IsFailed.Should().BeTrue();
 		harness.Session.Current.Steps[0].Properties.ContainsKey(new PropertyId(CommentColumn))
@@ -670,7 +668,7 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 
 		var bogusRecipe = Recipe.Empty.AppendStep(new Step(
 			UnknownActionId,
-			ImmutableDictionary<PropertyId, PropertyValue>.Empty));
+			[]));
 
 		var validator = harness.Services.GetRequiredService<ImportedRecipeValidator>();
 

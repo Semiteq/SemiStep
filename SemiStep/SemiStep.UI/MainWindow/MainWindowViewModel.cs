@@ -26,12 +26,10 @@ namespace SemiStep.UI.MainWindow;
 public class MainWindowViewModel : ReactiveObject, IDisposable
 {
 	private readonly RecipeCoordinator _coordinator;
-	private readonly CompositeDisposable _disposables = new();
+	private readonly CompositeDisposable _disposables = [];
 	private readonly ILogger<MainWindowViewModel> _logger;
 	private readonly Func<GridStyleEditorViewModel> _gridStyleEditorViewModelFactory;
 	private readonly ObservableAsPropertyHelper<bool> _isTransposedOrientation;
-
-	private bool _isToolBarVisible = true;
 
 	public MainWindowViewModel(
 		RecipeCoordinator coordinator,
@@ -142,9 +140,9 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public bool IsToolBarVisible
 	{
-		get => _isToolBarVisible;
-		private set => this.RaiseAndSetIfChanged(ref _isToolBarVisible, value);
-	}
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	} = true;
 
 	public bool IsConnectedToPlc => _coordinator.IsConnected;
 

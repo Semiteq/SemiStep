@@ -1,5 +1,5 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Reactive;
 using System.Reactive.Disposables;
 
@@ -25,7 +25,7 @@ namespace SemiStep.UI.StyleEditor;
 /// a new record positionally from the ten drafts' <c>Build()</c> calls, carrying the one unsurfaced field
 /// <see cref="GridStyleOptions.Orientation"/> straight from <c>_source.Orientation</c>.
 /// </summary>
-public sealed class GridStyleEditorViewModel : ReactiveObject
+public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 {
 	public const int MinFontSize = 6;
 	public const int MaxFontSize = 72;
@@ -43,7 +43,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 	private readonly ILogger<GridStyleEditorViewModel> _logger;
 
 	private GridStyleOptions _source;
-	private CompositeDisposable _draftSubscriptions = new();
+	private CompositeDisposable _draftSubscriptions = [];
 
 	public GridStyleEditorViewModel(
 		IGridStyleEditorFacade gridStyleEditorFacade,
@@ -327,7 +327,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 		{
 			if (weights.All(option => option.Value != weight))
 			{
-				weights.Add(new FontWeightOption(weight, weight.ToString()));
+				weights.Add(new FontWeightOption(weight, weight.ToString(CultureInfo.InvariantCulture)));
 			}
 		}
 
@@ -359,5 +359,10 @@ public sealed class GridStyleEditorViewModel : ReactiveObject
 	private static bool InRange(decimal? value, int min, int max)
 	{
 		return value is not null && value >= min && value <= max;
+	}
+
+	public void Dispose()
+	{
+		_draftSubscriptions.Dispose();
 	}
 }

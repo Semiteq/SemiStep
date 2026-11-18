@@ -41,7 +41,7 @@ internal sealed class TransposedGridSelectionController(ListBox stepListBox)
 
 		// Taking over the press must still commit a pending edit elsewhere: move focus to the
 		// pressed container so the previous editor's LostFocus fires.
-		(stepListBox.ContainerFromIndex(index) as Control)?.Focus();
+		stepListBox.ContainerFromIndex(index)?.Focus();
 		e.Handled = true;
 
 		return false;

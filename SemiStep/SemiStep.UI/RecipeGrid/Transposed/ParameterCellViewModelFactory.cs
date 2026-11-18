@@ -22,21 +22,15 @@ public sealed class ParameterCellViewModelFactory
 			return new ComboBoxCellViewModel(recipeRowViewModel, parameterDescriptor, _actionItemsProvider);
 		}
 
-		if (ColumnTypes.IsGroupBoundColumn(parameterDescriptor.ColumnType))
-		{
-			return new ComboBoxCellViewModel(
+		return ColumnTypes.IsGroupBoundColumn(parameterDescriptor.ColumnType)
+			? new ComboBoxCellViewModel(
 				recipeRowViewModel,
 				parameterDescriptor,
-				() => recipeRowViewModel.GroupItemsByColumn[parameterDescriptor.ParameterKey]);
-		}
-
-		if (parameterDescriptor.IsReadOnlyParameter
-			|| ColumnTypes.IsStepStartTimeColumn(parameterDescriptor.ColumnType))
-		{
-			return new ReadOnlyCellViewModel(recipeRowViewModel, parameterDescriptor);
-		}
-
-		return new PropertyTextCellViewModel(
+				() => recipeRowViewModel.GroupItemsByColumn[parameterDescriptor.ParameterKey])
+			: parameterDescriptor.IsReadOnlyParameter
+			|| ColumnTypes.IsStepStartTimeColumn(parameterDescriptor.ColumnType)
+			? new ReadOnlyCellViewModel(recipeRowViewModel, parameterDescriptor)
+			: new PropertyTextCellViewModel(
 			recipeRowViewModel,
 			parameterDescriptor,
 			_maxLengthByColumn.GetValueOrDefault(parameterDescriptor.ParameterKey));

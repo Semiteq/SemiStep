@@ -30,26 +30,26 @@ public sealed class ExecutionTimeEstimatorTests
 				id: ImmediateActionId,
 				uiName: "ImmediateAction",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: StepDurationKey,
 						GroupName: null,
 						PropertyTypeId: "time",
 						DefaultValue: "0")
-				}),
+				]),
 			[LongLastingActionId] = new ActionDefinition(
 				id: LongLastingActionId,
 				uiName: "LongLastingAction",
 				deployDuration: DeployDuration.LongLasting,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: StepDurationKey,
 						GroupName: null,
 						PropertyTypeId: "time",
 						DefaultValue: "0")
-				})
+				])
 		};
 
 		var config = new AppConfiguration(
@@ -105,7 +105,7 @@ public sealed class ExecutionTimeEstimatorTests
 		var recipe = new Recipe(ImmutableList.Create(
 			BuildStep(LongLastingActionId, 10f),
 			BuildStep(LongLastingActionId, 20f)));
-		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
+		var snapshot = BuildSnapshot(recipe, [], registry);
 
 		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(0, 0f));
 
@@ -116,9 +116,8 @@ public sealed class ExecutionTimeEstimatorTests
 	public void TimeLeftInRecipe_ActualLineBeyondStartTimes_ReturnsZeroLikeMissingKey()
 	{
 		var registry = BuildRegistry();
-		var recipe = new Recipe(ImmutableList.Create(
-			BuildStep(LongLastingActionId, 10f)));
-		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
+		var recipe = new Recipe([BuildStep(LongLastingActionId, 10f)]);
+		var snapshot = BuildSnapshot(recipe, [], registry);
 
 		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(5, 0f));
 
@@ -130,9 +129,8 @@ public sealed class ExecutionTimeEstimatorTests
 	public void TimeLeftInRecipe_NegativeActualLine_ReturnsZeroLikeMissingKey()
 	{
 		var registry = BuildRegistry();
-		var recipe = new Recipe(ImmutableList.Create(
-			BuildStep(LongLastingActionId, 10f)));
-		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
+		var recipe = new Recipe([BuildStep(LongLastingActionId, 10f)]);
+		var snapshot = BuildSnapshot(recipe, [], registry);
 
 		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(-1, 0f));
 
@@ -148,7 +146,7 @@ public sealed class ExecutionTimeEstimatorTests
 		var recipe = new Recipe(ImmutableList.Create(
 			BuildStep(LongLastingActionId, 10f),
 			BuildStep(LongLastingActionId, 20f)));
-		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
+		var snapshot = BuildSnapshot(recipe, [], registry);
 
 		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 20f));
 
@@ -250,9 +248,8 @@ public sealed class ExecutionTimeEstimatorTests
 	public void TimeLeftInRecipe_ActualLineBeyondRecipe_ReturnsZero()
 	{
 		var registry = BuildRegistry();
-		var recipe = new Recipe(ImmutableList.Create(
-			BuildStep(LongLastingActionId, 10f)));
-		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
+		var recipe = new Recipe([BuildStep(LongLastingActionId, 10f)]);
+		var snapshot = BuildSnapshot(recipe, [], registry);
 
 		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(99, 0f));
 
@@ -263,9 +260,8 @@ public sealed class ExecutionTimeEstimatorTests
 	public void TimeLeftInStep_ElapsedExceedsDuration_ClampsToZero()
 	{
 		var registry = BuildRegistry();
-		var recipe = new Recipe(ImmutableList.Create(
-			BuildStep(LongLastingActionId, 10f)));
-		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
+		var recipe = new Recipe([BuildStep(LongLastingActionId, 10f)]);
+		var snapshot = BuildSnapshot(recipe, [], registry);
 
 		var result = ExecutionTimeEstimator.TimeLeftInStep(snapshot, Info(0, 999f), registry);
 
@@ -276,9 +272,8 @@ public sealed class ExecutionTimeEstimatorTests
 	public void TimeLeftInStep_ActualLineBeyondRecipe_ReturnsZero()
 	{
 		var registry = BuildRegistry();
-		var recipe = new Recipe(ImmutableList.Create(
-			BuildStep(LongLastingActionId, 10f)));
-		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
+		var recipe = new Recipe([BuildStep(LongLastingActionId, 10f)]);
+		var snapshot = BuildSnapshot(recipe, [], registry);
 
 		var result = ExecutionTimeEstimator.TimeLeftInStep(snapshot, Info(5, 0f), registry);
 
@@ -289,9 +284,8 @@ public sealed class ExecutionTimeEstimatorTests
 	public void TimeLeftInStep_AtMidStep_ReturnsRemainder()
 	{
 		var registry = BuildRegistry();
-		var recipe = new Recipe(ImmutableList.Create(
-			BuildStep(LongLastingActionId, 10f)));
-		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>(), registry);
+		var recipe = new Recipe([BuildStep(LongLastingActionId, 10f)]);
+		var snapshot = BuildSnapshot(recipe, [], registry);
 
 		var result = ExecutionTimeEstimator.TimeLeftInStep(snapshot, Info(0, 4f), registry);
 

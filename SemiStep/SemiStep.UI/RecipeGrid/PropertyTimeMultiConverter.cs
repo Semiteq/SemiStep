@@ -32,21 +32,13 @@ internal sealed class PropertyTimeMultiConverter : IMultiValueConverter
 		}
 
 		var rawString = cellValue as string ?? FormatNumeric(cellValue);
-		if (string.IsNullOrEmpty(rawString))
-		{
-			return string.Empty;
-		}
-
-		return TimeFormatHelper.FormatValue(rawString, formatKind, units);
+		return string.IsNullOrEmpty(rawString) ? string.Empty : TimeFormatHelper.FormatValue(rawString, formatKind, units);
 	}
 
 	internal static string FormatNumeric(object cellValue)
 	{
-		if (cellValue is float or double or decimal)
-		{
-			return ((IFormattable)cellValue).ToString("0.###", CultureInfo.InvariantCulture);
-		}
-
-		return cellValue.ToString() ?? string.Empty;
+		return cellValue is float or double or decimal
+			? ((IFormattable)cellValue).ToString("0.###", CultureInfo.InvariantCulture)
+			: cellValue.ToString() ?? string.Empty;
 	}
 }

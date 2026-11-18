@@ -1,5 +1,4 @@
 ﻿using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Headless.XUnit;
 using Avalonia.Logging;
@@ -28,7 +27,7 @@ public sealed class BindingErrorGuardTests
 			guard.BindingErrorCount.Should().BeGreaterThanOrEqualTo(1);
 			guard.BindingErrors.Should().Contain(message => message.Contains("Ancestor not found"));
 
-			var assert = () => guard.AssertNoBindingErrors();
+			var assert = guard.AssertNoBindingErrors;
 			assert.Should().Throw<XunitException>();
 		}
 		finally
@@ -49,7 +48,7 @@ public sealed class BindingErrorGuardTests
 			{
 				guard.BindingErrorCount.Should().Be(0);
 
-				var assert = () => guard.AssertNoBindingErrors();
+				var assert = guard.AssertNoBindingErrors;
 				assert.Should().NotThrow();
 			}
 			finally

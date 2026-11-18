@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 
 using Avalonia.Controls;
 using Avalonia.Data;
@@ -81,7 +80,7 @@ public sealed class RowExecutionClassesStampingTests : IAsyncLifetime
 	private RecipeRowViewModel CreateRow(int stepNumber, int forDepth)
 	{
 		var action = _fixture.RecipeMetadataRegistry.GetAction(RecipeTestDriver.WaitActionId).Value;
-		var step = new Step(RecipeTestDriver.WaitActionId, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
+		var step = new Step(RecipeTestDriver.WaitActionId, []);
 		var row = new RecipeRowViewModel(stepNumber, step, action, _fixture.RecipeMetadataRegistry, new HashSet<string>())
 		{
 			ForDepth = forDepth,

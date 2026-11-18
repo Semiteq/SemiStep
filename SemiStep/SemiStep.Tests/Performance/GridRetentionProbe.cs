@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 
 using SemiStep.Tests.Performance.Harness;
 
@@ -21,7 +15,7 @@ namespace SemiStep.Tests.Performance;
 [Trait("Category", "Performance")]
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
-public sealed class GridRetentionProbe
+public sealed class GridRetentionProbe(ITestOutputHelper output, PerfActualsFixture actuals)
 {
 	private const string ConfigName = "WideParams";
 	private const int SeedSteps = 300;
@@ -44,14 +38,8 @@ public sealed class GridRetentionProbe
 	// control stack roots well past a viewport (a leak that keeps scrolled-history containers alive).
 	private const int MaxSurvivingContainers = 64;
 
-	private readonly ITestOutputHelper _output;
-	private readonly PerfActualsFixture _actuals;
-
-	public GridRetentionProbe(ITestOutputHelper output, PerfActualsFixture actuals)
-	{
-		_output = output;
-		_actuals = actuals;
-	}
+	private readonly ITestOutputHelper _output = output;
+	private readonly PerfActualsFixture _actuals = actuals;
 
 	[AvaloniaFact(Explicit = true)]
 	public async Task Transposed_ScrollRetention_FlatFloor()

@@ -21,15 +21,13 @@ internal sealed class TransposedStepColumnClassBinder
 			$"{nameof(StepColumnViewModel.Row)}.{nameof(RecipeRowViewModel.IsForDepth3)}"),
 	];
 
-	private readonly Dictionary<Control, IReadOnlyList<IDisposable>> _containerBindings = new();
+	private readonly Dictionary<Control, IReadOnlyList<IDisposable>> _containerBindings = [];
 
 	public void OnContainerPrepared(Control container)
 	{
 		OnContainerClearing(container);
 
-		_containerBindings[container] = _classBindings
-			.Select(pair => container.BindClass(pair.ClassName, new Binding(pair.BindingPath), container))
-			.ToList();
+		_containerBindings[container] = [.. _classBindings.Select(pair => container.BindClass(pair.ClassName, new Binding(pair.BindingPath), container))];
 	}
 
 	public void OnContainerClearing(Control container)

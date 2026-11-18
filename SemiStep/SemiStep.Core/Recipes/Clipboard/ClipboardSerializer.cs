@@ -69,10 +69,9 @@ public sealed class ClipboardSerializer(
 
 	private List<GridColumnDefinition> GetClipboardColumns()
 	{
-		return recipeMetadataRegistry
+		return [.. recipeMetadataRegistry
 			.GetAllColumns()
-			.Where(c => c.SaveToCsv)
-			.ToList();
+			.Where(c => c.SaveToCsv)];
 	}
 
 	private Result<Recipe> ReadAllSteps(
@@ -109,17 +108,9 @@ public sealed class ClipboardSerializer(
 			steps.Add(stepResult.Value);
 		}
 
-		if (errors.Count > 0)
-		{
-			return Result.Fail(errors);
-		}
-
-		if (steps.Count == 0)
-		{
-			return Result.Fail(new NoValidStepsError());
-		}
-
-		return new Recipe(steps.ToImmutableList());
+		return errors.Count > 0
+			? (Result<Recipe>)Result.Fail(errors)
+			: steps.Count == 0 ? (Result<Recipe>)Result.Fail(new NoValidStepsError()) : (Result<Recipe>)new Recipe([.. steps]);
 	}
 
 	private Result<Step> TryParseStep(
@@ -205,12 +196,7 @@ public sealed class ClipboardSerializer(
 			}
 		}
 
-		if (errors.Count > 0)
-		{
-			return Result.Fail(errors);
-		}
-
-		return new Step(actionKey, properties.ToImmutable());
+		return errors.Count > 0 ? (Result<Step>)Result.Fail(errors) : (Result<Step>)new Step(actionKey, properties.ToImmutable());
 	}
 
 	private static Result<int> FindActionColumnIndexOrFail(List<GridColumnDefinition> columns)

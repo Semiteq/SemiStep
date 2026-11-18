@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 

@@ -2,7 +2,6 @@
 
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Errors;
-using SemiStep.Core.Shared;
 
 namespace SemiStep.Core.Recipes.Analysis;
 
@@ -76,17 +75,14 @@ internal static class LoopParser
 
 	private static Result<int> ExtractIterationCount(Step step)
 	{
-		if (!step.Properties.TryGetValue(_iterationPropertyId, out var iterationProperty))
-		{
-			return 1;
-		}
-
-		return iterationProperty.Type switch
-		{
-			PropertyType.Int => iterationProperty.AsInt(),
-			PropertyType.Float => (int)iterationProperty.AsFloat(),
-			_ => new IterationCountUnsupportedTypeError(iterationProperty.Type, step.ActionKey)
-		};
+		return !step.Properties.TryGetValue(_iterationPropertyId, out var iterationProperty)
+			? (Result<int>)1
+			: iterationProperty.Type switch
+			{
+				PropertyType.Int => iterationProperty.AsInt(),
+				PropertyType.Float => (int)iterationProperty.AsFloat(),
+				_ => new IterationCountUnsupportedTypeError(iterationProperty.Type, step.ActionKey)
+			};
 	}
 
 	private sealed record ForFrame(int StartIndex, int Iterations, int Depth);

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -211,7 +207,7 @@ public sealed class TransposedColumnsPanelContractTests : IAsyncLifetime
 		ScrollToHorizontalStart(stepListBox);
 
 		stepListBox.Selection.SelectedIndexes.Should().Contain(
-			new[] { 0, 1 }, "both columns stay selected in the model across the scroll round-trip");
+			[0, 1], "both columns stay selected in the model across the scroll round-trip");
 		((ListBoxItem)stepListBox.ContainerFromIndex(0)!).IsSelected.Should().BeTrue(
 			"column 0 re-realized from idle must show selected");
 		((ListBoxItem)stepListBox.ContainerFromIndex(1)!).IsSelected.Should().BeTrue(
@@ -242,7 +238,7 @@ public sealed class TransposedColumnsPanelContractTests : IAsyncLifetime
 		var view = new TransposedRecipeGridView { DataContext = _surface };
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.UseTransposedColumnsPanel();
+		stepListBox.UseTransposedColumnsPanel();
 
 		_window = new Window
 		{

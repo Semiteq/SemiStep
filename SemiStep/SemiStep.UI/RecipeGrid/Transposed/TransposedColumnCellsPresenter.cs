@@ -1,11 +1,8 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.VisualTree;
-
-using SemiStep.Core.Recipes;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
@@ -16,14 +13,13 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 	public static readonly DirectProperty<TransposedColumnCellsPresenter, bool> IsColumnSelectedProperty =
 		AvaloniaProperty.RegisterDirect<TransposedColumnCellsPresenter, bool>(
 			nameof(IsColumnSelected),
-			presenter => presenter._isColumnSelected,
+			presenter => presenter.IsColumnSelected,
 			(presenter, value) => presenter.IsColumnSelected = value);
 
 	private readonly IReadOnlyList<ParameterDescriptor> _descriptors;
 	private readonly TransposedCellTemplateFactory _cellFactory;
 	private readonly double _cellHeight;
 	private bool _slotsBuilt;
-	private bool _isColumnSelected;
 
 	public TransposedColumnCellsPresenter(
 		IReadOnlyList<ParameterDescriptor> descriptors,
@@ -38,8 +34,8 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 
 	public bool IsColumnSelected
 	{
-		get => _isColumnSelected;
-		set => SetAndRaise(IsColumnSelectedProperty, ref _isColumnSelected, value);
+		get;
+		set => SetAndRaise(IsColumnSelectedProperty, ref field, value);
 	}
 
 	public void BindColumn(StepColumnViewModel column)
@@ -77,7 +73,7 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 	protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
 	{
 		base.OnAttachedToVisualTree(e);
-		RaisePropertyChanged(IsColumnSelectedProperty, !_isColumnSelected, _isColumnSelected);
+		RaisePropertyChanged(IsColumnSelectedProperty, !IsColumnSelected, IsColumnSelected);
 	}
 
 	private void EnsureSlotsBuilt(StepColumnViewModel column)

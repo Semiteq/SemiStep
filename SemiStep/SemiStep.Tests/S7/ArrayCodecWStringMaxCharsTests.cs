@@ -30,7 +30,7 @@ public sealed class ArrayCodecWStringMaxCharsTests
 	{
 		var codec = BuildCodec(wStringMaxChars);
 
-		codec.WStringElementSize.Should().Be(4 + wStringMaxChars * 2);
+		codec.WStringElementSize.Should().Be(4 + (wStringMaxChars * 2));
 	}
 
 	[Theory]
@@ -58,10 +58,10 @@ public sealed class ArrayCodecWStringMaxCharsTests
 	{
 		var codec = BuildCodec(wStringMaxChars: 16);
 
-		var bytes = codec.EncodeStringArray(new[] { "" });
+		var bytes = codec.EncodeStringArray([""]);
 		var decoded = codec.DecodeStringArray(bytes, 1);
 
-		decoded.Should().Equal(new[] { "" });
+		decoded.Should().Equal([""]);
 	}
 
 	[Fact]
@@ -69,7 +69,7 @@ public sealed class ArrayCodecWStringMaxCharsTests
 	{
 		var codec = BuildCodec(wStringMaxChars: 16);
 
-		var action = () => codec.EncodeStringArray(new[] { "ab\0c" });
+		var action = () => codec.EncodeStringArray(["ab\0c"]);
 
 		action.Should().Throw<ArgumentException>()
 			.WithMessage("*NUL*");
@@ -86,7 +86,7 @@ public sealed class ArrayCodecWStringMaxCharsTests
 		var bytes = codec.EncodeStringArray(values);
 
 		var expectedSize = DataDbLayout.DefaultString.DataStartOffset
-			+ values.Length * codec.WStringElementSize;
+			+ (values.Length * codec.WStringElementSize);
 		bytes.Length.Should().Be(expectedSize);
 	}
 
@@ -96,7 +96,7 @@ public sealed class ArrayCodecWStringMaxCharsTests
 		var codec = BuildCodec(wStringMaxChars: 16);
 		var overLength = new string('z', 17);
 
-		var action = () => codec.EncodeStringArray(new[] { overLength });
+		var action = () => codec.EncodeStringArray([overLength]);
 
 		action.Should().Throw<ArgumentException>()
 			.WithMessage("*17*16*");
@@ -118,8 +118,8 @@ public sealed class ArrayCodecWStringMaxCharsTests
 		BinaryPrimitives.WriteUInt32BigEndian(buffer.AsSpan(layout.CurrentSizeOffset), 1u);
 
 		var slotOffset = layout.DataStartOffset;
-		BinaryPrimitives.WriteUInt16BigEndian(buffer.AsSpan(slotOffset), (ushort)WStringMaxChars);
-		BinaryPrimitives.WriteUInt16BigEndian(buffer.AsSpan(slotOffset + 2), (ushort)(WStringMaxChars + 1));
+		BinaryPrimitives.WriteUInt16BigEndian(buffer.AsSpan(slotOffset), WStringMaxChars);
+		BinaryPrimitives.WriteUInt16BigEndian(buffer.AsSpan(slotOffset + 2), WStringMaxChars + 1);
 
 		var action = () => codec.DecodeStringArray(buffer, 1);
 

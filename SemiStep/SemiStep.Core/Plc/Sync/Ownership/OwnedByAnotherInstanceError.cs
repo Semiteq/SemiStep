@@ -2,15 +2,9 @@
 
 namespace SemiStep.Core.Plc.Sync.Ownership;
 
-public sealed class OwnedByAnotherInstanceError : Error
+public sealed class OwnedByAnotherInstanceError(OwnerInfo holder) : Error(BuildMessage(holder))
 {
-	public OwnedByAnotherInstanceError(OwnerInfo holder)
-		: base(BuildMessage(holder))
-	{
-		Holder = holder;
-	}
-
-	public OwnerInfo Holder { get; }
+	public OwnerInfo Holder { get; } = holder;
 
 	private static string BuildMessage(OwnerInfo holder)
 	{

@@ -11,7 +11,7 @@ internal static class PropertyValidator
 		return property.SystemType.ToLowerInvariant() switch
 		{
 			"int" => value is int intVal
-				? ValidateNumericRange(property, (double)intVal)
+				? ValidateNumericRange(property, intVal)
 				: Result.Fail(new PropertyValueTypeMismatchError("int", value.GetType().Name, property.Id)),
 			"float" => value is float floatVal
 				? ValidateNumericRange(property, (double)floatVal)
@@ -26,34 +26,22 @@ internal static class PropertyValidator
 		PropertyValue parsed,
 		RecipeMetadataRegistry recipeMetadataRegistry)
 	{
-		if (actionProperty.GroupName is null)
-		{
-			return Result.Ok();
-		}
-
-		if (parsed.Value is not int intKey)
-		{
-			return Result.Fail(new GroupValueNotIntegerError(parsed.Type));
-		}
-
-		return recipeMetadataRegistry.GroupHasIntKey(intKey, actionProperty.GroupName);
+		return actionProperty.GroupName is null
+			? Result.Ok()
+			: parsed.Value is not int intKey
+			? Result.Fail(new GroupValueNotIntegerError(parsed.Type))
+			: recipeMetadataRegistry.GroupHasIntKey(intKey, actionProperty.GroupName);
 	}
 
 	private static Result ValidateNumericRange(PropertyTypeDefinition property, double value)
 	{
-		if (property.Min.HasValue && value < property.Min.Value)
-		{
-			return Result.Fail(
-				new ValueBelowMinimumError(value, property.Min.Value, property.Id));
-		}
-
-		if (property.Max.HasValue && value > property.Max.Value)
-		{
-			return Result.Fail(
-				new ValueAboveMaximumError(value, property.Max.Value, property.Id));
-		}
-
-		return Result.Ok();
+		return property.Min.HasValue && value < property.Min.Value
+			? Result.Fail(
+				new ValueBelowMinimumError(value, property.Min.Value, property.Id))
+			: property.Max.HasValue && value > property.Max.Value
+			? Result.Fail(
+				new ValueAboveMaximumError(value, property.Max.Value, property.Id))
+			: Result.Ok();
 	}
 
 	private static Result ValidateStringLength(PropertyTypeDefinition property, object value)
@@ -64,18 +52,12 @@ internal static class PropertyValidator
 				new PropertyValueTypeMismatchError("string", value.GetType().Name, property.Id));
 		}
 
-		if (str.Contains('\0'))
-		{
-			return Result.Fail(
-				new StringContainsNulError(property.Id));
-		}
-
-		if (property.MaxLength.HasValue && str.Length > property.MaxLength.Value)
-		{
-			return Result.Fail(
-				new StringTooLongError(str.Length, property.MaxLength.Value, property.Id));
-		}
-
-		return Result.Ok();
+		return str.Contains('\0')
+			? Result.Fail(
+				new StringContainsNulError(property.Id))
+			: property.MaxLength.HasValue && str.Length > property.MaxLength.Value
+			? Result.Fail(
+				new StringTooLongError(str.Length, property.MaxLength.Value, property.Id))
+			: Result.Ok();
 	}
 }

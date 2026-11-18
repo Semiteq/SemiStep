@@ -55,21 +55,15 @@ internal static class TimingCalculator
 				$"Step references unknown action id {step.ActionKey}");
 		}
 
-		if (action.DeployDuration == DeployDuration.Immediate)
-		{
-			return TimeSpan.Zero;
-		}
-
-		if (!step.Properties.TryGetValue(_durationProperty, out var durationProperty))
-		{
-			return TimeSpan.Zero;
-		}
-
-		return durationProperty.Type switch
-		{
-			PropertyType.Float => TimeSpan.FromSeconds(durationProperty.AsFloat()),
-			PropertyType.Int => TimeSpan.FromSeconds(durationProperty.AsInt()),
-			_ => TimeSpan.Zero
-		};
+		return action.DeployDuration == DeployDuration.Immediate
+			? TimeSpan.Zero
+			: !step.Properties.TryGetValue(_durationProperty, out var durationProperty)
+			? TimeSpan.Zero
+			: durationProperty.Type switch
+			{
+				PropertyType.Float => TimeSpan.FromSeconds(durationProperty.AsFloat()),
+				PropertyType.Int => TimeSpan.FromSeconds(durationProperty.AsInt()),
+				_ => TimeSpan.Zero
+			};
 	}
 }

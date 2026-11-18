@@ -38,19 +38,16 @@ public sealed class ColumnWidthCalculator(
 
 	public DataGridLength CalculateColumnWidth(GridColumnDefinition columnDef)
 	{
-		if (ColumnTypes.IsGroupBoundColumn(columnDef.ColumnType))
-		{
-			return CalculateGroupColumnWidth(columnDef);
-		}
-
-		return columnDef.ColumnType.ToLowerInvariant() switch
-		{
-			ColumnTypes.ActionComboBox => CalculateActionColumnWidth(columnDef),
-			ColumnTypes.PropertyField => CalculatePropertyFieldWidth(columnDef),
-			ColumnTypes.StepStartTimeField => CalculateTimeColumnWidth(columnDef),
-			ColumnTypes.TextField => new DataGridLength(1, DataGridLengthUnitType.Star),
-			_ => CalculateWidth([], columnDef.UiName)
-		};
+		return ColumnTypes.IsGroupBoundColumn(columnDef.ColumnType)
+			? CalculateGroupColumnWidth(columnDef)
+			: columnDef.ColumnType.ToLowerInvariant() switch
+			{
+				ColumnTypes.ActionComboBox => CalculateActionColumnWidth(columnDef),
+				ColumnTypes.PropertyField => CalculatePropertyFieldWidth(columnDef),
+				ColumnTypes.StepStartTimeField => CalculateTimeColumnWidth(columnDef),
+				ColumnTypes.TextField => new DataGridLength(1, DataGridLengthUnitType.Star),
+				_ => CalculateWidth([], columnDef.UiName)
+			};
 	}
 
 	private DataGridLength CalculateActionColumnWidth(GridColumnDefinition columnDef)
@@ -92,7 +89,7 @@ public sealed class ColumnWidthCalculator(
 		return CalculateWidth(representatives, columnDef.UiName);
 	}
 
-	private IEnumerable<string> PropertyRepresentatives(PropertyTypeDefinition propertyDef)
+	private static IEnumerable<string> PropertyRepresentatives(PropertyTypeDefinition propertyDef)
 	{
 		if (SystemTypes.Comparer.Equals(propertyDef.SystemType, SystemTypes.String))
 		{

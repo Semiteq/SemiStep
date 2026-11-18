@@ -17,7 +17,7 @@ namespace SemiStep.UI.RecipeGrid;
 public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 {
 	private readonly RecipeCoordinator _coordinator;
-	private readonly CompositeDisposable _disposables = new();
+	private readonly CompositeDisposable _disposables = [];
 	private readonly BehaviorSubject<bool> _canUndo = new(false);
 	private readonly BehaviorSubject<bool> _canRedo = new(false);
 	private readonly IRecipeGridSurface _recipeGrid;

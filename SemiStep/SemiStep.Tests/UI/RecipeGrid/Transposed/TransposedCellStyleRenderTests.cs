@@ -247,10 +247,9 @@ public sealed class TransposedCellStyleRenderTests : IAsyncLifetime
 	private static List<Border> FindCellBorders(ListBox stepListBox, int columnIndex)
 	{
 		var container = (ListBoxItem)stepListBox.ContainerFromIndex(columnIndex)!;
-		return container.GetVisualDescendants()
+		return [.. container.GetVisualDescendants()
 			.OfType<Border>()
-			.Where(border => border.Classes.Contains(CellClass))
-			.ToList();
+			.Where(border => border.Classes.Contains(CellClass))];
 	}
 
 	private (TransposedRecipeGridView View, ListBox StepListBox) ShowView()
@@ -268,7 +267,7 @@ public sealed class TransposedCellStyleRenderTests : IAsyncLifetime
 
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.UseTransposedColumnsPanel();
+		stepListBox.UseTransposedColumnsPanel();
 
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();

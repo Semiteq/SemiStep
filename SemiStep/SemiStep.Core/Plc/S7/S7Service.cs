@@ -119,7 +119,7 @@ internal sealed class S7Service(
 		var result = await transactionExecutor.ReadManagingAreaAsync(ct);
 		if (result.IsFailed)
 		{
-			_logger.LogWarning("Failed to read managing area from PLC: {Reason}", result.Errors.FirstOrDefault()?.Message ?? "(no message)");
+			_logger.LogWarning("Failed to read managing area from PLC: {Reason}", result.Errors.Count > 0 ? result.Errors[0].Message : "(no message)");
 			return result.ToResult<PlcManagingAreaState>();
 		}
 		return result;
@@ -130,7 +130,7 @@ internal sealed class S7Service(
 		var result = await transactionExecutor.ReadRecipeFromPlcAsync(ct);
 		if (result.IsFailed)
 		{
-			_logger.LogWarning("Failed to read recipe from PLC: {Reason}", result.Errors.FirstOrDefault()?.Message ?? "(no message)");
+			_logger.LogWarning("Failed to read recipe from PLC: {Reason}", result.Errors.Count > 0 ? result.Errors[0].Message : "(no message)");
 		}
 		return result;
 	}
@@ -140,7 +140,7 @@ internal sealed class S7Service(
 		var result = await transactionExecutor.ReadProtocolVersionAsync(ct);
 		if (result.IsFailed)
 		{
-			_logger.LogWarning("Failed to read protocol version from PLC: {Reason}", result.Errors.FirstOrDefault()?.Message ?? "(no message)");
+			_logger.LogWarning("Failed to read protocol version from PLC: {Reason}", result.Errors.Count > 0 ? result.Errors[0].Message : "(no message)");
 		}
 		return result;
 	}

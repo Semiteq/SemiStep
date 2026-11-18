@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 

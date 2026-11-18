@@ -7,24 +7,16 @@ using SemiStep.Core.Plc.State;
 
 namespace SemiStep.Core.Plc.S7.Serialization;
 
-internal sealed class ExecutionStateCodec
+internal sealed class ExecutionStateCodec(ExecutionDbLayout layout)
 {
-	private readonly ExecutionDbLayout _layout;
-
-	public ExecutionStateCodec(ExecutionDbLayout layout)
-	{
-		_layout = layout;
-	}
+	private readonly ExecutionDbLayout _layout = layout;
 
 	public Result<PlcExecutionInfo> Decode(byte[] data)
 	{
-		if (data.Length < _layout.TotalSize)
-		{
-			return Result.Fail(
-				$"Execution state data length {data.Length} is less than expected {_layout.TotalSize}");
-		}
-
-		return Result.Ok(new PlcExecutionInfo(
+		return data.Length < _layout.TotalSize
+			? (Result<PlcExecutionInfo>)Result.Fail(
+				$"Execution state data length {data.Length} is less than expected {_layout.TotalSize}")
+			: Result.Ok(new PlcExecutionInfo(
 			RecipeActive: data[_layout.RecipeActiveOffset] != 0 ||
 						  data[_layout.RecipeActiveOffset + 1] != 0,
 			ActualLine: BinaryPrimitives.ReadInt32BigEndian(data.AsSpan(_layout.ActualLineOffset)),

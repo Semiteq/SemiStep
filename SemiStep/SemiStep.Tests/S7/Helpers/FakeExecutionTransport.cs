@@ -8,17 +8,11 @@ namespace SemiStep.Tests.S7.Helpers;
 /// A transport that returns a configurable <see cref="PlcExecutionInfo"/> encoded as bytes
 /// for execution DB reads, and returns empty arrays for all other DBs.
 /// </summary>
-internal sealed class FakeExecutionTransport : IS7Transport
+internal sealed class FakeExecutionTransport(PlcProtocolLayout layout, PlcExecutionInfo executionState) : IS7Transport
 {
-	private readonly PlcProtocolLayout _layout;
-	private readonly PlcExecutionInfo _executionState;
+	private readonly PlcProtocolLayout _layout = layout;
+	private readonly PlcExecutionInfo _executionState = executionState;
 	private int _executionReadCount;
-
-	public FakeExecutionTransport(PlcProtocolLayout layout, PlcExecutionInfo executionState)
-	{
-		_layout = layout;
-		_executionState = executionState;
-	}
 
 	public bool IsConnected => true;
 

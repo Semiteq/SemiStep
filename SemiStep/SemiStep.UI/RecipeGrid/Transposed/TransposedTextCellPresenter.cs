@@ -3,15 +3,11 @@ using Avalonia.Input;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-internal sealed class TransposedTextCellPresenter : TransposedLazyCellPresenter
+internal sealed class TransposedTextCellPresenter(
+	TransposedTextEditCoordinator coordinator,
+	Control display,
+	Func<Control> editorBuilder) : TransposedLazyCellPresenter(coordinator, display, editorBuilder)
 {
-	public TransposedTextCellPresenter(
-		TransposedTextEditCoordinator coordinator,
-		Control display,
-		Func<Control> editorBuilder)
-		: base(coordinator, display, editorBuilder)
-	{
-	}
 
 	// Applies the initial text (see the coordinator's BeginEdit for the null / "" / seed contract): null
 	// selects the whole value (F2 / pointer entry) so typing replaces it; "" clears it so the paired

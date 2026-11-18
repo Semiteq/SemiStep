@@ -4,16 +4,9 @@ using SemiStep.Core.Plc.State;
 
 namespace SemiStep.Tests.S7.Helpers;
 
-internal sealed class StubS7ServiceForSync : IS7Connection
+internal sealed class StubS7ServiceForSync(bool connected) : IS7Connection
 {
-	private bool _connected;
-
-	public StubS7ServiceForSync(bool connected)
-	{
-		_connected = connected;
-	}
-
-	public bool IsConnected => _connected;
+	public bool IsConnected { get; private set; } = connected;
 
 	public event Action<PlcConnectionState>? StateChanged
 	{
@@ -23,7 +16,7 @@ internal sealed class StubS7ServiceForSync : IS7Connection
 
 	public void SetConnected(bool connected)
 	{
-		_connected = connected;
+		IsConnected = connected;
 	}
 
 	public Task ConnectAsync(PlcConnectionSettings settings)

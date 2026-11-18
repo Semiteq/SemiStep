@@ -11,15 +11,12 @@ internal sealed class CellSlotConverter : IValueConverter
 
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
 	{
-		if (value is IReadOnlyList<ParameterCellViewModel> cells
+		return value is IReadOnlyList<ParameterCellViewModel> cells
 			&& parameter is int index
 			&& index >= 0
-			&& index < cells.Count)
-		{
-			return cells[index];
-		}
-
-		return AvaloniaProperty.UnsetValue;
+			&& index < cells.Count
+			? cells[index]
+			: AvaloniaProperty.UnsetValue;
 	}
 
 	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

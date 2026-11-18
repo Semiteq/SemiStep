@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 using Avalonia.Headless.XUnit;
@@ -133,7 +132,11 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 		tracker.OnExecutionStateChanged(BuildActive(5));
 
 		var changeCount = 0;
-		PropertyChangedEventHandler handler = (_, _) => changeCount++;
+		void handler(object? _1, PropertyChangedEventArgs _2)
+		{
+			changeCount++;
+		}
+
 		foreach (var row in rows)
 		{
 			row.PropertyChanged += handler;
@@ -153,8 +156,8 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 	public void ExecutionStart_ClearsAllChangedColumns()
 	{
 		var rows = BuildRows(10);
-		rows[2].MarkChanged(new[] { "Temperature" });
-		rows[5].MarkChanged(new[] { "Pressure", "Duration" });
+		rows[2].MarkChanged(["Temperature"]);
+		rows[5].MarkChanged(["Pressure", "Duration"]);
 		var tracker = new ExecutionHighlightTracker(() => rows.Count, i => rows[i]);
 
 		tracker.OnExecutionStateChanged(BuildActive(0));
@@ -173,7 +176,7 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 
 		tracker.OnExecutionStateChanged(BuildActive(0));
 
-		rows[3].MarkChanged(new[] { "Temperature" });
+		rows[3].MarkChanged(["Temperature"]);
 
 		tracker.OnExecutionStateChanged(BuildActive(4));
 
@@ -197,7 +200,7 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 		var action = _fixture.RecipeMetadataRegistry.GetAction(RecipeTestDriver.WaitActionId).Value;
 		for (var i = 0; i < count; i++)
 		{
-			var step = new Step(RecipeTestDriver.WaitActionId, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
+			var step = new Step(RecipeTestDriver.WaitActionId, []);
 			rows.Add(new RecipeRowViewModel(i + 1, step, action, _fixture.RecipeMetadataRegistry, new HashSet<string>()));
 		}
 

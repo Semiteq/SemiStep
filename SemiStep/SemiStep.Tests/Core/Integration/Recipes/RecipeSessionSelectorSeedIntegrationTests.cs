@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using System.Globalization;
 
 using FluentAssertions;
 
@@ -49,9 +50,9 @@ public sealed class RecipeSessionSelectorSeedIntegrationTests
 		var result = session.UpdateStepForSelectorChange(
 			0,
 			SelectorColumn,
-			ManualValue.ToString(),
-			columnsToDrop: System.Array.Empty<string>(),
-			columnsToSeed: new[] { SubValueColumn, SubNoDefaultColumn });
+			ManualValue.ToString(CultureInfo.InvariantCulture),
+			columnsToDrop: [],
+			columnsToSeed: [SubValueColumn, SubNoDefaultColumn]);
 
 		result.IsSuccess.Should().BeTrue(
 			"a column with no default_value must seed its resolved zero default, not an empty string");
@@ -84,8 +85,8 @@ public sealed class RecipeSessionSelectorSeedIntegrationTests
 			0,
 			"mode",
 			"1",
-			columnsToDrop: new[] { "b" },
-			columnsToSeed: System.Array.Empty<string>());
+			columnsToDrop: ["b"],
+			columnsToSeed: []);
 
 		result.IsSuccess.Should().BeTrue("deactivating a recalc variable must skip recalc, not throw");
 
@@ -117,7 +118,7 @@ public sealed class RecipeSessionSelectorSeedIntegrationTests
 		}
 
 		var formula = new FormulaDefinition(
-			recalcOrder: new[] { "a", "b" },
+			recalcOrder: ["a", "b"],
 			compiledExpressions: compiled);
 
 		var actions = new Dictionary<int, ActionDefinition>
@@ -126,8 +127,8 @@ public sealed class RecipeSessionSelectorSeedIntegrationTests
 				id: 444,
 				uiName: "selector gated",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						"mode",
 						null,
@@ -135,16 +136,16 @@ public sealed class RecipeSessionSelectorSeedIntegrationTests
 						"1",
 						Targets: new Dictionary<int, int> { [2] = 4444 }),
 					new ActionPropertyDefinition("a", null, "floatp", "0")
-				},
+				],
 				formula: formula),
 			[4444] = new ActionDefinition(
 				id: 4444,
 				uiName: "manual branch",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition("b", null, "floatp", "0")
-				},
+				],
 				role: ActionRole.Subaction)
 		};
 

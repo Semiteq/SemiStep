@@ -67,7 +67,7 @@ public record struct RecipeSnapshot(
 
 	private static Dictionary<int, IReadOnlyList<LoopInfo>> BuildEnclosingMap(IReadOnlyList<LoopInfo> loops)
 	{
-		var builder = new Dictionary<int, IReadOnlyList<LoopInfo>>();
+		var builder = new Dictionary<int, List<LoopInfo>>();
 
 		foreach (var loop in loops)
 		{
@@ -75,11 +75,11 @@ public record struct RecipeSnapshot(
 			{
 				if (builder.TryGetValue(i, out var existing))
 				{
-					((List<LoopInfo>)existing).Add(loop);
+					existing.Add(loop);
 				}
 				else
 				{
-					builder[i] = new List<LoopInfo> { loop };
+					builder[i] = [loop];
 				}
 			}
 		}
@@ -88,9 +88,9 @@ public record struct RecipeSnapshot(
 		// so their depths are distinct and no tie can reorder equal keys.
 		foreach (var list in builder.Values)
 		{
-			((List<LoopInfo>)list).Sort(static (left, right) => left.Depth.CompareTo(right.Depth));
+			list.Sort(static (left, right) => left.Depth.CompareTo(right.Depth));
 		}
 
-		return builder;
+		return builder.ToDictionary(pair => pair.Key, pair => (IReadOnlyList<LoopInfo>)pair.Value);
 	}
 }

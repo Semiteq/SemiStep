@@ -105,11 +105,11 @@ public sealed class PlcTransactionExecutorTests
 
 		await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
 
-		var firstWrite = transport.WriteLog[0];
-		firstWrite.DbNumber.Should().Be(layout.ManagingDb.DbNumber);
-		firstWrite.StartByte.Should().Be(layout.ManagingDb.CommittedOffset,
+		var (DbNumber, StartByte, Data) = transport.WriteLog[0];
+		DbNumber.Should().Be(layout.ManagingDb.DbNumber);
+		StartByte.Should().Be(layout.ManagingDb.CommittedOffset,
 			"the managing write must start at CommittedOffset so the firmware-owned version DWORD is preserved");
-		firstWrite.Data[0].Should().Be(0x00,
+		Data[0].Should().Be(0x00,
 			"committed=false must be written first");
 	}
 
@@ -210,7 +210,7 @@ public sealed class PlcTransactionExecutorTests
 		transport.SetReadResponse(layout.IntDb.DbNumber, 0, 8, mismatchHeader);
 
 		// For the full read after getting count=1, must return valid-length data.
-		var fullIntData = new byte[8 + 1 * 4]; // header(8) + 1 int(4)
+		var fullIntData = new byte[8 + (1 * 4)]; // header(8) + 1 int(4)
 		BinaryPrimitives.WriteUInt32BigEndian(fullIntData.AsSpan(0), 1);
 		BinaryPrimitives.WriteUInt32BigEndian(fullIntData.AsSpan(4), 1);
 		transport.SetReadResponse(layout.IntDb.DbNumber, 0, 8 + 4, fullIntData);

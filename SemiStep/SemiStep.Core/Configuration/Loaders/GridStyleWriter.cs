@@ -9,7 +9,7 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace SemiStep.Core.Configuration.Loaders;
 
-internal sealed class GridStyleWriter
+internal static class GridStyleWriter
 {
 	private static readonly ISerializer _serializer = new SerializerBuilder()
 		.WithNamingConvention(UnderscoredNamingConvention.Instance)
@@ -17,7 +17,7 @@ internal sealed class GridStyleWriter
 
 	private static readonly UTF8Encoding _utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
-	public async Task<Result> SaveAsync(string configDirectory, GridStyleOptions options)
+	public static async Task<Result> SaveAsync(string configDirectory, GridStyleOptions options)
 	{
 		var uiDir = Path.Combine(configDirectory, "ui");
 		var filePath = Path.Combine(uiDir, "grid_style.yaml");
@@ -63,12 +63,7 @@ internal sealed class GridStyleWriter
 			}
 		}
 
-		if (headerLines.Count == 0)
-		{
-			return string.Empty;
-		}
-
-		return string.Join('\n', headerLines).TrimEnd('\n') + "\n\n";
+		return headerLines.Count == 0 ? string.Empty : string.Join('\n', headerLines).TrimEnd('\n') + "\n\n";
 	}
 
 	private static string Normalize(string content)

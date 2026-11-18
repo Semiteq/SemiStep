@@ -1,7 +1,5 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -22,12 +20,12 @@ public sealed class ResourceSyncTests
 	private static readonly Dictionary<string, string> _neutral = ReadOwnResourceSet(CultureInfo.InvariantCulture);
 	private static readonly Dictionary<string, string> _russian = ReadOwnResourceSet(new CultureInfo("ru"));
 
-	public static IEnumerable<object[]> LocalizedKeys()
+	public static TheoryData<string> LocalizedKeys()
 	{
-		return typeof(Resources)
+		return [.. typeof(Resources)
 			.GetProperties(BindingFlags.Public | BindingFlags.Static)
 			.Where(property => property.PropertyType == typeof(string))
-			.Select(property => new object[] { property.Name });
+			.Select(property => property.Name)];
 	}
 
 	[Theory]
@@ -97,7 +95,7 @@ public sealed class ResourceSyncTests
 	private static ISet<int> Placeholders(string value)
 	{
 		return Regex.Matches(value, @"\{(\d+)")
-			.Select(match => int.Parse(match.Groups[1].Value))
+			.Select(match => int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture))
 			.ToHashSet();
 	}
 

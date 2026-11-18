@@ -62,18 +62,15 @@ public static class ActionTreeResolver
 		var walkResult = Walk(
 			root,
 			root.Id,
-			Array.Empty<ActivationCondition>(),
+			[],
 			actionsById,
 			union,
 			byKey,
 			onPath);
 
-		if (walkResult.IsFailed)
-		{
-			return walkResult.ToResult<ActionDefinition>();
-		}
-
-		return Result.Ok(new ActionDefinition(
+		return walkResult.IsFailed
+			? walkResult.ToResult<ActionDefinition>()
+			: Result.Ok(new ActionDefinition(
 			id: root.Id,
 			uiName: root.UiName,
 			deployDuration: root.DeployDuration,
@@ -172,16 +169,13 @@ public static class ActionTreeResolver
 			// unsupported by design (only the first path would survive), so reject rather than mis-grey.
 			var existingActivation = existing.Activation ?? Enumerable.Empty<ActivationCondition>();
 			var candidateActivation = activation ?? Enumerable.Empty<ActivationCondition>();
-			if (!existingActivation.SequenceEqual(candidateActivation))
-			{
-				return Result.Fail(
+			return !existingActivation.SequenceEqual(candidateActivation)
+				? Result.Fail(
 					$"Column key '{column.Key}' is reachable within action id {rootId} via more than "
 					+ $"one selector condition (for example two selector values mapping to the same "
 					+ $"subaction, or two different selectors reaching it). A column may be activated by "
-					+ $"only a single condition path; OR-activation across branches is not supported");
-			}
-
-			return Result.Ok();
+					+ $"only a single condition path; OR-activation across branches is not supported")
+				: Result.Ok();
 		}
 
 		var resolvedColumn = column with

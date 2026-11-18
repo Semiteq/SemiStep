@@ -66,13 +66,10 @@ internal static class ActionsSectionLoader
 			var actionsDictionary =
 				_deserializer.Deserialize<Dictionary<int, ActionDto>>(fileContent);
 
-			if (actionsDictionary is null || actionsDictionary.Count == 0)
-			{
-				return Result.Ok(new List<ActionDto>())
-					.WithWarning($"Empty or invalid YAML file: {Path.GetFileName(filePath)}");
-			}
-
-			return ValidateActionsFromFile(actionsDictionary, filePath, seenActionIds);
+			return actionsDictionary is null || actionsDictionary.Count == 0
+				? Result.Ok(new List<ActionDto>())
+					.WithWarning($"Empty or invalid YAML file: {Path.GetFileName(filePath)}")
+				: ValidateActionsFromFile(actionsDictionary, filePath, seenActionIds);
 		}
 		catch (Exception exception)
 		{
@@ -102,13 +99,8 @@ internal static class ActionsSectionLoader
 			}
 		}
 
-		var merged = Result.Merge(validationResults.ToArray());
-		if (merged.IsFailed)
-		{
-			return merged.ToResult<List<ActionDto>>();
-		}
-
-		return Result.Ok(actions).WithReasons(merged.Reasons);
+		var merged = Result.Merge([.. validationResults]);
+		return merged.IsFailed ? merged.ToResult<List<ActionDto>>() : Result.Ok(actions).WithReasons(merged.Reasons);
 	}
 
 	private static ActionDto CreateAction(int id, ActionDto source)
@@ -144,42 +136,23 @@ internal static class ActionsSectionLoader
 		string location,
 		HashSet<int> seenActionIds)
 	{
-		if (actionId <= 0)
-		{
-			return Result.Fail($"[{location}] Action Id must be positive, got: {actionId}");
-		}
-
-		if (!seenActionIds.Add(actionId))
-		{
-			return Result.Fail($"[{location}] Duplicate action Id: {actionId}");
-		}
-
-		return Result.Ok();
+		return actionId <= 0
+			? Result.Fail($"[{location}] Action Id must be positive, got: {actionId}")
+			: !seenActionIds.Add(actionId) ? Result.Fail($"[{location}] Duplicate action Id: {actionId}") : Result.Ok();
 	}
 
 	private static Result ValidateUiName(string? uiName, string location)
 	{
-		if (string.IsNullOrWhiteSpace(uiName))
-		{
-			return Result.Fail($"[{location}] Action UiName is required");
-		}
-
-		return Result.Ok();
+		return string.IsNullOrWhiteSpace(uiName) ? Result.Fail($"[{location}] Action UiName is required") : Result.Ok();
 	}
 
 	private static Result ValidateDeployDuration(string? deployDuration, string location)
 	{
-		if (string.IsNullOrWhiteSpace(deployDuration))
-		{
-			return Result.Fail($"[{location}] Action DeployDuration is required");
-		}
-
-		if (deployDuration is not ("immediate" or "longlasting"))
-		{
-			return Result.Fail($"[{location}] Action DeployDuration must be 'immediate' or 'longlasting', got: '{deployDuration}'");
-		}
-
-		return Result.Ok();
+		return string.IsNullOrWhiteSpace(deployDuration)
+			? Result.Fail($"[{location}] Action DeployDuration is required")
+			: deployDuration is not ("immediate" or "longlasting")
+			? Result.Fail($"[{location}] Action DeployDuration must be 'immediate' or 'longlasting', got: '{deployDuration}'")
+			: Result.Ok();
 	}
 
 	private static Result ValidateColumns(ActionDto action, string location)
@@ -197,26 +170,18 @@ internal static class ActionsSectionLoader
 			columnResults.Add(ValidatePropertyTypeId(column.PropertyTypeId, location));
 		}
 
-		return Result.Merge(columnResults.ToArray());
+		return Result.Merge([.. columnResults]);
 	}
 
 	private static Result ValidatePropertyTypeId(string? propertyTypeId, string location)
 	{
-		if (string.IsNullOrWhiteSpace(propertyTypeId))
-		{
-			return Result.Fail($"[{location}] Action column PropertyTypeId is required");
-		}
-
-		return Result.Ok();
+		return string.IsNullOrWhiteSpace(propertyTypeId)
+			? Result.Fail($"[{location}] Action column PropertyTypeId is required")
+			: Result.Ok();
 	}
 
 	private static Result ValidateActionColumnKey(string? actionColumnKey, string location)
 	{
-		if (string.IsNullOrWhiteSpace(actionColumnKey))
-		{
-			return Result.Fail($"[{location}] Action column Key is required");
-		}
-
-		return Result.Ok();
+		return string.IsNullOrWhiteSpace(actionColumnKey) ? Result.Fail($"[{location}] Action column Key is required") : Result.Ok();
 	}
 }

@@ -17,48 +17,35 @@ namespace SemiStep.Core.Recipes;
 /// formula-evaluator passes on each mutation and synchronises accepted snapshots
 /// with the PLC sync service.
 /// </summary>
-public sealed class RecipeSession
+public sealed class RecipeSession(
+	RecipeAnalyzer analyzer,
+	RecipeMetadataRegistry recipeMetadataRegistry,
+	FormulaEvaluator formulaEvaluator,
+	IPlcSyncService syncService,
+	ILogger<RecipeSession> logger)
 {
 	private const int MaxHistoryDepth = 100;
 
-	private readonly RecipeAnalyzer _analyzer;
-	private readonly FormulaEvaluator _formulaEvaluator;
-	private readonly ILogger<RecipeSession> _logger;
-	private readonly RecipeMetadataRegistry _recipeMetadataRegistry;
+	private readonly RecipeAnalyzer _analyzer = analyzer;
+	private readonly FormulaEvaluator _formulaEvaluator = formulaEvaluator;
+	private readonly ILogger<RecipeSession> _logger = logger;
+	private readonly RecipeMetadataRegistry _recipeMetadataRegistry = recipeMetadataRegistry;
 	private readonly List<Recipe> _redoStack = new(MaxHistoryDepth);
-	private readonly IPlcSyncService _syncService;
+	private readonly IPlcSyncService _syncService = syncService;
 	private readonly List<Recipe> _undoStack = new(MaxHistoryDepth);
 
-	private bool _isDirty;
-	private Recipe _lastValidRecipe = Recipe.Empty;
-	private Result<RecipeSnapshot> _latestSnapshot = Result.Ok(RecipeSnapshot.Empty);
-
-	public RecipeSession(
-		RecipeAnalyzer analyzer,
-		RecipeMetadataRegistry recipeMetadataRegistry,
-		FormulaEvaluator formulaEvaluator,
-		IPlcSyncService syncService,
-		ILogger<RecipeSession> logger)
-	{
-		_analyzer = analyzer;
-		_recipeMetadataRegistry = recipeMetadataRegistry;
-		_formulaEvaluator = formulaEvaluator;
-		_syncService = syncService;
-		_logger = logger;
-	}
-
-	public Recipe Current => _latestSnapshot.IsSuccess
-		? _latestSnapshot.Value.Recipe
+	public Recipe Current => Snapshot.IsSuccess
+		? Snapshot.Value.Recipe
 		: Recipe.Empty;
 
-	public Recipe LastValidRecipe => _lastValidRecipe;
+	public Recipe LastValidRecipe { get; private set; } = Recipe.Empty;
 
-	public bool IsDirty => _isDirty;
+	public bool IsDirty { get; private set; }
 
 	public bool IsValid =>
-		_latestSnapshot.IsSuccess && !_latestSnapshot.Reasons.OfType<Warning>().Any();
+		Snapshot.IsSuccess && !Snapshot.Reasons.OfType<Warning>().Any();
 
-	public Result<RecipeSnapshot> Snapshot => _latestSnapshot;
+	public Result<RecipeSnapshot> Snapshot { get; private set; } = Result.Ok(RecipeSnapshot.Empty);
 
 	public bool CanUndo => _undoStack.Count > 0;
 
@@ -160,7 +147,7 @@ public sealed class RecipeSession
 
 	public void MarkSaved()
 	{
-		_isDirty = false;
+		IsDirty = false;
 		_logger.LogInformation("Recipe marked as saved");
 	}
 
@@ -201,12 +188,7 @@ public sealed class RecipeSession
 	public Result LoadAsCurrentValidated(Recipe recipe, ImportedRecipeValidator validator)
 	{
 		var validation = validator.Validate(recipe);
-		if (validation.IsFailed)
-		{
-			return validation;
-		}
-
-		return LoadAsCurrent(recipe);
+		return validation.IsFailed ? validation : LoadAsCurrent(recipe);
 	}
 
 	public Result<MutationOutcome> AppendStep(int actionId)
@@ -260,12 +242,9 @@ public sealed class RecipeSession
 		var newRecipe = Current.InsertStep(index, step);
 
 		var applyResult = Apply(newRecipe);
-		if (applyResult.IsFailed)
-		{
-			return applyResult.ToResult<MutationOutcome>();
-		}
-
-		return Result.Ok(new MutationOutcome(index))
+		return applyResult.IsFailed
+			? applyResult.ToResult<MutationOutcome>()
+			: Result.Ok(new MutationOutcome(index))
 			.WithReasons(applyResult.Reasons);
 	}
 
@@ -343,12 +322,9 @@ public sealed class RecipeSession
 
 		var newRecipe = Current.InsertSteps(startIndex, steps);
 		var applyResult = Apply(newRecipe);
-		if (applyResult.IsFailed)
-		{
-			return applyResult.ToResult<MutationOutcome>();
-		}
-
-		return Result.Ok(new MutationOutcome(startIndex))
+		return applyResult.IsFailed
+			? applyResult.ToResult<MutationOutcome>()
+			: Result.Ok(new MutationOutcome(startIndex))
 			.WithReasons(applyResult.Reasons);
 	}
 
@@ -376,12 +352,9 @@ public sealed class RecipeSession
 		var newRecipe = Current.ReplaceStep(stepIndex, step);
 
 		var applyResult = Apply(newRecipe);
-		if (applyResult.IsFailed)
-		{
-			return applyResult.ToResult<MutationOutcome>();
-		}
-
-		return Result.Ok(new MutationOutcome(stepIndex))
+		return applyResult.IsFailed
+			? applyResult.ToResult<MutationOutcome>()
+			: Result.Ok(new MutationOutcome(stepIndex))
 			.WithReasons(applyResult.Reasons);
 	}
 
@@ -547,12 +520,7 @@ public sealed class RecipeSession
 		}
 
 		var groupCheck = PropertyValidator.ValidateGroupValue(actionProperty, parsedValue, _recipeMetadataRegistry);
-		if (groupCheck.IsFailed)
-		{
-			return groupCheck.ToResult<PropertyValue>();
-		}
-
-		return Result.Ok(parsedValue);
+		return groupCheck.IsFailed ? groupCheck.ToResult<PropertyValue>() : Result.Ok(parsedValue);
 	}
 
 	private Result<Step> TryApplyFormulaRecalc(Step step, ActionDefinition action, string columnKey, int stepIndex)
@@ -584,24 +552,24 @@ public sealed class RecipeSession
 
 	private void UpdateSnapshot(Result<RecipeSnapshot> snapshot, bool markDirty)
 	{
-		_latestSnapshot = snapshot;
+		Snapshot = snapshot;
 
 		if (markDirty)
 		{
-			_isDirty = true;
+			IsDirty = true;
 		}
 
 		if (snapshot.IsSuccess)
 		{
-			_lastValidRecipe = snapshot.Value.Recipe;
+			LastValidRecipe = snapshot.Value.Recipe;
 		}
 	}
 
 	private void ResetSnapshotToEmpty()
 	{
-		_latestSnapshot = RecipeSnapshot.Empty;
-		_lastValidRecipe = Recipe.Empty;
-		_isDirty = false;
+		Snapshot = RecipeSnapshot.Empty;
+		LastValidRecipe = Recipe.Empty;
+		IsDirty = false;
 	}
 
 	private void PushHistory(Recipe recipe)
@@ -632,21 +600,11 @@ public sealed class RecipeSession
 
 	private static Result ValidateInsertIndex(Recipe recipe, int index)
 	{
-		if (index < 0 || index > recipe.Steps.Count)
-		{
-			return Result.Fail(new InsertIndexOutOfRangeError(index, recipe.Steps.Count));
-		}
-
-		return Result.Ok();
+		return index < 0 || index > recipe.Steps.Count ? Result.Fail(new InsertIndexOutOfRangeError(index, recipe.Steps.Count)) : Result.Ok();
 	}
 
 	private static Result ValidateStepIndex(Recipe recipe, int index)
 	{
-		if (index < 0 || index >= recipe.Steps.Count)
-		{
-			return Result.Fail(new StepIndexOutOfRangeError(index, recipe.Steps.Count));
-		}
-
-		return Result.Ok();
+		return index < 0 || index >= recipe.Steps.Count ? Result.Fail(new StepIndexOutOfRangeError(index, recipe.Steps.Count)) : Result.Ok();
 	}
 }

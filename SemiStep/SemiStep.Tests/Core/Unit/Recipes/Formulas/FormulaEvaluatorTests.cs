@@ -369,7 +369,7 @@ public sealed class FormulaEvaluatorTests
 		}
 
 		var formula = new FormulaDefinition(
-			recalcOrder: new[] { "a", "b" },
+			recalcOrder: ["a", "b"],
 			compiledExpressions: compiled);
 
 		// The activation condition on 'b' is produced by the resolver from the selector's targets,
@@ -381,8 +381,8 @@ public sealed class FormulaEvaluatorTests
 				id: 444,
 				uiName: "selector gated",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						"mode",
 						null,
@@ -390,16 +390,16 @@ public sealed class FormulaEvaluatorTests
 						"1",
 						Targets: new Dictionary<int, int> { [2] = 4444 }),
 					new ActionPropertyDefinition("a", null, "floatp", "0")
-				},
+				],
 				formula: formula),
 			[4444] = new ActionDefinition(
 				id: 4444,
 				uiName: "manual branch",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition("b", null, "floatp", "0")
-				},
+				],
 				role: ActionRole.Subaction)
 		};
 
@@ -439,13 +439,13 @@ public sealed class FormulaEvaluatorTests
 				id: RampActionId,
 				uiName: "t°C ramp",
 				deployDuration: DeployDuration.LongLasting,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(TaskColumnKey, null, "temp", "0"),
 					new ActionPropertyDefinition(InitialValue, null, "temp", "0"),
 					new ActionPropertyDefinition(Speed, null, "speed_t", "1"),
 					new ActionPropertyDefinition(StepDuration, null, "duration", "0")
-				},
+				],
 				formula: formula)
 		};
 
@@ -469,7 +469,7 @@ public sealed class FormulaEvaluatorTests
 		}
 
 		return new FormulaDefinition(
-			recalcOrder: new[] { StepDuration, Speed, TaskColumnKey, InitialValue },
+			recalcOrder: [StepDuration, Speed, TaskColumnKey, InitialValue],
 			compiledExpressions: compiled);
 	}
 
@@ -493,7 +493,7 @@ public sealed class FormulaEvaluatorTests
 		}
 
 		var formula = new FormulaDefinition(
-			recalcOrder: new[] { "a", "b" },
+			recalcOrder: ["a", "b"],
 			compiledExpressions: compiled);
 
 		var actions = new Dictionary<int, ActionDefinition>
@@ -502,11 +502,11 @@ public sealed class FormulaEvaluatorTests
 				id: 999,
 				uiName: "NaN action",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition("a", null, "any", "0"),
 					new ActionPropertyDefinition("b", null, "any", "0")
-				},
+				],
 				formula: formula)
 		};
 
@@ -534,7 +534,7 @@ public sealed class FormulaEvaluatorTests
 		}
 
 		var formula = new FormulaDefinition(
-			recalcOrder: new[] { "target", "a" },
+			recalcOrder: ["target", "a"],
 			compiledExpressions: compiled);
 
 		var actions = new Dictionary<int, ActionDefinition>
@@ -543,11 +543,11 @@ public sealed class FormulaEvaluatorTests
 				id: 888,
 				uiName: "int overflow",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition("target", null, "intp", "0"),
 					new ActionPropertyDefinition("a", null, "floatp", "0")
-				},
+				],
 				formula: formula)
 		};
 
@@ -575,7 +575,7 @@ public sealed class FormulaEvaluatorTests
 		}
 
 		var formula = new FormulaDefinition(
-			recalcOrder: new[] { "target", "a" },
+			recalcOrder: ["target", "a"],
 			compiledExpressions: compiled);
 
 		var actions = new Dictionary<int, ActionDefinition>
@@ -584,11 +584,11 @@ public sealed class FormulaEvaluatorTests
 				id: 777,
 				uiName: "int rounding",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition("target", null, "intp", "0"),
 					new ActionPropertyDefinition("a", null, "floatp", "0")
-				},
+				],
 				formula: formula)
 		};
 
@@ -616,7 +616,7 @@ public sealed class FormulaEvaluatorTests
 		}
 
 		var formula = new FormulaDefinition(
-			recalcOrder: new[] { "target", "a" },
+			recalcOrder: ["target", "a"],
 			compiledExpressions: compiled);
 
 		var actions = new Dictionary<int, ActionDefinition>
@@ -625,11 +625,11 @@ public sealed class FormulaEvaluatorTests
 				id: 555,
 				uiName: "grouped target",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition("target", "g1", "intp", "1"),
 					new ActionPropertyDefinition("a", null, "intp", "1")
-				},
+				],
 				formula: formula)
 		};
 
@@ -665,7 +665,7 @@ public sealed class FormulaEvaluatorTests
 				id: 50,
 				uiName: "plain",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[] { new ActionPropertyDefinition("x", null, "any", "0") })
+				properties: [new ActionPropertyDefinition("x", null, "any", "0")])
 		};
 
 		return new RecipeMetadataRegistry(BuildAppConfiguration(properties, actions));

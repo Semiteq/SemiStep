@@ -27,7 +27,7 @@ public static class S7Di
 		services.AddSingleton<PlcTransactionExecutor>();
 		services.AddSingleton<PlcSyncCoordinator>();
 		services.AddSingleton<IPlcSyncService>(sp => sp.GetRequiredService<PlcSyncCoordinator>());
-		services.AddSingleton<S7Service>(sp =>
+		services.AddSingleton(sp =>
 		{
 			var transactionExecutor = sp.GetRequiredService<PlcTransactionExecutor>();
 			var protocolSettings = sp.GetRequiredService<PlcProtocolSettings>();

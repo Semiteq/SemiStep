@@ -1,6 +1,4 @@
-﻿using System;
-
-using FluentAssertions;
+﻿using FluentAssertions;
 
 using SemiStep.Tests.Helpers;
 using SemiStep.UI.StyleEditor;

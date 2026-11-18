@@ -1,12 +1,7 @@
-﻿using System.Collections.Immutable;
-
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
-using FluentResults;
-
-using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Recipes;
@@ -139,7 +134,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Coordinator.Mutated += sink.OnMutation;
 		var signals = sink.Signals;
 
-		_fixture.Coordinator.RemoveSteps(new[] { 0, 1 });
+		_fixture.Coordinator.RemoveSteps([0, 1]);
 
 		signals.Should().ContainSingle().Which.Should().BeOfType<MutationSignal.StepsRemoved>();
 	}
@@ -328,7 +323,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Session.Reset();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		var result = _fixture.Coordinator.InsertSteps(0, new[] { _fixture.Coordinator.CurrentRecipe.Steps[0] });
+		var result = _fixture.Coordinator.InsertSteps(0, [_fixture.Coordinator.CurrentRecipe.Steps[0]]);
 
 		result.Value.Should().Be(0);
 	}
@@ -353,7 +348,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		var result = _fixture.Coordinator.RemoveSteps(new[] { 1, 2 });
+		var result = _fixture.Coordinator.RemoveSteps([1, 2]);
 
 		result.Value.Should().Be(0);
 	}
@@ -365,7 +360,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		var result = _fixture.Coordinator.RemoveSteps(new[] { 0, 1 });
+		var result = _fixture.Coordinator.RemoveSteps([0, 1]);
 
 		result.Value.Should().BeNull();
 	}
@@ -456,8 +451,7 @@ public sealed class RecipeCoordinatorTests : IAsyncLifetime
 		// The reconnect-apply path validates the PLC recipe via ImportedRecipeValidator and fails
 		// when it carries an unknown action id; the failure has no initiating VM, so the coordinator
 		// must surface it as an operation outcome in the message panel.
-		var invalidPlcRecipe = new Recipe(ImmutableList.Create(
-			new Step(9999, ImmutableDictionary<PropertyId, PropertyValue>.Empty)));
+		var invalidPlcRecipe = new Recipe([new Step(9999, [])]);
 		_fixture.S7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
 		_fixture.S7Service.RecipeToReturn = invalidPlcRecipe;
 

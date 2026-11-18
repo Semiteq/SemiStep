@@ -27,7 +27,7 @@ public sealed class RecipeMetadataRegistryColumnPropertyReferenceTests
 		};
 
 		var action = () => TestRecipeMetadataRegistryFactory.Build(
-			new[] { TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: 32) },
+			[TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: 32)],
 			columns: columns);
 
 		action.Should().Throw<InvalidOperationException>()
@@ -50,7 +50,7 @@ public sealed class RecipeMetadataRegistryColumnPropertyReferenceTests
 		};
 
 		var action = () => TestRecipeMetadataRegistryFactory.Build(
-			new[] { TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: 32) },
+			[TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: 32)],
 			columns: columns);
 
 		action.Should().NotThrow();
@@ -71,7 +71,7 @@ public sealed class RecipeMetadataRegistryColumnPropertyReferenceTests
 		};
 
 		var action = () => TestRecipeMetadataRegistryFactory.Build(
-			new[] { TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: 32) },
+			[TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: 32)],
 			columns: columns);
 
 		action.Should().NotThrow();

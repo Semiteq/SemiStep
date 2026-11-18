@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace SemiStep.UI.StyleEditor;
+﻿namespace SemiStep.UI.StyleEditor;
 
 /// <summary>
 /// Strict numeric conversions shared by the per-group drafts' <c>Build()</c> methods. A draft exposes
@@ -24,13 +22,10 @@ internal static class DraftNumbers
 
 	private static decimal Require(decimal? value)
 	{
-		if (value is null)
-		{
-			throw new InvalidOperationException(
+		return value is null
+			? throw new InvalidOperationException(
 				"Build was called on a draft with a null numeric field; CanSave must reject a null or "
-				+ "out-of-range numeric before Build runs.");
-		}
-
-		return value.Value;
+				+ "out-of-range numeric before Build runs.")
+			: value.Value;
 	}
 }

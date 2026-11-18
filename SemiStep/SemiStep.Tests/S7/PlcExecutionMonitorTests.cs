@@ -86,7 +86,7 @@ public sealed class PlcExecutionMonitorTests
 	{
 		var (monitor, _) = BuildMonitor();
 		var items = new List<PlcExecutionInfo>();
-		monitor.State.Subscribe(info => items.Add(info));
+		monitor.State.Subscribe(items.Add);
 
 		monitor.Stop();
 
@@ -107,7 +107,7 @@ public sealed class PlcExecutionMonitorTests
 
 		var (monitor, _) = BuildMonitor(expectedState);
 		var received = new List<PlcExecutionInfo>();
-		monitor.State.Subscribe(info => received.Add(info));
+		monitor.State.Subscribe(received.Add);
 
 		monitor.Start(TestContext.Current.CancellationToken);
 
@@ -234,7 +234,7 @@ public sealed class PlcExecutionMonitorTests
 			NullLogger<PlcExecutionMonitor>.Instance);
 
 		var received = new List<PlcExecutionInfo>();
-		monitor.State.Subscribe(info => received.Add(info));
+		monitor.State.Subscribe(received.Add);
 
 		monitor.Start(TestContext.Current.CancellationToken);
 

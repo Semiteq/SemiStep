@@ -64,13 +64,10 @@ internal static class PropertiesSectionLoader
 			var content = await File.ReadAllTextAsync(filePath);
 			var propertiesDict = _deserializer.Deserialize<Dictionary<string, PropertyDto>>(content);
 
-			if (propertiesDict is null || propertiesDict.Count == 0)
-			{
-				return Result.Ok(new List<PropertyDto>())
-					.WithWarning($"Empty or invalid YAML file: {Path.GetFileName(filePath)}");
-			}
-
-			return ValidatePropertiesFromFile(propertiesDict, filePath, seenIds);
+			return propertiesDict is null || propertiesDict.Count == 0
+				? Result.Ok(new List<PropertyDto>())
+					.WithWarning($"Empty or invalid YAML file: {Path.GetFileName(filePath)}")
+				: ValidatePropertiesFromFile(propertiesDict, filePath, seenIds);
 		}
 		catch (Exception ex)
 		{
@@ -109,13 +106,8 @@ internal static class PropertiesSectionLoader
 			}
 		}
 
-		var merged = Result.Merge(validationResults.ToArray());
-		if (merged.IsFailed)
-		{
-			return merged.ToResult<List<PropertyDto>>();
-		}
-
-		return Result.Ok(properties).WithReasons(merged.Reasons);
+		var merged = Result.Merge([.. validationResults]);
+		return merged.IsFailed ? merged.ToResult<List<PropertyDto>>() : Result.Ok(properties).WithReasons(merged.Reasons);
 	}
 
 	private static Result ValidateProperty(
@@ -166,11 +158,6 @@ internal static class PropertiesSectionLoader
 				$"[{location}] Property Min ({property.Min}) cannot be greater than Max ({property.Max})"));
 		}
 
-		if (validationResults.Count == 0)
-		{
-			return Result.Ok();
-		}
-
-		return Result.Merge(validationResults.ToArray());
+		return validationResults.Count == 0 ? Result.Ok() : Result.Merge([.. validationResults]);
 	}
 }

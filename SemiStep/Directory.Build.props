@@ -13,6 +13,11 @@
          commit in the repository. -->
     <WarningsNotAsErrors>NU1900;NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <!-- The doc file exists only to unlock IDE0005 (unused usings) at build; doc-comment
+         coverage itself is not required, hence CS1591 stays off. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <!-- Version: permanent default, overridden at build/publish time via /p:Version=X.Y.Z -->

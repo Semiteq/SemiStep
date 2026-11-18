@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace SemiStep.Tests.Performance.Harness;
+﻿namespace SemiStep.Tests.Performance.Harness;
 
 // Single source of truth for every baseline metric name the probes report. Both the probes and the
 // always-on drift guard reference these constants, and the drift guard asserts this set equals the metric
@@ -19,8 +17,8 @@ internal static class PerfMetricNames
 	public const string CorePerAppendBytesN100 = "core.perAppend.bytes.n100";
 	public const string CorePerAppendBytesN500 = "core.perAppend.bytes.n500";
 
-	public static readonly IReadOnlyList<string> All = new[]
-	{
+	public static readonly IReadOnlyList<string> All =
+	[
 		TransposedViewportJumpBytesPerColumn,
 		CanonicalViewportJumpBytesPerColumn,
 		TransposedPerAddBytesN20,
@@ -30,7 +28,7 @@ internal static class PerfMetricNames
 		CorePerAppendBytesN10,
 		CorePerAppendBytesN100,
 		CorePerAppendBytesN500,
-	};
+	];
 
 	// The Core probe measures per-append bytes at a swept recipe size; each size maps to a fixed constant so
 	// a swept name never drifts from the committed baseline key.

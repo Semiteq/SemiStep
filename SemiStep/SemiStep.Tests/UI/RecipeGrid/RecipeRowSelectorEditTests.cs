@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 
 using Avalonia.Data.Converters;
 using Avalonia.Headless.XUnit;
@@ -66,7 +64,7 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 			services.GetRequiredService<PlcLifecycleManager>(),
 			services.GetRequiredService<CsvService>(),
 			services.GetRequiredService<ImportedRecipeValidator>(),
-			services.GetRequiredService<SemiStep.Core.Configuration.AppConfiguration>(),
+			services.GetRequiredService<AppConfiguration>(),
 			_registry,
 			_messagePanel,
 			NullLogger<RecipeCoordinator>.Instance);

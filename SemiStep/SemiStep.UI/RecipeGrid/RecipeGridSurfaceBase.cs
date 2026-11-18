@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
@@ -28,13 +27,11 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	private readonly ObservableAsPropertyHelper<int> _selectedStepIndex;
 	private readonly ChangedCellClickAwayBroadcaster _changedCellClickAwayBroadcaster;
 	private readonly RecipeCoordinator _coordinator;
-	private readonly CompositeDisposable _disposables = new();
+	private readonly CompositeDisposable _disposables = [];
 	private readonly ExecutionHighlightTracker _executionHighlightTracker;
 	private readonly ILogger _logger;
 	private readonly MessagePanelViewModel _messagePanel;
 	private readonly Subject<int?> _selectionRequests = new();
-
-	private IReadOnlyList<int> _selectedStepIndices = [];
 
 	protected RecipeGridSurfaceBase(
 		RecipeCoordinator coordinator,
@@ -49,7 +46,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		_changedCellClickAwayBroadcaster = changedCellClickAwayBroadcaster;
 		_logger = logger;
 
-		Items = new ObservableCollection<TItem>();
+		Items = [];
 		_executionHighlightTracker = new ExecutionHighlightTracker(() => Items.Count, i => RowOf(Items[i]));
 
 		CanDeleteStep = this
@@ -101,9 +98,9 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 
 	public IReadOnlyList<int> SelectedStepIndices
 	{
-		get => _selectedStepIndices;
-		private set => this.RaiseAndSetIfChanged(ref _selectedStepIndices, value);
-	}
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	} = [];
 
 	public int StepCount => Items.Count;
 
@@ -220,22 +217,18 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		switch (signal)
 		{
 			case MutationSignal.StepsInserted(var startIndex, var count):
-				return selection
-					.Select(index => index >= startIndex ? index + count : index)
-					.ToList();
+				return [.. selection.Select(index => index >= startIndex ? index + count : index)];
 
 			case MutationSignal.StepRemoved(var removedIndex):
-				return selection
+				return [.. selection
 					.Where(index => index != removedIndex)
-					.Select(index => index > removedIndex ? index - 1 : index)
-					.ToList();
+					.Select(index => index > removedIndex ? index - 1 : index)];
 
 			case MutationSignal.StepsRemoved(var removedIndices):
 				var removedSet = removedIndices.ToHashSet();
-				return selection
+				return [.. selection
 					.Where(index => !removedSet.Contains(index))
-					.Select(index => index - removedIndices.Count(removed => removed < index))
-					.ToList();
+					.Select(index => index - removedIndices.Count(removed => removed < index))];
 
 			case MutationSignal.RecipeReplaced:
 				return [];
@@ -572,10 +565,9 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	{
 		var recipe = _coordinator.CurrentRecipe;
 
-		return _selectedStepIndices
+		return [.. SelectedStepIndices
 			.OrderBy(i => i)
-			.Select(i => recipe.Steps[i])
-			.ToList();
+			.Select(i => recipe.Steps[i])];
 	}
 
 	// Throws rather than skips: a skipped step desyncs Items.Count from StepCount and breaks index-based dispatch.

@@ -21,12 +21,7 @@ public static class UiCultureSelector
 		{
 			var culture = CultureInfo.GetCultureInfo(locale);
 
-			if (culture.LCID == UnknownCustomCultureLcid)
-			{
-				return Fallback();
-			}
-
-			return culture;
+			return culture.LCID == UnknownCustomCultureLcid ? Fallback() : culture;
 		}
 		catch (CultureNotFoundException)
 		{

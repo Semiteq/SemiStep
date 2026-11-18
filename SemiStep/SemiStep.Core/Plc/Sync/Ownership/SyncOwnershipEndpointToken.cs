@@ -27,16 +27,6 @@ public static class SyncOwnershipEndpointToken
 
 	private static bool IsAllowed(char character, char[] invalidCharacters)
 	{
-		if (character == '.' || character == '_')
-		{
-			return true;
-		}
-
-		if (!char.IsLetterOrDigit(character))
-		{
-			return false;
-		}
-
-		return Array.IndexOf(invalidCharacters, character) < 0;
+		return character is '.' or '_' || (char.IsLetterOrDigit(character) && Array.IndexOf(invalidCharacters, character) < 0);
 	}
 }

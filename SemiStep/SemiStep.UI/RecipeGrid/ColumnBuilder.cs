@@ -59,11 +59,11 @@ public sealed class ColumnBuilder(
 			IsReadOnly = true,
 			Width = DataGridLength.Auto,
 			MinWidth = _widthCalculator.MinColumnWidth,
-			CanUserSort = false
+			CanUserSort = false,
+			FontFamily = string.IsNullOrWhiteSpace(gridStyle.Fonts.FontFamily)
+				? GridFonts.DefaultFamily
+				: new FontFamily(gridStyle.Fonts.FontFamily)
 		};
-		column.FontFamily = string.IsNullOrWhiteSpace(gridStyle.Fonts.FontFamily)
-			? GridFonts.DefaultFamily
-			: new FontFamily(gridStyle.Fonts.FontFamily);
 
 		column.CellStyleClasses.Add(StepNumberColumnClass);
 		grid.Columns.Add(column);

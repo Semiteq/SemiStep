@@ -5,7 +5,6 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 
 using SemiStep.Core.Recipes;
-using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
 
 using SemiStep.UI.RecipeGrid;

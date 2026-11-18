@@ -4,20 +4,13 @@ using Microsoft.Extensions.Logging;
 
 using SemiStep.Core.Recipes.Import.Errors;
 using SemiStep.Core.Recipes.Import.Warnings;
-using SemiStep.Core.Shared;
 
 namespace SemiStep.Core.Recipes.Import;
 
-public class CsvService
+public class CsvService(CsvFileSerializer csvFileSerializer, ILogger<CsvService> logger)
 {
-	private readonly CsvFileSerializer _csvFileSerializer;
-	private readonly ILogger<CsvService> _logger;
-
-	public CsvService(CsvFileSerializer csvFileSerializer, ILogger<CsvService> logger)
-	{
-		_csvFileSerializer = csvFileSerializer;
-		_logger = logger;
-	}
+	private readonly CsvFileSerializer _csvFileSerializer = csvFileSerializer;
+	private readonly ILogger<CsvService> _logger = logger;
 
 	public virtual async Task<Result<Recipe>> LoadAsync(string filePath)
 	{

@@ -53,12 +53,9 @@ public static class ConfigFacade
 		var config = mapResult.Value;
 
 		var plcResult = PlcConfigurationValidator.Validate(config.PlcConfiguration);
-		if (plcResult.IsFailed)
-		{
-			return Propagate(plcResult, loadResult, xrefResult, defaultsResult);
-		}
-
-		return Result.Ok(config)
+		return plcResult.IsFailed
+			? Propagate(plcResult, loadResult, xrefResult, defaultsResult)
+			: Result.Ok(config)
 			.WithReasons(loadResult.Reasons)
 			.WithReasons(xrefResult.Reasons)
 			.WithReasons(defaultsResult.Reasons);

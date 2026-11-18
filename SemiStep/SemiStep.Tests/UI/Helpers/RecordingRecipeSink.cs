@@ -7,7 +7,7 @@ namespace SemiStep.Tests.UI.Helpers;
 // non-thread-safe — callers outside the single-dispatcher model must not use this type.
 public sealed class RecordingRecipeSink
 {
-	private readonly List<MutationSignal> _signals = new();
+	private readonly List<MutationSignal> _signals = [];
 
 	public IReadOnlyList<MutationSignal> Signals => _signals;
 

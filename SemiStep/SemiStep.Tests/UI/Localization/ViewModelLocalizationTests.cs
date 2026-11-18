@@ -1,5 +1,4 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 
 using FluentAssertions;
 
@@ -62,7 +61,7 @@ public sealed class ViewModelLocalizationTests
 			string.Format(
 					CultureInfo.InvariantCulture,
 					Resources.LastSyncAgoFormat ?? "{0}",
-					(12.5).ToString("0.0", CultureInfo.InvariantCulture))
+					12.5.ToString("0.0", CultureInfo.InvariantCulture))
 				.Should().Be("12.5 с назад"));
 	}
 

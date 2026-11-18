@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-
-using SemiStep.Core.Recipes;
+﻿using SemiStep.Core.Recipes;
 
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
@@ -18,20 +13,14 @@ namespace SemiStep.Tests.Performance;
 // O(N)-per-mutation churn signal.
 [Trait("Category", "Performance")]
 [Trait("Component", "Core")]
-public sealed class CoreAllocationProbe
+public sealed class CoreAllocationProbe(ITestOutputHelper output, PerfActualsFixture actuals)
 {
 	private const int WarmupSize = 50;
 
-	private static readonly int[] _sizes = { 10, 100, 500 };
+	private static readonly int[] _sizes = [10, 100, 500];
 
-	private readonly ITestOutputHelper _output;
-	private readonly PerfActualsFixture _actuals;
-
-	public CoreAllocationProbe(ITestOutputHelper output, PerfActualsFixture actuals)
-	{
-		_output = output;
-		_actuals = actuals;
-	}
+	private readonly ITestOutputHelper _output = output;
+	private readonly PerfActualsFixture _actuals = actuals;
 
 	[Fact(Explicit = true)]
 	public async Task Report_PerAppend_CoreAllocation()

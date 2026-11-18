@@ -2,28 +2,21 @@
 
 using Avalonia.Logging;
 
-using Serilog;
-
 using AvaloniaLevel = Avalonia.Logging.LogEventLevel;
 using SerilogLevel = Serilog.Events.LogEventLevel;
 
 namespace SemiStep.UI.Logging;
 
-public sealed class AvaloniaSerilogSink : ILogSink
+public sealed class AvaloniaSerilogSink(AvaloniaLevel minimumLevel) : ILogSink
 {
 	private const int FullLogCount = 20;
 	private const int SampleInterval = 500;
 
-	private readonly AvaloniaLevel _minimumLevel;
+	private readonly AvaloniaLevel _minimumLevel = minimumLevel;
 
 	// The key set is trusted finite: Avalonia log templates are constant strings from a fixed set of
 	// call sites, so this never grows unbounded and needs no eviction.
 	private readonly ConcurrentDictionary<(string Area, string Template), int> _occurrences = new();
-
-	public AvaloniaSerilogSink(AvaloniaLevel minimumLevel)
-	{
-		_minimumLevel = minimumLevel;
-	}
 
 	public bool IsEnabled(AvaloniaLevel level, string area)
 	{
@@ -32,7 +25,7 @@ public sealed class AvaloniaSerilogSink : ILogSink
 
 	public void Log(AvaloniaLevel level, string area, object? source, string messageTemplate)
 	{
-		Log(level, area, source, messageTemplate, Array.Empty<object?>());
+		Log(level, area, source, messageTemplate, []);
 	}
 
 	public void Log(AvaloniaLevel level, string area, object? source, string messageTemplate, params object?[] propertyValues)
@@ -59,32 +52,20 @@ public sealed class AvaloniaSerilogSink : ILogSink
 
 	private static bool ShouldEmit(int occurrence)
 	{
-		if (occurrence <= FullLogCount)
-		{
-			return true;
-		}
-
-		return occurrence % SampleInterval == 0;
+		return occurrence <= FullLogCount || occurrence % SampleInterval == 0;
 	}
 
 	private static SerilogLevel MapLevel(AvaloniaLevel level)
 	{
-		switch (level)
+		return level switch
 		{
-			case AvaloniaLevel.Verbose:
-				return SerilogLevel.Verbose;
-			case AvaloniaLevel.Debug:
-				return SerilogLevel.Debug;
-			case AvaloniaLevel.Information:
-				return SerilogLevel.Information;
-			case AvaloniaLevel.Warning:
-				return SerilogLevel.Warning;
-			case AvaloniaLevel.Error:
-				return SerilogLevel.Error;
-			case AvaloniaLevel.Fatal:
-				return SerilogLevel.Fatal;
-			default:
-				return SerilogLevel.Information;
-		}
+			AvaloniaLevel.Verbose => SerilogLevel.Verbose,
+			AvaloniaLevel.Debug => SerilogLevel.Debug,
+			AvaloniaLevel.Information => SerilogLevel.Information,
+			AvaloniaLevel.Warning => SerilogLevel.Warning,
+			AvaloniaLevel.Error => SerilogLevel.Error,
+			AvaloniaLevel.Fatal => SerilogLevel.Fatal,
+			_ => SerilogLevel.Information,
+		};
 	}
 }

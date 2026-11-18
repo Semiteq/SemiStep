@@ -36,12 +36,9 @@ internal static class GridStyleMapper
 		var validationPanel = MapValidationPanel(dto.ValidationPanel, defaults.ValidationPanel, errors);
 		var orientation = MapOrientation(dto.Orientation, errors);
 
-		if (errors.Count > 0)
-		{
-			return Result.Fail(errors);
-		}
-
-		return Result.Ok(new GridStyleOptions(
+		return errors.Count > 0
+			? (Result<GridStyleOptions>)Result.Fail(errors)
+			: Result.Ok(new GridStyleOptions(
 			Fonts: new GridStyleFonts(
 				FontFamily: dto.Fonts?.Family ?? defaults.Fonts.FontFamily,
 				HeaderFontSize: dto.Fonts?.HeaderSize ?? defaults.Fonts.HeaderFontSize,
@@ -233,8 +230,8 @@ internal static class GridStyleMapper
 	private static GridOrientation MapOrientation(string? orientation, List<IError> errors)
 	{
 		if (orientation is not null
-			&& orientation != GridOrientationValues.RowsAsSteps
-			&& orientation != GridOrientationValues.ColumnsAsSteps)
+			and not GridOrientationValues.RowsAsSteps
+			and not GridOrientationValues.ColumnsAsSteps)
 		{
 			errors.Add(new GridStyleOrientationInvalidError(
 				orientation,

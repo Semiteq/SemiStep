@@ -15,21 +15,15 @@ namespace SemiStep.Core.Configuration;
 /// </summary>
 public sealed class GridStyleEditorFacade : IGridStyleEditorFacade
 {
-	private readonly GridStyleWriter _gridStyleWriter = new();
 
 	public async Task<Result<GridStyleOptions>> Load(string configDir)
 	{
 		var loadResult = await GridStyleLoader.LoadAsync(configDir);
-		if (loadResult.IsFailed)
-		{
-			return loadResult.ToResult<GridStyleOptions>();
-		}
-
-		return GridStyleMapper.Map(loadResult.Value);
+		return loadResult.IsFailed ? loadResult.ToResult<GridStyleOptions>() : GridStyleMapper.Map(loadResult.Value);
 	}
 
 	public async Task<Result> Save(string configDir, GridStyleOptions options)
 	{
-		return await _gridStyleWriter.SaveAsync(configDir, options);
+		return await GridStyleWriter.SaveAsync(configDir, options);
 	}
 }

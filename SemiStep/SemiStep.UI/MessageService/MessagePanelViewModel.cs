@@ -19,7 +19,7 @@ namespace SemiStep.UI.MessageService;
 
 public class MessagePanelViewModel : ReactiveObject, IDisposable
 {
-	private readonly CompositeDisposable _disposables = new();
+	private readonly CompositeDisposable _disposables = [];
 	private readonly ObservableAsPropertyHelper<string> _errorCountText;
 	private readonly ObservableAsPropertyHelper<bool> _hasErrors;
 	private readonly ObservableAsPropertyHelper<bool> _hasStatusErrors;
@@ -29,12 +29,7 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 	private readonly ObservableAsPropertyHelper<string> _warningCountText;
 
 	private readonly List<MessageEntry> _validationEntries = [];
-
-	private int _errorCount;
-	private bool _hasEntries;
-	private bool _isVisible = true;
 	private MessageEntry? _operationEntry;
-	private int _warningCount;
 
 	public MessagePanelViewModel()
 	{
@@ -93,20 +88,20 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 
 	public int ErrorCount
 	{
-		get => _errorCount;
-		private set => this.RaiseAndSetIfChanged(ref _errorCount, value);
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
 	public int WarningCount
 	{
-		get => _warningCount;
-		private set => this.RaiseAndSetIfChanged(ref _warningCount, value);
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
 	public bool HasEntries
 	{
-		get => _hasEntries;
-		private set => this.RaiseAndSetIfChanged(ref _hasEntries, value);
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
 	public bool HasErrors => _hasErrors.Value;
@@ -123,9 +118,9 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 
 	public bool IsVisible
 	{
-		get => _isVisible;
-		set => this.RaiseAndSetIfChanged(ref _isVisible, value);
-	}
+		get;
+		set => this.RaiseAndSetIfChanged(ref field, value);
+	} = true;
 
 	public bool ShowPanel => _showPanel.Value;
 
@@ -208,7 +203,7 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 		RecountAndNotify();
 	}
 
-	private void PostOnUiThread(Action action)
+	private static void PostOnUiThread(Action action)
 	{
 		if (Dispatcher.UIThread.CheckAccess())
 		{

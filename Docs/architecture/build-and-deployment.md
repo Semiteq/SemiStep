@@ -20,6 +20,14 @@ not at the repository root.
   the build with no change in the repository.
 - **`EnforceCodeStyleInBuild=true` plus `dotnet_diagnostic.IDE1006.severity = warning` in
   `.editorconfig`.** Together these turn naming violations into build errors.
+- **`AnalysisMode=Recommended` plus `dotnet_analyzer_diagnostic.category-Style.severity = warning`
+  in `.editorconfig`.** Every quality rule in the Recommended set and every IDE style rule fails the
+  build unless `.editorconfig` lowers it with an explicit `dotnet_diagnostic` entry; each opt-out
+  there carries its reason. The category line overrides the `:severity` suffix on option entries,
+  so a `:silent` suffix alone does not turn a rule off.
+- **`GenerateDocumentationFile=true` with `CS1591` in `NoWarn`.** The compiler reports unused
+  usings (IDE0005) at build only when it writes a documentation file. Doc-comment coverage is not
+  required.
 
 **`EnforceCodeStyleInBuild` alone does not gate naming.** The `dotnet_naming_rule.*.severity`
 entries in `.editorconfig` drive the IDE only; build enforcement reads the IDE1006 diagnostic

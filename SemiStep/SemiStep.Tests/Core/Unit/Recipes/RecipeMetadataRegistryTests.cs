@@ -154,7 +154,7 @@ public sealed class RecipeMetadataRegistryTests
 			3002,
 			"ICP manual",
 			DeployDuration.LongLasting,
-			new[] { Column("icp_load", "percent"), Column("icp_tune", "percent") },
+			[Column("icp_load", "percent"), Column("icp_tune", "percent")],
 			null,
 			ActionRole.Subaction);
 
@@ -162,7 +162,7 @@ public sealed class RecipeMetadataRegistryTests
 			300,
 			"Etch",
 			DeployDuration.LongLasting,
-			new[] { Column("icp_power", "power"), Selector("icp_match", "enum", 2, 3002) },
+			[Column("icp_power", "power"), Selector("icp_match", "enum", 2, 3002)],
 			null,
 			ActionRole.Action);
 
@@ -182,7 +182,7 @@ public sealed class RecipeMetadataRegistryTests
 			3002,
 			"A",
 			DeployDuration.LongLasting,
-			new[] { Selector("link", "enum", 1, 3003) },
+			[Selector("link", "enum", 1, 3003)],
 			null,
 			ActionRole.Subaction);
 
@@ -190,7 +190,7 @@ public sealed class RecipeMetadataRegistryTests
 			3003,
 			"B",
 			DeployDuration.LongLasting,
-			new[] { Selector("back", "enum", 1, 3002) },
+			[Selector("back", "enum", 1, 3002)],
 			null,
 			ActionRole.Subaction);
 
@@ -198,7 +198,7 @@ public sealed class RecipeMetadataRegistryTests
 			300,
 			"Root",
 			DeployDuration.LongLasting,
-			new[] { Selector("enter", "enum", 1, 3002) },
+			[Selector("enter", "enum", 1, 3002)],
 			null,
 			ActionRole.Action);
 
@@ -224,7 +224,7 @@ public sealed class RecipeMetadataRegistryTests
 			7002,
 			"One",
 			DeployDuration.LongLasting,
-			new[] { Column("shared", "percent") },
+			[Column("shared", "percent")],
 			null,
 			ActionRole.Subaction);
 
@@ -232,7 +232,7 @@ public sealed class RecipeMetadataRegistryTests
 			7003,
 			"Two",
 			DeployDuration.LongLasting,
-			new[] { Column("shared", "time") },
+			[Column("shared", "time")],
 			null,
 			ActionRole.Subaction);
 
@@ -240,7 +240,7 @@ public sealed class RecipeMetadataRegistryTests
 			700,
 			"Root",
 			DeployDuration.LongLasting,
-			new[] { Selector("a", "enum", 1, 7002), Selector("b", "enum", 1, 7003) },
+			[Selector("a", "enum", 1, 7002), Selector("b", "enum", 1, 7003)],
 			null,
 			ActionRole.Action);
 

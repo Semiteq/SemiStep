@@ -57,12 +57,9 @@ internal static class ActionMapper
 		}
 
 		var formulaResult = MapFormula(dto.Id, dto.UiName, dto.Formula, columns, properties);
-		if (formulaResult.IsFailed)
-		{
-			return formulaResult.ToResult<ActionDefinition>();
-		}
-
-		return Result.Ok(new ActionDefinition(
+		return formulaResult.IsFailed
+			? formulaResult.ToResult<ActionDefinition>()
+			: Result.Ok(new ActionDefinition(
 			id: dto.Id,
 			uiName: dto.UiName,
 			deployDuration: deployDurationResult.Value,
@@ -91,12 +88,9 @@ internal static class ActionMapper
 			}
 		}
 
-		if (failures.Count > 0)
-		{
-			return Result.Merge(failures.ToArray()).ToResult<IReadOnlyList<ActionDefinition>>();
-		}
-
-		return Result.Ok<IReadOnlyList<ActionDefinition>>(results);
+		return failures.Count > 0
+			? Result.Merge([.. failures]).ToResult<IReadOnlyList<ActionDefinition>>()
+			: Result.Ok<IReadOnlyList<ActionDefinition>>(results);
 	}
 
 	private static Result<ActionRole> MapRole(string? value, int actionId)
@@ -124,18 +118,12 @@ internal static class ActionMapper
 
 	private static Result<ActionPropertyDefinition> TryMapColumn(ActionColumnDto dto)
 	{
-		if (string.IsNullOrWhiteSpace(dto.Key))
-		{
-			return Result.Fail<ActionPropertyDefinition>("Action column Key is required for mapping");
-		}
-
-		if (string.IsNullOrWhiteSpace(dto.PropertyTypeId))
-		{
-			return Result.Fail<ActionPropertyDefinition>(
-				$"PropertyTypeId is required for action column '{dto.Key}'");
-		}
-
-		return Result.Ok(new ActionPropertyDefinition(
+		return string.IsNullOrWhiteSpace(dto.Key)
+			? Result.Fail<ActionPropertyDefinition>("Action column Key is required for mapping")
+			: string.IsNullOrWhiteSpace(dto.PropertyTypeId)
+			? Result.Fail<ActionPropertyDefinition>(
+				$"PropertyTypeId is required for action column '{dto.Key}'")
+			: Result.Ok(new ActionPropertyDefinition(
 			Key: dto.Key,
 			GroupName: dto.GroupName,
 			PropertyTypeId: dto.PropertyTypeId,
@@ -157,8 +145,8 @@ internal static class ActionMapper
 
 		var section = $"actions, Id={actionId}, UiName='{actionName}'";
 
-		var rawRecalcOrder = formulaDto.RecalcOrder ?? new List<string>();
-		var rawExpressions = formulaDto.Expressions ?? new Dictionary<string, string>();
+		var rawRecalcOrder = formulaDto.RecalcOrder ?? [];
+		var rawExpressions = formulaDto.Expressions ?? [];
 
 		var failures = new List<Result>();
 
@@ -292,7 +280,7 @@ internal static class ActionMapper
 
 		if (failures.Count > 0)
 		{
-			return Result.Merge(failures.ToArray()).ToResult<FormulaDefinition?>();
+			return Result.Merge([.. failures]).ToResult<FormulaDefinition?>();
 		}
 
 		var definition = new FormulaDefinition(

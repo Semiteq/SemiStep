@@ -86,9 +86,9 @@ internal sealed class PlcTransactionExecutor
 				ct);
 			var stringCount = ArrayCodec.ReadArrayCurrentSize(stringHeaderBytes, _layout.StringDb);
 
-			var intDataSize = _layout.IntDb.DataStartOffset + intCount * ProtocolConstants.IntElementSize;
-			var floatDataSize = _layout.FloatDb.DataStartOffset + floatCount * ProtocolConstants.FloatElementSize;
-			var stringDataSize = _layout.StringDb.DataStartOffset + stringCount * _arrayCodec.WStringElementSize;
+			var intDataSize = _layout.IntDb.DataStartOffset + (intCount * ProtocolConstants.IntElementSize);
+			var floatDataSize = _layout.FloatDb.DataStartOffset + (floatCount * ProtocolConstants.FloatElementSize);
+			var stringDataSize = _layout.StringDb.DataStartOffset + (stringCount * _arrayCodec.WStringElementSize);
 
 			var intData = await _transport.ReadBytesAsync(_layout.IntDb.DbNumber, 0, intDataSize, ct);
 			var floatData = await _transport.ReadBytesAsync(_layout.FloatDb.DbNumber, 0, floatDataSize, ct);
@@ -179,13 +179,10 @@ internal sealed class PlcTransactionExecutor
 				_layout.ManagingDb.VersionOffset,
 				sizeof(int),
 				ct);
-			if (bytes.Length < sizeof(int))
-			{
-				return Result.Fail(
-					$"Protocol version read returned {bytes.Length} bytes, expected {sizeof(int)}");
-			}
-
-			return Result.Ok(BinaryPrimitives.ReadInt32BigEndian(bytes));
+			return bytes.Length < sizeof(int)
+				? (Result<int>)Result.Fail(
+					$"Protocol version read returned {bytes.Length} bytes, expected {sizeof(int)}")
+				: Result.Ok(BinaryPrimitives.ReadInt32BigEndian(bytes));
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
@@ -208,12 +205,7 @@ internal sealed class PlcTransactionExecutor
 		}
 
 		var recipeDataResult = await ReadRecipeDataAsync(ct);
-		if (recipeDataResult.IsFailed)
-		{
-			return recipeDataResult.ToResult<Recipe>();
-		}
-
-		return _converter.ToRecipe(recipeDataResult.Value);
+		return recipeDataResult.IsFailed ? recipeDataResult.ToResult<Recipe>() : _converter.ToRecipe(recipeDataResult.Value);
 	}
 
 	private async Task<Result<T>> ReadAndDecodeAsync<T>(
@@ -257,12 +249,9 @@ internal sealed class PlcTransactionExecutor
 
 			var writeLinesResult = await WriteManagingAreaAsync(
 				new ManagingAreaPcData(Committed: false, RecipeLines: data.StepCount), ct);
-			if (writeLinesResult.IsFailed)
-			{
-				return writeLinesResult;
-			}
-
-			return await WriteManagingAreaAsync(
+			return writeLinesResult.IsFailed
+				? writeLinesResult
+				: await WriteManagingAreaAsync(
 				new ManagingAreaPcData(Committed: true, RecipeLines: data.StepCount), ct);
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
@@ -275,12 +264,9 @@ internal sealed class PlcTransactionExecutor
 	private async Task<Result<bool>> VerifyWriteAsync(PlcRecipeData expected, CancellationToken ct)
 	{
 		var actualResult = await ReadRecipeDataAsync(ct);
-		if (actualResult.IsFailed)
-		{
-			return actualResult.ToResult<bool>();
-		}
-
-		return Result.Ok(PlcRecipeDataComparer.DataMatchesExpected(actualResult.Value, expected));
+		return actualResult.IsFailed
+			? actualResult.ToResult<bool>()
+			: Result.Ok(PlcRecipeDataComparer.DataMatchesExpected(actualResult.Value, expected));
 	}
 
 	private async Task<Result> WriteManagingAreaAsync(ManagingAreaPcData data, CancellationToken ct)

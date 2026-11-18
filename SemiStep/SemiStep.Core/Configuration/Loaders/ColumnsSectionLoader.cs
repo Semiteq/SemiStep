@@ -64,13 +64,10 @@ internal static class ColumnsSectionLoader
 			var content = await File.ReadAllTextAsync(filePath);
 			var columnsDict = _deserializer.Deserialize<Dictionary<string, ColumnDto>>(content);
 
-			if (columnsDict is null || columnsDict.Count == 0)
-			{
-				return Result.Ok(new List<ColumnDto>())
-					.WithWarning($"Empty or invalid YAML file: {Path.GetFileName(filePath)}");
-			}
-
-			return ValidateColumnsFromFile(columnsDict, filePath, seenKeys);
+			return columnsDict is null || columnsDict.Count == 0
+				? Result.Ok(new List<ColumnDto>())
+					.WithWarning($"Empty or invalid YAML file: {Path.GetFileName(filePath)}")
+				: ValidateColumnsFromFile(columnsDict, filePath, seenKeys);
 		}
 		catch (Exception ex)
 		{
@@ -106,13 +103,8 @@ internal static class ColumnsSectionLoader
 			}
 		}
 
-		var merged = Result.Merge(validationResults.ToArray());
-		if (merged.IsFailed)
-		{
-			return merged.ToResult<List<ColumnDto>>();
-		}
-
-		return Result.Ok(columns).WithReasons(merged.Reasons);
+		var merged = Result.Merge([.. validationResults]);
+		return merged.IsFailed ? merged.ToResult<List<ColumnDto>>() : Result.Ok(columns).WithReasons(merged.Reasons);
 	}
 
 	private static Result ValidateColumn(
@@ -164,11 +156,6 @@ internal static class ColumnsSectionLoader
 				Result.Fail($"[{location}] Column BusinessLogic.PropertyTypeId is required"));
 		}
 
-		if (validationResults.Count == 0)
-		{
-			return Result.Ok();
-		}
-
-		return Result.Merge(validationResults.ToArray());
+		return validationResults.Count == 0 ? Result.Ok() : Result.Merge([.. validationResults]);
 	}
 }

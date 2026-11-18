@@ -30,7 +30,7 @@ public sealed class GridStyleWriterTests
 
 		var original = await LoadOptions(tempDir.Path);
 
-		(await new GridStyleWriter().SaveAsync(tempDir.Path, original)).IsSuccess.Should().BeTrue();
+		(await GridStyleWriter.SaveAsync(tempDir.Path, original)).IsSuccess.Should().BeTrue();
 
 		var reloaded = await LoadOptions(tempDir.Path);
 
@@ -50,7 +50,7 @@ public sealed class GridStyleWriterTests
 		originalHeader.Should().NotBeEmpty();
 		var options = await LoadOptions(tempDir.Path);
 
-		(await new GridStyleWriter().SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
+		(await GridStyleWriter.SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
 
 		var writtenHeader = LeadingCommentBlock(await File.ReadAllTextAsync(filePath, token));
 		writtenHeader.Should().Be(originalHeader);
@@ -67,7 +67,7 @@ public sealed class GridStyleWriterTests
 		LeadingCommentBlock(await File.ReadAllTextAsync(filePath, token)).Should().BeEmpty();
 		var options = await LoadOptions(tempDir.Path);
 
-		(await new GridStyleWriter().SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
+		(await GridStyleWriter.SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
 
 		var written = (await File.ReadAllTextAsync(filePath, token)).Replace("\r\n", "\n");
 		var firstNonBlank = written.Split('\n').First(line => line.TrimStart().Length > 0);
@@ -81,7 +81,7 @@ public sealed class GridStyleWriterTests
 		var filePath = GridStyleFilePath(tempDir.Path);
 		var options = await LoadOptions(tempDir.Path);
 
-		(await new GridStyleWriter().SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
+		(await GridStyleWriter.SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
 
 		var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
 		content.Should().Contain("\"#");
@@ -110,7 +110,7 @@ public sealed class GridStyleWriterTests
 		// Hold an exclusive lock on the target so the atomic File.Move cannot replace it.
 		using (var locking = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
 		{
-			result = await new GridStyleWriter().SaveAsync(tempDir.Path, options);
+			result = await GridStyleWriter.SaveAsync(tempDir.Path, options);
 		}
 
 		result.IsFailed.Should().BeTrue();
@@ -128,10 +128,10 @@ public sealed class GridStyleWriterTests
 		var filePath = GridStyleFilePath(tempDir.Path);
 		var options = await LoadOptions(tempDir.Path);
 
-		(await new GridStyleWriter().SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
+		(await GridStyleWriter.SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
 
 		var bytes = await File.ReadAllBytesAsync(filePath, TestContext.Current.CancellationToken);
-		bytes.Take(3).Should().NotEqual(new byte[] { 0xEF, 0xBB, 0xBF });
+		bytes.Take(3).Should().NotEqual([0xEF, 0xBB, 0xBF]);
 		bytes.Should().NotContain((byte)'\r');
 	}
 
@@ -147,7 +147,7 @@ public sealed class GridStyleWriterTests
 		try
 		{
 			CultureInfo.CurrentCulture = new CultureInfo("de-DE");
-			(await new GridStyleWriter().SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
+			(await GridStyleWriter.SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
 		}
 		finally
 		{

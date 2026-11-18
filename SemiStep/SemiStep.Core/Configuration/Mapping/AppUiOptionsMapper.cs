@@ -6,11 +6,6 @@ internal static class AppUiOptionsMapper
 {
 	public static AppUiOptions Map(AppUiOptionsDto? dto)
 	{
-		if (dto?.Locale is not { } locale || string.IsNullOrWhiteSpace(locale))
-		{
-			return AppUiOptions.Default;
-		}
-
-		return new AppUiOptions(locale.Trim());
+		return dto?.Locale is not { } locale || string.IsNullOrWhiteSpace(locale) ? AppUiOptions.Default : new AppUiOptions(locale.Trim());
 	}
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace SemiStep.Core.Configuration;
 
@@ -20,13 +19,10 @@ public readonly record struct StyleColor(byte A, byte R, byte G, byte B)
 	/// </summary>
 	public static StyleColor Parse(string value)
 	{
-		if (!TryParse(value, out var color))
-		{
-			throw new FormatException(
-				$"Invalid hex color: '{value}'. Expected format: '#RRGGBB' or '#AARRGGBB'.");
-		}
-
-		return color;
+		return !TryParse(value, out var color)
+			? throw new FormatException(
+				$"Invalid hex color: '{value}'. Expected format: '#RRGGBB' or '#AARRGGBB'.")
+			: color;
 	}
 
 	/// <summary>

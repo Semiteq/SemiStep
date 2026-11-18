@@ -24,7 +24,7 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 			.Add(new PropertyId("step_duration"), PropertyValue.FromFloat(5.0f))
 			.Add(new PropertyId("comment"), PropertyValue.FromString("test comment")));
 
-		var original = new Recipe(ImmutableList.Create(step));
+		var original = new Recipe([step]);
 		var csv = fixture.FileSerializer.Serialize(original);
 		var result = fixture.FileSerializer.Deserialize(csv);
 
@@ -77,7 +77,7 @@ public sealed class CsvDeserializationTests(CsvFixture fixture) : IClassFixture<
 			.Add(new PropertyId("comment"), PropertyValue.FromString("second")));
 
 		var steps = new List<Step> { step1, step2 };
-		var recipe = new Recipe(steps.ToImmutableList());
+		var recipe = new Recipe([.. steps]);
 
 		var csv = fixture.ClipboardSerializer.SerializeSteps(recipe);
 		csv.Should().Contain("\t");

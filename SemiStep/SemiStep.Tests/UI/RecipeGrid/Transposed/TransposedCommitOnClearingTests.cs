@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -164,12 +161,11 @@ public sealed class TransposedCommitOnClearingTests : IAsyncLifetime
 
 	private List<double> CellTops(IEnumerable<Visual> descendants, string cellClass)
 	{
-		return descendants
+		return [.. descendants
 			.OfType<Border>()
 			.Where(border => border.Classes.Contains(cellClass))
 			.Select(border => border.TranslatePoint(default, _window!)!.Value.Y)
-			.OrderBy(top => top)
-			.ToList();
+			.OrderBy(top => top)];
 	}
 
 	private static void ScrollToHorizontalEnd(ListBox stepListBox)
@@ -233,6 +229,6 @@ public sealed class TransposedCommitOnClearingTests : IAsyncLifetime
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();
 
-		return (view, stepListBox!);
+		return (view, stepListBox);
 	}
 }

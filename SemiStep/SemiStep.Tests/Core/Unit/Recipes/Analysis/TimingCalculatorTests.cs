@@ -29,26 +29,26 @@ public sealed class TimingCalculatorTests
 				id: ImmediateActionId,
 				uiName: "ImmediateAction",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: StepDurationKey,
 						GroupName: null,
 						PropertyTypeId: "time",
 						DefaultValue: "0")
-				}),
+				]),
 			[LongLastingActionId] = new ActionDefinition(
 				id: LongLastingActionId,
 				uiName: "LongLastingAction",
 				deployDuration: DeployDuration.LongLasting,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: StepDurationKey,
 						GroupName: null,
 						PropertyTypeId: "time",
 						DefaultValue: "0")
-				})
+				])
 		};
 
 		var config = new AppConfiguration(
@@ -81,7 +81,7 @@ public sealed class TimingCalculatorTests
 
 		var (stepStartTimes, totalDuration, singleIterations) = TimingCalculator.Calculate(
 			recipe,
-			Array.Empty<LoopInfo>(),
+			[],
 			registry);
 
 		stepStartTimes[0].Should().Be(TimeSpan.Zero);
@@ -164,7 +164,7 @@ public sealed class TimingCalculatorTests
 
 		var (startTimes, _, _) = TimingCalculator.Calculate(
 			recipe,
-			Array.Empty<LoopInfo>(),
+			[],
 			registry);
 
 		startTimes.Should().HaveCount(recipe.Steps.Count,

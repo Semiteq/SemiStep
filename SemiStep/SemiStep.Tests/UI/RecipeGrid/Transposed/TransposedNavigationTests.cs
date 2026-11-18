@@ -302,7 +302,7 @@ public sealed class TransposedNavigationTests : IAsyncLifetime
 
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.UseTransposedColumnsPanel();
+		stepListBox.UseTransposedColumnsPanel();
 
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();

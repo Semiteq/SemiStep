@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Reactive;
+﻿using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
@@ -28,7 +27,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 	private readonly ClipboardSerializer _clipboardSerializer;
 	private readonly RecipeCoordinator _coordinator;
 
-	private readonly CompositeDisposable _disposables = new();
+	private readonly CompositeDisposable _disposables = [];
 	private readonly ImportedRecipeValidator _importedRecipeValidator;
 	private readonly ILogger<ClipboardViewModel> _logger;
 	private readonly MessagePanelViewModel _messagePanel;
@@ -157,7 +156,7 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 
 	private string SerializeStepsForClipboard(IReadOnlyList<Step> steps)
 	{
-		var recipe = new Recipe(steps.ToImmutableList());
+		var recipe = new Recipe([.. steps]);
 		return _clipboardSerializer.SerializeSteps(recipe);
 	}
 
@@ -170,11 +169,6 @@ public class ClipboardViewModel : ReactiveObject, IDisposable
 		}
 
 		var validationResult = _importedRecipeValidator.Validate(result.Value);
-		if (validationResult.IsFailed)
-		{
-			return validationResult.ToResult<Recipe>();
-		}
-
-		return result;
+		return validationResult.IsFailed ? validationResult.ToResult<Recipe>() : result;
 	}
 }

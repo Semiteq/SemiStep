@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
@@ -115,7 +112,7 @@ public sealed class TransposedChildRecycleTests : IAsyncLifetime
 		ScrollToHorizontalStart(stepListBox);
 
 		stepListBox.Selection.SelectedIndexes.Should().Contain(
-			new[] { 0, 1 }, "both columns stay selected in the model across the scroll round-trip");
+			[0, 1], "both columns stay selected in the model across the scroll round-trip");
 
 		var container0 = (ListBoxItem)stepListBox.ContainerFromIndex(0)!;
 		var container1 = (ListBoxItem)stepListBox.ContainerFromIndex(1)!;
@@ -266,7 +263,7 @@ public sealed class TransposedChildRecycleTests : IAsyncLifetime
 	{
 		var (view, stepListBox) = ShowProductionView();
 
-		var container = (ListBoxItem)stepListBox.ContainerFromIndex(0)!;
+		_ = (ListBoxItem)stepListBox.ContainerFromIndex(0)!;
 		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
 		view.IsEditing.Should().BeTrue("the F2 gesture opened the editor");
 		_window!.FocusManager!.GetFocusedElement().Should().BeSameAs(
@@ -398,7 +395,7 @@ public sealed class TransposedChildRecycleTests : IAsyncLifetime
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();
 
-		return (view, stepListBox!);
+		return (view, stepListBox);
 	}
 
 	private ListBox ShowView()
@@ -406,7 +403,7 @@ public sealed class TransposedChildRecycleTests : IAsyncLifetime
 		var view = new TransposedRecipeGridView { DataContext = _surface };
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.UseTransposedColumnsPanel();
+		stepListBox.UseTransposedColumnsPanel();
 
 		_window = new Window
 		{

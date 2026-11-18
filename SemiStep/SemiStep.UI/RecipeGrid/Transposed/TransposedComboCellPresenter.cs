@@ -2,16 +2,11 @@
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-internal sealed class TransposedComboCellPresenter : TransposedLazyCellPresenter
+internal sealed class TransposedComboCellPresenter(
+	TransposedTextEditCoordinator coordinator,
+	Control display,
+	Func<Control> editorBuilder) : TransposedLazyCellPresenter(coordinator, display, editorBuilder)
 {
-	public TransposedComboCellPresenter(
-		TransposedTextEditCoordinator coordinator,
-		Control display,
-		Func<Control> editorBuilder)
-		: base(coordinator, display, editorBuilder)
-	{
-	}
-
 	protected override void OnEnteredEdit(Control editor, string? initialText)
 	{
 		if (editor is ComboBox comboBox)

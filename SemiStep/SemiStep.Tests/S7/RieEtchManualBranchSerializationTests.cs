@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-using FluentAssertions;
+﻿using FluentAssertions;
 
 using SemiStep.Core.Configuration.Facade;
 using SemiStep.Core.Plc.S7.Serialization;
@@ -166,7 +164,7 @@ public sealed class RieEtchManualBranchSerializationTests
 
 	private static Step BuildEtchStep()
 	{
-		return new Step(EtchActionId, ImmutableDictionary<PropertyId, PropertyValue>.Empty)
+		return new Step(EtchActionId, [])
 			.WithProperty("ar", PropertyValue.FromFloat(11f))
 			.WithProperty("o2", PropertyValue.FromFloat(12f))
 			.WithProperty("n2", PropertyValue.FromFloat(13f))
@@ -192,7 +190,7 @@ public sealed class RieEtchManualBranchSerializationTests
 	{
 		// Same active gas/power/duration values as BuildEtchStep, but Авто on both selectors
 		// and no capacitor values set (icp_load/icp_tune, rie_load/rie_tune omitted entirely).
-		return new Step(EtchActionId, ImmutableDictionary<PropertyId, PropertyValue>.Empty)
+		return new Step(EtchActionId, [])
 			.WithProperty("ar", PropertyValue.FromFloat(11f))
 			.WithProperty("o2", PropertyValue.FromFloat(12f))
 			.WithProperty("n2", PropertyValue.FromFloat(13f))

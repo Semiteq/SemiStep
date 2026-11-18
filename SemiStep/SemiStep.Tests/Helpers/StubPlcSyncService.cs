@@ -8,7 +8,7 @@ using SemiStep.Core.Recipes;
 
 namespace SemiStep.Tests.Helpers;
 
-public sealed class StubPlcSyncService : IPlcSyncService
+public sealed class StubPlcSyncService : IPlcSyncService, IDisposable
 {
 	private readonly BehaviorSubject<PlcSessionSnapshot> _plcStateSubject = new(
 		PlcSessionSnapshot.InitialState);
@@ -34,7 +34,7 @@ public sealed class StubPlcSyncService : IPlcSyncService
 	public int NotifyRecipeChangedCallCount { get; private set; }
 
 	/// <summary>Calls recorded by <see cref="NotifyRecipeChanged"/>, in order.</summary>
-	public List<(Recipe Recipe, bool IsValid)> NotifyRecipeChangedCalls { get; } = new();
+	public List<(Recipe Recipe, bool IsValid)> NotifyRecipeChangedCalls { get; } = [];
 
 	/// <summary>Pushes a new PLC state snapshot to subscribers of <see cref="PlcState"/>.</summary>
 	public void PushPlcState(PlcSessionSnapshot state)
@@ -71,5 +71,11 @@ public sealed class StubPlcSyncService : IPlcSyncService
 
 	public void UpdateConnectionState(PlcConnectionState state)
 	{
+	}
+
+	public void Dispose()
+	{
+		_plcStateSubject.Dispose();
+		_faultsSubject.Dispose();
 	}
 }

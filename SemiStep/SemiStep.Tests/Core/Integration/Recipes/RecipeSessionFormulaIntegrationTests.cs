@@ -151,23 +151,23 @@ public sealed class RecipeSessionFormulaIntegrationTests
 				id: RampActionId,
 				uiName: "t°C ramp",
 				deployDuration: DeployDuration.LongLasting,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(Task, null, "temp", "0"),
 					new ActionPropertyDefinition(InitialValue, null, "temp", "0"),
 					new ActionPropertyDefinition(Speed, null, "speed_t", "1"),
 					new ActionPropertyDefinition(StepDuration, null, "duration", "0"),
 					new ActionPropertyDefinition(Comment, null, "text", "")
-				},
+				],
 				formula: formula),
 			[PlainActionId] = new ActionDefinition(
 				id: PlainActionId,
 				uiName: "Plain",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(Task, null, "plain", "0")
-				})
+				])
 		};
 
 		var configuration = new AppConfiguration(
@@ -211,18 +211,13 @@ public sealed class RecipeSessionFormulaIntegrationTests
 		}
 
 		return new FormulaDefinition(
-			recalcOrder: new[] { StepDuration, Speed, Task, InitialValue },
+			recalcOrder: [StepDuration, Speed, Task, InitialValue],
 			compiledExpressions: compiled);
 	}
 
-	private sealed class Harness
+	private sealed class Harness(RecipeSession session)
 	{
-		public RecipeSession Session { get; }
-
-		public Harness(RecipeSession session)
-		{
-			Session = session;
-		}
+		public RecipeSession Session { get; } = session;
 
 		public void SeedRampStep(float task, float initialValue, float speed, float stepDuration)
 		{

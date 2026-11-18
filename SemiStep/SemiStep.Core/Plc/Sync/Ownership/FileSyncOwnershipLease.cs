@@ -1,17 +1,11 @@
 ﻿namespace SemiStep.Core.Plc.Sync.Ownership;
 
-public sealed class FileSyncOwnershipLease : ISyncOwnershipLease
+public sealed class FileSyncOwnershipLease(FileStream lockFile, OwnerInfo owner) : ISyncOwnershipLease
 {
-	private readonly FileStream _lockFile;
+	private readonly FileStream _lockFile = lockFile;
 	private bool _disposed;
 
-	public FileSyncOwnershipLease(FileStream lockFile, OwnerInfo owner)
-	{
-		_lockFile = lockFile;
-		Owner = owner;
-	}
-
-	public OwnerInfo Owner { get; }
+	public OwnerInfo Owner { get; } = owner;
 
 	public void Dispose()
 	{

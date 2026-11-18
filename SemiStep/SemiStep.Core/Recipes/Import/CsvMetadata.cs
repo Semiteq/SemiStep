@@ -8,7 +8,7 @@ internal sealed record CsvMetadata(
 	ImmutableDictionary<string, string>? Extras = null)
 {
 	public ImmutableDictionary<string, string> Extras { get; init; } =
-		Extras ?? ImmutableDictionary<string, string>.Empty;
+		Extras ?? [];
 
 	public static void Serialize(TextWriter writer, CsvMetadata metadata)
 	{
@@ -84,11 +84,6 @@ internal sealed record CsvMetadata(
 	{
 		var trimmed = value.Trim();
 
-		if (trimmed.Length >= 2 && trimmed[0] == '"' && trimmed[^1] == '"')
-		{
-			return trimmed[1..^1];
-		}
-
-		return trimmed;
+		return trimmed.Length >= 2 && trimmed[0] == '"' && trimmed[^1] == '"' ? trimmed[1..^1] : trimmed;
 	}
 }

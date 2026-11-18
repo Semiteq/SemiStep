@@ -1,6 +1,4 @@
-﻿using System.Reactive.Concurrency;
-
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 using ReactiveUI;
 
@@ -24,7 +22,7 @@ public static class UiDi
 	{
 		services.AddSingleton(sp => sp.GetRequiredService<AppConfiguration>().GridStyle);
 		services.AddSingleton<IGridStyleEditorFacade, GridStyleEditorFacade>();
-		services.AddSingleton<IScheduler>(_ => RxSchedulers.MainThreadScheduler);
+		services.AddSingleton(_ => RxSchedulers.MainThreadScheduler);
 		services.AddSingleton<MessagePanelViewModel>();
 		services.AddSingleton<RecipeCoordinator>();
 		services.AddSingleton<ChangedCellClickAwayBroadcaster>();

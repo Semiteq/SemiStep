@@ -1,6 +1,5 @@
 ﻿using FluentAssertions;
 
-using SemiStep.Core.Configuration;
 using SemiStep.Core.Configuration.Facade;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
@@ -154,7 +153,7 @@ public sealed class RieEtchManualBranchConfigTests
 
 	private static Step StepWithMatchModes(int icpMatch, int rieMatch)
 	{
-		return new Step(EtchActionId, System.Collections.Immutable.ImmutableDictionary<PropertyId, PropertyValue>.Empty)
+		return new Step(EtchActionId, [])
 			.WithProperty("icp_match", PropertyValue.FromInt(icpMatch))
 			.WithProperty("rie_match", PropertyValue.FromInt(rieMatch));
 	}

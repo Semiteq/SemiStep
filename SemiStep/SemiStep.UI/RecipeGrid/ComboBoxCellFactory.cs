@@ -50,7 +50,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 			comboBox.ItemsSource = items;
 
 			comboBox.Bind(
-				ComboBox.SelectedItemProperty,
+				Avalonia.Controls.Primitives.SelectingItemsControl.SelectedItemProperty,
 				new Binding(ColumnTypes.IndexerPath(ColumnTypes.Action))
 				{
 					Mode = BindingMode.TwoWay,
@@ -77,7 +77,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 				new Binding(ColumnTypes.GroupItemsPath(columnKey)));
 
 			comboBox.Bind(
-				ComboBox.SelectedItemProperty,
+				Avalonia.Controls.Primitives.SelectingItemsControl.SelectedItemProperty,
 				new MultiBinding
 				{
 					Mode = BindingMode.OneWay,

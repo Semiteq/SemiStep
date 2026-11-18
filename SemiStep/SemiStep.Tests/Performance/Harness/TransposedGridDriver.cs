@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Selection;
 using Avalonia.Threading;
@@ -28,7 +23,6 @@ public sealed class TransposedGridDriver : IRecipeGridDriver
 	private readonly TransposedRecipeGridSurface _surface;
 	private readonly TransposedStepListBox _stepListBox;
 	private readonly Window _window;
-	private readonly Visual _snapshotScope;
 
 	private TransposedGridDriver(
 		UIFixture fixture,
@@ -41,12 +35,12 @@ public sealed class TransposedGridDriver : IRecipeGridDriver
 		_surface = surface;
 		_stepListBox = stepListBox;
 		_window = window;
-		_snapshotScope = snapshotScope;
+		SnapshotScope = snapshotScope;
 	}
 
 	public TopLevel Root => _window;
 
-	public Visual SnapshotScope => _snapshotScope;
+	public Visual SnapshotScope { get; }
 
 	public int ItemCount => _surface.StepColumns.Count;
 
@@ -56,19 +50,18 @@ public sealed class TransposedGridDriver : IRecipeGridDriver
 	{
 		get
 		{
-			var containers = _stepListBox.GetRealizedContainers() ?? Enumerable.Empty<Control>();
-			return containers
+			var containers = _stepListBox.GetRealizedContainers() ?? [];
+			return [.. containers
 				.Select(container => container.DataContext)
 				.OfType<StepColumnViewModel>()
-				.Select(column => _surface.StepColumns.IndexOf(column))
+				.Select(_surface.StepColumns.IndexOf)
 				.Where(index => index >= 0)
-				.OrderBy(index => index)
-				.ToList();
+				.OrderBy(index => index)];
 		}
 	}
 
 	public IReadOnlyList<Control> RealizedContainers =>
-		(_stepListBox.GetRealizedContainers() ?? Enumerable.Empty<Control>()).ToList();
+		[.. _stepListBox.GetRealizedContainers() ?? []];
 
 	// The index-based selection model the transposed view feeds. Exposed so the selection-cost probe can
 	// toggle a single index inside its stopwatch window without pumping the dispatcher (index-based, so no

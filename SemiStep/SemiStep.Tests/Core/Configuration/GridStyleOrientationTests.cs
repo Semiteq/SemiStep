@@ -81,7 +81,7 @@ public sealed class GridStyleOrientationTests
 		await AppendOrientation(tempDir.Path, "columns_as_steps");
 		var original = await LoadValidated(tempDir.Path);
 
-		(await new GridStyleWriter().SaveAsync(tempDir.Path, original)).IsSuccess.Should().BeTrue();
+		(await GridStyleWriter.SaveAsync(tempDir.Path, original)).IsSuccess.Should().BeTrue();
 
 		var reloaded = await LoadValidated(tempDir.Path);
 		reloaded.Orientation.Should().Be(GridOrientation.ColumnsAsSteps);
@@ -94,7 +94,7 @@ public sealed class GridStyleOrientationTests
 		using var tempDir = CopyShippedConfig("MOCVD");
 		var options = await LoadValidated(tempDir.Path);
 
-		(await new GridStyleWriter().SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
+		(await GridStyleWriter.SaveAsync(tempDir.Path, options)).IsSuccess.Should().BeTrue();
 
 		var content = await File.ReadAllTextAsync(
 			Path.Combine(tempDir.Path, "ui", "grid_style.yaml"),

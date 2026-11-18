@@ -23,10 +23,10 @@ public sealed class S7DiArrayCodecRegistrationTests
 	{
 		const int ConfiguredMaxLength = 24;
 
-		var appConfiguration = BuildAppConfiguration(new[]
-		{
+		var appConfiguration = BuildAppConfiguration(
+		[
 			TestPropertyTypeDefinitionBuilder.CreateString("comment", ConfiguredMaxLength)
-		});
+		]);
 
 		var services = new ServiceCollection();
 		services.AddSingleton(appConfiguration);
@@ -37,17 +37,17 @@ public sealed class S7DiArrayCodecRegistrationTests
 		using var provider = services.BuildServiceProvider();
 		var codec = provider.GetRequiredService<ArrayCodec>();
 
-		var expectedElementSize = 4 + ConfiguredMaxLength * 2;
+		var expectedElementSize = 4 + (ConfiguredMaxLength * 2);
 		codec.WStringElementSize.Should().Be(expectedElementSize);
 	}
 
 	[Fact]
 	public void RegistryConstruction_WithoutStringProperty_FailsFast()
 	{
-		var appConfiguration = BuildAppConfiguration(new[]
-		{
+		var appConfiguration = BuildAppConfiguration(
+		[
 			TestPropertyTypeDefinitionBuilder.CreateFloat("temperature")
-		});
+		]);
 
 		var action = () => new RecipeMetadataRegistry(appConfiguration);
 

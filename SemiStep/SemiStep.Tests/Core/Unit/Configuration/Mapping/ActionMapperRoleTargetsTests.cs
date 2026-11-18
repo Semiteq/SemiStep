@@ -110,12 +110,12 @@ public sealed class ActionMapperRoleTargetsTests
 			Id = 300,
 			UiName = "process",
 			DeployDuration = "longlasting",
-			Columns = new List<ActionColumnDto>
-			{
+			Columns =
+			[
 				new() { Key = "task", PropertyTypeId = "temp" },
 				new() { Key = "speed", PropertyTypeId = "speed" },
 				new() { Key = "step_duration", PropertyTypeId = "duration" }
-			}
+			]
 		};
 	}
 }

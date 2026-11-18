@@ -132,12 +132,9 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 
 		ReadManagingAreaCallCount++;
 
-		if (ManagingAreaReadGate is not null)
-		{
-			return GateThenReadManagingAreaAsync(ManagingAreaReadGate, ct);
-		}
-
-		return Task.FromResult(BuildManagingAreaResult());
+		return ManagingAreaReadGate is not null
+			? GateThenReadManagingAreaAsync(ManagingAreaReadGate, ct)
+			: Task.FromResult(BuildManagingAreaResult());
 	}
 
 	private async Task<Result<PlcManagingAreaState>> GateThenReadManagingAreaAsync(ReadGate gate, CancellationToken ct)
@@ -148,12 +145,7 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 
 	private Result<PlcManagingAreaState> BuildManagingAreaResult()
 	{
-		if (ManagingAreaToReturn is not null)
-		{
-			return Result.Ok(ManagingAreaToReturn);
-		}
-
-		return Result.Fail<PlcManagingAreaState>("Not connected");
+		return ManagingAreaToReturn is not null ? Result.Ok(ManagingAreaToReturn) : Result.Fail<PlcManagingAreaState>("Not connected");
 	}
 
 	public Task<Result<Recipe>> ReadRecipeFromPlcAsync(CancellationToken ct = default)
@@ -163,29 +155,20 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 		ReadRecipeFromPlcCallCount++;
 		_recipeReadReached.TrySetResult();
 
-		if (RecipeToReturn is not null)
-		{
-			return Task.FromResult(Result.Ok(RecipeToReturn));
-		}
-
-		return Task.FromResult(Result.Fail<Recipe>("Not connected"));
+		return RecipeToReturn is not null
+			? Task.FromResult(Result.Ok(RecipeToReturn))
+			: Task.FromResult(Result.Fail<Recipe>("Not connected"));
 	}
 
 	public Task<Result<int>> ReadProtocolVersionAsync(CancellationToken ct = default)
 	{
 		ct.ThrowIfCancellationRequested();
 
-		if (ProtocolVersionReadShouldThrowCanceled)
-		{
-			throw new TaskCanceledException("Stub protocol version read timed out");
-		}
-
-		if (ProtocolVersionReadGate is not null)
-		{
-			return GateThenReadProtocolVersionAsync(ProtocolVersionReadGate, ct);
-		}
-
-		return Task.FromResult(ProtocolVersionToReturn);
+		return ProtocolVersionReadShouldThrowCanceled
+			? throw new TaskCanceledException("Stub protocol version read timed out")
+			: ProtocolVersionReadGate is not null
+			? GateThenReadProtocolVersionAsync(ProtocolVersionReadGate, ct)
+			: Task.FromResult(ProtocolVersionToReturn);
 	}
 
 	private async Task<Result<int>> GateThenReadProtocolVersionAsync(ReadGate gate, CancellationToken ct)

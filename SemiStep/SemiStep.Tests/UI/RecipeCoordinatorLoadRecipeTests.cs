@@ -4,8 +4,6 @@ using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
-using FluentResults;
-
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -329,7 +327,7 @@ public sealed class RecipeCoordinatorLoadRecipeTests
 			}.ToImmutableDictionary());
 		var endForStep = new Step(
 			RecipeTestDriver.EndForLoopActionId,
-			ImmutableDictionary<PropertyId, PropertyValue>.Empty);
+			[]);
 
 		var steps = ImmutableList<Step>.Empty;
 		for (var i = 0; i < depth; i++)

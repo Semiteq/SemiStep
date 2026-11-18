@@ -1,6 +1,4 @@
-﻿using System;
-using System.Reactive;
-using System.Threading.Tasks;
+﻿using System.Reactive;
 #if DEBUG
 using System.Diagnostics;
 #endif
@@ -54,8 +52,9 @@ internal static class GlobalExceptionBackstop
 					args.ExceptionObject);
 			}
 
-			// Flush so the fatal stack reaches the log file before the process dies.
-			SerilogLog.CloseAndFlushAsync().GetAwaiter().GetResult();
+			// Flush so the fatal stack reaches the log file before the process dies. AsTask:
+			// blocking GetResult directly on an incomplete ValueTask is invalid (CA2012).
+			SerilogLog.CloseAndFlushAsync().AsTask().GetAwaiter().GetResult();
 		};
 	}
 

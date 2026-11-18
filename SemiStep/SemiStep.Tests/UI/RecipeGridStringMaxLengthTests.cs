@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
@@ -81,8 +79,8 @@ public sealed class RecipeGridStringMaxLengthTests : IAsyncLifetime
 
 	private RecipeRowViewModel CreateRow()
 	{
-		var firstAction = _fixture.RecipeMetadataRegistry.GetAllActions().First();
-		var step = new Step(firstAction.Id, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
+		var firstAction = _fixture.RecipeMetadataRegistry.GetAllActions()[0];
+		var step = new Step(firstAction.Id, []);
 		return new RecipeRowViewModel(
 			1,
 			step,

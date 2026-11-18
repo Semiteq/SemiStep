@@ -30,9 +30,9 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry recipeMetadataRegis
 		}
 
 		return Result.Ok(new PlcRecipeData(
-			IntValues: intValues.ToArray(),
-			FloatValues: floatValues.ToArray(),
-			StringValues: stringValues.ToArray(),
+			IntValues: [.. intValues],
+			FloatValues: [.. floatValues],
+			StringValues: [.. stringValues],
 			StepCount: recipe.StepCount));
 	}
 
@@ -60,7 +60,7 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry recipeMetadataRegis
 			steps.Add(stepResult.Value);
 		}
 
-		return Result.Ok(new Recipe(steps.ToImmutableList()));
+		return Result.Ok(new Recipe([.. steps]));
 	}
 
 	private Result SerialiseStep(
@@ -212,24 +212,18 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry recipeMetadataRegis
 	private Result<PropertyType> ResolvePropertyType(ActionPropertyDefinition propertyDef)
 	{
 		var propertyDefResult = recipeMetadataRegistry.GetProperty(propertyDef.PropertyTypeId);
-		if (propertyDefResult.IsFailed)
-		{
-			return Result.Fail(
-				$"Property type '{propertyDef.PropertyTypeId}' not found in configuration registry");
-		}
-
-		return Result.Ok(PropertyTypeMapping.FromSystemType(propertyDefResult.Value.SystemType));
+		return propertyDefResult.IsFailed
+			? (Result<PropertyType>)Result.Fail(
+				$"Property type '{propertyDef.PropertyTypeId}' not found in configuration registry")
+			: Result.Ok(PropertyTypeMapping.FromSystemType(propertyDefResult.Value.SystemType));
 	}
 
 	private Result<ActionDefinition> ResolveAction(int actionKey)
 	{
 		var actionResult = recipeMetadataRegistry.GetAction(actionKey);
-		if (actionResult.IsFailed)
-		{
-			return Result.Fail($"Action with key {actionKey} not found in configuration registry");
-		}
-
-		return Result.Ok(actionResult.Value);
+		return actionResult.IsFailed
+			? (Result<ActionDefinition>)Result.Fail($"Action with key {actionKey} not found in configuration registry")
+			: Result.Ok(actionResult.Value);
 	}
 
 	private static void AppendDefaultValue(

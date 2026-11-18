@@ -65,9 +65,9 @@ public sealed class PlcLifecycleManagerReconnectTests
 	{
 		var step = new Step(
 			WaitActionId,
-			ImmutableDictionary<PropertyId, PropertyValue>.Empty);
+			[]);
 
-		return new Recipe(ImmutableList.Create(step));
+		return new Recipe([step]);
 	}
 
 	[Fact]
@@ -140,7 +140,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 		var copiedSteps = recipe.Steps
 			.Select(step => new Step(step.ActionKey, ImmutableDictionary.CreateRange(step.Properties)));
 
-		return new Recipe(ImmutableList.CreateRange(copiedSteps));
+		return new Recipe([.. copiedSteps]);
 	}
 
 	[Fact]

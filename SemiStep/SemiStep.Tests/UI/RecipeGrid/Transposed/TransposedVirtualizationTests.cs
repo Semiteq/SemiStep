@@ -301,7 +301,7 @@ public sealed class TransposedVirtualizationTests : IAsyncLifetime
 		var view = new TransposedRecipeGridView { DataContext = _surface };
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.UseTransposedColumnsPanel();
+		stepListBox.UseTransposedColumnsPanel();
 
 		_window = new Window
 		{

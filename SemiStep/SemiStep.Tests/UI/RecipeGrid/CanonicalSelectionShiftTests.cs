@@ -83,7 +83,7 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void RemoveStepBeforeSelection_ShiftsSurvivorDown()
 	{
-		_surface.UpdateSelection(new[] { 3 });
+		_surface.UpdateSelection([3]);
 
 		// Removing step 1 (before the selection) shifts the surviving step 3 down to 2.
 		_fixture.Coordinator.RemoveStep(1);
@@ -95,7 +95,7 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void InsertStepAfterSelection_LeavesCacheUnchanged()
 	{
-		_surface.UpdateSelection(new[] { 1 });
+		_surface.UpdateSelection([1]);
 
 		_fixture.Coordinator.InsertStep(4, RecipeTestDriver.WaitActionId);
 		Dispatcher.UIThread.RunJobs();
@@ -106,7 +106,7 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void RemoveStepAfterSelection_LeavesCacheUnchanged()
 	{
-		_surface.UpdateSelection(new[] { 1 });
+		_surface.UpdateSelection([1]);
 
 		_fixture.Coordinator.RemoveStep(4);
 		Dispatcher.UIThread.RunJobs();
@@ -117,7 +117,7 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void InsertBeforeContiguousRange_ShiftsBlockUp()
 	{
-		_surface.UpdateSelection(new[] { 2, 3, 4 });
+		_surface.UpdateSelection([2, 3, 4]);
 
 		// Inserting one step before the whole block moves {2, 3, 4} up to {3, 4, 5}.
 		_fixture.Coordinator.InsertStep(0, RecipeTestDriver.WaitActionId);
@@ -133,7 +133,7 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 		_fixture.Coordinator.InsertStep(SeededStepCount, RecipeTestDriver.WaitActionId);
 		Dispatcher.UIThread.RunJobs();
 
-		_surface.UpdateSelection(new[] { 2 });
+		_surface.UpdateSelection([2]);
 
 		// RecipeReplaced from a full rebuild invalidates every index, so the cache clears.
 		_fixture.Coordinator.Undo();
@@ -145,7 +145,7 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void ChangeStepAction_OnSelectedStep_LeavesCacheUnchanged()
 	{
-		_surface.UpdateSelection(new[] { 2 });
+		_surface.UpdateSelection([2]);
 
 		// StepActionChanged replaces the row at a stable index; the shift must not touch the cache.
 		// The live re-selection is governed by OnActionChanged -> RequestSelection, not the shift.
@@ -163,7 +163,7 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 		Dispatcher.UIThread.RunJobs();
 		var originallySelectedStep = _fixture.Coordinator.CurrentRecipe.Steps[2];
 
-		_surface.UpdateSelection(new[] { 2 });
+		_surface.UpdateSelection([2]);
 
 		// Inserting before the selection shifts the cache from [2] to [3].
 		_fixture.Coordinator.InsertStep(0, RecipeTestDriver.WaitActionId);
@@ -180,7 +180,7 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void InsertMultipleStepsBeforeSelection_ShiftsCachedIndexByCount()
 	{
-		_surface.UpdateSelection(new[] { 4 });
+		_surface.UpdateSelection([4]);
 
 		// Two steps inserted before the selection push the cached index up by the full count, 4 -> 6.
 		var stepsToInsert = _fixture.Coordinator.CurrentRecipe.Steps.Take(2).ToList();
@@ -193,7 +193,7 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void InsertStepAtSelectedIndex_ShiftsCachedIndexUp()
 	{
-		_surface.UpdateSelection(new[] { 2 });
+		_surface.UpdateSelection([2]);
 
 		// Inserting exactly at the selected index still displaces it: index >= startIndex shifts, 2 -> 3.
 		_fixture.Coordinator.InsertStep(2, RecipeTestDriver.WaitActionId);
@@ -205,10 +205,10 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void RemoveSteps_DropsSelectedAndOffsetsSurvivorsPastEachRemovedIndex()
 	{
-		_surface.UpdateSelection(new[] { 2, 3, 5 });
+		_surface.UpdateSelection([2, 3, 5]);
 
 		// Removing {2, 4}: index 2 is dropped; 3 shifts past one removal to 2; 5 shifts past two removals to 3.
-		_fixture.Coordinator.RemoveSteps(new[] { 2, 4 });
+		_fixture.Coordinator.RemoveSteps([2, 4]);
 		Dispatcher.UIThread.RunJobs();
 
 		_surface.SelectedStepIndices.Should().Equal(2, 3);
@@ -217,7 +217,7 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void AppendStep_LeavesSelectionUnchanged()
 	{
-		_surface.UpdateSelection(new[] { 2 });
+		_surface.UpdateSelection([2]);
 
 		// Appending past the tail adds no index at or before the selection, so the cache is untouched.
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
@@ -242,6 +242,6 @@ public sealed class CanonicalSelectionShiftTests : IAsyncLifetime
 		var dataGrid = view.FindControl<DataGrid>("RecipeGrid");
 		dataGrid.Should().NotBeNull();
 
-		return dataGrid!;
+		return dataGrid;
 	}
 }

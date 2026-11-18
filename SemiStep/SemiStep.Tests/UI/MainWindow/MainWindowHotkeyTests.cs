@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reactive.Linq;
+﻿using System.Reactive.Linq;
 using System.Windows.Input;
 
 using Avalonia.Headless.XUnit;
@@ -65,7 +64,7 @@ public sealed class MainWindowHotkeyTests : IAsyncLifetime
 	{
 		_fixture.SeedRecipe(2);
 		_viewModel.RecipeGrid.Initialize();
-		_viewModel.RecipeGrid.UpdateSelection(new[] { 0 });
+		_viewModel.RecipeGrid.UpdateSelection([0]);
 
 		var deleteCommand = _viewModel.RecipeCommands.DeleteStepCommand;
 		((ICommand)deleteCommand).CanExecute(null).Should().BeTrue("precondition: editable with a step selected");
@@ -84,7 +83,7 @@ public sealed class MainWindowHotkeyTests : IAsyncLifetime
 	{
 		_fixture.SeedRecipe(2);
 		_viewModel.RecipeGrid.Initialize();
-		_viewModel.RecipeGrid.UpdateSelection(new[] { 0 });
+		_viewModel.RecipeGrid.UpdateSelection([0]);
 
 		_viewModel.RecipeCommands.DeleteStepCommand.ExecuteIfPossible();
 

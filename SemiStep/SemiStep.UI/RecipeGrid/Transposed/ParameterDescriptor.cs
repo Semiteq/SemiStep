@@ -10,9 +10,8 @@ public sealed record ParameterDescriptor(
 {
 	public static IReadOnlyList<ParameterDescriptor> BuildFromRegistry(RecipeMetadataRegistry recipeMetadataRegistry)
 	{
-		return recipeMetadataRegistry
+		return [.. recipeMetadataRegistry
 			.GetAllColumns()
-			.Select(column => new ParameterDescriptor(column.Key, column.UiName, column.ColumnType, column.ReadOnly))
-			.ToList();
+			.Select(column => new ParameterDescriptor(column.Key, column.UiName, column.ColumnType, column.ReadOnly))];
 	}
 }

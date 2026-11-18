@@ -19,13 +19,11 @@ public sealed class RecipeRowViewModel(
 	private const string IndexerName = "Item";
 
 	// Cached per action (stable ActionDefinition instance makes the reference key safe); weak table drops entries when an action is collected.
-	private static readonly ConditionalWeakTable<ActionDefinition, ActionColumnMetadata> _actionMetadataCache = new();
+	private static readonly ConditionalWeakTable<ActionDefinition, ActionColumnMetadata> _actionMetadataCache = [];
 
 	private readonly ActionColumnMetadata _actionMetadata = GetActionMetadata(action, recipeMetadataRegistry);
 
-	private Step _step = step;
-
-	internal Step CurrentStep => _step;
+	internal Step CurrentStep { get; private set; } = step;
 
 	public int StepNumber
 	{
@@ -39,7 +37,7 @@ public sealed class RecipeRowViewModel(
 		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
-	public int ActionId => _step.ActionKey;
+	public int ActionId => CurrentStep.ActionKey;
 
 	public bool IsCurrentStep
 	{
@@ -116,7 +114,7 @@ public sealed class RecipeRowViewModel(
 
 	public void UpdateStep(Step newStep)
 	{
-		_step = newStep;
+		CurrentStep = newStep;
 		this.RaisePropertyChanged(IndexerName);
 	}
 
@@ -148,12 +146,7 @@ public sealed class RecipeRowViewModel(
 		}
 
 		var columnId = new PropertyId(columnKey);
-		if (_step.Properties.TryGetValue(columnId, out var propertyValue))
-		{
-			return propertyValue.Value;
-		}
-
-		return null;
+		return CurrentStep.Properties.TryGetValue(columnId, out var propertyValue) ? propertyValue.Value : null;
 	}
 
 	public void SetPropertyValue(string columnKey, string? value)
@@ -165,7 +158,7 @@ public sealed class RecipeRowViewModel(
 				return;
 			}
 
-			if (actionId == _step.ActionKey)
+			if (actionId == CurrentStep.ActionKey)
 			{
 				return;
 			}
@@ -198,7 +191,7 @@ public sealed class RecipeRowViewModel(
 	/// </summary>
 	public void RecomputeInapplicableColumns()
 	{
-		var recomputed = BuildInapplicableColumns(action, _step, recipeMetadataRegistry);
+		var recomputed = BuildInapplicableColumns(action, CurrentStep, recipeMetadataRegistry);
 		if (InapplicableColumns.SetEquals(recomputed))
 		{
 			return;
@@ -269,8 +262,8 @@ public sealed class RecipeRowViewModel(
 			return false;
 		}
 
-		var oldActive = ActiveColumnSetResolver.Resolve(action, _step);
-		var candidateStep = _step.WithProperty(columnKey, PropertyValue.FromInt(selectorId));
+		var oldActive = ActiveColumnSetResolver.Resolve(action, CurrentStep);
+		var candidateStep = CurrentStep.WithProperty(columnKey, PropertyValue.FromInt(selectorId));
 		var newActive = ActiveColumnSetResolver.Resolve(action, candidateStep);
 
 		var columnsToDrop = new List<string>();
@@ -374,7 +367,7 @@ public sealed class RecipeRowViewModel(
 		{
 			if (ColumnTypes.IsGroupBoundColumn(column.ColumnType))
 			{
-				result[column.Key] = Array.Empty<ComboBoxItemViewModel>();
+				result[column.Key] = [];
 			}
 		}
 

@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-using FluentAssertions;
+﻿using FluentAssertions;
 
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.Sync.Ownership;
@@ -96,7 +94,7 @@ public sealed class FileSyncOwnershipTests : IDisposable
 		var lease = ownership.TryAcquire(_endpoint).Value;
 
 		lease.Dispose();
-		var secondDispose = () => lease.Dispose();
+		var secondDispose = lease.Dispose;
 
 		secondDispose.Should().NotThrow();
 	}

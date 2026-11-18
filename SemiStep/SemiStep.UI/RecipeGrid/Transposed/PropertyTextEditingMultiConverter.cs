@@ -11,13 +11,10 @@ internal sealed class PropertyTextEditingMultiConverter : IMultiValueConverter
 
 	public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
 	{
-		if (values.Count < 2
+		return values.Count < 2
 			|| values[0] == AvaloniaProperty.UnsetValue
-			|| values[1] == AvaloniaProperty.UnsetValue)
-		{
-			return string.Empty;
-		}
-
-		return PropertyTimeEditingConverter.FormatForDisplay(values[0], values[1] as string);
+			|| values[1] == AvaloniaProperty.UnsetValue
+			? string.Empty
+			: PropertyTimeEditingConverter.FormatForDisplay(values[0], values[1] as string);
 	}
 }

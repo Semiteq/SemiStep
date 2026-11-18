@@ -2,19 +2,13 @@
 
 namespace SemiStep.UI.RecipeGrid;
 
-internal sealed class ExecutionHighlightTracker
+internal sealed class ExecutionHighlightTracker(Func<int> rowCount, Func<int, RecipeRowViewModel> rowAt)
 {
-	private readonly Func<int> _rowCount;
-	private readonly Func<int, RecipeRowViewModel> _rowAt;
+	private readonly Func<int> _rowCount = rowCount;
+	private readonly Func<int, RecipeRowViewModel> _rowAt = rowAt;
 
 	private bool _lastRecipeActive;
 	private int _lastActualLine = -1;
-
-	public ExecutionHighlightTracker(Func<int> rowCount, Func<int, RecipeRowViewModel> rowAt)
-	{
-		_rowCount = rowCount;
-		_rowAt = rowAt;
-	}
 
 	public void OnExecutionStateChanged(PlcExecutionInfo info)
 	{

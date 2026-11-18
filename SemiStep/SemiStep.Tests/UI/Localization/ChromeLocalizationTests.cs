@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 

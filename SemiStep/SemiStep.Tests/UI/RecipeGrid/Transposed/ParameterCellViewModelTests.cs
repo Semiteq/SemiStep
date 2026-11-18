@@ -1,4 +1,6 @@
-﻿using Avalonia.Headless.XUnit;
+﻿using System.Globalization;
+
+using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
@@ -85,10 +87,10 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 		var cell = CreateFactory().Create(row, FindDescriptor(ActionColumn));
 		var actionChanges = new List<int>();
 		var propertyWrites = new List<(string Key, string? Value)>();
-		row.ActionChanged += actionId => actionChanges.Add(actionId);
+		row.ActionChanged += actionChanges.Add;
 		row.PropertyValueChanged += (key, value) => propertyWrites.Add((key, value));
 
-		cell.Value = RecipeTestDriver.ForLoopActionId.ToString();
+		cell.Value = RecipeTestDriver.ForLoopActionId.ToString(CultureInfo.InvariantCulture);
 
 		actionChanges.Should().Equal(RecipeTestDriver.ForLoopActionId);
 		propertyWrites.Should().BeEmpty();
@@ -100,9 +102,9 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 		var cell = CreateFactory().Create(row, FindDescriptor(ActionColumn));
 		var actionChanges = new List<int>();
-		row.ActionChanged += actionId => actionChanges.Add(actionId);
+		row.ActionChanged += actionChanges.Add;
 
-		cell.Value = RecipeTestDriver.WaitActionId.ToString();
+		cell.Value = RecipeTestDriver.WaitActionId.ToString(CultureInfo.InvariantCulture);
 
 		actionChanges.Should().BeEmpty();
 	}
@@ -274,7 +276,7 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 		var cell = new ParameterCellViewModelFactory(registry).Create(row, descriptor);
 		var selectorEdits = new List<SelectorEdit>();
 		var propertyWrites = new List<(string Key, string? Value)>();
-		row.SelectorValueChanged += edit => selectorEdits.Add(edit);
+		row.SelectorValueChanged += selectorEdits.Add;
 		row.PropertyValueChanged += (key, value) => propertyWrites.Add((key, value));
 
 		cell.Value = "1";

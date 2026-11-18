@@ -76,7 +76,7 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 		expected.IsFailed.Should().BeTrue();
 		var expectedMessage = expected.FormatErrors();
 
-		_surface.SelectedStepIndices = new[] { 99 };
+		_surface.SelectedStepIndices = [99];
 
 		using (ResourcesCultureScope.Use("en"))
 		{
@@ -146,7 +146,7 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 	{
 		public int SelectedStepIndex { get; set; } = -1;
 
-		public IReadOnlyList<int> SelectedStepIndices { get; set; } = Array.Empty<int>();
+		public IReadOnlyList<int> SelectedStepIndices { get; set; } = [];
 
 		public Exception? RequestSelectionException { get; set; }
 
@@ -178,7 +178,7 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 
 		public IReadOnlyList<Step> CollectSelectedSteps()
 		{
-			return Array.Empty<Step>();
+			return [];
 		}
 
 		public void Dispose()

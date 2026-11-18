@@ -19,7 +19,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "step_duration", "speed", "task", "initial_value" },
+			RecalcOrder = ["step_duration", "speed", "task", "initial_value"],
 			Expressions = new Dictionary<string, string>
 			{
 				["step_duration"] = "(task - initial_value) / speed * 60",
@@ -55,7 +55,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task", "speed", "step_duration" },
+			RecalcOrder = ["task", "speed", "step_duration"],
 			Expressions = new Dictionary<string, string>
 			{
 				["task"] = "speed * step_duration",
@@ -77,7 +77,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task", "speed" },
+			RecalcOrder = ["task", "speed"],
 			Expressions = new Dictionary<string, string>
 			{
 				["task"] = "speed * 2",
@@ -99,7 +99,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task", "speed" },
+			RecalcOrder = ["task", "speed"],
 			Expressions = new Dictionary<string, string>
 			{
 				["task"] = "speed +",
@@ -120,7 +120,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task", "speed" },
+			RecalcOrder = ["task", "speed"],
 			Expressions = new Dictionary<string, string>
 			{
 				["task"] = "speed + zzz",
@@ -142,7 +142,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task", "ghost" },
+			RecalcOrder = ["task", "ghost"],
 			Expressions = new Dictionary<string, string>
 			{
 				["task"] = "ghost * 2",
@@ -163,7 +163,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task" },
+			RecalcOrder = ["task"],
 			Expressions = new Dictionary<string, string>
 			{
 				["task"] = "42"
@@ -183,7 +183,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task", "speed", "task" },
+			RecalcOrder = ["task", "speed", "task"],
 			Expressions = new Dictionary<string, string>
 			{
 				["task"] = "speed * 2",
@@ -205,7 +205,7 @@ public sealed class ActionMapperFormulaTests
 		dto.Columns!.Add(new ActionColumnDto { Key = "comment", PropertyTypeId = "string" });
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task", "comment" },
+			RecalcOrder = ["task", "comment"],
 			Expressions = new Dictionary<string, string>
 			{
 				["task"] = "comment + 1",
@@ -234,7 +234,7 @@ public sealed class ActionMapperFormulaTests
 		dto.Formula = new FormulaDto
 		{
 			// recalc_order uses different casing than column keys
-			RecalcOrder = new List<string> { "STEP_DURATION", "SPEED", "TASK", "INITIAL_VALUE" },
+			RecalcOrder = ["STEP_DURATION", "SPEED", "TASK", "INITIAL_VALUE"],
 			Expressions = new Dictionary<string, string>
 			{
 				["STEP_DURATION"] = "(task - initial_value) / speed * 60",
@@ -260,7 +260,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task", "speed", "ghost" },
+			RecalcOrder = ["task", "speed", "ghost"],
 			Expressions = new Dictionary<string, string>
 			{
 				["task"] = "speed +",
@@ -299,7 +299,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task", "speed" },
+			RecalcOrder = ["task", "speed"],
 			Expressions = null
 		};
 
@@ -316,7 +316,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task", "speed", "step_duration", "initial_value" },
+			RecalcOrder = ["task", "speed", "step_duration", "initial_value"],
 			Expressions = new Dictionary<string, string>
 			{
 				// 'TASK' inside the expression body has different casing than recalc_order entry 'task'.
@@ -340,7 +340,7 @@ public sealed class ActionMapperFormulaTests
 		var dto = BuildBaseActionDto();
 		dto.Formula = new FormulaDto
 		{
-			RecalcOrder = new List<string> { "task", "speed" },
+			RecalcOrder = ["task", "speed"],
 			Expressions = new Dictionary<string, string>
 			{
 				["task"] = "speed * 2",
@@ -374,13 +374,13 @@ public sealed class ActionMapperFormulaTests
 			Id = 110,
 			UiName = "t°C плавно",
 			DeployDuration = "longlasting",
-			Columns = new List<ActionColumnDto>
-			{
+			Columns =
+			[
 				new() { Key = "task", PropertyTypeId = "temp" },
 				new() { Key = "initial_value", PropertyTypeId = "temp" },
 				new() { Key = "speed", PropertyTypeId = "speed" },
 				new() { Key = "step_duration", PropertyTypeId = "duration" }
-			}
+			]
 		};
 	}
 }

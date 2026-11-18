@@ -8,13 +8,10 @@ public sealed class DictionaryEntryConverter<TValue>(string key, TValue defaultV
 {
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
 	{
-		if (value is IReadOnlyDictionary<string, TValue> dictionary
-			&& dictionary.TryGetValue(key, out var entry))
-		{
-			return entry;
-		}
-
-		return defaultValue;
+		return value is IReadOnlyDictionary<string, TValue> dictionary
+			&& dictionary.TryGetValue(key, out var entry)
+			? entry
+			: defaultValue;
 	}
 
 	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

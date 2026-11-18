@@ -126,7 +126,7 @@ public sealed class AvaloniaSerilogSinkTests
 
 	private sealed class CapturingSink : ILogEventSink
 	{
-		private readonly List<LogEvent> _events = new();
+		private readonly List<LogEvent> _events = [];
 
 		public IReadOnlyList<LogEvent> Events => _events;
 

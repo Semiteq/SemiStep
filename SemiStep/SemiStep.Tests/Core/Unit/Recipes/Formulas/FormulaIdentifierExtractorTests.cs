@@ -17,7 +17,7 @@ public sealed class FormulaIdentifierExtractorTests
 		var result = FormulaIdentifierExtractor.Parse("a + b");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Identifiers.Should().BeEquivalentTo(new[] { "a", "b" });
+		result.Value.Identifiers.Should().BeEquivalentTo(["a", "b"]);
 	}
 
 	[Fact]
@@ -26,7 +26,7 @@ public sealed class FormulaIdentifierExtractorTests
 		var result = FormulaIdentifierExtractor.Parse("(x - y) / z * 60");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Identifiers.Should().BeEquivalentTo(new[] { "x", "y", "z" });
+		result.Value.Identifiers.Should().BeEquivalentTo(["x", "y", "z"]);
 	}
 
 	[Fact]
@@ -44,7 +44,7 @@ public sealed class FormulaIdentifierExtractorTests
 		var result = FormulaIdentifierExtractor.Parse("Sqrt(a*a + b*b)");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Identifiers.Should().BeEquivalentTo(new[] { "a", "b" });
+		result.Value.Identifiers.Should().BeEquivalentTo(["a", "b"]);
 	}
 
 	[Fact]
@@ -53,7 +53,7 @@ public sealed class FormulaIdentifierExtractorTests
 		var result = FormulaIdentifierExtractor.Parse("Pow(x, 2) + Abs(y)");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Identifiers.Should().BeEquivalentTo(new[] { "x", "y" });
+		result.Value.Identifiers.Should().BeEquivalentTo(["x", "y"]);
 	}
 
 	[Fact]
@@ -70,7 +70,7 @@ public sealed class FormulaIdentifierExtractorTests
 		var result = FormulaIdentifierExtractor.Parse("A + a");
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Identifiers.Should().BeEquivalentTo(new[] { "A", "a" });
+		result.Value.Identifiers.Should().BeEquivalentTo(["A", "a"]);
 	}
 
 	[Fact]

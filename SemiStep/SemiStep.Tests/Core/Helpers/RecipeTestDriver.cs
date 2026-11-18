@@ -17,16 +17,14 @@ public sealed class RecipeTestDriver(RecipeSession session)
 
 	public int StepCount => Recipe.StepCount;
 
-	public IReadOnlyList<IError> Errors => session.Snapshot
+	public IReadOnlyList<IError> Errors => [.. session.Snapshot
 		.Reasons
-		.OfType<IError>()
-		.ToList();
+		.OfType<IError>()];
 
-	public IReadOnlyList<string> Warnings => session.Snapshot
+	public IReadOnlyList<string> Warnings => [.. session.Snapshot
 		.Reasons
 		.OfType<Warning>()
-		.Select(w => w.Message)
-		.ToList();
+		.Select(w => w.Message)];
 
 	#region Recipe Management
 

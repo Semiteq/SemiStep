@@ -55,7 +55,7 @@ public static class Program
 		}
 		finally
 		{
-			Log.CloseAndFlushAsync().GetAwaiter().GetResult();
+			Log.CloseAndFlushAsync().AsTask().GetAwaiter().GetResult();
 		}
 	}
 

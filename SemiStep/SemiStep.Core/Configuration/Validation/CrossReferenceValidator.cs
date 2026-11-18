@@ -30,12 +30,7 @@ internal static class CrossReferenceValidator
 		ValidateActionReferences(actions, propertyIds, columnKeys, groupIds, validationResults);
 		ValidateReferenceGraph(actions, validationResults);
 
-		if (validationResults.Count == 0)
-		{
-			return Result.Ok();
-		}
-
-		return Result.Merge(validationResults.ToArray());
+		return validationResults.Count == 0 ? Result.Ok() : Result.Merge([.. validationResults]);
 	}
 
 	private static void ValidateReferenceGraph(

@@ -1,6 +1,4 @@
-﻿using SemiStep.Core.Recipes;
-
-namespace SemiStep.UI.RecipeGrid.Transposed;
+﻿namespace SemiStep.UI.RecipeGrid.Transposed;
 
 internal sealed class TransposedColumnCellsPool(
 	IReadOnlyList<ParameterDescriptor> descriptors,

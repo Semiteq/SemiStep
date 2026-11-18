@@ -6,14 +6,9 @@ namespace SemiStep.Tests.Helpers;
 /// Lease handed out by <see cref="StubPlcSyncOwnership"/>. Counts dispose calls so tests
 /// can assert the lease is released exactly once and that disposal is idempotent.
 /// </summary>
-public sealed class StubSyncOwnershipLease : ISyncOwnershipLease
+public sealed class StubSyncOwnershipLease(OwnerInfo owner) : ISyncOwnershipLease
 {
-	public StubSyncOwnershipLease(OwnerInfo owner)
-	{
-		Owner = owner;
-	}
-
-	public OwnerInfo Owner { get; }
+	public OwnerInfo Owner { get; } = owner;
 
 	public int DisposeCallCount { get; private set; }
 

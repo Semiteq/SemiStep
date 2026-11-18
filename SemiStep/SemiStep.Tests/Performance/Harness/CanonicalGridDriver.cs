@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -26,7 +21,6 @@ public sealed class CanonicalGridDriver : IRecipeGridDriver
 	private readonly CanonicalRecipeGridSurface _surface;
 	private readonly DataGrid _dataGrid;
 	private readonly Window _window;
-	private readonly Visual _snapshotScope;
 
 	private CanonicalGridDriver(
 		UIFixture fixture,
@@ -39,32 +33,30 @@ public sealed class CanonicalGridDriver : IRecipeGridDriver
 		_surface = surface;
 		_dataGrid = dataGrid;
 		_window = window;
-		_snapshotScope = snapshotScope;
+		SnapshotScope = snapshotScope;
 	}
 
 	public TopLevel Root => _window;
 
-	public Visual SnapshotScope => _snapshotScope;
+	public Visual SnapshotScope { get; }
 
 	public int ItemCount => _surface.RecipeRows.Count;
 
 	public IReadOnlyList<int> SelectedIndices => _surface.SelectedStepIndices;
 
-	public IReadOnlyList<int> RealizedIndices => _dataGrid
+	public IReadOnlyList<int> RealizedIndices => [.. _dataGrid
 				.GetVisualDescendants()
 				.OfType<DataGridRow>()
 				.Select(row => row.DataContext)
 				.OfType<RecipeRowViewModel>()
-				.Select(row => _surface.RecipeRows.IndexOf(row))
+				.Select(_surface.RecipeRows.IndexOf)
 				.Where(index => index >= 0)
-				.OrderBy(index => index)
-				.ToList();
+				.OrderBy(index => index)];
 
-	public IReadOnlyList<Control> RealizedContainers => _dataGrid
+	public IReadOnlyList<Control> RealizedContainers => [.. _dataGrid
 				.GetVisualDescendants()
 				.OfType<DataGridRow>()
-				.Cast<Control>()
-				.ToList();
+				.Cast<Control>()];
 
 	public static async Task<CanonicalGridDriver> CreateAsync(
 		string configName = "WithGroups",

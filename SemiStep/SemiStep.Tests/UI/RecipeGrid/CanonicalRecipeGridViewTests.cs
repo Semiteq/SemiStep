@@ -156,7 +156,7 @@ public sealed class CanonicalRecipeGridViewTests : IAsyncLifetime
 		var (view, dataGrid) = ShowViewWithControl();
 
 		var durationColumn = dataGrid.Columns.Single(column =>
-			column.Tag as string == RecipeTestDriver.StepDurationColumn);
+			(column.Tag as string) == RecipeTestDriver.StepDurationColumn);
 
 		DataGridTestHelper.SetCurrentCell(dataGrid, rowIndex: 0, durationColumn);
 		dataGrid.BeginEdit();
@@ -193,7 +193,7 @@ public sealed class CanonicalRecipeGridViewTests : IAsyncLifetime
 		var dataGrid = view.FindControl<DataGrid>("RecipeGrid");
 		dataGrid.Should().NotBeNull();
 
-		return (view, dataGrid!);
+		return (view, dataGrid);
 	}
 
 }

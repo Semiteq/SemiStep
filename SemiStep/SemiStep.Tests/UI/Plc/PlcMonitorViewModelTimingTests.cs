@@ -234,7 +234,7 @@ public sealed class PlcMonitorViewModelTimingTests : IAsyncLifetime
 		_fixture.Coordinator.UpdateStepProperty(
 			_fixture.Session.Current.StepCount - 1,
 			RecipeTestDriver.StepDurationColumn,
-			(120f).ToString(CultureInfo.InvariantCulture));
+			120f.ToString(CultureInfo.InvariantCulture));
 
 		// New total = 60 + 120 = 180s; elapsed in current step still 0 → remaining 180s.
 		monitor.TimeLeftInRecipeText.Should().Be("00:03:00");

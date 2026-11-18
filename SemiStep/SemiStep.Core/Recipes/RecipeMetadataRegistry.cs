@@ -29,9 +29,9 @@ public sealed class RecipeMetadataRegistry
 
 	public RecipeMetadataRegistry(AppConfiguration config)
 	{
-		var resolvedActions = ResolvePrimaryActions(config.Actions.Values.ToList());
+		var resolvedActions = ResolvePrimaryActions([.. config.Actions.Values]);
 
-		_actionsById = new Dictionary<int, ActionDefinition>();
+		_actionsById = [];
 		_actionsByName = new Dictionary<string, ActionDefinition>(StringComparer.OrdinalIgnoreCase);
 		foreach (var action in resolvedActions)
 		{
@@ -53,7 +53,7 @@ public sealed class RecipeMetadataRegistry
 			_columns[key] = column;
 		}
 
-		_allColumns = config.Columns.Values.ToList();
+		_allColumns = [.. config.Columns.Values];
 
 		_groups = new Dictionary<string, GroupDefinition>(StringComparer.OrdinalIgnoreCase);
 		foreach (var (key, group) in config.Groups)
@@ -78,14 +78,11 @@ public sealed class RecipeMetadataRegistry
 		IReadOnlyCollection<ActionDefinition> rawActions)
 	{
 		var resolveResult = ActionTreeResolver.Resolve(rawActions);
-		if (resolveResult.IsFailed)
-		{
-			throw new InvalidOperationException(
+		return resolveResult.IsFailed
+			? throw new InvalidOperationException(
 				"RecipeMetadataRegistry: failed to resolve the action reference graph: "
-				+ string.Join("; ", resolveResult.Errors.Select(error => error.Message)));
-		}
-
-		return resolveResult.Value;
+				+ string.Join("; ", resolveResult.Errors.Select(error => error.Message)))
+			: resolveResult.Value;
 	}
 
 	private static void EnsureColumnPropertyReferencesResolve(
@@ -188,12 +185,9 @@ public sealed class RecipeMetadataRegistry
 		return _comboItemsByGroup.GetOrAdd(groupName, static (key, self) =>
 		{
 			var groupResult = self.GetGroup(key);
-			if (groupResult.IsFailed)
-			{
-				return Array.Empty<ComboBoxItemViewModel>();
-			}
-
-			return groupResult.Value.Items
+			return groupResult.IsFailed
+				? Array.Empty<ComboBoxItemViewModel>()
+				: groupResult.Value.Items
 				.Select(entry => new ComboBoxItemViewModel(entry.Key, entry.Value))
 				.OrderBy(item => item.Id)
 				.ToList();
@@ -206,9 +200,7 @@ public sealed class RecipeMetadataRegistry
 	/// </summary>
 	public IReadOnlyList<ComboBoxItemViewModel> GetActionComboBoxItems()
 	{
-		return _actionComboBoxItems ??= _allActions
-			.Select(action => new ComboBoxItemViewModel(action.Id, action.UiName))
-			.ToList();
+		return _actionComboBoxItems ??= [.. _allActions.Select(action => new ComboBoxItemViewModel(action.Id, action.UiName))];
 	}
 
 	/// <summary>
@@ -286,17 +278,9 @@ public sealed class RecipeMetadataRegistry
 	public Result GroupHasIntKey(int key, string groupId)
 	{
 		var groupResult = GetGroup(groupId);
-		if (groupResult.IsFailed)
-		{
-			return groupResult.ToResult();
-		}
-
-		if (!groupResult.Value.Items.ContainsKey(key))
-		{
-			return Result.Fail(new ValueNotInGroupError(key, groupId));
-		}
-
-		return Result.Ok();
+		return groupResult.IsFailed
+			? groupResult.ToResult()
+			: !groupResult.Value.Items.ContainsKey(key) ? Result.Fail(new ValueNotInGroupError(key, groupId)) : Result.Ok();
 	}
 
 	private static Result<TValue> TryGetOrFail<TKey, TValue>(
@@ -304,12 +288,7 @@ public sealed class RecipeMetadataRegistry
 		TKey key,
 		IError error) where TKey : notnull
 	{
-		if (dictionary.TryGetValue(key, out var value))
-		{
-			return value;
-		}
-
-		return Result.Fail(error);
+		return dictionary.TryGetValue(key, out var value) ? (Result<TValue>)value : (Result<TValue>)Result.Fail(error);
 	}
 
 	private static Result ContainsOrFail<TKey, TValue>(
@@ -317,11 +296,6 @@ public sealed class RecipeMetadataRegistry
 		TKey key,
 		IError error) where TKey : notnull
 	{
-		if (dictionary.ContainsKey(key))
-		{
-			return Result.Ok();
-		}
-
-		return Result.Fail(error);
+		return dictionary.ContainsKey(key) ? Result.Ok() : Result.Fail(error);
 	}
 }

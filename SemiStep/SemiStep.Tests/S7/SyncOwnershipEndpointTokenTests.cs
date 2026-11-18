@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-using FluentAssertions;
+﻿using FluentAssertions;
 
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.Sync.Ownership;

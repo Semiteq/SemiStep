@@ -1,4 +1,5 @@
-﻿using System.Reactive.Concurrency;
+﻿using System.Globalization;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
@@ -19,19 +20,11 @@ public sealed class PlcMonitorViewModel : ReactiveObject, IDisposable
 	private const string MissingSnapshotText = "—";
 
 	private readonly RecipeCoordinator _coordinator;
-	private readonly CompositeDisposable _disposables = new();
+	private readonly CompositeDisposable _disposables = [];
 	private readonly RecipeMetadataRegistry _recipeMetadataRegistry;
 	private readonly IScheduler _scheduler;
-
-	private int _actualLine;
-	private int _forLoopCount1;
-	private int _forLoopCount2;
-	private int _forLoopCount3;
-	private bool _isRecipeActive;
 	private PlcExecutionInfo _lastInfo = PlcExecutionInfo.Empty;
 	private DateTime _baseUtc;
-	private string _timeLeftInRecipeText = MissingSnapshotText;
-	private string _timeLeftInStepText = MissingSnapshotText;
 
 	public PlcMonitorViewModel(
 		RecipeCoordinator coordinator,
@@ -59,44 +52,44 @@ public sealed class PlcMonitorViewModel : ReactiveObject, IDisposable
 
 	public bool IsRecipeActive
 	{
-		get => _isRecipeActive;
-		private set => this.RaiseAndSetIfChanged(ref _isRecipeActive, value);
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
 	public int ActualLine
 	{
-		get => _actualLine;
-		private set => this.RaiseAndSetIfChanged(ref _actualLine, value);
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
 	public string TimeLeftInStepText
 	{
-		get => _timeLeftInStepText;
-		private set => this.RaiseAndSetIfChanged(ref _timeLeftInStepText, value);
-	}
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	} = MissingSnapshotText;
 
 	public string TimeLeftInRecipeText
 	{
-		get => _timeLeftInRecipeText;
-		private set => this.RaiseAndSetIfChanged(ref _timeLeftInRecipeText, value);
-	}
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	} = MissingSnapshotText;
 
 	public int ForLoopCount1
 	{
-		get => _forLoopCount1;
-		private set => this.RaiseAndSetIfChanged(ref _forLoopCount1, value);
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
 	public int ForLoopCount2
 	{
-		get => _forLoopCount2;
-		private set => this.RaiseAndSetIfChanged(ref _forLoopCount2, value);
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
 	public int ForLoopCount3
 	{
-		get => _forLoopCount3;
-		private set => this.RaiseAndSetIfChanged(ref _forLoopCount3, value);
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
 	public void Dispose()
@@ -108,8 +101,8 @@ public sealed class PlcMonitorViewModel : ReactiveObject, IDisposable
 	private static string FormatTimeSpan(TimeSpan value)
 	{
 		return value.TotalHours >= 24
-			? value.ToString(@"d\.hh\:mm\:ss")
-			: value.ToString(@"hh\:mm\:ss");
+			? value.ToString(@"d\.hh\:mm\:ss", CultureInfo.InvariantCulture)
+			: value.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
 	}
 
 	private void OnExecutionStateChanged(PlcExecutionInfo info)
@@ -130,18 +123,12 @@ public sealed class PlcMonitorViewModel : ReactiveObject, IDisposable
 
 	private PlcExecutionInfo ApplyMonotonicClamp(PlcExecutionInfo incoming)
 	{
-		if (!_lastInfo.RecipeActive || !incoming.RecipeActive)
-		{
-			return incoming;
-		}
-
-		if (incoming.ActualLine == _lastInfo.ActualLine
-			&& incoming.StepCurrentTime < _lastInfo.StepCurrentTime)
-		{
-			return incoming with { StepCurrentTime = _lastInfo.StepCurrentTime };
-		}
-
-		return incoming;
+		return !_lastInfo.RecipeActive || !incoming.RecipeActive
+			? incoming
+			: incoming.ActualLine == _lastInfo.ActualLine
+			&& incoming.StepCurrentTime < _lastInfo.StepCurrentTime
+			? (incoming with { StepCurrentTime = _lastInfo.StepCurrentTime })
+			: incoming;
 	}
 
 	private void OnInterpolationTick()

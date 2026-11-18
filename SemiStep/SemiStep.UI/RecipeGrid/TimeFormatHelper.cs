@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace SemiStep.UI.RecipeGrid;
 
-internal static class TimeFormatHelper
+internal static partial class TimeFormatHelper
 {
 	internal const string TimeHmsFormat = "time_hms";
 	internal const string DefaultFormatKind = "numeric";
@@ -13,9 +13,8 @@ internal static class TimeFormatHelper
 	private const int SecondsPerHour = 3600;
 	private const int SecondsPerMinute = 60;
 
-	private static readonly Regex _timePattern = new(
-		@"^(?<h>\d{1,2}):(?<m>\d{1,2})(:(?<s>\d{1,2})(\.(?<ms>\d+))?)?$",
-		RegexOptions.Compiled);
+	[GeneratedRegex(@"^(?<h>\d{1,2}):(?<m>\d{1,2})(:(?<s>\d{1,2})(\.(?<ms>\d+))?)?$")]
+	private static partial Regex TimePattern();
 
 	/// Units suffixes must be stripped by the caller before invoking this method. The editing TextBox never appends units, so no stripping is required in the editing code path.
 	internal static string? ParseValue(string? text)
@@ -30,7 +29,7 @@ internal static class TimeFormatHelper
 			return text;
 		}
 
-		var match = _timePattern.Match(text);
+		var match = TimePattern().Match(text);
 		if (!match.Success)
 		{
 			return text;
@@ -50,7 +49,7 @@ internal static class TimeFormatHelper
 			return text;
 		}
 
-		var totalSeconds = hours * SecondsPerHour + minutes * SecondsPerMinute + seconds + fractionalSeconds;
+		var totalSeconds = (hours * SecondsPerHour) + (minutes * SecondsPerMinute) + seconds + fractionalSeconds;
 
 		return totalSeconds.ToString(CultureInfo.InvariantCulture);
 	}
@@ -62,7 +61,7 @@ internal static class TimeFormatHelper
 		{
 			var totalSec = (int)totalSecondsFloat;
 			var hours = totalSec / SecondsPerHour;
-			var minutes = (totalSec % SecondsPerHour) / SecondsPerMinute;
+			var minutes = totalSec % SecondsPerHour / SecondsPerMinute;
 			var seconds = totalSec % SecondsPerMinute;
 			var formatted = $"{hours:D2}:{minutes:D2}:{seconds:D2}";
 
@@ -74,11 +73,6 @@ internal static class TimeFormatHelper
 
 	private static string AppendUnits(string formatted, string? units)
 	{
-		if (string.IsNullOrEmpty(units))
-		{
-			return formatted;
-		}
-
-		return $"{formatted} {units}";
+		return string.IsNullOrEmpty(units) ? formatted : $"{formatted} {units}";
 	}
 }

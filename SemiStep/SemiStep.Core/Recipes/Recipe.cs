@@ -47,17 +47,7 @@ public sealed record Recipe(ImmutableList<Step> Steps)
 
 	public bool Equals(Recipe? other)
 	{
-		if (other is null)
-		{
-			return false;
-		}
-
-		if (ReferenceEquals(this, other))
-		{
-			return true;
-		}
-
-		return Steps.SequenceEqual(other.Steps);
+		return other is not null && (ReferenceEquals(this, other) || Steps.SequenceEqual(other.Steps));
 	}
 
 	public override int GetHashCode()

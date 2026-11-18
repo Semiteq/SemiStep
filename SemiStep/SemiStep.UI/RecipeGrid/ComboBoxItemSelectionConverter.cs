@@ -11,21 +11,11 @@ internal sealed class ComboBoxItemSelectionConverter(IReadOnlyList<ComboBoxItemV
 {
 	public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
 	{
-		if (value is not int id)
-		{
-			return null;
-		}
-
-		return items.FirstOrDefault(item => item.Id == id);
+		return value is not int id ? null : (object?)items.FirstOrDefault(item => item.Id == id);
 	}
 
 	public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
 	{
-		if (value is ComboBoxItemViewModel selectedItem)
-		{
-			return selectedItem.Id;
-		}
-
-		return BindingOperations.DoNothing;
+		return value is ComboBoxItemViewModel selectedItem ? selectedItem.Id : BindingOperations.DoNothing;
 	}
 }

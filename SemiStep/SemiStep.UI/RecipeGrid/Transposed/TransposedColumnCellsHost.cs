@@ -76,13 +76,7 @@ internal sealed class TransposedColumnCellsHost : Decorator
 				// GetObservable pushes the current IsSelected synchronously on Subscribe, seeding IsColumnSelected.
 				_selectionSubscription = container
 					.GetObservable(ListBoxItem.IsSelectedProperty)
-					.Subscribe(isSelected =>
-					{
-						if (_presenter is not null)
-						{
-							_presenter.IsColumnSelected = isSelected;
-						}
-					});
+					.Subscribe(isSelected => _presenter?.IsColumnSelected = isSelected);
 			}
 			else
 			{

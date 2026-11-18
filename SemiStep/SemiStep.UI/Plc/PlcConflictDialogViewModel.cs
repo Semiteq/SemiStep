@@ -4,17 +4,11 @@ using SemiStep.UI.Localization;
 
 namespace SemiStep.UI.Plc;
 
-internal sealed class PlcConflictDialogViewModel
+internal sealed class PlcConflictDialogViewModel(int localStepCount, int plcStepCount)
 {
-	public PlcConflictDialogViewModel(int localStepCount, int plcStepCount)
-	{
-		LocalStepCount = localStepCount;
-		PlcStepCount = plcStepCount;
-	}
+	public int LocalStepCount { get; } = localStepCount;
 
-	public int LocalStepCount { get; }
-
-	public int PlcStepCount { get; }
+	public int PlcStepCount { get; } = plcStepCount;
 
 	public string LocalStepCountText => FormatLocalStepCount(LocalStepCount);
 

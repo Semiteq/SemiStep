@@ -49,6 +49,7 @@ public abstract class RecipeGridSurfaceContractTests : IAsyncLifetime
 	{
 		Surface.Dispose();
 		await Fixture.DisposeAsync();
+		GC.SuppressFinalize(this);
 	}
 
 	[AvaloniaFact]
@@ -303,7 +304,7 @@ public abstract class RecipeGridSurfaceContractTests : IAsyncLifetime
 		SeedDistinctDurations(5);
 		var before = CaptureStartTimes(1);
 
-		Fixture.Coordinator.RemoveSteps(new[] { 1, 3 });
+		Fixture.Coordinator.RemoveSteps([1, 3]);
 
 		RowAt(0).StepStartTime.Should().Be(before[0]);
 		AssertStartTimesConsistent();

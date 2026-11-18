@@ -38,6 +38,7 @@ public abstract class ParameterCellViewModel : INotifyPropertyChanged, IDisposab
 	public virtual void Dispose()
 	{
 		Row.PropertyChanged -= OnRowPropertyChanged;
+		GC.SuppressFinalize(this);
 	}
 
 	protected virtual void WriteValue(object? value)

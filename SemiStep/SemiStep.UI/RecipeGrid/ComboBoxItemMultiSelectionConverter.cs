@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 
 using Avalonia;
-using Avalonia.Data;
 using Avalonia.Data.Converters;
 
 using SemiStep.Core.Recipes;
@@ -10,7 +9,7 @@ namespace SemiStep.UI.RecipeGrid;
 
 /// <summary>
 /// OneWay-only resolver from (Id, items) to ComboBoxItemViewModel. Writeback is owned by
-/// SelectionChanged in ComboBoxCellFactory; ConvertBack returns DoNothing.
+/// SelectionChanged in ComboBoxCellFactory.
 /// </summary>
 internal sealed class ComboBoxItemMultiSelectionConverter : IMultiValueConverter
 {
@@ -31,21 +30,8 @@ internal sealed class ComboBoxItemMultiSelectionConverter : IMultiValueConverter
 			return null;
 		}
 
-		if (idValue is not int id)
-		{
-			return null;
-		}
-
-		if (itemsValue is not IEnumerable<ComboBoxItemViewModel> items)
-		{
-			return null;
-		}
-
-		return items.FirstOrDefault(item => item.Id == id);
-	}
-
-	public object?[] ConvertBack(object? value, IList<Type> targetTypes, object? parameter, CultureInfo culture)
-	{
-		return [BindingOperations.DoNothing, BindingOperations.DoNothing];
+		return idValue is not int id
+			? null
+			: itemsValue is not IEnumerable<ComboBoxItemViewModel> items ? null : (object?)items.FirstOrDefault(item => item.Id == id);
 	}
 }

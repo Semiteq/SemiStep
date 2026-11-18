@@ -4,20 +4,19 @@ using SemiStep.Core.Plc.S7;
 namespace SemiStep.Tests.S7.Helpers;
 
 /// <summary>
-/// A controllable in-memory driver stub for testing <see cref="S7.Facade.S7Service"/>
+/// A controllable in-memory driver stub for testing <see cref="S7Service"/>
 /// without a real PLC connection.
 /// </summary>
 internal sealed class FakeS7Driver : IS7Driver
 {
-	private readonly Dictionary<int, Exception> _dbReadExceptions = new();
-	private readonly Dictionary<int, Func<int, int, byte[]>> _dbReadFactories = new();
-	private bool _connected;
+	private readonly Dictionary<int, Exception> _dbReadExceptions = [];
+	private readonly Dictionary<int, Func<int, int, byte[]>> _dbReadFactories = [];
 
-	public bool IsConnected => _connected;
+	public bool IsConnected { get; private set; }
 
-	public List<(int DbNumber, int StartByte, int Count)> ReadLog { get; } = new();
+	public List<(int DbNumber, int StartByte, int Count)> ReadLog { get; } = [];
 
-	public List<(int DbNumber, int StartByte, byte[] Data)> WriteLog { get; } = new();
+	public List<(int DbNumber, int StartByte, byte[] Data)> WriteLog { get; } = [];
 
 	/// <summary>
 	/// Directly sets the connected state, bypassing <see cref="ConnectAsync"/> and
@@ -25,7 +24,7 @@ internal sealed class FakeS7Driver : IS7Driver
 	/// </summary>
 	public void SetConnected(bool connected)
 	{
-		_connected = connected;
+		IsConnected = connected;
 	}
 
 	/// <summary>
@@ -46,19 +45,19 @@ internal sealed class FakeS7Driver : IS7Driver
 
 	public Task ConnectAsync(PlcConnectionSettings settings)
 	{
-		_connected = true;
+		IsConnected = true;
 		return Task.CompletedTask;
 	}
 
 	public Task DisconnectAsync()
 	{
-		_connected = false;
+		IsConnected = false;
 		return Task.CompletedTask;
 	}
 
 	public ValueTask DisposeAsync()
 	{
-		_connected = false;
+		IsConnected = false;
 		return ValueTask.CompletedTask;
 	}
 
@@ -67,17 +66,11 @@ internal sealed class FakeS7Driver : IS7Driver
 		ct.ThrowIfCancellationRequested();
 		ReadLog.Add((dbNumber, startByte, count));
 
-		if (_dbReadExceptions.TryGetValue(dbNumber, out var exception))
-		{
-			throw exception;
-		}
-
-		if (_dbReadFactories.TryGetValue(dbNumber, out var factory))
-		{
-			return Task.FromResult(factory(startByte, count));
-		}
-
-		return Task.FromResult(new byte[count]);
+		return _dbReadExceptions.TryGetValue(dbNumber, out var exception)
+			? throw exception
+			: _dbReadFactories.TryGetValue(dbNumber, out var factory)
+			? Task.FromResult(factory(startByte, count))
+			: Task.FromResult(new byte[count]);
 	}
 
 	public Task WriteBytesAsync(int dbNumber, int startByte, byte[] data, CancellationToken ct = default)

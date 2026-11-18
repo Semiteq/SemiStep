@@ -11,8 +11,6 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
-using ReactiveUI;
-
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis;
 using SemiStep.Core.Recipes.Clipboard;
@@ -212,28 +210,27 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 				id: BoundActionId,
 				uiName: "Bound",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: AmountColumnKey,
 						GroupName: null,
 						PropertyTypeId: "int_bounded",
 						DefaultValue: null)
-				})
+				])
 		};
 		var registry = TestRecipeMetadataRegistryFactory.Build(
-			new[]
-			{
+			[
 				TestPropertyTypeDefinitionBuilder.CreateInt("int_bounded", min: 0, max: 100),
 				TestPropertyTypeDefinitionBuilder.CreateString("text", maxLength: 8)
-			},
+			],
 			actions);
 		var validator = new ImportedRecipeValidator(registry);
 		var step = new Step(
 			BoundActionId,
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
 				.Add(new PropertyId(AmountColumnKey), PropertyValue.FromInt(500)));
-		var recipe = new Recipe(ImmutableList.Create(step));
+		var recipe = new Recipe([step]);
 
 		var result = validator.Validate(recipe);
 		result.IsFailed.Should().BeTrue();
@@ -262,14 +259,14 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 				id: ValveActionId,
 				uiName: "Valve",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: TargetColumnKey,
 						GroupName: ValveGroupId,
 						PropertyTypeId: "enum",
 						DefaultValue: null)
-				})
+				])
 		};
 		var groups = new Dictionary<string, GroupDefinition>
 		{
@@ -278,11 +275,10 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 				Items: new Dictionary<int, string> { [1] = "Open", [2] = "Close" })
 		};
 		var registry = TestRecipeMetadataRegistryFactory.Build(
-			new[]
-			{
+			[
 				TestPropertyTypeDefinitionBuilder.CreateInt("enum"),
 				TestPropertyTypeDefinitionBuilder.CreateString("text", maxLength: 8)
-			},
+			],
 			actions,
 			groups);
 		var validator = new ImportedRecipeValidator(registry);
@@ -290,7 +286,7 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 			ValveActionId,
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
 				.Add(new PropertyId(TargetColumnKey), PropertyValue.FromInt(InvalidGroupKey)));
-		var recipe = new Recipe(ImmutableList.Create(step));
+		var recipe = new Recipe([step]);
 
 		var result = validator.Validate(recipe);
 		result.IsFailed.Should().BeTrue();
@@ -319,21 +315,20 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 				id: BoundActionId,
 				uiName: "Bound",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: AmountColumnKey,
 						GroupName: null,
 						PropertyTypeId: BoundPropertyTypeId,
 						DefaultValue: null)
-				})
+				])
 		};
 		var registry = TestRecipeMetadataRegistryFactory.Build(
-			new[]
-			{
+			[
 				TestPropertyTypeDefinitionBuilder.CreateInt(BoundPropertyTypeId, min: 0, max: 100),
 				TestPropertyTypeDefinitionBuilder.CreateString("text", maxLength: 8)
-			},
+			],
 			actions);
 		var session = BuildSession(registry);
 		session.AppendStep(BoundActionId).IsSuccess.Should().BeTrue();

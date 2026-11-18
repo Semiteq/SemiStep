@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 
 using FluentAssertions;
 
@@ -13,7 +11,7 @@ namespace SemiStep.Tests.Performance.Harness;
 [Trait("Area", "Performance")]
 public sealed class PerfBaselinesTests
 {
-	private const string OneMetricJson = """
+	private const string OneMetricJson = /*lang=json,strict*/ """
 	{
 	  "context": { "runtime": "net10", "avalonia": "12.0.5", "os": "win-x64", "testbed": "dev-primary", "capturedUtc": null },
 	  "metrics": {
@@ -24,7 +22,7 @@ public sealed class PerfBaselinesTests
 
 	// Budget sits inside the tolerance band (1000 +20% = 1200, budget 1100): the hard cap bites before the
 	// soft tolerance does.
-	private const string TightBudgetJson = """
+	private const string TightBudgetJson = /*lang=json,strict*/ """
 	{
 	  "context": { "runtime": "net10", "avalonia": "12.0.5", "os": "win-x64", "testbed": "dev-primary", "capturedUtc": null },
 	  "metrics": {
@@ -33,7 +31,7 @@ public sealed class PerfBaselinesTests
 	}
 	""";
 
-	private const string NullBudgetJson = """
+	private const string NullBudgetJson = /*lang=json,strict*/ """
 	{
 	  "context": { "runtime": "net10", "avalonia": "12.0.5", "os": "win-x64", "testbed": "dev-primary", "capturedUtc": null },
 	  "metrics": {
@@ -42,7 +40,7 @@ public sealed class PerfBaselinesTests
 	}
 	""";
 
-	private const string BudgetBelowValueJson = """
+	private const string BudgetBelowValueJson = /*lang=json,strict*/ """
 	{
 	  "context": { "runtime": "net10", "avalonia": "12.0.5", "os": "win-x64", "testbed": "dev-primary", "capturedUtc": null },
 	  "metrics": {
@@ -53,7 +51,7 @@ public sealed class PerfBaselinesTests
 
 	// Two committed metrics: one budgeted, one with a null budget. Used to prove the merge carries both
 	// budget shapes through untouched.
-	private const string TwoMetricJson = """
+	private const string TwoMetricJson = /*lang=json,strict*/ """
 	{
 	  "context": { "runtime": "net10", "avalonia": "12.0.5", "os": "win-x64", "testbed": "dev-primary", "capturedUtc": "2020-01-01T00:00:00Z" },
 	  "metrics": {
@@ -63,7 +61,7 @@ public sealed class PerfBaselinesTests
 	}
 	""";
 
-	private const string EmptyMetricsJson = """
+	private const string EmptyMetricsJson = /*lang=json,strict*/ """
 	{
 	  "context": { "runtime": "net10", "avalonia": "12.0.5", "os": "win-x64", "testbed": "dev-primary", "capturedUtc": null },
 	  "metrics": {}

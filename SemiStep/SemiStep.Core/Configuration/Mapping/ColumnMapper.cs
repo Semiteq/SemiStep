@@ -17,17 +17,11 @@ internal static class ColumnMapper
 			throw new InvalidOperationException($"ColumnType is required for column '{dto.Key}'");
 		}
 
-		if (dto.Ui == null)
-		{
-			throw new InvalidOperationException($"Ui section is required for column '{dto.Key}'");
-		}
-
-		if (dto.BusinessLogic == null)
-		{
-			throw new InvalidOperationException($"BusinessLogic section is required for column '{dto.Key}'");
-		}
-
-		return new GridColumnDefinition(
+		return dto.Ui == null
+			? throw new InvalidOperationException($"Ui section is required for column '{dto.Key}'")
+			: dto.BusinessLogic == null
+			? throw new InvalidOperationException($"BusinessLogic section is required for column '{dto.Key}'")
+			: new GridColumnDefinition(
 			Key: dto.Key,
 			ColumnType: dto.ColumnType,
 			UiName: dto.Ui.UiName ?? string.Empty,
@@ -38,6 +32,6 @@ internal static class ColumnMapper
 
 	public static IReadOnlyList<GridColumnDefinition> MapMany(IEnumerable<ColumnDto> dtos)
 	{
-		return dtos.Select(Map).ToList();
+		return [.. dtos.Select(Map)];
 	}
 }

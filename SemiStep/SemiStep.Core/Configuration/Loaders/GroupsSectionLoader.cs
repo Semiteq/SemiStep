@@ -41,13 +41,10 @@ internal static class GroupsSectionLoader
 			fileResults.Add(await LoadFileGroupsAsync(file, allGroups));
 		}
 
-		var merged = Result.Merge(fileResults.ToArray());
-		if (merged.IsFailed)
-		{
-			return merged.ToResult<Dictionary<string, Dictionary<int, string>>>();
-		}
-
-		return Result.Ok(allGroups).WithReasons(merged.Reasons);
+		var merged = Result.Merge([.. fileResults]);
+		return merged.IsFailed
+			? merged.ToResult<Dictionary<string, Dictionary<int, string>>>()
+			: Result.Ok(allGroups).WithReasons(merged.Reasons);
 	}
 
 	private static async Task<Result> LoadFileGroupsAsync(
@@ -83,12 +80,7 @@ internal static class GroupsSectionLoader
 				allGroups[groupId] = validItems;
 			}
 
-			if (validationResults.Count == 0)
-			{
-				return Result.Ok();
-			}
-
-			return Result.Merge(validationResults.ToArray());
+			return validationResults.Count == 0 ? Result.Ok() : Result.Merge([.. validationResults]);
 		}
 		catch (Exception ex)
 		{

@@ -72,7 +72,7 @@ public sealed class ActiveColumnSetResolverTests
 	public void Resolve_SelectorValueMissing_DependentColumnsInactive()
 	{
 		var action = BuildRieAction();
-		var step = new Step(300, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
+		var step = new Step(300, []);
 
 		var active = ActiveColumnSetResolver.Resolve(action, step);
 

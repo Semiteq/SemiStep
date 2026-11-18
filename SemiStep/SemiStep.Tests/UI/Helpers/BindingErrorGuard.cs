@@ -13,7 +13,7 @@ namespace SemiStep.Tests.UI.Helpers;
 public sealed class BindingErrorGuard : IDisposable
 {
 	private readonly ILogSink? _previousSink;
-	private readonly List<CapturedLogEvent> _events = new();
+	private readonly List<CapturedLogEvent> _events = [];
 	private bool _disposed;
 
 	public BindingErrorGuard()
@@ -23,9 +23,7 @@ public sealed class BindingErrorGuard : IDisposable
 	}
 
 	public IReadOnlyList<string> BindingErrors =>
-		_events.Where(static logEvent => logEvent.Area == LogArea.Binding)
-			.Select(static logEvent => logEvent.Message)
-			.ToList();
+		[.. _events.Where(static logEvent => logEvent.Area == LogArea.Binding).Select(static logEvent => logEvent.Message)];
 
 	public int BindingErrorCount => BindingErrors.Count;
 
@@ -88,14 +86,9 @@ public sealed class BindingErrorGuard : IDisposable
 
 	public sealed record CapturedLogEvent(string Area, string Message);
 
-	private sealed class CollectingSink : ILogSink
+	private sealed class CollectingSink(List<CapturedLogEvent> events) : ILogSink
 	{
-		private readonly List<CapturedLogEvent> _events;
-
-		public CollectingSink(List<CapturedLogEvent> events)
-		{
-			_events = events;
-		}
+		private readonly List<CapturedLogEvent> _events = events;
 
 		public bool IsEnabled(LogEventLevel level, string area)
 		{
@@ -104,7 +97,7 @@ public sealed class BindingErrorGuard : IDisposable
 
 		public void Log(LogEventLevel level, string area, object? source, string messageTemplate)
 		{
-			Log(level, area, source, messageTemplate, Array.Empty<object?>());
+			Log(level, area, source, messageTemplate, []);
 		}
 
 		public void Log(LogEventLevel level, string area, object? source, string messageTemplate, params object?[] propertyValues)

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-
-namespace SemiStep.Tests.Performance.Harness;
+﻿namespace SemiStep.Tests.Performance.Harness;
 
 // Locates the repository root by walking up from the test assembly directory (the exe runs from
 // SemiStep/Artifacts/bin/.../release/). The root is marked by a `.git` entry or a repo-root global.json;

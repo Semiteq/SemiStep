@@ -93,7 +93,7 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_surface.UpdateSelection(Array.Empty<int>());
+		_surface.UpdateSelection([]);
 
 		((ICommand)_clipboard.CutStepCommand).CanExecute(null).Should().BeFalse();
 	}
@@ -161,6 +161,6 @@ public sealed class ClipboardViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_surface.UpdateSelection(new[] { 0 });
+		_surface.UpdateSelection([0]);
 	}
 }

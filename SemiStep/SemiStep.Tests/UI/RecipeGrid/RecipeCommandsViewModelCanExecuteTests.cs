@@ -79,7 +79,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_surface.UpdateSelection(new[] { 0 });
+		_surface.UpdateSelection([0]);
 
 		((ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeTrue();
 	}
@@ -89,7 +89,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_surface.UpdateSelection(new[] { 0 });
+		_surface.UpdateSelection([0]);
 		_fixture.SetRecipeActive(true);
 
 		((ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeFalse();
@@ -100,7 +100,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_surface.UpdateSelection(Array.Empty<int>());
+		_surface.UpdateSelection([]);
 
 		((ICommand)_commands.DeleteStepCommand).CanExecute(null).Should().BeFalse();
 	}
@@ -110,7 +110,7 @@ public sealed class RecipeCommandsViewModelCanExecuteTests : IAsyncLifetime
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
-		_surface.UpdateSelection(new[] { 0 });
+		_surface.UpdateSelection([0]);
 
 		using var commands = new RecipeCommandsViewModel(
 			_fixture.Coordinator,

@@ -1,6 +1,4 @@
-﻿using System;
-
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
@@ -163,7 +161,7 @@ public sealed class ResultReportingExtensionsTests : IDisposable
 	[AvaloniaFact]
 	public void ReportFailure_SingleUntypedError_FallsThroughToItsMessage()
 	{
-		_panel.ReportFailure((IError)new Error("x"));
+		_panel.ReportFailure(new Error("x"));
 
 		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
 		entry.Message.Should().Be("x");

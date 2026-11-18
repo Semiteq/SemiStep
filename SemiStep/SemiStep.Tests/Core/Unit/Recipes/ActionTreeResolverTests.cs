@@ -35,7 +35,7 @@ public sealed class ActionTreeResolverTests
 			Column("step_duration", "time"),
 			Column("comment", "string"));
 
-		var result = ActionTreeResolver.Resolve(new[] { root, icpManual, rieManual });
+		var result = ActionTreeResolver.Resolve([root, icpManual, rieManual]);
 
 		result.IsSuccess.Should().BeTrue();
 		var resolved = result.Value.Single();
@@ -54,7 +54,7 @@ public sealed class ActionTreeResolverTests
 			Column("icp_power", "power"),
 			Selector("icp_match", "enum", (2, 3002)));
 
-		var result = ActionTreeResolver.Resolve(new[] { root, icpManual });
+		var result = ActionTreeResolver.Resolve([root, icpManual]);
 
 		result.IsSuccess.Should().BeTrue();
 		var resolved = result.Value.Single();
@@ -73,7 +73,7 @@ public sealed class ActionTreeResolverTests
 		var icpManual = BuildSubaction(3002, "ICP manual", Column("icp_load", "percent"));
 		var root = BuildAction(300, "Etch", Selector("icp_match", "enum", (2, 3002)));
 
-		var result = ActionTreeResolver.Resolve(new[] { root, icpManual });
+		var result = ActionTreeResolver.Resolve([root, icpManual]);
 
 		result.IsSuccess.Should().BeTrue();
 		result.Value.Single().Properties.Should().OnlyContain(p => p.Targets == null);
@@ -104,7 +104,7 @@ public sealed class ActionTreeResolverTests
 			Selector("destination", "enum", (1, 4001)),
 			Column("comment", "string"));
 
-		var result = ActionTreeResolver.Resolve(new[] { root, chamber, byPressure, byTime });
+		var result = ActionTreeResolver.Resolve([root, chamber, byPressure, byTime]);
 
 		result.IsSuccess.Should().BeTrue();
 		var resolved = result.Value.Single();
@@ -146,7 +146,7 @@ public sealed class ActionTreeResolverTests
 			Selector("mode_two", "enum", (2, 5002)),
 			Column("tail", "string"));
 
-		var result = ActionTreeResolver.Resolve(new[] { root, shared });
+		var result = ActionTreeResolver.Resolve([root, shared]);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
@@ -172,7 +172,7 @@ public sealed class ActionTreeResolverTests
 			Selector("mode", "enum", (2, 5002), (3, 5002)),
 			Column("tail", "string"));
 
-		var result = ActionTreeResolver.Resolve(new[] { root, shared });
+		var result = ActionTreeResolver.Resolve([root, shared]);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
@@ -200,7 +200,7 @@ public sealed class ActionTreeResolverTests
 			"ProcessTwo",
 			Selector("mode_two", "enum", (3, 5002)));
 
-		var result = ActionTreeResolver.Resolve(new[] { rootOne, rootTwo, shared });
+		var result = ActionTreeResolver.Resolve([rootOne, rootTwo, shared]);
 
 		result.IsSuccess.Should().BeTrue();
 		result.Value.Should().HaveCount(2);
@@ -219,7 +219,7 @@ public sealed class ActionTreeResolverTests
 	{
 		var orphanSubaction = BuildSubaction(9001, "Lonely", Column("x", "percent"));
 
-		var result = ActionTreeResolver.Resolve(new[] { orphanSubaction });
+		var result = ActionTreeResolver.Resolve([orphanSubaction]);
 
 		result.IsSuccess.Should().BeTrue();
 		result.Value.Should().BeEmpty();
@@ -232,7 +232,7 @@ public sealed class ActionTreeResolverTests
 		var subB = BuildSubaction(6003, "B", Selector("back", "enum", (1, 6002)));
 		var root = BuildAction(600, "Root", Selector("enter", "enum", (1, 6002)));
 
-		var result = ActionTreeResolver.Resolve(new[] { root, subA, subB });
+		var result = ActionTreeResolver.Resolve([root, subA, subB]);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains("Cycle detected"));
@@ -249,7 +249,7 @@ public sealed class ActionTreeResolverTests
 			Selector("a", "enum", (1, 7002)),
 			Selector("b", "enum", (1, 7003)));
 
-		var result = ActionTreeResolver.Resolve(new[] { root, subOne, subTwo });
+		var result = ActionTreeResolver.Resolve([root, subOne, subTwo]);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains("conflicting property types"));
@@ -260,7 +260,7 @@ public sealed class ActionTreeResolverTests
 	{
 		var root = BuildAction(800, "Root", Selector("sel", "enum", (1, 9999)));
 
-		var result = ActionTreeResolver.Resolve(new[] { root });
+		var result = ActionTreeResolver.Resolve([root]);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e => e.Message.Contains("undefined action id 9999"));
@@ -272,19 +272,19 @@ public sealed class ActionTreeResolverTests
 		var icpManual = BuildSubaction(3002, "ICP manual", Column("icp_load", "percent"), Column("icp_tune", "percent"));
 		var rieManual = BuildSubaction(3003, "RIE manual", Column("rie_load", "percent"), Column("rie_tune", "percent"));
 
-		var first = ActionTreeResolver.Resolve(new[]
-		{
+		var first = ActionTreeResolver.Resolve(
+		[
 			BuildAction(300, "Etch", Column("icp_power", "power"), Selector("icp_match", "enum", (2, 3002)), Selector("rie_match", "enum", (2, 3003))),
 			icpManual,
 			rieManual
-		});
+		]);
 
-		var second = ActionTreeResolver.Resolve(new[]
-		{
+		var second = ActionTreeResolver.Resolve(
+		[
 			rieManual,
 			icpManual,
 			BuildAction(300, "Etch", Column("icp_power", "power"), Selector("icp_match", "enum", (2, 3002)), Selector("rie_match", "enum", (2, 3003)))
-		});
+		]);
 
 		first.IsSuccess.Should().BeTrue();
 		second.IsSuccess.Should().BeTrue();
@@ -297,7 +297,7 @@ public sealed class ActionTreeResolverTests
 		var sub = BuildSubaction(3002, "ICP manual", Column("icp_load", "percent"));
 		var root = BuildAction(300, "Etch", Selector("icp_match", "enum", (2, 3002)));
 
-		var result = ActionTreeResolver.Resolve(new[] { root, sub });
+		var result = ActionTreeResolver.Resolve([root, sub]);
 
 		result.IsSuccess.Should().BeTrue();
 		result.Value.Should().ContainSingle().Which.Id.Should().Be(300);
@@ -305,7 +305,7 @@ public sealed class ActionTreeResolverTests
 
 	private static IReadOnlyList<string> Keys(ActionDefinition action)
 	{
-		return action.Properties.Select(p => p.Key).ToList();
+		return [.. action.Properties.Select(p => p.Key)];
 	}
 
 	private static ActionPropertyDefinition Property(ActionDefinition action, string key)

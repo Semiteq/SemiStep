@@ -49,11 +49,6 @@ public static class ActiveColumnSetResolver
 	private static bool IsConditionMet(ActivationCondition condition, Step step)
 	{
 		var selectorId = new PropertyId(condition.SelectorKey);
-		if (!step.Properties.TryGetValue(selectorId, out var value))
-		{
-			return false;
-		}
-
-		return value.Type == PropertyType.Int && value.AsInt() == condition.EnablingValue;
+		return step.Properties.TryGetValue(selectorId, out var value) && value.Type == PropertyType.Int && value.AsInt() == condition.EnablingValue;
 	}
 }

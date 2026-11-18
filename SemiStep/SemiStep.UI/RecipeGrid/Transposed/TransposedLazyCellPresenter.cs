@@ -11,7 +11,6 @@ internal abstract class TransposedLazyCellPresenter : Border
 	private readonly TransposedTextEditCoordinator _coordinator;
 	private readonly Control _display;
 	private readonly Func<Control> _editorBuilder;
-	private Control? _editor;
 
 	protected TransposedLazyCellPresenter(
 		TransposedTextEditCoordinator coordinator,
@@ -31,7 +30,7 @@ internal abstract class TransposedLazyCellPresenter : Border
 
 	public bool IsEditing { get; private set; }
 
-	public Control? Editor => _editor;
+	public Control? Editor { get; private set; }
 
 	public bool CanEnterEdit => IsEffectivelyEnabled;
 
@@ -44,25 +43,25 @@ internal abstract class TransposedLazyCellPresenter : Border
 		}
 
 		EnsureEditorBuilt();
-		Child = _editor;
+		Child = Editor;
 		IsEditing = true;
-		_editor!.Focus();
-		OnEnteredEdit(_editor, initialText);
+		Editor!.Focus();
+		OnEnteredEdit(Editor, initialText);
 	}
 
 	public void FocusEditor()
 	{
-		_editor?.Focus();
+		Editor?.Focus();
 	}
 
 	public void CommitEdit()
 	{
-		if (!IsEditing || _editor is null)
+		if (!IsEditing || Editor is null)
 		{
 			return;
 		}
 
-		CommitEditorContent(_editor);
+		CommitEditorContent(Editor);
 		ShowDisplay();
 		_coordinator.NotifyEditEnded(this);
 	}
@@ -102,33 +101,23 @@ internal abstract class TransposedLazyCellPresenter : Border
 
 	protected static bool IsPrintable(string? text, KeyModifiers modifiers)
 	{
-		if (string.IsNullOrEmpty(text))
-		{
-			return false;
-		}
-
-		if ((modifiers & (KeyModifiers.Control | KeyModifiers.Alt | KeyModifiers.Meta)) != 0)
-		{
-			return false;
-		}
-
-		return !char.IsControl(text[0]);
+		return !string.IsNullOrEmpty(text) && (modifiers & (KeyModifiers.Control | KeyModifiers.Alt | KeyModifiers.Meta)) == 0 && !char.IsControl(text[0]);
 	}
 
 	private void EnsureEditorBuilt()
 	{
-		if (_editor is not null)
+		if (Editor is not null)
 		{
 			return;
 		}
 
-		_editor = _editorBuilder();
-		_editor.AddHandler(LostFocusEvent, OnEditorLostFocus, RoutingStrategies.Bubble);
+		Editor = _editorBuilder();
+		Editor.AddHandler(LostFocusEvent, OnEditorLostFocus, RoutingStrategies.Bubble);
 	}
 
 	private void OnEditorLostFocus(object? sender, RoutedEventArgs e)
 	{
-		if (_editor is null || !ShouldExitOnEditorLostFocus(_editor))
+		if (Editor is null || !ShouldExitOnEditorLostFocus(Editor))
 		{
 			return;
 		}

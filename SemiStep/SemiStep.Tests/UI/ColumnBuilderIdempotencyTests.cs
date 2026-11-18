@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
 
@@ -192,7 +190,7 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 	private RecipeRowViewModel CreateRow(int actionId)
 	{
 		var action = _fixture.RecipeMetadataRegistry.GetAction(actionId).Value;
-		var step = new Step(actionId, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
+		var step = new Step(actionId, []);
 		var inapplicableColumns = BuildInapplicableColumns(action, step);
 		return new RecipeRowViewModel(1, step, action, _fixture.RecipeMetadataRegistry, inapplicableColumns);
 	}
@@ -218,7 +216,7 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 
 		var comboBox = built as ComboBox;
 		comboBox.Should().NotBeNull("CellTemplate must return a ComboBox directly");
-		comboBox!.DataContext = row;
+		comboBox.DataContext = row;
 		return comboBox;
 	}
 }

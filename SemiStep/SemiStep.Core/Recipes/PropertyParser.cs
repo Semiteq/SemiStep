@@ -1,5 +1,4 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 
 using FluentResults;
 
@@ -25,21 +24,15 @@ public static class PropertyParser
 
 	private static Result<PropertyValue> ParseInt(string rawValue)
 	{
-		if (int.TryParse(rawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
-		{
-			return Result.Ok(PropertyValue.FromInt(result));
-		}
-
-		return Result.Fail(new PropertyValueParseError(rawValue, "integer"));
+		return int.TryParse(rawValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result)
+			? Result.Ok(PropertyValue.FromInt(result))
+			: (Result<PropertyValue>)Result.Fail(new PropertyValueParseError(rawValue, "integer"));
 	}
 
 	private static Result<PropertyValue> ParseFloat(string rawValue)
 	{
-		if (float.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out var result))
-		{
-			return Result.Ok(PropertyValue.FromFloat(result));
-		}
-
-		return Result.Fail(new PropertyValueParseError(rawValue, "float"));
+		return float.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out var result)
+			? Result.Ok(PropertyValue.FromFloat(result))
+			: (Result<PropertyValue>)Result.Fail(new PropertyValueParseError(rawValue, "float"));
 	}
 }

@@ -11,46 +11,34 @@ using SemiStep.Core.Recipes.Helpers;
 
 namespace SemiStep.Core.Plc;
 
-public sealed class PlcLifecycleManager : IDisposable
+public sealed class PlcLifecycleManager(
+	RecipeSession session,
+	IS7Connection connection,
+	IS7Reader reader,
+	IS7ExecutionStream executionStream,
+	IPlcSyncService syncService,
+	IPlcSyncOwnership syncOwnership,
+	ImportedRecipeValidator importedRecipeValidator,
+	ILogger<PlcLifecycleManager> logger) : IDisposable
 {
 	internal const string SyncEnableCancelledMessage = "PLC sync enable cancelled";
 
-	private readonly IS7Connection _connection;
-	private readonly IS7ExecutionStream _executionStream;
-	private readonly ImportedRecipeValidator _importedRecipeValidator;
+	private readonly IS7Connection _connection = connection;
+	private readonly IS7ExecutionStream _executionStream = executionStream;
+	private readonly ImportedRecipeValidator _importedRecipeValidator = importedRecipeValidator;
 	private readonly CancellationTokenSource _lifetimeCts = new();
-	private readonly ILogger<PlcLifecycleManager> _logger;
-	private readonly object _pendingLock = new();
-	private readonly IS7Reader _reader;
-	private readonly RecipeSession _session;
-	private readonly IPlcSyncOwnership _syncOwnership;
-	private readonly IPlcSyncService _syncService;
+	private readonly ILogger<PlcLifecycleManager> _logger = logger;
+	private readonly Lock _pendingLock = new();
+	private readonly IS7Reader _reader = reader;
+	private readonly RecipeSession _session = session;
+	private readonly IPlcSyncOwnership _syncOwnership = syncOwnership;
+	private readonly IPlcSyncService _syncService = syncService;
 	private Action<PlcConnectionState>? _connectionStateHandler;
 	private bool _disposed;
 	private bool _initialized;
 	private ISyncOwnershipLease? _ownershipLease;
 	private Recipe? _pendingPlcRecipe;
 	private Func<Recipe, Task<Result>>? _reconnectApplyCallback;
-
-	public PlcLifecycleManager(
-		RecipeSession session,
-		IS7Connection connection,
-		IS7Reader reader,
-		IS7ExecutionStream executionStream,
-		IPlcSyncService syncService,
-		IPlcSyncOwnership syncOwnership,
-		ImportedRecipeValidator importedRecipeValidator,
-		ILogger<PlcLifecycleManager> logger)
-	{
-		_session = session;
-		_connection = connection;
-		_reader = reader;
-		_executionStream = executionStream;
-		_syncService = syncService;
-		_syncOwnership = syncOwnership;
-		_importedRecipeValidator = importedRecipeValidator;
-		_logger = logger;
-	}
 
 	public bool IsSyncEnabled => _syncService.IsSyncEnabled;
 	public bool IsConnected => _connection.IsConnected;
@@ -154,18 +142,12 @@ public sealed class PlcLifecycleManager : IDisposable
 	private async Task<Result> ValidateProtocolVersionAsync(CancellationToken ct)
 	{
 		var versionResult = await _reader.ReadProtocolVersionAsync(ct);
-		if (versionResult.IsFailed)
-		{
-			return versionResult.ToResult();
-		}
-
-		if (versionResult.Value != ProtocolConstants.ProtocolVersion)
-		{
-			return Result.Fail(
-				new ProtocolVersionMismatchError(ProtocolConstants.ProtocolVersion, versionResult.Value));
-		}
-
-		return Result.Ok();
+		return versionResult.IsFailed
+			? versionResult.ToResult()
+			: versionResult.Value != ProtocolConstants.ProtocolVersion
+			? Result.Fail(
+				new ProtocolVersionMismatchError(ProtocolConstants.ProtocolVersion, versionResult.Value))
+			: Result.Ok();
 	}
 
 	private async Task FailProtocolVersionHandshakeAsync()

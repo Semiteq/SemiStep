@@ -20,7 +20,7 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 {
 	private readonly RecipeCoordinator _coordinator;
 
-	private readonly CompositeDisposable _disposables = new();
+	private readonly CompositeDisposable _disposables = [];
 	private readonly ILogger<RecipeFileViewModel> _logger;
 	private readonly MessagePanelViewModel _messagePanel;
 
@@ -75,12 +75,7 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 	private async Task<bool> SaveRecipeAsync()
 	{
-		if (CurrentFilePath is not null)
-		{
-			return await SaveToFileAsync(CurrentFilePath);
-		}
-
-		return await SaveAsRecipeAsync();
+		return CurrentFilePath is not null ? await SaveToFileAsync(CurrentFilePath) : await SaveAsRecipeAsync();
 	}
 
 	private async Task<bool> SaveAsRecipeAsync()
@@ -90,12 +85,7 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 			: null;
 
 		var filePath = await SaveFileInteraction.Handle(suggestedName);
-		if (filePath is null)
-		{
-			return false;
-		}
-
-		return await SaveToFileAsync(filePath);
+		return filePath is not null && await SaveToFileAsync(filePath);
 	}
 
 	private async Task<bool> SaveToFileAsync(string filePath)

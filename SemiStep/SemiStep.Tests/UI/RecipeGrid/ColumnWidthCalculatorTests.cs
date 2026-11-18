@@ -247,17 +247,17 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var actions = new Dictionary<int, ActionDefinition>
 		{
 			[1] = new ActionDefinition(1, "Flow action", DeployDuration.Immediate,
-				new[] { new ActionPropertyDefinition("value", null, "flow", null) }),
+				[new ActionPropertyDefinition("value", null, "flow", null)]),
 			[2] = new ActionDefinition(2, "Percent action", DeployDuration.Immediate,
-				new[] { new ActionPropertyDefinition("value", null, "percent", null) })
+				[new ActionPropertyDefinition("value", null, "percent", null)])
 		};
 
 		var calculator = BuildCalculator(
-			new[] { comment, flow, percent },
+			[comment, flow, percent],
 			actions,
 			new Dictionary<string, GridColumnDefinition> { ["value"] = valueColumn });
 		var defaultOnlyCalculator = BuildCalculator(
-			new[] { comment, flow, percent },
+			[comment, flow, percent],
 			actions: null,
 			new Dictionary<string, GridColumnDefinition> { ["value"] = valueColumn });
 
@@ -289,7 +289,7 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var maxDrivenColumn = speedColumn with { Key = "speed_positive", PropertyTypeId = "speed_positive" };
 
 		var calculator = BuildCalculator(
-			new[] { comment, speed, speedWithoutNegativeMin },
+			[comment, speed, speedWithoutNegativeMin],
 			actions: null,
 			new Dictionary<string, GridColumnDefinition>
 			{
@@ -384,11 +384,11 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var actions = new Dictionary<int, ActionDefinition>
 		{
 			[1] = new ActionDefinition(1, representative, DeployDuration.Immediate,
-				new[] { new ActionPropertyDefinition("value", null, "sample", null) })
+				[new ActionPropertyDefinition("value", null, "sample", null)])
 		};
 
 		var calculator = BuildCalculator(
-			new[] { sampleProperty },
+			[sampleProperty],
 			actions,
 			new Dictionary<string, GridColumnDefinition>
 			{
@@ -424,11 +424,11 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 		var actions = new Dictionary<int, ActionDefinition>
 		{
 			[1] = new ActionDefinition(1, representative, DeployDuration.Immediate,
-				new[] { new ActionPropertyDefinition("value", null, "sample", null) })
+				[new ActionPropertyDefinition("value", null, "sample", null)])
 		};
 
 		var registry = TestRecipeMetadataRegistryFactory.Build(
-			new[] { sampleProperty }, actions,
+			[sampleProperty], actions,
 			columns: new Dictionary<string, GridColumnDefinition> { ["combo"] = comboColumn });
 
 		var smallFontCalculator = new ColumnWidthCalculator(registry, GridStyleOptions.Default);

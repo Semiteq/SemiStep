@@ -1,6 +1,4 @@
-﻿using System;
-
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
@@ -34,9 +32,9 @@ public sealed class TransposedStepListBox : ListBox
 	// change) relies on this clear resetting ContentTemplate. ItemTemplate is static for this ListBox, so
 	// skipping it is a no-op today; a future ItemTemplate swap would silently keep the old template and must
 	// revisit this override.
-	protected override void ClearContainerForItemOverride(Control container)
+	protected override void ClearContainerForItemOverride(Control element)
 	{
-		container.ClearValue(ListBoxItem.IsSelectedProperty);
+		element.ClearValue(ListBoxItem.IsSelectedProperty);
 	}
 
 	// Re-point Content explicitly before base: the base PrepareContainerForItemOverride sets Content via

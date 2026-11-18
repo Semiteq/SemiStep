@@ -27,12 +27,7 @@ internal sealed class PropertyTimeEditingConverter(string formatKind, bool allow
 		}
 
 		var rawString = value.ToString();
-		if (string.IsNullOrEmpty(rawString))
-		{
-			return string.Empty;
-		}
-
-		return TimeFormatHelper.FormatValue(rawString, formatKind, units: null);
+		return string.IsNullOrEmpty(rawString) ? string.Empty : TimeFormatHelper.FormatValue(rawString, formatKind, units: null);
 	}
 
 	// Commit-side parse shared with the transposed recyclable text editor, which owns the write in
@@ -48,11 +43,6 @@ internal sealed class PropertyTimeEditingConverter(string formatKind, bool allow
 
 		var parsed = TimeFormatHelper.ParseValue(text);
 
-		if (parsed == text && text.Contains(':'))
-		{
-			return BindingOperations.DoNothing;
-		}
-
-		return parsed;
+		return parsed == text && text.Contains(':') ? BindingOperations.DoNothing : parsed;
 	}
 }

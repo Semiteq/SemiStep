@@ -95,7 +95,7 @@ public sealed class GridStyleEditorFacadeTests
 		var configDirAsFile = Path.Combine(tempDir.Path, "not-a-directory");
 		File.WriteAllText(configDirAsFile, string.Empty);
 
-		var result = await new GridStyleWriter().SaveAsync(configDirAsFile, GridStyleOptions.Default);
+		var result = await GridStyleWriter.SaveAsync(configDirAsFile, GridStyleOptions.Default);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().ContainSingle().Which.Should().BeOfType<GridStyleSaveFailedError>();

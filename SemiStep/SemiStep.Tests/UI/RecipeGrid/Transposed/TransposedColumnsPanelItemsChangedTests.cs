@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -66,7 +63,7 @@ public sealed class TransposedColumnsPanelItemsChangedTests : IAsyncLifetime
 		const int TargetIndex = 20;
 		ScrollTo(stepListBox, TargetIndex * columnWidth);
 
-		var container = (Control)stepListBox.ContainerFromIndex(TargetIndex)!;
+		var container = stepListBox.ContainerFromIndex(TargetIndex)!;
 		var boundColumn = container.DataContext;
 		boundColumn.Should().BeSameAs(
 			_surface.StepColumns[TargetIndex], "the realized container is bound to the column at its index");
@@ -104,7 +101,7 @@ public sealed class TransposedColumnsPanelItemsChangedTests : IAsyncLifetime
 			removedColumn, "the removed column is gone from the collection");
 		_surface.StepColumns[RemovedIndex].Should().BeSameAs(
 			survivorColumn, "the survivor after the gap now lives at the removed index");
-		((Control)stepListBox.ContainerFromIndex(RemovedIndex)!).DataContext.Should().BeSameAs(
+		stepListBox.ContainerFromIndex(RemovedIndex)!.DataContext.Should().BeSameAs(
 			survivorColumn, "the container now at the removed index binds to the survivor column");
 
 		// The removed item's container must not stay mapped to the gone column: every visible container
@@ -141,7 +138,7 @@ public sealed class TransposedColumnsPanelItemsChangedTests : IAsyncLifetime
 
 		var lastContainer = stepListBox.ContainerFromIndex(newLastIndex);
 		lastContainer.Should().NotBeNull("scrolling to the max offset realizes the freshly appended last column");
-		((Control)lastContainer!).DataContext.Should().BeSameAs(
+		lastContainer!.DataContext.Should().BeSameAs(
 			_surface.StepColumns[newLastIndex], "the new last column's container binds to the appended step");
 	}
 
@@ -284,7 +281,7 @@ public sealed class TransposedColumnsPanelItemsChangedTests : IAsyncLifetime
 		panel.DesiredSize.Width.Should().BeApproximately(
 			panel.ColumnWidth, 0.5, "a one-column recipe extends exactly one column width");
 
-		var container = (Control?)stepListBox.ContainerFromIndex(0);
+		var container = stepListBox.ContainerFromIndex(0);
 		container.Should().NotBeNull("the sole column realizes");
 		container!.DataContext.Should().BeSameAs(_surface.StepColumns[0], "the realized container binds to the only column");
 		container.Bounds.Width.Should().BeApproximately(
@@ -300,7 +297,7 @@ public sealed class TransposedColumnsPanelItemsChangedTests : IAsyncLifetime
 		var stepListBox = ShowView();
 
 		const int TargetIndex = 3;
-		var oldContainer = (Control)stepListBox.ContainerFromIndex(TargetIndex)!;
+		var oldContainer = stepListBox.ContainerFromIndex(TargetIndex)!;
 		var oldColumn = oldContainer.DataContext;
 
 		var cleared = new List<Control>();
@@ -313,7 +310,7 @@ public sealed class TransposedColumnsPanelItemsChangedTests : IAsyncLifetime
 			oldColumn, "the action change rebuilds the column view model at that index");
 		cleared.Should().Contain(
 			oldContainer, "the replaced step's container is unrealized (ContainerClearing) so it rebinds to the new column");
-		((Control)stepListBox.ContainerFromIndex(TargetIndex)!).DataContext.Should().BeSameAs(
+		stepListBox.ContainerFromIndex(TargetIndex)!.DataContext.Should().BeSameAs(
 			_surface.StepColumns[TargetIndex], "the container at the replaced index binds to the fresh column");
 	}
 
@@ -334,7 +331,7 @@ public sealed class TransposedColumnsPanelItemsChangedTests : IAsyncLifetime
 		Dispatcher.UIThread.RunJobs();
 
 		_surface.StepColumns[ToIndex].Should().BeSameAs(movedColumn, "the moved column now lives at the destination index");
-		((Control)stepListBox.ContainerFromIndex(ToIndex)!).DataContext.Should().BeSameAs(
+		stepListBox.ContainerFromIndex(ToIndex)!.DataContext.Should().BeSameAs(
 			movedColumn, "the container now at the destination index binds to the moved column");
 
 		foreach (var child in panel.Children.Where(child => child.IsVisible))
@@ -387,7 +384,7 @@ public sealed class TransposedColumnsPanelItemsChangedTests : IAsyncLifetime
 		_view = new TransposedRecipeGridView { DataContext = _surface };
 		var stepListBox = _view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.UseTransposedColumnsPanel();
+		stepListBox.UseTransposedColumnsPanel();
 
 		_window = new Window
 		{

@@ -14,10 +14,9 @@ public sealed class CsvRowConverter(AppConfiguration config)
 	private const char Separator = ';';
 	private const string ActionColumnKey = StepValueParser.ActionColumnKey;
 
-	private readonly List<string> _columnOrder = config.Columns.Values
+	private readonly List<string> _columnOrder = [.. config.Columns.Values
 		.Where(c => c.SaveToCsv)
-		.Select(c => c.Key)
-		.ToList();
+		.Select(c => c.Key)];
 
 	public IReadOnlyList<string> ColumnOrder => _columnOrder;
 
@@ -108,11 +107,6 @@ public sealed class CsvRowConverter(AppConfiguration config)
 			properties.Add(new PropertyId(columnKey), parseResult.Value);
 		}
 
-		if (errors.Count > 0)
-		{
-			return Result.Fail(errors);
-		}
-
-		return Result.Ok(new Step(actionKey, properties.ToImmutable()));
+		return errors.Count > 0 ? (Result<Step>)Result.Fail(errors) : Result.Ok(new Step(actionKey, properties.ToImmutable()));
 	}
 }

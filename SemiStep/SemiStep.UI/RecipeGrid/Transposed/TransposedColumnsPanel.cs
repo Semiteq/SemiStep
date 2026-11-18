@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -37,10 +35,10 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 	public static readonly StyledProperty<double> ColumnWidthProperty =
 		AvaloniaProperty.Register<TransposedColumnsPanel, double>(nameof(ColumnWidth), defaultValue: 96d);
 
-	private readonly Dictionary<int, Control> _realized = new();
+	private readonly Dictionary<int, Control> _realized = [];
 	private readonly Stack<Control> _idle = new();
-	private readonly List<int> _indicesToUnrealize = new();
-	private readonly List<KeyValuePair<int, Control>> _shiftBuffer = new();
+	private readonly List<int> _indicesToUnrealize = [];
+	private readonly List<KeyValuePair<int, Control>> _shiftBuffer = [];
 
 	private Rect _viewport;
 	private double _maxRealizedChildHeight;
@@ -141,15 +139,9 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 	{
 		base.OnItemsControlChanged(oldValue);
 
-		if (oldValue is not null)
-		{
-			oldValue.PropertyChanged -= OnItemsControlPropertyChanged;
-		}
+		oldValue?.PropertyChanged -= OnItemsControlPropertyChanged;
 
-		if (ItemsControl is not null)
-		{
-			ItemsControl.PropertyChanged += OnItemsControlPropertyChanged;
-		}
+		ItemsControl?.PropertyChanged += OnItemsControlPropertyChanged;
 	}
 
 	protected override void OnItemsChanged(IReadOnlyList<object?> items, NotifyCollectionChangedEventArgs e)
@@ -220,17 +212,7 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 
 	protected override Control? ContainerFromIndex(int index)
 	{
-		if (index < 0 || index >= Items.Count)
-		{
-			return null;
-		}
-
-		if (_deferredIndex == index)
-		{
-			return _deferredElement;
-		}
-
-		return _realized.GetValueOrDefault(index);
+		return index < 0 || index >= Items.Count ? null : _deferredIndex == index ? _deferredElement : _realized.GetValueOrDefault(index);
 	}
 
 	protected override int IndexFromContainer(Control container)
@@ -388,7 +370,7 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 		{
 			// Keep-attached reuse: the container is already a child, so no AddInternalChild.
 			container = _idle.Pop();
-			container.SetCurrentValue(Visual.IsVisibleProperty, true);
+			container.SetCurrentValue(IsVisibleProperty, true);
 			generator.PrepareItemContainer(container, item, index);
 			generator.ItemContainerPrepared(container, item, index);
 		}
@@ -433,7 +415,7 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 	private void RecycleToIdle(Control container)
 	{
 		ItemContainerGenerator!.ClearItemContainer(container);
-		container.SetCurrentValue(Visual.IsVisibleProperty, false);
+		container.SetCurrentValue(IsVisibleProperty, false);
 		_idle.Push(container);
 	}
 
@@ -595,7 +577,7 @@ public sealed class TransposedColumnsPanel : VirtualizingPanel
 		// releases its pooled presenter — the surface-swap teardown the pool lifecycle depends on.
 		while (Children.Count > 0)
 		{
-			RemoveInternalChild(Children[Children.Count - 1]);
+			RemoveInternalChild(Children[^1]);
 		}
 
 		_idle.Clear();

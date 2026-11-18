@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
@@ -18,7 +13,7 @@ namespace SemiStep.Tests.Performance;
 [Trait("Category", "Performance")]
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
-public sealed class TransposedViewAllocationProbe
+public sealed class TransposedViewAllocationProbe(ITestOutputHelper output, PerfActualsFixture actuals)
 {
 	// Scroll gate: enough columns to virtualize in a 1400px window, scrolled ~200 apart per round-trip.
 	private const string ScrollConfig = "WideParams";
@@ -56,14 +51,8 @@ public sealed class TransposedViewAllocationProbe
 	private const int MeasuredAppends = 12;
 	private const double ScalingRatioLimit = 1.5;
 
-	private readonly ITestOutputHelper _output;
-	private readonly PerfActualsFixture _actuals;
-
-	public TransposedViewAllocationProbe(ITestOutputHelper output, PerfActualsFixture actuals)
-	{
-		_output = output;
-		_actuals = actuals;
-	}
+	private readonly ITestOutputHelper _output = output;
+	private readonly PerfActualsFixture _actuals = actuals;
 
 	[AvaloniaFact(Explicit = true)]
 	public async Task ScrollRoundTrips_CreateZeroFreshVisuals()

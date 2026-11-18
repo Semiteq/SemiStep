@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -151,7 +149,7 @@ public sealed class TransposedEdgeCaseTests : IAsyncLifetime
 
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.UseTransposedColumnsPanel();
+		stepListBox.UseTransposedColumnsPanel();
 
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();

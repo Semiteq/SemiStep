@@ -19,7 +19,7 @@ public sealed class RecipeSnapshotRowLoopDepthsTests
 	public void NoLoops_AllZeros()
 	{
 		var recipe = BuildRecipe(3);
-		var snapshot = BuildSnapshot(recipe, Array.Empty<LoopInfo>());
+		var snapshot = BuildSnapshot(recipe, []);
 
 		snapshot.RowLoopDepths.Should().Equal(0, 0, 0);
 	}
@@ -90,7 +90,7 @@ public sealed class RecipeSnapshotRowLoopDepthsTests
 		var steps = ImmutableList.CreateBuilder<Step>();
 		for (var i = 0; i < stepCount; i++)
 		{
-			steps.Add(new Step(DummyActionId, ImmutableDictionary<PropertyId, PropertyValue>.Empty));
+			steps.Add(new Step(DummyActionId, []));
 		}
 
 		return new Recipe(steps.ToImmutable());

@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+﻿using System.Globalization;
 
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
@@ -58,7 +58,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		items.Should().NotBeEmpty(
 			"action 50 (Valve) defines a target column bound to the 'valve' group which has items");
 
-		items.Select(item => item.DisplayText).Should().Contain(new[] { "Open", "Close" });
+		items.Select(item => item.DisplayText).Should().Contain(["Open", "Close"]);
 	}
 
 	[AvaloniaFact]
@@ -90,7 +90,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		refreshedItems.Should().NotBeEmpty(
 			"after swapping DataContext to a Valve-action row, the ComboBox must surface the valve group items");
 
-		refreshedItems.Select(item => item.DisplayText).Should().Contain(new[] { "Open", "Close" });
+		refreshedItems.Select(item => item.DisplayText).Should().Contain(["Open", "Close"]);
 	}
 
 	[AvaloniaFact]
@@ -129,37 +129,37 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 			id: 9001,
 			uiName: "FirstGroupAction",
 			deployDuration: DeployDuration.Immediate,
-			properties: new[]
-			{
+			properties:
+			[
 				new ActionPropertyDefinition(
 					Key: RecipeTestDriver.TargetColumn,
 					GroupName: "first_group",
 					PropertyTypeId: "enum",
 					DefaultValue: null),
-			});
+			]);
 		var secondAction = new ActionDefinition(
 			id: 9002,
 			uiName: "SecondGroupAction",
 			deployDuration: DeployDuration.Immediate,
-			properties: new[]
-			{
+			properties:
+			[
 				new ActionPropertyDefinition(
 					Key: RecipeTestDriver.TargetColumn,
 					GroupName: "second_group",
 					PropertyTypeId: "enum",
 					DefaultValue: null),
-			});
+			]);
 
 		var registry = BuildTwoGroupRegistry();
 		var firstRow = new RecipeRowViewModel(
 			1,
-			new Step(9001, ImmutableDictionary<PropertyId, PropertyValue>.Empty),
+			new Step(9001, []),
 			firstAction,
 			registry,
 			new HashSet<string>());
 		var secondRow = new RecipeRowViewModel(
 			2,
-			new Step(9002, ImmutableDictionary<PropertyId, PropertyValue>.Empty),
+			new Step(9002, []),
 			secondAction,
 			registry,
 			new HashSet<string>());
@@ -246,7 +246,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		captured.Should().ContainSingle(
 			"the SelectionChanged handler must forward the chosen item's Id once to the row VM");
 		captured[0].Key.Should().Be(RecipeTestDriver.TargetColumn);
-		captured[0].Value.Should().Be(chosen.Id.ToString());
+		captured[0].Value.Should().Be(chosen.Id.ToString(CultureInfo.InvariantCulture));
 	}
 
 	[AvaloniaFact]
@@ -267,7 +267,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 
 		var items = comboBox.ItemsSource
 			.Should().BeAssignableTo<IReadOnlyList<ComboBoxItemViewModel>>().Subject;
-		comboBox.SelectedItem = items.First();
+		comboBox.SelectedItem = items[0];
 
 		var withGroupActions = 0;
 		var withGroupPropertyChanges = 0;
@@ -297,15 +297,15 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 			.FirstOrDefault(column => string.Equals(column.Tag as string, RecipeTestDriver.TargetColumn, StringComparison.Ordinal));
 
 		groupColumn.Should().NotBeNull("the target column must exist for the WithGroups configuration");
-		groupColumn!.CellTemplate.Should().NotBeNull("the group ComboBox must materialize from CellTemplate");
+		groupColumn.CellTemplate.Should().NotBeNull("the group ComboBox must materialize from CellTemplate");
 
-		return groupColumn.CellTemplate!;
+		return groupColumn.CellTemplate;
 	}
 
 	private RecipeRowViewModel CreateRow(int actionId)
 	{
 		var action = _fixture.RecipeMetadataRegistry.GetAction(actionId).Value;
-		var step = new Step(actionId, ImmutableDictionary<PropertyId, PropertyValue>.Empty);
+		var step = new Step(actionId, []);
 		var inapplicableColumns = BuildInapplicableColumns(action, step);
 		return new RecipeRowViewModel(1, step, action, _fixture.RecipeMetadataRegistry, inapplicableColumns);
 	}
@@ -331,7 +331,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 
 		var comboBox = built as ComboBox;
 		comboBox.Should().NotBeNull("CellTemplate must return a ComboBox directly");
-		comboBox!.DataContext = row;
+		comboBox.DataContext = row;
 		return comboBox;
 	}
 }

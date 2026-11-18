@@ -124,7 +124,7 @@ public sealed class TransposedSelectionIndexTests : IAsyncLifetime
 
 		Select(stepListBox, 4);
 
-		snapshot.Should().Equal(new[] { 0, 2 }, "the captured index list must be a frozen materialization, not a live view");
+		snapshot.Should().Equal([0, 2], "the captured index list must be a frozen materialization, not a live view");
 	}
 
 	[AvaloniaFact]
@@ -169,7 +169,7 @@ public sealed class TransposedSelectionIndexTests : IAsyncLifetime
 
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.DataContext = _surface;
+		stepListBox.DataContext = _surface;
 		stepListBox.UseTransposedColumnsPanel();
 
 		_window.Show();

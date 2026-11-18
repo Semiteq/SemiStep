@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 using Avalonia.Headless.XUnit;
 
@@ -24,7 +19,7 @@ namespace SemiStep.Tests.Performance;
 [Trait("Category", "Performance")]
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
-public sealed class TransposedSelectionCostProbe
+public sealed class TransposedSelectionCostProbe(ITestOutputHelper output)
 {
 	private const string ConfigName = "WithGroups";
 	private const int WindowWidth = 1200;
@@ -35,14 +30,9 @@ public sealed class TransposedSelectionCostProbe
 	private const int RunsForMedian = 9;
 	private const double MaxAllowedRatio = 3.0;
 
-	private static readonly int[] _stepCounts = { 300, 1200, 4800 };
+	private static readonly int[] _stepCounts = [300, 1200, 4800];
 
-	private readonly ITestOutputHelper _output;
-
-	public TransposedSelectionCostProbe(ITestOutputHelper output)
-	{
-		_output = output;
-	}
+	private readonly ITestOutputHelper _output = output;
 
 	[AvaloniaFact(Explicit = true)]
 	public async Task SelectionChangedCost_StaysFlatAsRecipeGrows()

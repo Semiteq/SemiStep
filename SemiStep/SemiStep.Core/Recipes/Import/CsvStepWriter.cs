@@ -8,9 +8,7 @@ internal static class CsvStepWriter
 
 	internal static IReadOnlyList<GridColumnDefinition> GetCsvColumns(RecipeMetadataRegistry recipeMetadataRegistry)
 	{
-		return recipeMetadataRegistry.GetAllColumns()
-			.Where(c => c.SaveToCsv)
-			.ToList();
+		return [.. recipeMetadataRegistry.GetAllColumns().Where(c => c.SaveToCsv)];
 	}
 
 	internal static void WriteStep(CsvWriter csvWriter, Step step, IReadOnlyList<GridColumnDefinition> columns)

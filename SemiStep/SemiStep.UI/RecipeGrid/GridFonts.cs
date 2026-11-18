@@ -11,5 +11,5 @@ internal static class GridFonts
 
 	// Tabular figures (OpenType tnum) keep digit columns vertically aligned without a monospaced font.
 	public static readonly FontFeatureCollection TabularFigures =
-		new() { new FontFeature { Tag = "tnum", Value = 1 } };
+		[new FontFeature { Tag = "tnum", Value = 1 }];
 }

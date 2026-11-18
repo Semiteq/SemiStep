@@ -10,16 +10,10 @@ using SemiStep.Core.Recipes.Formulas.Errors;
 
 namespace SemiStep.Core.Recipes.Formulas;
 
-public sealed class FormulaEvaluator
+public sealed class FormulaEvaluator(RecipeMetadataRegistry registry, ILogger<FormulaEvaluator> logger)
 {
-	private readonly ILogger<FormulaEvaluator> _logger;
-	private readonly RecipeMetadataRegistry _registry;
-
-	public FormulaEvaluator(RecipeMetadataRegistry registry, ILogger<FormulaEvaluator> logger)
-	{
-		_registry = registry;
-		_logger = logger;
-	}
+	private readonly ILogger<FormulaEvaluator> _logger = logger;
+	private readonly RecipeMetadataRegistry _registry = registry;
 
 	public Result<Step> Recalculate(
 		Step step,
@@ -92,12 +86,7 @@ public sealed class FormulaEvaluator
 			target,
 			newPropertyValue,
 			propertyDefinition);
-		if (validationResult.IsFailed)
-		{
-			return validationResult.ToResult<Step>();
-		}
-
-		return Result.Ok(step.WithProperty(target, newPropertyValue));
+		return validationResult.IsFailed ? validationResult.ToResult<Step>() : Result.Ok(step.WithProperty(target, newPropertyValue));
 	}
 
 	private Result<double> EvaluateExpression(
@@ -159,12 +148,7 @@ public sealed class FormulaEvaluator
 		}
 
 		var groupCheck = PropertyValidator.ValidateGroupValue(targetActionProperty, newPropertyValue, _registry);
-		if (groupCheck.IsFailed)
-		{
-			return Result.Fail(new FormulaComputationFailedError(target, groupCheck.Errors[0]));
-		}
-
-		return Result.Ok();
+		return groupCheck.IsFailed ? Result.Fail(new FormulaComputationFailedError(target, groupCheck.Errors[0])) : Result.Ok();
 	}
 
 	/// <summary>
@@ -213,29 +197,23 @@ public sealed class FormulaEvaluator
 		if (SystemTypes.Comparer.Equals(propertyDefinition.SystemType, SystemTypes.Int))
 		{
 			var rounded = Math.Round(computed, MidpointRounding.ToEven);
-			if (rounded > int.MaxValue || rounded < int.MinValue)
-			{
-				return Result.Fail<PropertyValue>(
+			return rounded is > int.MaxValue or < int.MinValue
+				? Result.Fail<PropertyValue>(
 					new FormulaComputationFailedError(
 						target,
-						new Error($"Recalculated value {computed.ToString(CultureInfo.InvariantCulture)} overflows Int32.")));
-			}
-
-			return Result.Ok(PropertyValue.FromInt((int)rounded));
+						new Error($"Recalculated value {computed.ToString(CultureInfo.InvariantCulture)} overflows Int32.")))
+				: Result.Ok(PropertyValue.FromInt((int)rounded));
 		}
 
 		if (SystemTypes.Comparer.Equals(propertyDefinition.SystemType, SystemTypes.Float))
 		{
 			var floatValue = (float)computed;
-			if (!float.IsFinite(floatValue))
-			{
-				return Result.Fail<PropertyValue>(
+			return !float.IsFinite(floatValue)
+				? Result.Fail<PropertyValue>(
 					new FormulaComputationFailedError(
 						target,
-						new Error($"Recalculated value {computed.ToString(CultureInfo.InvariantCulture)} is not representable as a finite float.")));
-			}
-
-			return Result.Ok(PropertyValue.FromFloat(floatValue));
+						new Error($"Recalculated value {computed.ToString(CultureInfo.InvariantCulture)} is not representable as a finite float.")))
+				: Result.Ok(PropertyValue.FromFloat(floatValue));
 		}
 
 		throw new InvalidOperationException(

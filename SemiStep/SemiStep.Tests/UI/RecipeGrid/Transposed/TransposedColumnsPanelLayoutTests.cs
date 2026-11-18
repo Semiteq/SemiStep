@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -82,7 +79,7 @@ public sealed class TransposedColumnsPanelLayoutTests : IAsyncLifetime
 			"a column scrolled far out of the viewport is not realized");
 
 		var resolved = Enumerable.Range(0, stepListBox.ItemCount)
-			.Select(index => stepListBox.ContainerFromIndex(index))
+			.Select(stepListBox.ContainerFromIndex)
 			.Where(container => container is not null)
 			.Cast<Control>()
 			.ToHashSet();
@@ -110,7 +107,7 @@ public sealed class TransposedColumnsPanelLayoutTests : IAsyncLifetime
 		_surface.RequestSelection(0);
 		Dispatcher.UIThread.RunJobs();
 
-		var anchor = (Control)stepListBox.ContainerFromIndex(0)!;
+		var anchor = stepListBox.ContainerFromIndex(0)!;
 		KeyboardNavigation.GetTabOnceActiveElement(stepListBox).Should().BeSameAs(
 			anchor, "selecting column 0 makes its container the TabOnceActiveElement anchor");
 
@@ -183,7 +180,7 @@ public sealed class TransposedColumnsPanelLayoutTests : IAsyncLifetime
 		var view = new TransposedRecipeGridView { DataContext = _surface };
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.UseTransposedColumnsPanel();
+		stepListBox.UseTransposedColumnsPanel();
 
 		_window = new Window
 		{

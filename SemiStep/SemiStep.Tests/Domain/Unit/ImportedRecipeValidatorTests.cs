@@ -2,8 +2,6 @@
 
 using FluentAssertions;
 
-using FluentResults;
-
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Helpers;
@@ -37,13 +35,13 @@ public sealed class ImportedRecipeValidatorTests
 
 	private static IEnumerable<PropertyTypeDefinition> DefaultProperties()
 	{
-		return new[]
-		{
+		return
+		[
 			TestPropertyTypeDefinitionBuilder.CreateInt("enum"),
 			TestPropertyTypeDefinitionBuilder.CreateFloat("time"),
 			TestPropertyTypeDefinitionBuilder.CreateString("text", maxLength: 8),
 			TestPropertyTypeDefinitionBuilder.CreateInt("int_bounded", min: 0, max: 100)
-		};
+		];
 	}
 
 	private static RecipeMetadataRegistry BuildValveRegistry()
@@ -54,14 +52,14 @@ public sealed class ImportedRecipeValidatorTests
 				id: ValveActionId,
 				uiName: "Valve",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: TargetColumnKey,
 						GroupName: ValveGroupId,
 						PropertyTypeId: "enum",
 						DefaultValue: null)
-				})
+				])
 		};
 
 		var groups = new Dictionary<string, GroupDefinition>
@@ -90,7 +88,7 @@ public sealed class ImportedRecipeValidatorTests
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
 				.Add(new PropertyId(columnKey), value));
 
-		return new Recipe(ImmutableList.Create(step));
+		return new Recipe([step]);
 	}
 
 	[Fact]
@@ -126,14 +124,14 @@ public sealed class ImportedRecipeValidatorTests
 				id: 10,
 				uiName: "Wait",
 				deployDuration: DeployDuration.LongLasting,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: "step_duration",
 						GroupName: null,
 						PropertyTypeId: "time",
 						DefaultValue: "10")
-				})
+				])
 		};
 
 		var registry = BuildRecipeMetadataRegistry(actions);
@@ -142,7 +140,7 @@ public sealed class ImportedRecipeValidatorTests
 			10,
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
 				.Add(new PropertyId("step_duration"), PropertyValue.FromFloat(5f)));
-		var recipe = new Recipe(ImmutableList.Create(step));
+		var recipe = new Recipe([step]);
 
 		var result = validator.Validate(recipe);
 
@@ -159,14 +157,14 @@ public sealed class ImportedRecipeValidatorTests
 				id: 11,
 				uiName: "Bound",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: "amount",
 						GroupName: null,
 						PropertyTypeId: "int_bounded",
 						DefaultValue: null)
-				})
+				])
 		};
 
 		var registry = BuildRecipeMetadataRegistry(actions);
@@ -175,7 +173,7 @@ public sealed class ImportedRecipeValidatorTests
 			11,
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
 				.Add(new PropertyId("amount"), PropertyValue.FromInt(500)));
-		var recipe = new Recipe(ImmutableList.Create(step));
+		var recipe = new Recipe([step]);
 
 		var result = validator.Validate(recipe);
 
@@ -196,14 +194,14 @@ public sealed class ImportedRecipeValidatorTests
 				id: 12,
 				uiName: "Bound",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: "amount",
 						GroupName: null,
 						PropertyTypeId: "int_bounded",
 						DefaultValue: null)
-				})
+				])
 		};
 
 		var registry = BuildRecipeMetadataRegistry(actions);
@@ -212,7 +210,7 @@ public sealed class ImportedRecipeValidatorTests
 			12,
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
 				.Add(new PropertyId("amount"), PropertyValue.FromString("not-an-int")));
-		var recipe = new Recipe(ImmutableList.Create(step));
+		var recipe = new Recipe([step]);
 
 		var result = validator.Validate(recipe);
 
@@ -227,7 +225,7 @@ public sealed class ImportedRecipeValidatorTests
 	public void Validate_EmptyRecipe_ReturnsSuccess()
 	{
 		var validator = BuildValidator();
-		var recipe = new Recipe(ImmutableList<Step>.Empty);
+		var recipe = new Recipe([]);
 
 		var result = validator.Validate(recipe);
 
@@ -263,8 +261,8 @@ public sealed class ImportedRecipeValidatorTests
 				id: CommentActionId,
 				uiName: "Annotate",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: CommentColumnKey,
 						GroupName: null,
@@ -275,7 +273,7 @@ public sealed class ImportedRecipeValidatorTests
 						GroupName: null,
 						PropertyTypeId: "int_bounded",
 						DefaultValue: null)
-				})
+				])
 		};
 
 		return BuildRecipeMetadataRegistry(actions);
@@ -294,7 +292,7 @@ public sealed class ImportedRecipeValidatorTests
 			CommentActionId,
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
 				.Add(new PropertyId(CommentColumnKey), PropertyValue.FromString("XXXXXXXXX")));
-		var recipe = new Recipe(ImmutableList.Create(step));
+		var recipe = new Recipe([step]);
 
 		var result = validator.Validate(recipe);
 
@@ -303,8 +301,8 @@ public sealed class ImportedRecipeValidatorTests
 			error.Message.Contains("Step 1")
 			&& error.Message.Contains(CommentColumnKey)
 			&& error.Message.Contains("exceeds maximum")
-			&& error.Message.Contains("9")
-			&& error.Message.Contains("8"));
+			&& error.Message.Contains('9')
+			&& error.Message.Contains('8'));
 	}
 
 	[Fact]
@@ -316,7 +314,7 @@ public sealed class ImportedRecipeValidatorTests
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
 				.Add(new PropertyId(CommentColumnKey), PropertyValue.FromString("ok"))
 				.Add(new PropertyId(IntColumnKey), PropertyValue.FromInt(42)));
-		var recipe = new Recipe(ImmutableList.Create(step));
+		var recipe = new Recipe([step]);
 
 		var result = validator.Validate(recipe);
 
@@ -375,7 +373,7 @@ public sealed class ImportedRecipeValidatorTests
 			CommentActionId,
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
 				.Add(new PropertyId(IntColumnKey), PropertyValue.FromInt(500)));
-		var recipe = new Recipe(ImmutableList.Create(step));
+		var recipe = new Recipe([step]);
 
 		var result = validator.Validate(recipe);
 
@@ -402,14 +400,14 @@ public sealed class ImportedRecipeValidatorTests
 				id: GhostActionId,
 				uiName: "Ghost",
 				deployDuration: DeployDuration.Immediate,
-				properties: new[]
-				{
+				properties:
+				[
 					new ActionPropertyDefinition(
 						Key: GhostColumnKey,
 						GroupName: null,
 						PropertyTypeId: MissingPropertyTypeId,
 						DefaultValue: null)
-				})
+				])
 		};
 		var registry = BuildRecipeMetadataRegistry(actions);
 		var validator = new ImportedRecipeValidator(registry);
@@ -417,7 +415,7 @@ public sealed class ImportedRecipeValidatorTests
 			GhostActionId,
 			ImmutableDictionary<PropertyId, PropertyValue>.Empty
 				.Add(new PropertyId(GhostColumnKey), PropertyValue.FromInt(1)));
-		var recipe = new Recipe(ImmutableList.Create(step));
+		var recipe = new Recipe([step]);
 
 		var result = validator.Validate(recipe);
 

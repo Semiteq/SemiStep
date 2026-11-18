@@ -27,6 +27,39 @@ charset = utf-8-bom
 #### Core EditorConfig Options ####
 max_line_length = 120
 
+#### Analyzer severity baseline ####
+
+# Every IDExxxx style rule not configured explicitly below fires as a build warning.
+# The category baseline overrides option-suffix severities (:silent), so opt-outs
+# need explicit dotnet_diagnostic entries.
+dotnet_analyzer_diagnostic.category-Style.severity = warning
+
+# Discarding an unused expression value everywhere (_ = ...) is churn, not clarity.
+dotnet_diagnostic.IDE0058.severity = silent
+# A deliberate default arm is the house way to write non-exhaustive switches.
+dotnet_diagnostic.IDE0010.severity = silent
+dotnet_diagnostic.IDE0072.severity = silent
+# High-performance logging ceremony (LoggerMessage, CompositeFormat) is premature
+# optimization in a desktop app.
+dotnet_diagnostic.CA1848.severity = none
+dotnet_diagnostic.CA1873.severity = none
+dotnet_diagnostic.CA1863.severity = none
+# Keyword-collision naming guards protect cross-language library consumers; this is an app.
+dotnet_diagnostic.CA1716.severity = none
+# Type-name/suffix naming guards (Int, Single, *Stream) fight PLC domain vocabulary.
+dotnet_diagnostic.CA1720.severity = none
+dotnet_diagnostic.CA1711.severity = none
+# Concrete-over-interface micro-devirtualization trades away deliberate contracts
+# (factory returns Control, builders return IReadOnlyList).
+dotnet_diagnostic.CA1859.severity = silent
+# Static-member candidates are enforced on internals only: the shape of a public
+# surface (a stateless harness object, an interface-ready seam) is a design decision.
+dotnet_code_quality.CA1822.api_surface = private, internal
+# A guard clause followed by a return is the house shape; the conditional-expression
+# rewrite nests ternaries and hides the guard.
+dotnet_diagnostic.IDE0045.severity = silent
+dotnet_diagnostic.IDE0046.severity = silent
+
 #### .NET Coding Conventions ####
 
 # Organize usings
@@ -111,6 +144,9 @@ csharp_style_prefer_tuple_swap = true:suggestion
 
 # 'using' directive preferences
 csharp_using_directive_placement = outside_namespace:warning
+
+# Namespace preferences
+csharp_style_namespace_declarations = file_scoped:warning
 
 # Inlined variable declarations
 csharp_style_inlined_variable_declaration = true:suggestion
@@ -253,6 +289,18 @@ resharper_csharp_blank_lines_after_block_statements = 0
 resharper_csharp_blank_lines_before_control_transfer_statements = 1
 
 ###############################
+# Test project relaxations
+###############################
+[**/*.Tests*/**.cs]
+# Method_State_Expected naming and inline theory-data arrays are the test idiom.
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1861.severity = none
+# GeneratedRegex ceremony (partial class + attribute member) buys nothing in tests.
+dotnet_diagnostic.SYSLIB1045.severity = none
+# A test double's lifetime ends with the test; it owns no disposable field worth an IDisposable.
+dotnet_diagnostic.CA1001.severity = none
+
+###############################
 # XML Files (csproj, config, etc)
 ###############################
 [*.{xml,config,props,targets,nuspec,resx,ruleset}]
@@ -309,3 +357,13 @@ indent_style = tab
 [*.proto]
 indent_size = 2
 indent_style = space
+
+###############################
+# Python Files
+###############################
+[*.py]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+max_line_length = 100

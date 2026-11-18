@@ -172,7 +172,7 @@ public sealed class TransposedSelectionBindingTests : IAsyncLifetime
 	// so its cell paints the plain selection background rather than the inapplicable variant.
 	private int EditableApplicableIndex(params int[] columnIndices)
 	{
-		var columns = columnIndices.Length == 0 ? new[] { 0 } : columnIndices;
+		var columns = columnIndices.Length == 0 ? [0] : columnIndices;
 		var descriptors = _surface.ParameterDescriptors;
 		for (var i = 0; i < descriptors.Count; i++)
 		{
@@ -208,10 +208,9 @@ public sealed class TransposedSelectionBindingTests : IAsyncLifetime
 
 	private static List<Border> FindCellBorders(ListBoxItem container)
 	{
-		return container.GetVisualDescendants()
+		return [.. container.GetVisualDescendants()
 			.OfType<Border>()
-			.Where(border => border.Classes.Contains(CellClass))
-			.ToList();
+			.Where(border => border.Classes.Contains(CellClass))];
 	}
 
 	private static void ScrollToHorizontalEnd(ListBox stepListBox)
@@ -243,7 +242,7 @@ public sealed class TransposedSelectionBindingTests : IAsyncLifetime
 
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.UseTransposedColumnsPanel();
+		stepListBox.UseTransposedColumnsPanel();
 
 		_window.Show();
 		Dispatcher.UIThread.RunJobs();

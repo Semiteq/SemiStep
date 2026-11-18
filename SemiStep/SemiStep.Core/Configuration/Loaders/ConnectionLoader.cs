@@ -58,26 +58,13 @@ internal static class ConnectionLoader
 			"connection_protocol",
 			dto?.ConnectionProtocol,
 			SupportedConnectionProtocol);
-		if (protocolResult.IsFailed)
-		{
-			return protocolResult;
-		}
-
-		return Result.Ok(dto);
+		return protocolResult.IsFailed ? (Result<ConnectionDto?>)protocolResult : Result.Ok(dto);
 	}
 
 	private static Result ValidateVersion(string fieldName, string? actualValue, string expected)
 	{
-		if (string.IsNullOrWhiteSpace(actualValue))
-		{
-			return Result.Fail($"Missing required field '{fieldName}'. Expected: '{expected}'.");
-		}
-
-		if (actualValue != expected)
-		{
-			return Result.Fail($"Unsupported {fieldName}: '{actualValue}'. Expected: '{expected}'.");
-		}
-
-		return Result.Ok();
+		return string.IsNullOrWhiteSpace(actualValue)
+			? Result.Fail($"Missing required field '{fieldName}'. Expected: '{expected}'.")
+			: actualValue != expected ? Result.Fail($"Unsupported {fieldName}: '{actualValue}'. Expected: '{expected}'.") : Result.Ok();
 	}
 }

@@ -3,29 +3,28 @@
 namespace SemiStep.Tests.S7.Helpers;
 
 /// <summary>
-/// A controllable in-memory transport stub for testing <see cref="PlcTransactionExecutor"/>
+/// A controllable in-memory transport stub for testing <see cref="SemiStep.Core.Plc.Sync.PlcTransactionExecutor"/>
 /// without a real PLC connection.
 /// </summary>
 internal sealed class FakeS7Transport : IS7Transport
 {
-	private readonly Dictionary<(int DbNumber, int StartByte, int Count), byte[]> _readResponses = new();
-	private readonly Dictionary<int, Func<int, int, byte[]>> _dbReadFactories = new();
-	private bool _connected = true;
+	private readonly Dictionary<(int DbNumber, int StartByte, int Count), byte[]> _readResponses = [];
+	private readonly Dictionary<int, Func<int, int, byte[]>> _dbReadFactories = [];
 
 	/// <summary>When set, every write throws this exception, simulating a transport-level write failure.</summary>
 	public Exception? WriteException { get; set; }
 
 	/// <summary>Ordered log of every write call received.</summary>
-	public List<(int DbNumber, int StartByte, byte[] Data)> WriteLog { get; } = new();
+	public List<(int DbNumber, int StartByte, byte[] Data)> WriteLog { get; } = [];
 
 	/// <summary>Ordered log of every read call received (dbNumber, startByte, count).</summary>
-	public List<(int DbNumber, int StartByte, int Count)> ReadLog { get; } = new();
+	public List<(int DbNumber, int StartByte, int Count)> ReadLog { get; } = [];
 
-	public bool IsConnected => _connected;
+	public bool IsConnected { get; private set; } = true;
 
 	public void SetConnected(bool connected)
 	{
-		_connected = connected;
+		IsConnected = connected;
 	}
 
 	/// <summary>
@@ -52,17 +51,11 @@ internal sealed class FakeS7Transport : IS7Transport
 		ReadLog.Add((dbNumber, startByte, count));
 
 		var key = (dbNumber, startByte, count);
-		if (_readResponses.TryGetValue(key, out var response))
-		{
-			return Task.FromResult(response);
-		}
-
-		if (_dbReadFactories.TryGetValue(dbNumber, out var factory))
-		{
-			return Task.FromResult(factory(startByte, count));
-		}
-
-		return Task.FromResult(new byte[count]);
+		return _readResponses.TryGetValue(key, out var response)
+			? Task.FromResult(response)
+			: _dbReadFactories.TryGetValue(dbNumber, out var factory)
+			? Task.FromResult(factory(startByte, count))
+			: Task.FromResult(new byte[count]);
 	}
 
 	public Task WriteBytesAsync(int dbNumber, int startByte, byte[] data, CancellationToken ct = default)

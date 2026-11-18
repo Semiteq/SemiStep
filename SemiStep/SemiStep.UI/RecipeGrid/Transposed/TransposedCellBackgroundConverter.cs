@@ -35,12 +35,7 @@ internal sealed class TransposedCellBackgroundConverter : IMultiValueConverter
 
 		var key = ResolveBrushKey(depth, isPastStep, isReadOnly, !isApplicable, isChanged, isSelected);
 
-		if (host.TryFindResource(key, out var value) && value is IBrush brush)
-		{
-			return brush;
-		}
-
-		return AvaloniaProperty.UnsetValue;
+		return host.TryFindResource(key, out var value) && value is IBrush brush ? brush : AvaloniaProperty.UnsetValue;
 	}
 
 	private static string ResolveBrushKey(
@@ -60,17 +55,9 @@ internal sealed class TransposedCellBackgroundConverter : IMultiValueConverter
 				return CellPaletteInstaller.CellChangedSelectedBackgroundBrushKey;
 			}
 
-			if (inapplicable)
-			{
-				return CellPaletteInstaller.CellDisabledSelectedBackgroundBrushKey;
-			}
-
-			if (readOnly)
-			{
-				return CellPaletteInstaller.CellReadOnlySelectedBackgroundBrushKey;
-			}
-
-			return CellPaletteInstaller.SelectionBackgroundBrushKey;
+			return inapplicable
+				? CellPaletteInstaller.CellDisabledSelectedBackgroundBrushKey
+				: readOnly ? CellPaletteInstaller.CellReadOnlySelectedBackgroundBrushKey : CellPaletteInstaller.SelectionBackgroundBrushKey;
 		}
 
 		if (changed)
@@ -78,9 +65,8 @@ internal sealed class TransposedCellBackgroundConverter : IMultiValueConverter
 			return CellPaletteInstaller.CellChangedBrushKey;
 		}
 
-		if (inapplicable)
-		{
-			return depth switch
+		return inapplicable
+			? depth switch
 			{
 				0 => past ? CellPaletteInstaller.CellDisabledDepth0PastBrushKey
 					: CellPaletteInstaller.CellDisabledDepth0BrushKey,
@@ -90,12 +76,9 @@ internal sealed class TransposedCellBackgroundConverter : IMultiValueConverter
 					: CellPaletteInstaller.CellDisabledDepth2BrushKey,
 				_ => past ? CellPaletteInstaller.CellDisabledDepth3PastBrushKey
 					: CellPaletteInstaller.CellDisabledDepth3BrushKey,
-			};
-		}
-
-		if (readOnly)
-		{
-			return depth switch
+			}
+			: readOnly
+			? depth switch
 			{
 				0 => past ? CellPaletteInstaller.CellReadOnlyDepth0PastBrushKey
 					: CellPaletteInstaller.CellReadOnlyDepth0BrushKey,
@@ -105,19 +88,17 @@ internal sealed class TransposedCellBackgroundConverter : IMultiValueConverter
 					: CellPaletteInstaller.CellReadOnlyDepth2BrushKey,
 				_ => past ? CellPaletteInstaller.CellReadOnlyDepth3PastBrushKey
 					: CellPaletteInstaller.CellReadOnlyDepth3BrushKey,
+			}
+			: depth switch
+			{
+				0 => past ? ExecutionPaletteInstaller.ExecRowDepth0PastBrushKey
+					: CellPaletteInstaller.GridBackgroundBrushKey,
+				1 => past ? ExecutionPaletteInstaller.ExecRowDepth1PastBrushKey
+					: ExecutionPaletteInstaller.ExecRowDepth1BrushKey,
+				2 => past ? ExecutionPaletteInstaller.ExecRowDepth2PastBrushKey
+					: ExecutionPaletteInstaller.ExecRowDepth2BrushKey,
+				_ => past ? ExecutionPaletteInstaller.ExecRowDepth3PastBrushKey
+					: ExecutionPaletteInstaller.ExecRowDepth3BrushKey,
 			};
-		}
-
-		return depth switch
-		{
-			0 => past ? ExecutionPaletteInstaller.ExecRowDepth0PastBrushKey
-				: CellPaletteInstaller.GridBackgroundBrushKey,
-			1 => past ? ExecutionPaletteInstaller.ExecRowDepth1PastBrushKey
-				: ExecutionPaletteInstaller.ExecRowDepth1BrushKey,
-			2 => past ? ExecutionPaletteInstaller.ExecRowDepth2PastBrushKey
-				: ExecutionPaletteInstaller.ExecRowDepth2BrushKey,
-			_ => past ? ExecutionPaletteInstaller.ExecRowDepth3PastBrushKey
-				: ExecutionPaletteInstaller.ExecRowDepth3BrushKey,
-		};
 	}
 }

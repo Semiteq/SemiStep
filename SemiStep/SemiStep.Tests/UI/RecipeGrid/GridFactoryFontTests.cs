@@ -125,7 +125,7 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 			"an empty family must fall back to the chrome font for grid cells");
 	}
 
-	private GridStyleOptions NonDefaultStyle()
+	private static GridStyleOptions NonDefaultStyle()
 	{
 		var defaults = GridStyleOptions.Default;
 		return defaults with

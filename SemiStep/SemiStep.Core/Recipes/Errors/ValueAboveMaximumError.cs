@@ -1,6 +1,4 @@
-﻿using System;
-
-using FluentResults;
+﻿using FluentResults;
 
 namespace SemiStep.Core.Recipes.Errors;
 

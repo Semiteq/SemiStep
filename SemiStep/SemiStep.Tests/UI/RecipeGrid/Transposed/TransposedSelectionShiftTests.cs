@@ -62,7 +62,7 @@ public sealed class TransposedSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void RemoveStepBeforeSelection_ShiftsSurvivorDown()
 	{
-		_surface.UpdateSelection(new[] { 3 });
+		_surface.UpdateSelection([3]);
 
 		// Removing step 1 (before the selection) shifts the surviving step 3 down to 2.
 		_fixture.Coordinator.RemoveStep(1);
@@ -74,7 +74,7 @@ public sealed class TransposedSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void InsertStepAfterSelection_LeavesCacheUnchanged()
 	{
-		_surface.UpdateSelection(new[] { 1 });
+		_surface.UpdateSelection([1]);
 
 		_fixture.Coordinator.InsertStep(4, RecipeTestDriver.WaitActionId);
 		Dispatcher.UIThread.RunJobs();
@@ -85,7 +85,7 @@ public sealed class TransposedSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void RemoveStepAfterSelection_LeavesCacheUnchanged()
 	{
-		_surface.UpdateSelection(new[] { 1 });
+		_surface.UpdateSelection([1]);
 
 		_fixture.Coordinator.RemoveStep(4);
 		Dispatcher.UIThread.RunJobs();
@@ -96,7 +96,7 @@ public sealed class TransposedSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void InsertBeforeContiguousRange_ShiftsBlockUp()
 	{
-		_surface.UpdateSelection(new[] { 2, 3, 4 });
+		_surface.UpdateSelection([2, 3, 4]);
 
 		// Inserting one step before the whole block moves {2, 3, 4} up to {3, 4, 5}.
 		_fixture.Coordinator.InsertStep(0, RecipeTestDriver.WaitActionId);
@@ -112,7 +112,7 @@ public sealed class TransposedSelectionShiftTests : IAsyncLifetime
 		_fixture.Coordinator.InsertStep(SeededStepCount, RecipeTestDriver.WaitActionId);
 		Dispatcher.UIThread.RunJobs();
 
-		_surface.UpdateSelection(new[] { 2 });
+		_surface.UpdateSelection([2]);
 
 		// RecipeReplaced from a full rebuild invalidates every index, so the cache clears.
 		_fixture.Coordinator.Undo();
@@ -124,7 +124,7 @@ public sealed class TransposedSelectionShiftTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void ChangeStepAction_OnSelectedStep_LeavesCacheUnchanged()
 	{
-		_surface.UpdateSelection(new[] { 2 });
+		_surface.UpdateSelection([2]);
 
 		// StepActionChanged replaces the row at a stable index; the shift must not touch the cache.
 		// The live re-selection is governed by OnActionChanged -> RequestSelection, not the shift.
@@ -142,7 +142,7 @@ public sealed class TransposedSelectionShiftTests : IAsyncLifetime
 		Dispatcher.UIThread.RunJobs();
 		var originallySelectedStep = _fixture.Coordinator.CurrentRecipe.Steps[2];
 
-		_surface.UpdateSelection(new[] { 2 });
+		_surface.UpdateSelection([2]);
 
 		// Inserting before the selection shifts the cache from [2] to [3].
 		_fixture.Coordinator.InsertStep(0, RecipeTestDriver.WaitActionId);
@@ -192,7 +192,7 @@ public sealed class TransposedSelectionShiftTests : IAsyncLifetime
 
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();
-		stepListBox!.DataContext = _surface;
+		stepListBox.DataContext = _surface;
 		stepListBox.UseTransposedColumnsPanel();
 
 		_window.Show();

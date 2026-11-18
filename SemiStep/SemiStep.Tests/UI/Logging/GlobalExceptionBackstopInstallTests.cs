@@ -1,6 +1,4 @@
-﻿using System;
-
-using Avalonia.Headless.XUnit;
+﻿using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
 
@@ -32,7 +30,7 @@ public sealed class GlobalExceptionBackstopInstallTests
 		{
 			var handler = GlobalExceptionBackstop.CreateRecoverableExceptionHandler(provider);
 
-			handler.OnNext(new Exception("boom"));
+			handler.OnNext(new InvalidOperationException("boom"));
 
 			var entry = panel.Entries.Should().ContainSingle().Subject;
 			entry.Severity.Should().Be(MessageSeverity.Error);

@@ -4,9 +4,9 @@ using System.Security.Principal;
 
 namespace SemiStep.Core.Plc.Sync.Ownership;
 
-internal sealed class SyncLockRootProvisioner
+internal static class SyncLockRootProvisioner
 {
-	public void EnsureRoot(string lockRoot)
+	public static void EnsureRoot(string lockRoot)
 	{
 		var directory = new DirectoryInfo(lockRoot);
 

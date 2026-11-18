@@ -1,7 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-
-using Avalonia.Threading;
+﻿using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using FluentAssertions;
@@ -83,7 +80,7 @@ internal static class RecipeGridDriverScenarios
 
 	public static Task SnapshotScopeIsItemsPanelSubtreeNotWholeRoot(IRecipeGridDriver driver)
 	{
-		driver.SnapshotScope.Should().NotBeSameAs((object)driver.Root);
+		driver.SnapshotScope.Should().NotBeSameAs(driver.Root);
 
 		var scopeDescendants = driver.SnapshotScope.GetVisualDescendants().Count();
 		var rootDescendants = driver.Root.GetVisualDescendants().Count();

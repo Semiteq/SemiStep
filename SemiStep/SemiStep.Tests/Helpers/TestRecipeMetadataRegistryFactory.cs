@@ -42,9 +42,9 @@ internal static class TestRecipeMetadataRegistryFactory
 
 		var config = new AppConfiguration(
 			Properties: propertyMap,
-			Columns: columns ?? new Dictionary<string, GridColumnDefinition>(),
-			Groups: groups ?? new Dictionary<string, GroupDefinition>(),
-			Actions: actions ?? new Dictionary<int, ActionDefinition>(),
+			Columns: columns ?? [],
+			Groups: groups ?? [],
+			Actions: actions ?? [],
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default,
 			Ui: AppUiOptions.Default);

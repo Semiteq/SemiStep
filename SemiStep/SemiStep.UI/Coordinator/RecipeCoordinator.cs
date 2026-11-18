@@ -24,20 +24,17 @@ namespace SemiStep.UI.Coordinator;
 public sealed class RecipeCoordinator : IDisposable
 {
 	private readonly AppConfiguration _appConfiguration;
-	private readonly IObservable<bool> _canEditRecipe;
 	private readonly IDisposable _canEditRecipeConnection;
 	private readonly CsvService _csvService;
-	private readonly object _disposeLock = new();
+	private readonly Lock _disposeLock = new();
+
 	// Hopped to MainThreadScheduler once and shared via Publish().RefCount(); subscribers add no ObserveOn.
-	private readonly IObservable<PlcExecutionInfo> _executionState;
 	private readonly ImportedRecipeValidator _importedRecipeValidator;
 	private readonly ILogger<RecipeCoordinator> _logger;
 	private readonly MessagePanelViewModel _messagePanel;
 	private readonly PlcLifecycleManager _plc;
 	private readonly Subject<(Recipe Local, Recipe Plc)> _plcRecipeConflictDetected = new();
-	private readonly IObservable<(Recipe Local, Recipe Plc)> _plcRecipeConflictDetectedShared;
 	private readonly Subject<PlcSessionSnapshot> _plcStateChanged = new();
-	private readonly IObservable<PlcSessionSnapshot> _plcStateChangedShared;
 	private readonly RecipeMetadataRegistry _recipeMetadataRegistry;
 	private readonly RecipeSession _session;
 	private PlcConnectionState _connectionState = PlcConnectionState.Disconnected;
@@ -65,31 +62,31 @@ public sealed class RecipeCoordinator : IDisposable
 		_messagePanel = messagePanel;
 		_logger = logger;
 
-		_executionState = _plc.ExecutionState
+		ExecutionState = _plc.ExecutionState
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Publish()
 			.RefCount();
-		_plcStateChangedShared = _plcStateChanged
+		PlcStateChanged = _plcStateChanged
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Publish()
 			.RefCount();
-		_plcRecipeConflictDetectedShared = _plcRecipeConflictDetected
+		PlcRecipeConflictDetected = _plcRecipeConflictDetected
 			.ObserveOn(RxSchedulers.MainThreadScheduler)
 			.Publish()
 			.RefCount();
 
-		var canEditConnectable = _executionState
+		var canEditConnectable = ExecutionState
 			.Select(info => !info.RecipeActive)
 			.StartWith(!IsRecipeActive)
 			.DistinctUntilChanged()
 			.Replay(1);
 		_canEditRecipeConnection = canEditConnectable.Connect();
-		_canEditRecipe = canEditConnectable;
+		CanEditRecipe = canEditConnectable;
 	}
 
-	public IObservable<(Recipe Local, Recipe Plc)> PlcRecipeConflictDetected => _plcRecipeConflictDetectedShared;
-	public IObservable<PlcSessionSnapshot> PlcStateChanged => _plcStateChangedShared;
-	public IObservable<bool> CanEditRecipe => _canEditRecipe;
+	public IObservable<(Recipe Local, Recipe Plc)> PlcRecipeConflictDetected { get; }
+	public IObservable<PlcSessionSnapshot> PlcStateChanged { get; }
+	public IObservable<bool> CanEditRecipe { get; }
 
 	public event Action<MutationSignal>? Mutated;
 
@@ -107,7 +104,7 @@ public sealed class RecipeCoordinator : IDisposable
 	public bool IsConnecting => _connectionState == PlcConnectionState.Connecting;
 	public bool IsRecipeActive => _plc.IsRecipeActive;
 	public bool IsSyncEnabled => _plc.IsSyncEnabled;
-	public IObservable<PlcExecutionInfo> ExecutionState => _executionState;
+	public IObservable<PlcExecutionInfo> ExecutionState { get; }
 	public PlcSyncStatus SyncStatus => _plc.SyncStatus;
 	public DateTimeOffset? LastSyncTime => _plc.LastSyncTime;
 
@@ -168,8 +165,9 @@ public sealed class RecipeCoordinator : IDisposable
 
 	public int GetDefaultActionId()
 	{
-		return _recipeMetadataRegistry.GetAllActions().FirstOrDefault()?.Id
-			?? throw new InvalidOperationException("No actions are defined in the configuration.");
+		return _recipeMetadataRegistry.GetAllActions() is [var firstAction, ..]
+			? firstAction.Id
+			: throw new InvalidOperationException("No actions are defined in the configuration.");
 	}
 
 	public async Task<Result> EnableSync()
@@ -202,15 +200,9 @@ public sealed class RecipeCoordinator : IDisposable
 		_logger.LogInformation("Loading recipe from PLC");
 
 		var readResult = await _plc.ReadRecipeFromPlcAsync();
-		Result result;
-		if (readResult.IsFailed)
-		{
-			result = readResult.ToResult();
-		}
-		else
-		{
-			result = await Dispatcher.UIThread.InvokeAsync(() => _plc.ApplyRecipeFromPlc(readResult.Value));
-		}
+		var result = readResult.IsFailed
+			? readResult.ToResult()
+			: await Dispatcher.UIThread.InvokeAsync(() => _plc.ApplyRecipeFromPlc(readResult.Value));
 
 		if (result.IsFailed)
 		{
@@ -328,14 +320,9 @@ public sealed class RecipeCoordinator : IDisposable
 		_logger.LogInformation("Loading recipe from file: {FilePath}", filePath);
 
 		var loadResult = await _csvService.LoadAsync(filePath);
-		Result result;
-		if (loadResult.IsFailed)
-		{
-			result = loadResult.ToResult();
-		}
-		else
-		{
-			result = await Dispatcher.UIThread.InvokeAsync(() =>
+		var result = loadResult.IsFailed
+			? loadResult.ToResult()
+			: await Dispatcher.UIThread.InvokeAsync(() =>
 			{
 				var validateResult = _session.LoadAsCurrentValidated(loadResult.Value, _importedRecipeValidator);
 				if (validateResult.IsFailed)
@@ -351,7 +338,6 @@ public sealed class RecipeCoordinator : IDisposable
 				// Warning type the viewmodel inspects.
 				return Result.Ok().WithReasons(loadResult.Successes);
 			});
-		}
 
 		if (result.IsFailed)
 		{
@@ -381,7 +367,7 @@ public sealed class RecipeCoordinator : IDisposable
 			filePath,
 			_session.Current.StepCount);
 
-		if (_session.IsValid == false)
+		if (!_session.IsValid)
 		{
 			const string SaveRejectionMessage = "Cannot save recipe with structural defects (see warnings in the message panel).";
 			_logger.LogWarning(
@@ -402,7 +388,7 @@ public sealed class RecipeCoordinator : IDisposable
 		}
 		else
 		{
-			await Dispatcher.UIThread.InvokeAsync(() => _session.MarkSaved());
+			await Dispatcher.UIThread.InvokeAsync(_session.MarkSaved);
 			_logger.LogInformation("Saved recipe to {FilePath}", filePath);
 			// Not a step-graph mutation; subscribers refresh window-title / IsDirty / status.
 			DispatchMutation(new MutationSignal.StateRefreshed());

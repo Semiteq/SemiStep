@@ -30,7 +30,7 @@ namespace SemiStep.Tests.UI.Helpers;
 
 public sealed class UIFixture : IAsyncLifetime
 {
-	private readonly List<IDisposable> _createdSurfaces = new();
+	private readonly List<IDisposable> _createdSurfaces = [];
 
 	public RecipeSession Session { get; private set; } = null!;
 	public PlcLifecycleManager Plc { get; private set; } = null!;

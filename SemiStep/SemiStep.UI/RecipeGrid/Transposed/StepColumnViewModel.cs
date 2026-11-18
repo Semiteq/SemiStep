@@ -20,7 +20,7 @@ public sealed class StepColumnViewModel : IDisposable
 		// A column never scrolled to or keyboard-traversed never builds its per-parameter cell VMs.
 		// Cells is UI-thread-only, so the default locking Lazy mode is unnecessary overhead.
 		_cells = new Lazy<IReadOnlyList<ParameterCellViewModel>>(
-			() => parameterDescriptors.Select(descriptor => cellFactory(Row, descriptor)).ToList(),
+			() => [.. parameterDescriptors.Select(descriptor => cellFactory(Row, descriptor))],
 			LazyThreadSafetyMode.None);
 	}
 

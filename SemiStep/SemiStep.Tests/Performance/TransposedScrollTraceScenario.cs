@@ -21,7 +21,7 @@ namespace SemiStep.Tests.Performance;
 [Trait("Category", "Performance")]
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
-public sealed class TransposedScrollTraceScenario
+public sealed class TransposedScrollTraceScenario(ITestOutputHelper output)
 {
 	private const string ConfigName = "WideParams";
 	private const int WindowWidth = 1400;
@@ -36,12 +36,7 @@ public sealed class TransposedScrollTraceScenario
 	private const int AddRemoveSteps = 50;
 	private const int ExecutionTickSteps = 200;
 
-	private readonly ITestOutputHelper _output;
-
-	public TransposedScrollTraceScenario(ITestOutputHelper output)
-	{
-		_output = output;
-	}
+	private readonly ITestOutputHelper _output = output;
 
 	[AvaloniaFact(Explicit = true)]
 	public async Task Drive_FixedWorkload_ForCpuTrace()

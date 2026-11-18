@@ -208,12 +208,15 @@ there; the enable-catch cancellation message is also plain English, settled by s
 ### PLC faults localize by type
 
 The PLC operator-facing producer surface now raises **typed** errors, so a sync failure localizes by type
-on the fault channel the same way recipe failures do on the panel. Seven typed faults cover it:
+on the fault channel the same way recipe failures do on the panel. Eight typed faults cover it:
 `ConnectionLostError` and `NotConnectedError` (connection), `ProtocolVersionMismatchError` (version),
 `RecipeActiveError` (a sync attempted while the PLC executes the recipe), `WriteVerificationFailedError(attempts)`
-(the write-back read-verify mismatch), `RecipeNotCommittedError` (the managing-area commit check), and the
-Rule-B envelope `PlcCommandFailedError`. `NotConnectedError`/`ProtocolVersionMismatchError` live in
-`SemiStep.Core/Plc/S7/Protocol/`; the five sync-side faults in `SemiStep.Core/Plc/Sync/`.
+(the write-back read-verify mismatch), `RecipeNotCommittedError` (the managing-area commit check),
+`RecipeLengthMismatchError(headerStepCount, fault, arrayType)` (the read-back `recipe_lines` header disagrees
+with the value arrays: a negative count, an array that ends early, or an array with leftover values), and the
+Rule-B envelope `PlcCommandFailedError`. `NotConnectedError`, `ProtocolVersionMismatchError` and
+`RecipeLengthMismatchError` live in `SemiStep.Core/Plc/S7/Protocol/`; the five sync-side faults in
+`SemiStep.Core/Plc/Sync/`.
 
 **Un-laundering the fault seam.** `PlcSyncExecutor` used to re-wrap a typed inner's `.Message` in a fresh
 `new Error(...)` before emitting the fault, discarding the type so `OnPlcFault`'s single-`IError` seam could

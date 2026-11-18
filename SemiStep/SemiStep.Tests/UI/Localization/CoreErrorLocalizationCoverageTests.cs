@@ -54,6 +54,8 @@ public sealed class CoreErrorLocalizationCoverageTests
 			new RecipeActiveError(),
 		[typeof(RecipeNotCommittedError)] =
 			new RecipeNotCommittedError(),
+		[typeof(RecipeLengthMismatchError)] =
+			new RecipeLengthMismatchError(4, RecipeLengthFault.ArrayExhausted, PropertyType.Int),
 		[typeof(WriteVerificationFailedError)] =
 			new WriteVerificationFailedError(3),
 		[typeof(PlcCommandFailedError)] =
@@ -138,6 +140,12 @@ public sealed class CoreErrorLocalizationCoverageTests
 			new RowCountMismatchWarning("recipe.csv", 5, 3)
 	};
 
+	private static readonly IReadOnlyList<IReason> _additionalFaultSamples =
+	[
+		new RecipeLengthMismatchError(-1, RecipeLengthFault.NegativeStepCount),
+		new RecipeLengthMismatchError(2, RecipeLengthFault.ArrayHasLeftovers, PropertyType.Float),
+	];
+
 	[Fact]
 	public void EveryPublicCoreReasonType_HasSampleAndLocalizesUnderRussianCulture()
 	{
@@ -148,22 +156,24 @@ public sealed class CoreErrorLocalizationCoverageTests
 			PublicCoreWarningTypes().Should().NotBeEmpty(
 				"the coverage loop must not pass vacuously if all public Core warnings became internal");
 
-			foreach (var reasonType in PublicCoreErrorTypes().Concat(PublicCoreWarningTypes()))
+			foreach (var reasonType in PublicCoreReasonTypes())
 			{
 				_typeData.Should().ContainKey(
 					reasonType,
 					"every public Core Error/Warning subclass needs a sample in _typeData");
+			}
 
-				var sample = _typeData[reasonType];
+			foreach (var sample in AllSamples())
+			{
 				var localized = ReasonLocalizer.Localize(sample);
 
 				localized.Should().NotBeNullOrEmpty(
 					"{0} must localize to a non-empty sentence",
-					reasonType.Name);
+					sample.GetType().Name);
 				localized.Should().NotBe(
 					sample.Message,
 					"{0} needs a ReasonLocalizer switch case producing localized text under ru",
-					reasonType.Name);
+					sample.GetType().Name);
 			}
 		}
 	}
@@ -173,13 +183,25 @@ public sealed class CoreErrorLocalizationCoverageTests
 	{
 		using (ResourcesCultureScope.Use("en"))
 		{
-			var mismatches = PublicCoreErrorTypes().Concat(PublicCoreWarningTypes())
-				.Where(reasonType => ReasonLocalizer.Localize(_typeData[reasonType]) != _typeData[reasonType].Message)
-				.Select(reasonType => reasonType.Name)
+			var mismatches = AllSamples()
+				.Where(sample => ReasonLocalizer.Localize(sample) != sample.Message)
+				.Select(sample => sample.Message)
 				.ToList();
 
 			mismatches.Should().BeEmpty("the English resource text must match the Core message for the same arguments");
 		}
+	}
+
+	private static IEnumerable<IReason> AllSamples()
+	{
+		return PublicCoreReasonTypes()
+			.Select(reasonType => _typeData[reasonType])
+			.Concat(_additionalFaultSamples);
+	}
+
+	private static IEnumerable<Type> PublicCoreReasonTypes()
+	{
+		return PublicCoreErrorTypes().Concat(PublicCoreWarningTypes());
 	}
 
 	private static IEnumerable<Type> PublicCoreErrorTypes()

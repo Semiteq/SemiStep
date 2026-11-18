@@ -185,7 +185,8 @@ Each named guard is a hypothesis the owning slice plan must confirm fires at HEA
 - **Depends on:** plc-reconcile-uncommitted
 - **Stacking base:** master
 - **Scope guard:** no new error type and no resx changes — the errors raised already exist and are
-  already localized. No retry logic.
+  already localized. No retry logic. `RecipeLengthMismatchError` (a header that disagrees with the
+  arrays, since #196) is one of the read failures this slice will report.
 - **Plan:** —
 - **PR:** —
 - **Branch:** —
@@ -228,6 +229,14 @@ Each named guard is a hypothesis the owning slice plan must confirm fires at HEA
 - **Plan:** —
 - **PR:** —
 - **Branch:** —
+
+## Read path fix (#196)
+
+The read path used the int-array size as the step count, so a recipe with group columns read back
+with the wrong length. That defect is fixed: the read takes the step count from `recipe_lines`, and
+the write verifies `recipe_lines` after it. The manual verification gate below no longer depends on
+the defect. A header that disagrees with the arrays now fails with `RecipeLengthMismatchError`.
+The `plc-reconcile-read-failure` slice will surface that error to the operator.
 
 ## Manual verification gate
 

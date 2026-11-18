@@ -2,6 +2,7 @@
 
 using FluentResults;
 
+using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 
@@ -38,26 +39,33 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry recipeMetadataRegis
 
 	public Result<Recipe> ToRecipe(PlcRecipeData data)
 	{
-		if (data.StepCount == 0)
+		if (data.StepCount < 0)
 		{
-			return Result.Ok(Recipe.Empty);
+			return Result.Fail(new RecipeLengthMismatchError(data.StepCount, RecipeLengthFault.NegativeStepCount));
 		}
 
 		var intIndex = 0;
 		var floatIndex = 0;
 		var stringIndex = 0;
 
-		var steps = new List<Step>(data.StepCount);
+		var steps = new List<Step>();
 
 		for (var stepIndex = 0; stepIndex < data.StepCount; stepIndex++)
 		{
-			var stepResult = DeserialiseStep(stepIndex, data, ref intIndex, ref floatIndex, ref stringIndex);
+			var stepResult = DeserialiseStep(data, ref intIndex, ref floatIndex, ref stringIndex);
 			if (stepResult.IsFailed)
 			{
 				return stepResult.ToResult<Recipe>();
 			}
 
 			steps.Add(stepResult.Value);
+		}
+
+		var leftoverArray = FindArrayWithLeftovers(data, intIndex, floatIndex, stringIndex);
+		if (leftoverArray is { } array)
+		{
+			return Result.Fail(
+				new RecipeLengthMismatchError(data.StepCount, RecipeLengthFault.ArrayHasLeftovers, array));
 		}
 
 		return Result.Ok(new Recipe([.. steps]));
@@ -91,7 +99,6 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry recipeMetadataRegis
 	}
 
 	private Result<Step> DeserialiseStep(
-		int stepIndex,
 		PlcRecipeData data,
 		ref int intIndex,
 		ref int floatIndex,
@@ -100,7 +107,7 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry recipeMetadataRegis
 		if (intIndex >= data.IntValues.Length)
 		{
 			return Result.Fail(
-				$"Insufficient int values at step {stepIndex}: expected ActionKey but reached end of array");
+				new RecipeLengthMismatchError(data.StepCount, RecipeLengthFault.ArrayExhausted, PropertyType.Int));
 		}
 
 		var actionKey = data.IntValues[intIndex++];
@@ -115,7 +122,7 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry recipeMetadataRegis
 		foreach (var propertyDef in actionResult.Value.Properties)
 		{
 			var propertyResult = DeserialiseProperty(
-				propertyDef, stepIndex, data, ref intIndex, ref floatIndex, ref stringIndex);
+				propertyDef, data, ref intIndex, ref floatIndex, ref stringIndex);
 			if (propertyResult.IsFailed)
 			{
 				return propertyResult.ToResult<Step>();
@@ -166,7 +173,6 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry recipeMetadataRegis
 
 	private Result<PropertyValue> DeserialiseProperty(
 		ActionPropertyDefinition propertyDef,
-		int stepIndex,
 		PlcRecipeData data,
 		ref int intIndex,
 		ref int floatIndex,
@@ -183,24 +189,24 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry recipeMetadataRegis
 			case PropertyType.Int:
 				if (intIndex >= data.IntValues.Length)
 				{
-					return Result.Fail(
-						$"Insufficient int values at step {stepIndex}, column '{propertyDef.Key}'");
+					return Result.Fail(new RecipeLengthMismatchError(
+							data.StepCount, RecipeLengthFault.ArrayExhausted, PropertyType.Int));
 				}
 				return Result.Ok(PropertyValue.FromInt(data.IntValues[intIndex++]));
 
 			case PropertyType.Float:
 				if (floatIndex >= data.FloatValues.Length)
 				{
-					return Result.Fail(
-						$"Insufficient float values at step {stepIndex}, column '{propertyDef.Key}'");
+					return Result.Fail(new RecipeLengthMismatchError(
+							data.StepCount, RecipeLengthFault.ArrayExhausted, PropertyType.Float));
 				}
 				return Result.Ok(PropertyValue.FromFloat(data.FloatValues[floatIndex++]));
 
 			case PropertyType.String:
 				if (stringIndex >= data.StringValues.Length)
 				{
-					return Result.Fail(
-						$"Insufficient string values at step {stepIndex}, column '{propertyDef.Key}'");
+					return Result.Fail(new RecipeLengthMismatchError(
+							data.StepCount, RecipeLengthFault.ArrayExhausted, PropertyType.String));
 				}
 				return Result.Ok(PropertyValue.FromString(data.StringValues[stringIndex++]));
 
@@ -224,6 +230,22 @@ internal sealed class RecipeConverter(RecipeMetadataRegistry recipeMetadataRegis
 		return actionResult.IsFailed
 			? (Result<ActionDefinition>)Result.Fail($"Action with key {actionKey} not found in configuration registry")
 			: Result.Ok(actionResult.Value);
+	}
+
+	private static PropertyType? FindArrayWithLeftovers(
+		PlcRecipeData data, int intIndex, int floatIndex, int stringIndex)
+	{
+		if (intIndex < data.IntValues.Length)
+		{
+			return PropertyType.Int;
+		}
+
+		if (floatIndex < data.FloatValues.Length)
+		{
+			return PropertyType.Float;
+		}
+
+		return stringIndex < data.StringValues.Length ? PropertyType.String : null;
 	}
 
 	private static void AppendDefaultValue(

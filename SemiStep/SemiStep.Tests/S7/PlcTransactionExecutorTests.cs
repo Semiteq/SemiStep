@@ -259,6 +259,41 @@ public sealed class PlcTransactionExecutorTests
 	}
 
 	[Fact]
+	public async Task WriteRecipeWithRetryAsync_VerifyManagingAreaReadFails_ReturnsPlcCommandFailedError()
+	{
+		var (executor, transport) = BuildExecutor();
+		ConfigureEmptyArrayReadResponses(transport);
+		var managingDb = BuildTestConfiguration().Layout.ManagingDb;
+		transport.SetReadResponseForDb(managingDb.DbNumber, (_, _) => throw new IOException("read failed"));
+
+		var result = await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
+
+		result.IsFailed.Should().BeTrue();
+		result.HasError<PlcCommandFailedError>().Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task WriteRecipeWithRetryAsync_RecipeLinesDifferFromWrittenStepCount_FailsVerification()
+	{
+		var (executor, transport) = BuildExecutor();
+		ConfigureEmptyArrayReadResponses(transport);
+		SetManagingAreaRecipeLines(transport, 5);
+
+		var result = await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
+
+		result.IsFailed.Should().BeTrue("the arrays match but recipe_lines in the PLC is not the written count");
+		result.HasError<WriteVerificationFailedError>().Should().BeTrue();
+	}
+
+	private static void SetManagingAreaRecipeLines(FakeS7Transport transport, int recipeLines)
+	{
+		var managingDb = BuildTestConfiguration().Layout.ManagingDb;
+		var bytes = new byte[managingDb.TotalSize];
+		BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(managingDb.RecipeLinesOffset), recipeLines);
+		transport.SetReadResponseForDb(managingDb.DbNumber, (_, _) => bytes);
+	}
+
+	[Fact]
 	public async Task WriteRecipeWithRetryAsync_NotConnected_ReturnsFailedResultWithNotConnectedError()
 	{
 		var (executor, transport) = BuildExecutor();

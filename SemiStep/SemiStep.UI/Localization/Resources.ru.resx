@@ -463,6 +463,24 @@
   <data name="ErrorRecipeNotCommitted" xml:space="preserve">
     <value>Рецепт не зафиксирован на ПЛК</value>
   </data>
+  <data name="ErrorRecipeLengthNegative" xml:space="preserve">
+    <value>В заголовке рецепта указано отрицательное число шагов: {0}</value>
+  </data>
+  <data name="ErrorRecipeLengthExhausted" xml:space="preserve">
+    <value>В заголовке рецепта указано шагов: {0}, но массив {1} закончился раньше</value>
+  </data>
+  <data name="ErrorRecipeLengthLeftovers" xml:space="preserve">
+    <value>В заголовке рецепта указано шагов: {0}, но в массиве {1} остались лишние значения</value>
+  </data>
+  <data name="RecipeArrayNameInt" xml:space="preserve">
+    <value>целых чисел</value>
+  </data>
+  <data name="RecipeArrayNameFloat" xml:space="preserve">
+    <value>вещественных чисел</value>
+  </data>
+  <data name="RecipeArrayNameString" xml:space="preserve">
+    <value>строк</value>
+  </data>
   <data name="ErrorWriteVerificationFailed" xml:space="preserve">
     <value>Проверка записи рецепта не удалась после {0} попыток</value>
   </data>

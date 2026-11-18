@@ -6,6 +6,7 @@ using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Plc.Sync.Ownership;
+using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Clipboard.Errors;
 using SemiStep.Core.Recipes.Errors;
@@ -42,6 +43,7 @@ public static class ReasonLocalizer
 			GridStyleSaveFailedError error => Format(Resources.ErrorGridStyleSaveFailed, error.FileName),
 			RecipeActiveError => Resources.ErrorRecipeActive,
 			RecipeNotCommittedError => Resources.ErrorRecipeNotCommitted,
+			RecipeLengthMismatchError error => LocalizeRecipeLength(error),
 			WriteVerificationFailedError error => Format(
 				Resources.ErrorWriteVerificationFailed, error.Attempts),
 			PlcCommandFailedError => Resources.ErrorPlcCommandFailed,
@@ -127,6 +129,31 @@ public static class ReasonLocalizer
 		}
 
 		return null;
+	}
+
+	private static string LocalizeRecipeLength(RecipeLengthMismatchError error)
+	{
+		var arrayName = LocalizeArrayName(error.ArrayType);
+		return error.Fault switch
+		{
+			RecipeLengthFault.NegativeStepCount => Format(Resources.ErrorRecipeLengthNegative, error.HeaderStepCount),
+			RecipeLengthFault.ArrayExhausted => Format(
+				Resources.ErrorRecipeLengthExhausted, error.HeaderStepCount, arrayName),
+			RecipeLengthFault.ArrayHasLeftovers => Format(
+				Resources.ErrorRecipeLengthLeftovers, error.HeaderStepCount, arrayName),
+			_ => error.Message
+		};
+	}
+
+	private static string LocalizeArrayName(PropertyType? arrayType)
+	{
+		return arrayType switch
+		{
+			PropertyType.Int => Resources.RecipeArrayNameInt,
+			PropertyType.Float => Resources.RecipeArrayNameFloat,
+			PropertyType.String => Resources.RecipeArrayNameString,
+			_ => string.Empty
+		};
 	}
 
 	private static string Format(string template, params object[] args)

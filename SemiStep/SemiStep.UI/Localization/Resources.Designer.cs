@@ -304,6 +304,18 @@ public class Resources
 
 	public static string ErrorRecipeNotCommitted => ResourceManager.GetString("ErrorRecipeNotCommitted", resourceCulture) ?? string.Empty;
 
+	public static string ErrorRecipeLengthNegative => ResourceManager.GetString("ErrorRecipeLengthNegative", resourceCulture) ?? string.Empty;
+
+	public static string ErrorRecipeLengthExhausted => ResourceManager.GetString("ErrorRecipeLengthExhausted", resourceCulture) ?? string.Empty;
+
+	public static string ErrorRecipeLengthLeftovers => ResourceManager.GetString("ErrorRecipeLengthLeftovers", resourceCulture) ?? string.Empty;
+
+	public static string RecipeArrayNameInt => ResourceManager.GetString("RecipeArrayNameInt", resourceCulture) ?? string.Empty;
+
+	public static string RecipeArrayNameFloat => ResourceManager.GetString("RecipeArrayNameFloat", resourceCulture) ?? string.Empty;
+
+	public static string RecipeArrayNameString => ResourceManager.GetString("RecipeArrayNameString", resourceCulture) ?? string.Empty;
+
 	public static string ErrorWriteVerificationFailed => ResourceManager.GetString("ErrorWriteVerificationFailed", resourceCulture) ?? string.Empty;
 
 	public static string ErrorPlcCommandFailed => ResourceManager.GetString("ErrorPlcCommandFailed", resourceCulture) ?? string.Empty;

@@ -56,57 +56,6 @@ internal sealed class PlcTransactionExecutor
 			ct);
 	}
 
-	public async Task<Result<PlcRecipeData>> ReadRecipeDataAsync(CancellationToken ct = default)
-	{
-		if (!_transport.IsConnected)
-		{
-			return Result.Fail(new NotConnectedError());
-		}
-
-		try
-		{
-			var intHeaderBytes = await _transport.ReadBytesAsync(
-				_layout.IntDb.DbNumber,
-				0,
-				_layout.IntDb.DataStartOffset,
-				ct);
-			var intCount = ArrayCodec.ReadArrayCurrentSize(intHeaderBytes, _layout.IntDb);
-
-			var floatHeaderBytes = await _transport.ReadBytesAsync(
-				_layout.FloatDb.DbNumber,
-				0,
-				_layout.FloatDb.DataStartOffset,
-				ct);
-			var floatCount = ArrayCodec.ReadArrayCurrentSize(floatHeaderBytes, _layout.FloatDb);
-
-			var stringHeaderBytes = await _transport.ReadBytesAsync(
-				_layout.StringDb.DbNumber,
-				0,
-				_layout.StringDb.DataStartOffset,
-				ct);
-			var stringCount = ArrayCodec.ReadArrayCurrentSize(stringHeaderBytes, _layout.StringDb);
-
-			var intDataSize = _layout.IntDb.DataStartOffset + (intCount * ProtocolConstants.IntElementSize);
-			var floatDataSize = _layout.FloatDb.DataStartOffset + (floatCount * ProtocolConstants.FloatElementSize);
-			var stringDataSize = _layout.StringDb.DataStartOffset + (stringCount * _arrayCodec.WStringElementSize);
-
-			var intData = await _transport.ReadBytesAsync(_layout.IntDb.DbNumber, 0, intDataSize, ct);
-			var floatData = await _transport.ReadBytesAsync(_layout.FloatDb.DbNumber, 0, floatDataSize, ct);
-			var stringData = await _transport.ReadBytesAsync(_layout.StringDb.DbNumber, 0, stringDataSize, ct);
-
-			var intValues = _arrayCodec.DecodeIntArray(intData, intCount);
-			var floatValues = _arrayCodec.DecodeFloatArray(floatData, floatCount);
-			var stringValues = _arrayCodec.DecodeStringArray(stringData, stringCount);
-
-			return Result.Ok(new PlcRecipeData(intValues, floatValues, stringValues, StepCount: intCount));
-		}
-		catch (Exception ex) when (ex is not OperationCanceledException)
-		{
-			_logger.LogWarning(ex, "PLC recipe data read failed");
-			return Result.Fail(new PlcCommandFailedError().CausedBy(ex));
-		}
-	}
-
 	public async Task<Result> WriteRecipeWithRetryAsync(Recipe recipe, CancellationToken ct = default)
 	{
 		if (!_transport.IsConnected)
@@ -204,7 +153,7 @@ internal sealed class PlcTransactionExecutor
 			return Result.Fail(new RecipeNotCommittedError());
 		}
 
-		var recipeDataResult = await ReadRecipeDataAsync(ct);
+		var recipeDataResult = await ReadRecipeDataAsync(managingAreaResult.Value.RecipeLines, ct);
 		return recipeDataResult.IsFailed ? recipeDataResult.ToResult<Recipe>() : _converter.ToRecipe(recipeDataResult.Value);
 	}
 
@@ -224,6 +173,57 @@ internal sealed class PlcTransactionExecutor
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
 			_logger.LogWarning(ex, "PLC read/decode failed for DB {DbNumber}", dbNumber);
+			return Result.Fail(new PlcCommandFailedError().CausedBy(ex));
+		}
+	}
+
+	private async Task<Result<PlcRecipeData>> ReadRecipeDataAsync(int stepCount, CancellationToken ct)
+	{
+		if (!_transport.IsConnected)
+		{
+			return Result.Fail(new NotConnectedError());
+		}
+
+		try
+		{
+			var intHeaderBytes = await _transport.ReadBytesAsync(
+				_layout.IntDb.DbNumber,
+				0,
+				_layout.IntDb.DataStartOffset,
+				ct);
+			var intCount = ArrayCodec.ReadArrayCurrentSize(intHeaderBytes, _layout.IntDb);
+
+			var floatHeaderBytes = await _transport.ReadBytesAsync(
+				_layout.FloatDb.DbNumber,
+				0,
+				_layout.FloatDb.DataStartOffset,
+				ct);
+			var floatCount = ArrayCodec.ReadArrayCurrentSize(floatHeaderBytes, _layout.FloatDb);
+
+			var stringHeaderBytes = await _transport.ReadBytesAsync(
+				_layout.StringDb.DbNumber,
+				0,
+				_layout.StringDb.DataStartOffset,
+				ct);
+			var stringCount = ArrayCodec.ReadArrayCurrentSize(stringHeaderBytes, _layout.StringDb);
+
+			var intDataSize = _layout.IntDb.DataStartOffset + (intCount * ProtocolConstants.IntElementSize);
+			var floatDataSize = _layout.FloatDb.DataStartOffset + (floatCount * ProtocolConstants.FloatElementSize);
+			var stringDataSize = _layout.StringDb.DataStartOffset + (stringCount * _arrayCodec.WStringElementSize);
+
+			var intData = await _transport.ReadBytesAsync(_layout.IntDb.DbNumber, 0, intDataSize, ct);
+			var floatData = await _transport.ReadBytesAsync(_layout.FloatDb.DbNumber, 0, floatDataSize, ct);
+			var stringData = await _transport.ReadBytesAsync(_layout.StringDb.DbNumber, 0, stringDataSize, ct);
+
+			var intValues = _arrayCodec.DecodeIntArray(intData, intCount);
+			var floatValues = _arrayCodec.DecodeFloatArray(floatData, floatCount);
+			var stringValues = _arrayCodec.DecodeStringArray(stringData, stringCount);
+
+			return Result.Ok(new PlcRecipeData(intValues, floatValues, stringValues, StepCount: stepCount));
+		}
+		catch (Exception ex) when (ex is not OperationCanceledException)
+		{
+			_logger.LogWarning(ex, "PLC recipe data read failed");
 			return Result.Fail(new PlcCommandFailedError().CausedBy(ex));
 		}
 	}
@@ -263,7 +263,22 @@ internal sealed class PlcTransactionExecutor
 
 	private async Task<Result<bool>> VerifyWriteAsync(PlcRecipeData expected, CancellationToken ct)
 	{
-		var actualResult = await ReadRecipeDataAsync(ct);
+		var managingAreaResult = await ReadManagingAreaAsync(ct);
+		if (managingAreaResult.IsFailed)
+		{
+			return managingAreaResult.ToResult<bool>();
+		}
+
+		if (managingAreaResult.Value.RecipeLines != expected.StepCount)
+		{
+			_logger.LogWarning(
+				"PLC recipe_lines is {ActualLines}, written step count is {ExpectedLines}",
+				managingAreaResult.Value.RecipeLines,
+				expected.StepCount);
+			return Result.Ok(false);
+		}
+
+		var actualResult = await ReadRecipeDataAsync(expected.StepCount, ct);
 		return actualResult.IsFailed
 			? actualResult.ToResult<bool>()
 			: Result.Ok(PlcRecipeDataComparer.DataMatchesExpected(actualResult.Value, expected));

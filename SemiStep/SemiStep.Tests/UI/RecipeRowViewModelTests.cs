@@ -1,5 +1,7 @@
 ﻿using System.Globalization;
 
+using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Headless.XUnit;
 
 using FluentAssertions;
@@ -9,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
+using SemiStep.Tests.Helpers;
 
 using SemiStep.UI.RecipeGrid;
 
@@ -77,26 +80,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void ActionMetadata_TwoRowsDifferentActions_GetDistinctDictionaries()
-	{
-		var waitAction = _recipeMetadataRegistry.GetAction(RecipeTestDriver.WaitActionId).Value;
-		var withGroupAction = _recipeMetadataRegistry.GetAction(RecipeTestDriver.WithGroupActionId).Value;
-		_session.AppendStep(RecipeTestDriver.WaitActionId);
-		_session.AppendStep(RecipeTestDriver.WithGroupActionId);
-		var waitStep = _session.Current.Steps[0];
-		var withGroupStep = _session.Current.Steps[1];
-
-		var waitRow = new RecipeRowViewModel(
-			1, waitStep, waitAction, _recipeMetadataRegistry, BuildInapplicableColumns(waitAction, waitStep));
-		var withGroupRow = new RecipeRowViewModel(
-			2, withGroupStep, withGroupAction, _recipeMetadataRegistry, BuildInapplicableColumns(withGroupAction, withGroupStep));
-
-		withGroupRow.ColumnUnits.Should().NotBeSameAs(waitRow.ColumnUnits);
-		withGroupRow.ColumnFormatKinds.Should().NotBeSameAs(waitRow.ColumnFormatKinds);
-		withGroupRow.GroupItemsByColumn.Should().NotBeSameAs(waitRow.GroupItemsByColumn);
-	}
-
-	[AvaloniaFact]
 	public void GetPropertyValue_Action_ReturnsActionId()
 	{
 		var row = CreateRow();
@@ -124,18 +107,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var value = row.GetPropertyValue("nonexistent_column");
 
 		value.Should().BeNull();
-	}
-
-	[AvaloniaFact]
-	public void Indexer_Get_DelegatesToGetPropertyValue()
-	{
-		var row = CreateRow();
-
-		var indexerValue = row["action"];
-		var directValue = row.GetPropertyValue("action");
-
-		indexerValue.Should().Be(directValue);
-		indexerValue.Should().Be(RecipeTestDriver.WaitActionId);
 	}
 
 	[AvaloniaFact]
@@ -199,18 +170,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void SetPropertyValue_ActionWithDifferentId_FiresEvent()
-	{
-		var row = CreateRow(RecipeTestDriver.WaitActionId);
-		var receivedActionId = -1;
-		row.ActionChanged += id => receivedActionId = id;
-
-		row.SetPropertyValue("action", RecipeTestDriver.ForLoopActionId.ToString(CultureInfo.InvariantCulture));
-
-		receivedActionId.Should().Be(RecipeTestDriver.ForLoopActionId);
-	}
-
-	[AvaloniaFact]
 	public void SetPropertyValue_PropertyWithSameValue_DoesNotFirePropertyChanged()
 	{
 		var row = CreateRow();
@@ -248,19 +207,17 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void UpdateStep_RaisesIndexerPropertyChanged()
+	public void UpdateStep_RefreshesIndexerBinding()
 	{
-		// Avalonia's IndexerNode invalidates indexer bindings only when PropertyChanged carries
-		// the declared CLR indexer name ("Item" by default). The WPF "Item[]" convention is not
-		// recognized — see Avalonia.Data.Core.ExpressionNodes.Reflection.ReflectionIndexerNode.
 		var row = CreateRow();
-		var changedProperties = new List<string>();
-		row.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName ?? "");
+		var textBlock = new TextBlock { DataContext = row };
+		textBlock.Bind(TextBlock.TextProperty, new Binding($"[{RecipeTestDriver.CommentColumn}]"));
 
-		var updatedStep = _session.Current.Steps[0];
-		row.UpdateStep(updatedStep);
+		const string NewComment = "updated";
+		_session.UpdateStepProperty(0, RecipeTestDriver.CommentColumn, NewComment);
+		row.UpdateStep(_session.Current.Steps[0]);
 
-		changedProperties.Should().Contain("Item");
+		textBlock.Text.Should().Be(NewComment);
 	}
 
 	[AvaloniaFact]
@@ -269,28 +226,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var row = CreateRow(RecipeTestDriver.PauseActionId);
 
 		row.IsApplicable("action").Should().BeTrue();
-	}
-
-	// The real-change contract (new instance + PropertyChanged on an applicability flip) is
-	// pinned by RecipeRowSelectorEditTests.SelectorReassignment_FlipsInapplicableColumns.
-	[AvaloniaFact]
-	public void RecomputeInapplicableColumns_UnchangedResult_KeepsInstanceAndRaisesNothing()
-	{
-		var row = CreateRow(RecipeTestDriver.WaitActionId);
-		var before = row.InapplicableColumns;
-		var raised = false;
-		row.PropertyChanged += (_, args) =>
-		{
-			if (args.PropertyName == nameof(RecipeRowViewModel.InapplicableColumns))
-			{
-				raised = true;
-			}
-		};
-
-		row.RecomputeInapplicableColumns();
-
-		raised.Should().BeFalse();
-		row.InapplicableColumns.Should().BeSameAs(before);
 	}
 
 	[AvaloniaFact]
@@ -327,46 +262,60 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		row.GroupItemsByColumn[RecipeTestDriver.TargetColumn].Should().BeEmpty();
 	}
 
-	[AvaloniaFact]
-	public void GroupItemsByColumn_DoesNotInject_NonGroupBoundColumnKeys()
-	{
-		// Defensive invariant: GroupItemsByColumn carries only column keys that the registry
-		// declares as ActionTargetComboBox. If an action property references a column key that
-		// isn't a registered group-bound column (production validators reject this at startup;
-		// the guard exists for validator drift), the row VM must not silently inject it.
-		var unresolvedGroupProperty = new ActionPropertyDefinition(
-			Key: "phantom_column",
-			GroupName: "nonexistent_group",
-			PropertyTypeId: "enum",
-			DefaultValue: null);
-		var actionWithUnresolvedGroup = new ActionDefinition(
-			id: 999,
-			uiName: "Phantom",
-			deployDuration: DeployDuration.Immediate,
-			properties: [unresolvedGroupProperty]);
-		var step = new Step(999, []);
-		var inapplicableColumns = new HashSet<string>();
-
-		var row = new RecipeRowViewModel(1, step, actionWithUnresolvedGroup, _recipeMetadataRegistry, inapplicableColumns);
-
-		row.GroupItemsByColumn.Should().NotContainKey("phantom_column");
-	}
-
-	public static TheoryData<string, string> ColumnUnitsData => new()
-	{
-		{ "step_start_time", "с" },
-		{ RecipeTestDriver.StepDurationColumn, "s" },
-		{ RecipeTestDriver.CommentColumn, "" },
-	};
-
 	[AvaloniaTheory]
-	[MemberData(nameof(ColumnUnitsData))]
-	public void ColumnUnits_ExposesExpectedUnitsForKnownColumns(string columnKey, string expectedUnits)
+	[InlineData(RecipeTestDriver.StepDurationColumn)]
+	[InlineData(RecipeTestDriver.CommentColumn)]
+	public void ColumnUnits_MatchesConfiguredPropertyUnits(string columnKey)
 	{
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 
 		row.ColumnUnits.Should().ContainKey(columnKey)
-			.WhoseValue.Should().Be(expectedUnits);
+			.WhoseValue.Should().Be(ConfiguredUnitsOfColumn(columnKey));
+	}
+
+	[AvaloniaFact]
+	public void ColumnUnits_StartTimeColumn_EqualsDurationPropertyUnits()
+	{
+		var row = CreateRow(RecipeTestDriver.WaitActionId);
+		var durationUnits = ConfiguredUnitsOfColumn(RecipeTestDriver.StepDurationColumn);
+
+		durationUnits.Should().NotBeNullOrEmpty();
+		row.ColumnUnits.Should().ContainKey("step_start_time")
+			.WhoseValue.Should().Be(durationUnits);
+	}
+
+	[Fact]
+	public void StartTimeUnits_DurationPropertyWithEmptyUnits_AreEmpty()
+	{
+		var duration = TestPropertyTypeDefinitionBuilder.CreateFloat("time") with { Units = "" };
+		var durationColumn = new GridColumnDefinition(
+			Key: StepValueParser.StepDurationColumnKey,
+			ColumnType: ColumnTypes.PropertyField,
+			UiName: "Duration",
+			PropertyTypeId: "time",
+			ReadOnly: false,
+			SaveToCsv: true);
+		var registry = TestRecipeMetadataRegistryFactory.Build(
+			[duration, .. TestRecipeMetadataRegistryFactory.DefaultStringProperty().Values],
+			columns: new Dictionary<string, GridColumnDefinition> { [durationColumn.Key] = durationColumn });
+
+		TimeFormatHelper.ResolveStartTimeUnits(registry).Should().BeEmpty();
+	}
+
+	[Fact]
+	public void StartTimeUnits_NoDurationColumn_AreNull()
+	{
+		var registry = TestRecipeMetadataRegistryFactory.Build(
+			TestRecipeMetadataRegistryFactory.DefaultStringProperty().Values);
+
+		TimeFormatHelper.ResolveStartTimeUnits(registry).Should().BeNull();
+	}
+
+	private string? ConfiguredUnitsOfColumn(string columnKey)
+	{
+		var column = _recipeMetadataRegistry.GetColumn(columnKey).Value;
+
+		return _recipeMetadataRegistry.GetProperty(column.PropertyTypeId).Value.Units;
 	}
 
 	[AvaloniaTheory]

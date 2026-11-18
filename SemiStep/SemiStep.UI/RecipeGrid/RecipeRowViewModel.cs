@@ -404,7 +404,7 @@ public sealed class RecipeRowViewModel(
 			formatKinds[actionProperty.Key] = propertyType?.FormatKind ?? TimeFormatHelper.DefaultFormatKind;
 		}
 
-		units[TimeFormatHelper.StepStartTimeColumnKey] = TimeFormatHelper.TimeUnits;
+		units[TimeFormatHelper.StepStartTimeColumnKey] = TimeFormatHelper.ResolveStartTimeUnits(recipeMetadataRegistry);
 		formatKinds[TimeFormatHelper.StepStartTimeColumnKey] = TimeFormatHelper.TimeHmsFormat;
 
 		return (units, formatKinds);

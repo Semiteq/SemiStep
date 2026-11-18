@@ -10,12 +10,10 @@ using Xunit;
 namespace SemiStep.Tests.S7;
 
 /// <summary>
-/// PLC byte-layout regression for the RIE etch action 300 ("Травление") after the capacitor
-/// columns (icp_load/icp_tune, rie_load/rie_tune) moved into manual-branch subactions. The
-/// serializer iterates the resolved <c>Properties</c> order to fill fixed PLC slots, so the
-/// slot layout must equal the layout derived from the pre-change column order. A "before"
-/// baseline is impractical here (the old config is gone), so the expected slot order is
-/// stated explicitly from the pre-change order and asserted against the serializer output.
+/// PLC byte layout of the RIE etch action 300. The capacitor columns (icp_load/icp_tune,
+/// rie_load/rie_tune) belong to manual-branch subactions. The serializer iterates the resolved
+/// <c>Properties</c> order to fill fixed PLC slots, so the slot order is stated explicitly here
+/// and asserted against the serializer output.
 /// </summary>
 [Trait("Category", "Integration")]
 [Trait("Component", "S7")]
@@ -28,7 +26,7 @@ public sealed class RieEtchManualBranchSerializationTests
 	private const int GateModeDefault = 1;
 
 	[Fact]
-	public async Task SerialiseEtchStep_ManualMatch_ProducesPreChangeSlotLayout()
+	public async Task SerialiseEtchStep_ManualMatch_ProducesFixedSlotLayout()
 	{
 		var registry = await BuildRieRegistryAsync();
 		var converter = new RecipeConverter(registry);
@@ -49,7 +47,7 @@ public sealed class RieEtchManualBranchSerializationTests
 		// gate_mode, icp_match, rie_match.
 		data.IntValues.Should().Equal(EtchActionId, 0, MatchModeManual, MatchModeManual);
 
-		// Float slots, in resolved-column order matching the pre-change layout:
+		// Float slots, in resolved-column order:
 		// ar, o2, n2, sf6, cf4, cl2, he, gate_setpoint, icp_power,
 		// icp_load, icp_tune, rie_power, rie_load, rie_tune, step_duration.
 		data.FloatValues.Should().Equal(
@@ -71,7 +69,7 @@ public sealed class RieEtchManualBranchSerializationTests
 		var registry = await BuildRieRegistryAsync();
 		var converter = new RecipeConverter(registry);
 
-		// Авто on both match selectors: the capacitor columns icp_load/icp_tune and
+		// Auto on both match selectors: the capacitor columns icp_load/icp_tune and
 		// rie_load/rie_tune are inactive and carry no value. They must still occupy their
 		// fixed float slots, written as 0, so the active columns keep their slot positions.
 		var step = BuildAutoEtchStep();
@@ -105,7 +103,7 @@ public sealed class RieEtchManualBranchSerializationTests
 	public async Task SerialiseFreshlyCreatedEtchStep_AutoMatch_InactiveCapacitorColumnsWriteZero()
 	{
 		// Exercises the REAL step-creation path (StepInitializer.Create), not a hand-built step.
-		// Action 300 defaults to icp_match/rie_match = Авто (the min group key), so the capacitor
+		// Action 300 defaults to icp_match/rie_match = Auto (the min group key), so the capacitor
 		// columns icp_load/icp_tune/rie_load/rie_tune are inactive and must NOT be seeded with
 		// their "50" default; their PLC slots must serialise as 0.
 		var registry = await BuildRieRegistryAsync();
@@ -130,7 +128,7 @@ public sealed class RieEtchManualBranchSerializationTests
 		var data = result.Value;
 		// Int slots: ActionKey, then gate_mode, icp_match, rie_match — each an enum with no
 		// default_value, so each seeds its group's minimum key (gate_mode min and match_mode
-		// Авто both being 1 in this config).
+		// Auto both being 1 in this config).
 		data.IntValues.Should().Equal(EtchActionId, GateModeDefault, MatchModeAuto, MatchModeAuto);
 
 		// All floats default to 0 (config default_value "0" for gas/power/gate, and the inactive
@@ -188,7 +186,7 @@ public sealed class RieEtchManualBranchSerializationTests
 
 	private static Step BuildAutoEtchStep()
 	{
-		// Same active gas/power/duration values as BuildEtchStep, but Авто on both selectors
+		// Same active gas/power/duration values as BuildEtchStep, but Auto on both selectors
 		// and no capacitor values set (icp_load/icp_tune, rie_load/rie_tune omitted entirely).
 		return new Step(EtchActionId, [])
 			.WithProperty("ar", PropertyValue.FromFloat(11f))

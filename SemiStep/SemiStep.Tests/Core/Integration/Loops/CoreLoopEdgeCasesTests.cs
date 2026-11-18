@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 
+using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Tests.Core.Helpers;
 
 using Xunit;
@@ -87,5 +88,27 @@ public sealed class CoreLoopEdgeCasesTests(CoreFixture fixture) : IClassFixture<
 		enclosing[0].StartIndex.Should().Be(0, "outermost loop starts at index 0");
 		enclosing[1].StartIndex.Should().Be(1, "middle loop starts at index 1");
 		enclosing[2].StartIndex.Should().Be(2, "innermost loop starts at index 2");
+	}
+
+	[Fact]
+	public void UnclosedFor_OnRowOne_WarnsStepNumberOne()
+	{
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
+		driver.AddFor(2).AddWait(1f);
+
+		var warning = fixture.Session.Snapshot.Reasons.OfType<UnclosedForLoopWarning>().Should().ContainSingle().Subject;
+		warning.StepNumber.Should().Be(1);
+	}
+
+	[Fact]
+	public void UnmatchedEndFor_OnRowThree_WarnsStepNumberThree()
+	{
+		fixture.Session.Reset();
+		var driver = new RecipeTestDriver(fixture.Session);
+		driver.AddWait(1f).AddWait(1f).AddEndFor();
+
+		var warning = fixture.Session.Snapshot.Reasons.OfType<UnmatchedEndForWarning>().Should().ContainSingle().Subject;
+		warning.StepNumber.Should().Be(3);
 	}
 }

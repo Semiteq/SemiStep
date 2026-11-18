@@ -103,19 +103,6 @@ public sealed class ImportedRecipeValidatorTests
 	}
 
 	[Fact]
-	public void Validate_InvalidGroupKey_ErrorMessageContainsStepNumberAndGroupName()
-	{
-		var validator = BuildValidator();
-		var recipe = BuildRecipeWithStep(ValveActionId, TargetColumnKey, PropertyValue.FromInt(InvalidGroupKey));
-
-		var result = validator.Validate(recipe);
-
-		result.Errors.Should().ContainSingle()
-			.Which.Message.Should().Contain("Step 1")
-			.And.Contain(ValveGroupId);
-	}
-
-	[Fact]
 	public void Validate_NonGroupColumnWithoutConstraints_PassesValidation()
 	{
 		var actions = new Dictionary<int, ActionDefinition>
@@ -149,43 +136,6 @@ public sealed class ImportedRecipeValidatorTests
 	}
 
 	[Fact]
-	public void Validate_NonGroupColumnWithViolatingValue_IsRejected()
-	{
-		var actions = new Dictionary<int, ActionDefinition>
-		{
-			[11] = new ActionDefinition(
-				id: 11,
-				uiName: "Bound",
-				deployDuration: DeployDuration.Immediate,
-				properties:
-				[
-					new ActionPropertyDefinition(
-						Key: "amount",
-						GroupName: null,
-						PropertyTypeId: "int_bounded",
-						DefaultValue: null)
-				])
-		};
-
-		var registry = BuildRecipeMetadataRegistry(actions);
-		var validator = new ImportedRecipeValidator(registry);
-		var step = new Step(
-			11,
-			ImmutableDictionary<PropertyId, PropertyValue>.Empty
-				.Add(new PropertyId("amount"), PropertyValue.FromInt(500)));
-		var recipe = new Recipe([step]);
-
-		var result = validator.Validate(recipe);
-
-		result.IsFailed.Should().BeTrue(
-			"non-group columns ARE validated against their property's Min/Max/MaxLength via PropertyValidator");
-		result.Errors.Should().Contain(error =>
-			error.Message.Contains("Step 1")
-			&& error.Message.Contains("amount")
-			&& error.Message.Contains("exceeds maximum"));
-	}
-
-	[Fact]
 	public void Validate_NonGroupColumnWithTypeMismatch_IsRejected()
 	{
 		var actions = new Dictionary<int, ActionDefinition>
@@ -214,11 +164,13 @@ public sealed class ImportedRecipeValidatorTests
 
 		var result = validator.Validate(recipe);
 
-		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(error =>
-			error.Message.Contains("Step 1")
-			&& error.Message.Contains("amount")
-			&& error.Message.Contains("Expected int"));
+		var stepError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtStepError>().Subject;
+		stepError.StepNumber.Should().Be(1);
+		var columnError = stepError.Inner.Should().BeOfType<AtColumnError>().Subject;
+		columnError.ColumnKey.Should().Be("amount");
+		var mismatch = columnError.Inner.Should().BeOfType<PropertyValueTypeMismatchError>().Subject;
+		mismatch.Id.Should().Be("int_bounded");
+		mismatch.ActualType.Should().NotBe(mismatch.ExpectedType);
 	}
 
 	[Fact]
@@ -246,6 +198,7 @@ public sealed class ImportedRecipeValidatorTests
 
 		var result = validator.Validate(recipe);
 
+		result.Errors.OfType<AtStepError>().Select(error => error.StepNumber).Should().Equal(1, 2);
 		result.Errors.Should().HaveCount(2);
 	}
 
@@ -296,13 +249,13 @@ public sealed class ImportedRecipeValidatorTests
 
 		var result = validator.Validate(recipe);
 
-		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(error =>
-			error.Message.Contains("Step 1")
-			&& error.Message.Contains(CommentColumnKey)
-			&& error.Message.Contains("exceeds maximum")
-			&& error.Message.Contains('9')
-			&& error.Message.Contains('8'));
+		var stepError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtStepError>().Subject;
+		stepError.StepNumber.Should().Be(1);
+		var columnError = stepError.Inner.Should().BeOfType<AtColumnError>().Subject;
+		columnError.ColumnKey.Should().Be(CommentColumnKey);
+		var tooLong = columnError.Inner.Should().BeOfType<StringTooLongError>().Subject;
+		tooLong.Length.Should().Be(9);
+		tooLong.Max.Should().Be(8);
 	}
 
 	[Fact]
@@ -337,10 +290,13 @@ public sealed class ImportedRecipeValidatorTests
 
 		var result = validator.Validate(recipe);
 
-		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().HaveCount(2);
-		result.Errors.Should().Contain(error => error.Message.Contains("Step 1"));
-		result.Errors.Should().Contain(error => error.Message.Contains("Step 2"));
+		var stepErrors = result.Errors.OfType<AtStepError>().ToList();
+		stepErrors.Select(error => error.StepNumber).Should().Equal(1, 2);
+		stepErrors[0].Inner.Should().BeOfType<AtColumnError>()
+			.Which.Inner.Should().BeOfType<StringTooLongError>();
+		stepErrors[1].Inner.Should().BeOfType<AtColumnError>()
+			.Which.Inner.Should().BeOfType<ValueAboveMaximumError>();
 	}
 
 	[Fact]
@@ -358,10 +314,9 @@ public sealed class ImportedRecipeValidatorTests
 		var columnError = stepError.Inner.Should().BeOfType<AtColumnError>().Subject;
 		columnError.ColumnKey.Should().Be(TargetColumnKey);
 
-		var expectedInner = registry.GroupHasIntKey(InvalidGroupKey, ValveGroupId).Errors[0];
-		columnError.Inner.Message.Should().Be(expectedInner.Message,
-			"the GroupHasIntKey typed error is forwarded verbatim, not rebuilt into a fabricated string");
-		columnError.Inner.Should().NotBeOfType<AtColumnError>().And.NotBeOfType<AtStepError>();
+		var groupError = columnError.Inner.Should().BeOfType<ValueNotInGroupError>().Subject;
+		groupError.Key.Should().Be(InvalidGroupKey);
+		groupError.GroupId.Should().Be(ValveGroupId);
 	}
 
 	[Fact]
@@ -383,9 +338,10 @@ public sealed class ImportedRecipeValidatorTests
 		var columnError = stepError.Inner.Should().BeOfType<AtColumnError>().Subject;
 		columnError.ColumnKey.Should().Be(IntColumnKey);
 
-		columnError.Inner.Message.Should().Contain("exceeds maximum").And.Contain("int_bounded");
-		columnError.Inner.Message.Should().NotContain(IntColumnKey,
-			"the column key is carried by the AtColumnError decorator, not baked into the forwarded inner");
+		var aboveMaximum = columnError.Inner.Should().BeOfType<ValueAboveMaximumError>().Subject;
+		aboveMaximum.Value.Should().Be(500);
+		aboveMaximum.Max.Should().Be(100);
+		aboveMaximum.Id.Should().Be("int_bounded");
 	}
 
 	[Fact]
@@ -423,9 +379,8 @@ public sealed class ImportedRecipeValidatorTests
 		var columnError = stepError.Inner.Should().BeOfType<AtColumnError>().Subject;
 		columnError.ColumnKey.Should().Be(GhostColumnKey);
 
-		var expectedInner = registry.GetProperty(MissingPropertyTypeId).Errors[0];
-		columnError.Inner.Message.Should().Be(expectedInner.Message,
-			"the GetProperty typed error is forwarded verbatim, not string-joined into a new message");
+		columnError.Inner.Should().BeOfType<PropertyNotFoundError>()
+			.Which.PropertyTypeId.Should().Be(MissingPropertyTypeId);
 	}
 
 	[Fact]
@@ -442,10 +397,8 @@ public sealed class ImportedRecipeValidatorTests
 		var columnError = stepError.Inner.Should().BeOfType<AtColumnError>().Subject;
 		columnError.ColumnKey.Should().Be(TargetColumnKey);
 
-		columnError.Inner.Message.Should().Be($"Group value must be integer, got {PropertyType.String}");
-		columnError.Inner.Message.Should().NotContain(TargetColumnKey,
-			"the column key is carried by the AtColumnError decorator, not baked into the raised group error");
-		columnError.Inner.Should().NotBeOfType<AtColumnError>().And.NotBeOfType<AtStepError>();
+		columnError.Inner.Should().BeOfType<GroupValueNotIntegerError>()
+			.Which.ActualType.Should().Be(PropertyType.String);
 	}
 
 	[Fact]
@@ -460,7 +413,7 @@ public sealed class ImportedRecipeValidatorTests
 		var stepError = result.Errors.Should().ContainSingle().Which.Should().BeOfType<AtStepError>().Subject;
 		stepError.StepNumber.Should().Be(1);
 
-		stepError.Inner.Should().NotBeOfType<AtColumnError>();
-		stepError.Inner.Message.Should().Be($"Action with id {UnknownActionId} not found");
+		stepError.Inner.Should().BeOfType<ActionByIdNotFoundError>()
+			.Which.Id.Should().Be(UnknownActionId);
 	}
 }

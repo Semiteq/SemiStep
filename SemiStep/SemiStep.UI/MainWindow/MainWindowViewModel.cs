@@ -301,7 +301,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		this.RaisePropertyChanged(nameof(LastSyncTimeText));
 	}
 
-	internal static string MapSyncStatus(PlcSyncStatus status)
+	private static string MapSyncStatus(PlcSyncStatus status)
 	{
 		return status switch
 		{
@@ -314,7 +314,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		};
 	}
 
-	internal static string FormatLastSyncTime(DateTimeOffset? lastSyncTime)
+	private static string FormatLastSyncTime(DateTimeOffset? lastSyncTime)
 	{
 		var value = lastSyncTime is null
 			? Resources.LastSyncNever

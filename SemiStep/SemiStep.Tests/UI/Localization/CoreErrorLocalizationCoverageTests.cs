@@ -168,6 +168,20 @@ public sealed class CoreErrorLocalizationCoverageTests
 		}
 	}
 
+	[Fact]
+	public void EveryPublicCoreReasonType_UnderEnglishCulture_LocalizesToItsOwnMessage()
+	{
+		using (ResourcesCultureScope.Use("en"))
+		{
+			var mismatches = PublicCoreErrorTypes().Concat(PublicCoreWarningTypes())
+				.Where(reasonType => ReasonLocalizer.Localize(_typeData[reasonType]) != _typeData[reasonType].Message)
+				.Select(reasonType => reasonType.Name)
+				.ToList();
+
+			mismatches.Should().BeEmpty("the English resource text must match the Core message for the same arguments");
+		}
+	}
+
 	private static IEnumerable<Type> PublicCoreErrorTypes()
 	{
 		return typeof(OwnedByAnotherInstanceError).Assembly

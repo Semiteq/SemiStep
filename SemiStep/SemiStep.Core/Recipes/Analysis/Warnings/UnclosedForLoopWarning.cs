@@ -2,8 +2,8 @@
 
 namespace SemiStep.Core.Recipes.Analysis.Warnings;
 
-public sealed class UnclosedForLoopWarning(int startIndex)
-	: Warning($"Unclosed For loop starting at step {startIndex}")
+public sealed class UnclosedForLoopWarning(int stepNumber)
+	: Warning($"Unclosed For loop starting at step {stepNumber}")
 {
-	public int StartIndex { get; } = startIndex;
+	public int StepNumber { get; } = stepNumber;
 }

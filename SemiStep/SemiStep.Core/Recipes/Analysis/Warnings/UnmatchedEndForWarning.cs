@@ -2,8 +2,8 @@
 
 namespace SemiStep.Core.Recipes.Analysis.Warnings;
 
-public sealed class UnmatchedEndForWarning(int stepIndex)
-	: Warning($"Unmatched EndFor at step {stepIndex}")
+public sealed class UnmatchedEndForWarning(int stepNumber)
+	: Warning($"Unmatched EndFor at step {stepNumber}")
 {
-	public int StepIndex { get; } = stepIndex;
+	public int StepNumber { get; } = stepNumber;
 }

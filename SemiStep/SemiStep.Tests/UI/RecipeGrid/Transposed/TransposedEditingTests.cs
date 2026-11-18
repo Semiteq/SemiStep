@@ -82,6 +82,19 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	public void ClockLikeText_InStringCell_IsStoredAsTyped()
+	{
+		var (_, stepListBox) = ShowView();
+		var editor = EnterTextEdit(stepListBox, 0, RecipeTestDriver.CommentColumn);
+
+		editor.Text = "12:30";
+		_window!.FocusManager!.Focus(null);
+		Dispatcher.UIThread.RunJobs();
+
+		_surface.StepColumns[0].Row[RecipeTestDriver.CommentColumn].Should().Be("12:30");
+	}
+
+	[AvaloniaFact]
 	public void InvalidTimeInput_StaysUncommitted()
 	{
 		_fixture.Coordinator.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "100")

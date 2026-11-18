@@ -50,6 +50,50 @@ public sealed class PropertyTimeEditingConverterTests
 		result.Should().Be(BindingOperations.DoNothing);
 	}
 
+	[Theory]
+	[InlineData("0")]
+	[InlineData("59")]
+	[InlineData("3600")]
+	[InlineData("86399")]
+	[InlineData("86400")]
+	public void ConvertBack_FormattedTimeValue_RoundTripsToSameSeconds(string seconds)
+	{
+		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.TimeHmsFormat, allowsEmpty: false);
+
+		var displayed = converter.Convert(seconds, typeof(string), parameter: null, CultureInfo.InvariantCulture);
+		var result = ConvertBack(converter, displayed as string);
+
+		result.Should().Be(seconds);
+	}
+
+	[Fact]
+	public void ConvertBack_MinutesOverSixty_IsRejected()
+	{
+		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.TimeHmsFormat, allowsEmpty: false);
+
+		var result = ConvertBack(converter, "00:61:00");
+
+		result.Should().Be(BindingOperations.DoNothing);
+	}
+
+	[Theory]
+	[InlineData("12:30")]
+	[InlineData("1:30")]
+	public void ConvertBack_ClockLikeText_NonTimeColumn_IsKeptAsTyped(string text)
+	{
+		var nonTimeColumn = new PropertyTimeEditingConverter(TimeFormatHelper.DefaultFormatKind, allowsEmpty: true);
+
+		ConvertBack(nonTimeColumn, text).Should().Be(text);
+	}
+
+	[Fact]
+	public void ConvertBack_ClockLikeText_TimeColumn_ParsesToSeconds()
+	{
+		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.TimeHmsFormat, allowsEmpty: false);
+
+		ConvertBack(converter, "12:30").Should().Be("45000");
+	}
+
 	private static object? ConvertBack(PropertyTimeEditingConverter converter, string? value)
 	{
 		return converter.ConvertBack(value, typeof(object), parameter: null, CultureInfo.InvariantCulture);

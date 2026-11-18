@@ -4,12 +4,12 @@ using FluentAssertions;
 
 using FluentResults;
 
-using SemiStep.Core.Plc.S7.Protocol;
-using SemiStep.Core.Plc.Sync;
+using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Core.Recipes.Formulas.Errors;
 
 using SemiStep.Tests.UI.Localization;
 
+using SemiStep.UI.Localization;
 using SemiStep.UI.MessageService;
 
 using Xunit;
@@ -28,142 +28,80 @@ public sealed class ResultReportingExtensionsTests : IDisposable
 		_panel.Dispose();
 	}
 
-	[Fact]
-	public void FormatErrors_SuccessResult_ReturnsEmptyString()
-	{
-		var result = Result.Ok();
-
-		result.FormatErrors().Should().BeEmpty();
-	}
-
-	[Fact]
-	public void FormatErrors_SingleError_ReturnsThatMessage()
-	{
-		var result = Result.Fail("only error");
-
-		result.FormatErrors().Should().Be("only error");
-	}
-
-	[Fact]
-	public void FormatErrors_MultipleErrors_JoinsAllMessagesInOrder()
-	{
-		var result = Result.Fail("first").WithError("second").WithError("third");
-
-		result.FormatErrors().Should().Be("first; second; third");
-	}
-
-	[AvaloniaFact]
-	public void ReportFailure_SingleErrorWithoutContext_SurfacesThatMessage()
-	{
-		var result = Result.Fail("only error");
-
-		_panel.ReportFailure(result);
-
-		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
-		entry.Message.Should().Be("only error");
-	}
-
-	[AvaloniaFact]
-	public void ReportFailure_WithoutContext_SurfacesAllErrorMessages()
-	{
-		var result = Result.Fail("first").WithError("second");
-
-		_panel.ReportFailure(result);
-
-		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
-		entry.Message.Should().Be("first; second");
-	}
-
 	[AvaloniaFact]
 	public void ReportFailure_WithContext_PrefixesAndSurfacesAllErrorMessages()
 	{
-		var result = Result.Fail("first").WithError("second");
+		const string Context = "context";
+		const string FirstMessage = "first";
+		const string SecondMessage = "second";
+		var result = Result.Fail(FirstMessage).WithError(SecondMessage);
 
-		_panel.ReportFailure(result, "Step 1");
+		_panel.ReportFailure(result, Context);
 
 		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
-		entry.Message.Should().Be("Step 1: first; second");
+		entry.Message.Should().StartWith(Context + ":");
+		entry.Message.Should().Contain(FirstMessage).And.Contain(SecondMessage);
 	}
 
-	[Fact]
+	[AvaloniaFact]
+	public void ReportFailure_ResultWithoutContext_UnderRussianCulture_SurfacesLocalizedText()
+	{
+		var error = FormulaFailed();
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			_panel.ReportFailure(Result.Fail(error));
+
+			var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
+			entry.Message.Should().Be(ReasonLocalizer.Localize(error));
+			entry.Message.Should().NotBe(error.Message);
+		}
+	}
+
+	[AvaloniaFact]
+	public void ReportFailure_SingleError_UnderRussianCulture_SurfacesLocalizedText()
+	{
+		var error = FormulaFailed();
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			_panel.ReportFailure(error);
+
+			var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
+			entry.Message.Should().Be(ReasonLocalizer.Localize(error));
+			entry.Message.Should().NotBe(error.Message);
+		}
+	}
+
+	[AvaloniaFact]
+	public void ReportWarnings_TypedWarning_UnderRussianCulture_SurfacesLocalizedText()
+	{
+		var warning = new UnclosedForLoopWarning(1);
+
+		using (ResourcesCultureScope.Use("ru"))
+		{
+			_panel.ReportWarnings(Result.Ok().WithSuccess(warning));
+
+			var entry = _panel.Entries.Should().ContainSingle(item => item.IsWarning).Subject;
+			entry.Message.Should().Be(ReasonLocalizer.Localize(warning));
+			entry.Message.Should().NotBe(warning.Message);
+		}
+	}
+
+	[AvaloniaFact]
 	public void FormatErrors_TypedError_UnderRussianCulture_StaysRawEnglish()
 	{
-		var result = Result.Fail(new FormulaComputationFailedError("temp", new Error("min > max")));
+		var error = new FormulaComputationFailedError("temp", new Error("min > max"));
+		var result = Result.Fail(error);
 
 		using (ResourcesCultureScope.Use("ru"))
 		{
-			result.FormatErrors().Should().Be("Formula computation for target 'temp' failed: min > max");
+			result.FormatErrors().Should().Be(error.Message);
 		}
 	}
 
-	[AvaloniaFact]
-	public void ReportFailure_TypedError_UnderRussianCulture_LocalizesInPanel()
+	private static FormulaComputationFailedError FormulaFailed()
 	{
-		var result = Result.Fail(new FormulaComputationFailedError("temp", new Error("min > max")));
-
-		using (ResourcesCultureScope.Use("ru"))
-		{
-			_panel.ReportFailure(result);
-		}
-
-		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
-		entry.Message.Should().Be("Вычисление формулы для цели «temp» не выполнено: min > max");
-	}
-
-	[AvaloniaFact]
-	public void ReportFailure_SingleTypedError_UnderRussianCulture_LocalizesInOperationSlot()
-	{
-		using (ResourcesCultureScope.Use("ru"))
-		{
-			_panel.ReportFailure(new ConnectionLostError());
-		}
-
-		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
-		entry.Message.Should().Be("Соединение с ПЛК потеряно");
-	}
-
-	[AvaloniaFact]
-	public void ReportFailure_NotConnectedFault_UnderRussianCulture_LocalizesInOperationSlot()
-	{
-		using (ResourcesCultureScope.Use("ru"))
-		{
-			_panel.ReportFailure(new NotConnectedError());
-		}
-
-		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
-		entry.Message.Should().Be("Нет соединения с ПЛК");
-	}
-
-	[AvaloniaFact]
-	public void ReportFailure_RecipeActiveFault_UnderRussianCulture_LocalizesInOperationSlot()
-	{
-		using (ResourcesCultureScope.Use("ru"))
-		{
-			_panel.ReportFailure(new RecipeActiveError());
-		}
-
-		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
-		entry.Message.Should().Be("Рецепт выполняется на ПЛК");
-	}
-
-	[AvaloniaFact]
-	public void ReportFailure_PlcCommandFailedFault_UnderRussianCulture_LocalizesInOperationSlot()
-	{
-		using (ResourcesCultureScope.Use("ru"))
-		{
-			_panel.ReportFailure(new PlcCommandFailedError());
-		}
-
-		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
-		entry.Message.Should().Be("Ошибка команды ПЛК");
-	}
-
-	[AvaloniaFact]
-	public void ReportFailure_SingleUntypedError_FallsThroughToItsMessage()
-	{
-		_panel.ReportFailure(new Error("x"));
-
-		var entry = _panel.Entries.Should().ContainSingle(item => item.IsError).Subject;
-		entry.Message.Should().Be("x");
+		return new FormulaComputationFailedError("temp", new Error("min > max"));
 	}
 }

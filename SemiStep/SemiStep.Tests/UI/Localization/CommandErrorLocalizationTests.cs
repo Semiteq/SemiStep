@@ -23,42 +23,30 @@ namespace SemiStep.Tests.UI.Localization;
 public sealed class CommandErrorLocalizationTests
 {
 	[AvaloniaFact]
-	public async Task ReportThrownExceptions_UnderRussianCulture_ReportsRussianPrefixButLogsEnglishContext()
+	public async Task ReportThrownExceptions_UnderRussianCulture_PanelUsesLocalizedContextAndLogUsesInvariantContext()
 	{
-		var panel = new MessagePanelViewModel();
+		using var panel = new MessagePanelViewModel();
 		var logger = new RecordingLogger<object>();
 		var failure = new InvalidOperationException("boom");
-		var command = ReactiveCommand.Create<Unit, Unit>(_ => throw failure);
+		using var command = ReactiveCommand.Create<Unit, Unit>(_ => throw failure);
 		var context = new LocalizedText(nameof(Resources.CopyStepFailed));
 
-		try
+		using (ResourcesCultureScope.Use("ru"))
+		using (command.ReportThrownExceptions(panel, logger, context))
 		{
-			using (ResourcesCultureScope.Use("ru"))
-			using (command.ReportThrownExceptions(panel, logger, context))
-			{
-				try
-				{
-					await command.Execute();
-				}
-				catch (InvalidOperationException)
-				{
-					// Routed to ThrownExceptions; awaiting also surfaces it here.
-				}
+			var execute = async () => await command.Execute();
+			await execute.Should().ThrowAsync<InvalidOperationException>();
 
-				var entry = panel.Entries.Should().ContainSingle().Subject;
-				entry.Severity.Should().Be(MessageSeverity.Error);
-				entry.Message.Should().Be("Не удалось скопировать: boom");
+			var entry = panel.Entries.Should().ContainSingle().Subject;
+			entry.Severity.Should().Be(MessageSeverity.Error);
+			entry.Message.Should().StartWith(context.Localized);
 
-				var logged = logger.Entries.Should().ContainSingle().Subject;
-				logged.Level.Should().Be(LogLevel.Error);
-				logged.Exception.Should().BeSameAs(failure);
-				logged.Message.Should().Be("Copy failed");
-			}
-		}
-		finally
-		{
-			command.Dispose();
-			panel.Dispose();
+			var logged = logger.Entries.Should().ContainSingle().Subject;
+			logged.Level.Should().Be(LogLevel.Error);
+			logged.Exception.Should().BeSameAs(failure);
+			logged.Message.Should().Be(context.Invariant);
+
+			context.Localized.Should().NotBe(context.Invariant);
 		}
 	}
 }

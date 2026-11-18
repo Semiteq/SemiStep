@@ -43,7 +43,7 @@ internal static class LoopParser
 				}
 				case (int)ServiceActionId.EndForLoop when stack.Count == 0:
 				{
-					reasons.Add(new UnmatchedEndForWarning(i));
+					reasons.Add(new UnmatchedEndForWarning(i + 1));
 
 					break;
 				}
@@ -65,7 +65,7 @@ internal static class LoopParser
 		while (stack.Count > 0)
 		{
 			var frame = stack.Pop();
-			reasons.Add(new UnclosedForLoopWarning(frame.StartIndex));
+			reasons.Add(new UnclosedForLoopWarning(frame.StartIndex + 1));
 		}
 
 		return Result

@@ -12,7 +12,7 @@ public sealed class ColumnWidthCalculator(
 	RecipeMetadataRegistry recipeMetadataRegistry,
 	GridStyleOptions gridStyle)
 {
-	// Raw seconds whose units-bearing render ("00:00:00 с") is the widest step-start-time cell value.
+	// Every hh:mm:ss start time under 100 hours renders at the width of this sample.
 	private const string RepresentativeTimeRawSeconds = "0";
 
 	// String MaxLength can be very large (production props use 64/255); cap the representative sample
@@ -69,7 +69,7 @@ public sealed class ColumnWidthCalculator(
 		var representative = TimeFormatHelper.FormatValue(
 			RepresentativeTimeRawSeconds,
 			TimeFormatHelper.TimeHmsFormat,
-			TimeFormatHelper.TimeUnits);
+			TimeFormatHelper.ResolveStartTimeUnits(recipeMetadataRegistry));
 
 		return CalculateWidth([representative], columnDef.UiName);
 	}
@@ -197,12 +197,10 @@ public sealed class ColumnWidthCalculator(
 	private FontFamily MeasureFontFamily =>
 		string.IsNullOrWhiteSpace(gridStyle.Fonts.FontFamily) ? GridFonts.DefaultFamily : new FontFamily(gridStyle.Fonts.FontFamily);
 
-	// The single typeface the cell-role measurement uses, threading the configured family, weight, and
-	// italic so the measured width tracks the rendered cell. Exposed for the measurement-threading test.
-	internal Typeface CellTypeface =>
+	private Typeface CellTypeface =>
 		new(MeasureFontFamily, gridStyle.Fonts.CellItalic ? FontStyle.Italic : FontStyle.Normal, (FontWeight)gridStyle.Fonts.CellFontWeight);
 
-	internal Typeface HeaderTypeface =>
+	private Typeface HeaderTypeface =>
 		new(MeasureFontFamily, gridStyle.Fonts.HeaderItalic ? FontStyle.Italic : FontStyle.Normal, (FontWeight)gridStyle.Fonts.HeaderFontWeight);
 
 	private double MeasureContent(string text)

@@ -258,6 +258,26 @@ must have a registered sample and must localize to a non-empty string that diffe
 `.Message` under `Resources.Culture = ru`. A new public error or warning type without a switch case and
 resx pair fails the build instead of leaking English silently.
 
+### What tests assert on errors
+
+A new or rewritten test does not assert on wording. It checks one of three things:
+
+- the error type and its public properties (`AtStepError.StepNumber`, `AtRowError.RowNumber`,
+  `AtColumnError.ColumnKey`, the inner error type);
+- message severity and counts (`Severity`, `ErrorCount`, `WarningCount`);
+- a relation between two production outputs, for example a wrapped error localizes to the same text as
+  its inner error.
+
+English parity between an error's `Message` and its neutral resource value is one data-driven test,
+`EveryPublicCoreReasonType_UnderEnglishCulture_LocalizesToItsOwnMessage`. It runs over every reason type
+the coverage test enumerates, so a swapped format argument fails it. There is no per-type sentence test.
+
+Some tests still match text:
+
+- config loader and config mapper tests, because those errors are plain text with no typed surface;
+- the PLC monitor timing tests, because their display text is the product contract;
+- older tests outside the 2026-11-18 cleanup. They move to typed checks when someone touches them.
+
 ### The log path is unchanged (always English)
 
 `FormatErrors` stays the **raw English** joiner (`string.Join("; ", result.Errors.Select(e => e.Message))`).

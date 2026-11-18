@@ -1,6 +1,8 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
 
+using SemiStep.Core.Recipes;
+
 namespace SemiStep.UI.RecipeGrid;
 
 internal static partial class TimeFormatHelper
@@ -8,7 +10,6 @@ internal static partial class TimeFormatHelper
 	internal const string TimeHmsFormat = "time_hms";
 	internal const string DefaultFormatKind = "numeric";
 	internal const string StepStartTimeColumnKey = "step_start_time";
-	internal const string TimeUnits = "с";
 
 	private const int SecondsPerHour = 3600;
 	private const int SecondsPerMinute = 60;
@@ -44,7 +45,7 @@ internal static partial class TimeFormatHelper
 			? double.Parse($"0.{match.Groups["ms"].Value}", CultureInfo.InvariantCulture)
 			: 0d;
 
-		if (hours >= 24 || minutes >= 60 || seconds >= 60)
+		if (minutes >= 60 || seconds >= 60)
 		{
 			return text;
 		}
@@ -52,6 +53,19 @@ internal static partial class TimeFormatHelper
 		var totalSeconds = (hours * SecondsPerHour) + (minutes * SecondsPerMinute) + seconds + fractionalSeconds;
 
 		return totalSeconds.ToString(CultureInfo.InvariantCulture);
+	}
+
+	internal static string? ResolveStartTimeUnits(RecipeMetadataRegistry recipeMetadataRegistry)
+	{
+		var column = recipeMetadataRegistry.GetColumn(StepValueParser.StepDurationColumnKey);
+		if (column.IsFailed)
+		{
+			return null;
+		}
+
+		var property = recipeMetadataRegistry.GetProperty(column.Value.PropertyTypeId);
+
+		return property.IsSuccess ? property.Value.Units : null;
 	}
 
 	internal static string FormatValue(string rawString, string? formatKind, string? units)

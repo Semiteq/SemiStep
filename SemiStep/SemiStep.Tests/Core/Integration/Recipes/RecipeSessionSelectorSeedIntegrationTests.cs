@@ -43,7 +43,7 @@ public sealed class RecipeSessionSelectorSeedIntegrationTests
 
 		session.AppendStep(BranchingActionId).IsSuccess.Should().BeTrue();
 
-		// sub_value (default "50") and sub_nodefault (no default) are both inactive under Авто.
+		// sub_value (default "50") and sub_nodefault (no default) are both inactive under the Auto selector value.
 		var step = session.Current.Steps[0];
 		step.Properties.ContainsKey(new PropertyId(SubNoDefaultColumn)).Should().BeFalse();
 
@@ -94,6 +94,12 @@ public sealed class RecipeSessionSelectorSeedIntegrationTests
 		updated.Properties[new PropertyId("mode")].AsInt().Should().Be(1);
 		updated.Properties.ContainsKey(new PropertyId("b")).Should().BeFalse("the deactivated column is dropped");
 		updated.Properties[new PropertyId("a")].AsFloat().Should().Be(5f, "the untouched active column is unchanged");
+
+		session.Undo().IsSuccess.Should().BeTrue();
+
+		var restored = session.Current.Steps[0];
+		restored.Properties[new PropertyId("mode")].AsInt().Should().Be(2);
+		restored.Properties[new PropertyId("b")].AsFloat().Should().Be(10f);
 	}
 
 	private static RecipeMetadataRegistry BuildSelectorGatedRegistry()

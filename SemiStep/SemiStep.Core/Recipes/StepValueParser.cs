@@ -5,6 +5,7 @@ namespace SemiStep.Core.Recipes;
 public static class StepValueParser
 {
 	public const string ActionColumnKey = "action";
+	public const string StepDurationColumnKey = "step_duration";
 
 	public static string FormatStepValue(Step step, GridColumnDefinition column)
 	{

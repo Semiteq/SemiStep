@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿using AwesomeAssertions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Configuration.Loaders;

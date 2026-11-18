@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 using Avalonia.Headless.XUnit;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;

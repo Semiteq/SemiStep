@@ -2,7 +2,7 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;

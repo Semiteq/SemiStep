@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.UI.Localization;
 

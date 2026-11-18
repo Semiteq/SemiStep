@@ -4,7 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Headless.XUnit;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 

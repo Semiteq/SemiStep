@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Core.Recipes;
 
@@ -16,9 +16,9 @@ public sealed class RecipeStructuralEqualityTests
 	private static Step BuildStep(int actionKey, params (string Key, PropertyValue Value)[] properties)
 	{
 		var builder = ImmutableDictionary.CreateBuilder<PropertyId, PropertyValue>();
-		foreach (var property in properties)
+		foreach (var (key, value) in properties)
 		{
-			builder[new PropertyId(property.Key)] = property.Value;
+			builder[new PropertyId(key)] = value;
 		}
 
 		return new Step(actionKey, builder.ToImmutable());

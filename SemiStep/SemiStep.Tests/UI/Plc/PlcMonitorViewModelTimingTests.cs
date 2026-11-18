@@ -3,7 +3,7 @@ using System.Reactive.Concurrency;
 
 using Avalonia.Headless.XUnit;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Core.Plc.State;
 

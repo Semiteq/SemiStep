@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿using AwesomeAssertions;
 
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.Sync.Ownership;

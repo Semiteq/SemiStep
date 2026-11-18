@@ -4,7 +4,7 @@ using System.Reactive.Linq;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using FluentResults;
 

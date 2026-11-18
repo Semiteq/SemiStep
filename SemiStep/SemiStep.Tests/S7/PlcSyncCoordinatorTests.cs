@@ -1,6 +1,6 @@
 ﻿using System.Reactive.Linq;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using FluentResults;
 

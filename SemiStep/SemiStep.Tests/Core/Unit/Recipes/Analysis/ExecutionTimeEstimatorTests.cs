@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;

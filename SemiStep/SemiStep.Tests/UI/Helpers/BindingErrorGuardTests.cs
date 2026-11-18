@@ -4,7 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Logging;
 using Avalonia.Threading;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using Xunit;
 using Xunit.Sdk;

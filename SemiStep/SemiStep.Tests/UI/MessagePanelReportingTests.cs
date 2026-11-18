@@ -5,7 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input.Platform;
 using Avalonia.Threading;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
 

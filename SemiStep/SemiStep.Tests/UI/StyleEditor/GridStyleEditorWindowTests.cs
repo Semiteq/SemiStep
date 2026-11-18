@@ -3,7 +3,7 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
 

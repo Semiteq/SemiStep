@@ -1,6 +1,6 @@
 ﻿using System.Buffers.Binary;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using FluentResults;
 

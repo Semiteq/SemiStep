@@ -1,7 +1,7 @@
 ﻿using Avalonia.Threading;
 using Avalonia.VisualTree;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 namespace SemiStep.Tests.Performance.Harness;
 

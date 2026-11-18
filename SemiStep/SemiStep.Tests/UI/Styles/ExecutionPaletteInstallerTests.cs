@@ -2,7 +2,7 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.UI.Styles;

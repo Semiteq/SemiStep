@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Core.Recipes;
 using SemiStep.Tests.Core.Helpers;

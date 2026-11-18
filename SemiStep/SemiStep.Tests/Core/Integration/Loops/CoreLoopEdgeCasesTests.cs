@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿using AwesomeAssertions;
 
 using SemiStep.Core.Recipes.Analysis.Warnings;
 using SemiStep.Tests.Core.Helpers;

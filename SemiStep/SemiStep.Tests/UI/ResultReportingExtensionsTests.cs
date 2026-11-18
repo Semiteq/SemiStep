@@ -1,6 +1,6 @@
 ﻿using Avalonia.Headless.XUnit;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using FluentResults;
 

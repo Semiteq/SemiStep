@@ -6,7 +6,7 @@ using System.Reactive.Subjects;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.UI.RecipeGrid;
 

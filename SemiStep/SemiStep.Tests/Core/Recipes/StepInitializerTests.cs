@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Core.Recipes;
 using SemiStep.Tests.Helpers;

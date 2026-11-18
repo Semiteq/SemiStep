@@ -1,7 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;

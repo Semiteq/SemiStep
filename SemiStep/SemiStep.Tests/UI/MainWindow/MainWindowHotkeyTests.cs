@@ -3,7 +3,7 @@ using System.Windows.Input;
 
 using Avalonia.Headless.XUnit;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using ReactiveUI;
 

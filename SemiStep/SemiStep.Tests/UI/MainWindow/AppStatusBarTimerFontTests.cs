@@ -2,7 +2,7 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.VisualTree;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Tests.UI.Helpers;

@@ -2,7 +2,7 @@
 
 using Avalonia.Data;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.UI.RecipeGrid;
 

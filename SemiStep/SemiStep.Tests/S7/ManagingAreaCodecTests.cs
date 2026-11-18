@@ -1,6 +1,6 @@
 ﻿using System.Buffers.Binary;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Core.Plc.Configuration.Memory;
 using SemiStep.Core.Plc.S7.Protocol;

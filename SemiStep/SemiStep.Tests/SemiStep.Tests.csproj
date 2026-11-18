@@ -13,7 +13,7 @@
     </PackageReference>
     <PackageReference Include="Avalonia.Headless"/>
     <PackageReference Include="Avalonia.Headless.XUnit"/>
-    <PackageReference Include="FluentAssertions"/>
+    <PackageReference Include="AwesomeAssertions"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
     <PackageReference Include="Serilog"/>
   </ItemGroup>

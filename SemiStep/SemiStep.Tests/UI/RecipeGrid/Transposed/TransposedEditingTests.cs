@@ -7,7 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;

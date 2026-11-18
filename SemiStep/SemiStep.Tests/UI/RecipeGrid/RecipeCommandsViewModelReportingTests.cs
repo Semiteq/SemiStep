@@ -3,7 +3,7 @@ using System.Reactive.Linq;
 
 using Avalonia.Headless.XUnit;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using Microsoft.Extensions.Logging;
 

@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿using AwesomeAssertions;
 
 using SemiStep.Core.Configuration.Dto;
 using SemiStep.Core.Configuration.Mapping;

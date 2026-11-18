@@ -5,7 +5,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Tests.UI.Helpers;
 

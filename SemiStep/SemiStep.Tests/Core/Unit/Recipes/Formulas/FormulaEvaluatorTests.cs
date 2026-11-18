@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
 

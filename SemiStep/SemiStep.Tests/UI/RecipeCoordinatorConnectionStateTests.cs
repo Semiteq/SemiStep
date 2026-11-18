@@ -1,6 +1,6 @@
 ﻿using Avalonia.Headless.XUnit;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Core.Plc.State;
 using SemiStep.Tests.Helpers;

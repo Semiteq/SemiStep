@@ -3,7 +3,7 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.Tests.UI.Helpers;
 using SemiStep.UI.Localization;

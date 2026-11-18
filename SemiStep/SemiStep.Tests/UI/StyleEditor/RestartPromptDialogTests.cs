@@ -5,7 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 
-using FluentAssertions;
+using AwesomeAssertions;
 
 using SemiStep.UI.StyleEditor;
 

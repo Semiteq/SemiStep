@@ -36,6 +36,14 @@ public sealed class StubPlcSyncService : IPlcSyncService, IDisposable
 	/// <summary>Calls recorded by <see cref="NotifyRecipeChanged"/>, in order.</summary>
 	public List<(Recipe Recipe, bool IsValid)> NotifyRecipeChangedCalls { get; } = [];
 
+	/// <summary>
+	/// Runs once, at the end of the next <see cref="NotifyRecipeChanged"/> call, and is then cleared.
+	/// Lets a test edit the session inside the push window the way the UI thread can. It must be
+	/// one-shot: a session mutation re-enters <see cref="NotifyRecipeChanged"/> through
+	/// <c>RecipeSession.Apply</c>.
+	/// </summary>
+	public Action? OnNextNotifyRecipeChanged { get; set; }
+
 	/// <summary>Pushes a new PLC state snapshot to subscribers of <see cref="PlcState"/>.</summary>
 	public void PushPlcState(PlcSessionSnapshot state)
 	{
@@ -52,6 +60,10 @@ public sealed class StubPlcSyncService : IPlcSyncService, IDisposable
 	{
 		NotifyRecipeChangedCallCount++;
 		NotifyRecipeChangedCalls.Add((recipe, isValid));
+
+		var hook = OnNextNotifyRecipeChanged;
+		OnNextNotifyRecipeChanged = null;
+		hook?.Invoke();
 	}
 
 	public void ResetForDisable()

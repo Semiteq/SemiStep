@@ -309,7 +309,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.PropertyUpdated(99));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("PropertyUpdated"));
 	}
 
@@ -321,7 +321,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.StepAppended(50));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepAppended"));
 	}
 
@@ -334,7 +334,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.StepsInserted(10, 3));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepsInserted"));
 	}
 
@@ -347,7 +347,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.StepActionChanged(42));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepActionChanged"));
 	}
 
@@ -357,7 +357,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
-		_logger.Entries.Should().NotContain(entry =>
+		_logger.Snapshot().Should().NotContain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("Stale"));
 	}
 
@@ -370,7 +370,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.StepRemoved(42));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepRemoved"));
 	}
 
@@ -383,7 +383,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 		var act = () => _surface.OnMutation(new MutationSignal.StepRemoved(-1));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepRemoved"));
 	}
 
@@ -398,7 +398,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 			new MutationSignal.StepsRemoved([0, 99]));
 
 		act.Should().NotThrow();
-		_logger.Entries.Should().Contain(entry =>
+		_logger.Snapshot().Should().Contain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("StepsRemoved"));
 	}
 
@@ -410,7 +410,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 
 		_fixture.Coordinator.RemoveStep(0);
 
-		_logger.Entries.Should().NotContain(entry =>
+		_logger.Snapshot().Should().NotContain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("Stale"));
 	}
 
@@ -424,7 +424,7 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 
 		_fixture.Coordinator.RemoveSteps([0, 2]);
 
-		_logger.Entries.Should().NotContain(entry =>
+		_logger.Snapshot().Should().NotContain(entry =>
 			entry.Level == LogLevel.Warning && entry.Message.Contains("Stale"));
 	}
 

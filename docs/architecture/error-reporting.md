@@ -305,6 +305,28 @@ always English; only the panel seams localize.
   its own line (`Environment.NewLine`), because a rejected paste can carry many per-step errors that
   read better stacked. It still surfaces every error (never just `Errors[0]`).
 
+## Log levels and the pinned source
+
+One global floor comes from `--logging-level` (`MinimumLevel.Is`, default `Warning` —
+`StartupOptions.DefaultLoggingLevel`), so an installed machine records `Warning` and above. Sources
+that must be readable in the field regardless of that floor are pinned with a per-source
+`MinimumLevel.Override`, wired in `Program.ApplyMinimumLevels`. Today one source is pinned:
+`PlcLifecycleManager` (its reconnect-reconciliation begin and outcome lines — `docs/readme.md` §5).
+
+**An override caps as well as floors.** Serilog's `LevelOverrideMap.GetEffectiveLevel` *replaces* the
+effective minimum for a matching `{SourceContext}` prefix, in both directions. An override at
+`Information` therefore also suppresses that source's `Debug` and `Verbose` events, even under
+`--logging-level debug`, which is the opposite of what "pin it up" suggests. `ApplyMinimumLevels`
+avoids that by pinning at the *lower* of the global level and `Information`
+(`Program.ResolvePinnedSourceLevel`), so the override only ever lowers the floor. Both directions are
+held by `SemiStep.Tests/UI/Logging/PinnedLogSourceTests.cs`.
+
+The pinned source is `typeof(PlcLifecycleManager).FullName`, not a literal: a rename or a namespace
+move would compile clean against a literal and silently unpin the source.
+
+A line that must reach the field log therefore needs *both* a pinned source and a level at or above
+that source's pin. A `Debug` line from a source pinned at `Information` reaches no configuration.
+
 ## Command-exception pipe (report + log)
 
 A command whose `Execute` throws (file I/O, PLC calls) faults on `ReactiveCommand.ThrownExceptions`.

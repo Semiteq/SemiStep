@@ -214,7 +214,7 @@ public sealed class GridStyleEditorViewModelTests
 		await ExecuteSwallowing(viewModel.SaveCommand);
 
 		viewModel.ErrorMessage.Should().Be(Resources.SaveFailed);
-		var logged = logger.Entries.Should().ContainSingle().Subject;
+		var logged = logger.Snapshot().Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
 		logged.Exception.Should().BeSameAs(failure);
 	}
@@ -233,7 +233,7 @@ public sealed class GridStyleEditorViewModelTests
 
 		await viewModel.LoadAsync();
 
-		var logged = logger.Entries.Should().ContainSingle().Subject;
+		var logged = logger.Snapshot().Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Warning);
 		logged.Exception.Should().BeSameAs(failure);
 	}
@@ -254,7 +254,7 @@ public sealed class GridStyleEditorViewModelTests
 
 		await viewModel.SaveCommand.Execute();
 
-		var logged = logger.Entries.Should().ContainSingle().Subject;
+		var logged = logger.Snapshot().Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Warning);
 		logged.Exception.Should().BeSameAs(failure);
 	}

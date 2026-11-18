@@ -56,7 +56,7 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 		(await execute.Should().ThrowAsync<InvalidOperationException>()).Which.Should().BeSameAs(failure);
 		_fixture.MessagePanel.Entries.Should().ContainSingle(e => e.IsError);
 
-		var logged = _logger.Entries.Should().ContainSingle().Subject;
+		var logged = _logger.Snapshot().Should().ContainSingle().Subject;
 		logged.Level.Should().Be(LogLevel.Error);
 		logged.Exception.Should().BeSameAs(failure);
 	}

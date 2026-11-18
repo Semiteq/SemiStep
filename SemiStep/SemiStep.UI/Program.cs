@@ -5,6 +5,7 @@ using FluentResults;
 using Microsoft.Extensions.DependencyInjection;
 
 using SemiStep.Core.Configuration.Facade;
+using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.S7;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard;
@@ -19,6 +20,11 @@ namespace SemiStep.UI;
 
 public static class Program
 {
+	/// <summary>
+	/// The PLC reconciliation source, pinned so its begin and outcome lines survive the field's
+	/// default <c>Warning</c> floor.
+	/// </summary>
+	internal static readonly string PinnedReconciliationSource = typeof(PlcLifecycleManager).FullName!;
 
 	[STAThread]
 	public static void Main(string[] args)
@@ -134,8 +140,7 @@ public static class Program
 		}
 
 		var config =
-			new LoggerConfiguration()
-				.MinimumLevel.Is(logLevel)
+			ApplyMinimumLevels(new LoggerConfiguration(), logLevel)
 				.Enrich.FromLogContext()
 				.WriteTo.File(
 					path: logFilePath,
@@ -148,6 +153,24 @@ public static class Program
 					formatProvider: invariant);
 
 		Log.Logger = config.CreateLogger();
+	}
+
+	internal static LoggerConfiguration ApplyMinimumLevels(LoggerConfiguration config, LogEventLevel logLevel)
+	{
+		return config
+			.MinimumLevel.Is(logLevel)
+			.MinimumLevel.Override(PinnedReconciliationSource, ResolvePinnedSourceLevel(logLevel));
+	}
+
+	/// <summary>
+	/// A Serilog per-source override replaces the effective minimum in both directions: it raises the
+	/// floor as readily as it lowers it. Pinning at <c>Information</c> unconditionally would therefore
+	/// drop this source's <c>Debug</c> lines even under <c>--logging-level debug</c>, so the pin is the
+	/// lower of the global level and <c>Information</c>.
+	/// </summary>
+	internal static LogEventLevel ResolvePinnedSourceLevel(LogEventLevel logLevel)
+	{
+		return logLevel < LogEventLevel.Information ? logLevel : LogEventLevel.Information;
 	}
 
 	private static bool EnsureLogDirExists(string filePath)

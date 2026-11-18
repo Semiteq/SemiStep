@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-using FluentAssertions;
+﻿using FluentAssertions;
 
 using FluentResults;
 
@@ -63,11 +61,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 
 	private static Recipe BuildSingleStepRecipe()
 	{
-		var step = new Step(
-			WaitActionId,
-			[]);
-
-		return new Recipe([step]);
+		return RecipeStubs.WithSteps(WaitActionId, 1);
 	}
 
 	[Fact]
@@ -115,7 +109,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 		// Reusing BuildSingleStepRecipe() would yield empty Properties, which differ from the
 		// session's populated step and would wrongly trip the conflict branch.
 		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
-		s7Service.RecipeToReturn = DeepCopy(session.Current);
+		s7Service.RecipeToReturn = RecipeStubs.DeepCopy(session.Current);
 
 		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
@@ -133,14 +127,6 @@ public sealed class PlcLifecycleManagerReconnectTests
 
 		conflictFired.Should().BeFalse(
 			"identical PLC and PC recipe content must not raise PlcRecipeConflictDetected");
-	}
-
-	private static Recipe DeepCopy(Recipe recipe)
-	{
-		var copiedSteps = recipe.Steps
-			.Select(step => new Step(step.ActionKey, ImmutableDictionary.CreateRange(step.Properties)));
-
-		return new Recipe([.. copiedSteps]);
 	}
 
 	[Fact]

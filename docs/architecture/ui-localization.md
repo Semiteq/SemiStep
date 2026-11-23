@@ -51,31 +51,36 @@ that need plural-neutral Russian phrasing or invariant-culture number formatting
 `Ошибок: {0}`, last-sync elapsed text) are folded into view-model properties rather than formatted in
 XAML.
 
-## Gotcha: the accessor is a committed source file, not build-time-generated
+## The generated accessor
 
-The strongly-typed accessor is a **committed** source file,
-`SemiStep.UI/Localization/Resources.Designer.cs` — a hand-authored public partial class in the
-standard auto-generated shape (lazy `ResourceManager` on base name
-`SemiStep.UI.Localization.Resources`, a public static `Culture`, one `public static string Key => ...`
-property per key). It is deliberately **not** produced by MSBuild `EmbeddedResource`
-`StronglyType*` metadata.
+`Microsoft.CodeAnalysis.ResxSourceGenerator` writes the accessor. `Directory.Packages.props` pins the
+version exactly (the package has no stable release), and `SemiStep.UI.csproj` references it with
+`PrivateAssets="all"` and one item:
 
-The reason is a build-ordering race. Build-time generation emits the `Resources` class too late: on a
-**cold** build the class does not exist when the Avalonia XAML compiler (XamlIl) runs, so every
-`{x:Static l:Resources.*}` reference fails with `AVLN2000: Unable to resolve "Resources.X"`.
-`App.axaml` then fails to precompile, and at test time `App.Initialize()` throws `XamlLoadException`,
-killing the shared headless dispatcher — so every `[AvaloniaFact]` deadlocks. A committed `.cs` file
-is visible to both the C# compiler and XamlIl before their passes, so the reference resolves on a cold
+```xml
+<EmbeddedResource Update="Localization/Resources.resx" GenerateSource="true"/>
+```
+
+The generated type is `internal static partial class SemiStep.UI.Localization.Resources`. It has one
+`public static string` per key, a static `Culture` and a `ResourceManager`. `InternalsVisibleTo` gives
+the test project access, and XamlIl rewrites the same assembly, so the item needs no `Public="true"`.
+`NeutralLanguage` is `en` in the csproj: without it the analyzer baseline fails the build with `CA1824`.
+
+The generator runs inside the compiler, so the accessor exists before XamlIl runs. MSBuild
+`StronglyTyped*` generation writes the class in a target that runs after the Avalonia XAML compile. On a
+**cold** build the class does not exist when XamlIl runs, every `{x:Static l:Resources.*}` reference fails with
+`AVLN2000: Unable to resolve "Resources.X"`, `App.Initialize()` throws `XamlLoadException` at test time,
+and every `[AvaloniaFact]` deadlocks. That is why the project does not use MSBuild generation.
+
+**Consequence for contributors.** Adding a localized string means editing **two** files:
+
+1. `Resources.resx` - the English (neutral) value. The key becomes `Resources.<Key>` at the next build.
+2. `Resources.ru.resx` - the Russian value.
+
+Miss the Russian value and the Russian UI falls back to English. `ResourceTranslationTests` catches
+that: it compares the raw key sets of both files, rejects blank values and checks that each key uses
+the same `{n}` placeholders in English and Russian. Remove a key and every remaining use fails the
 build.
-
-**Consequence for contributors.** Adding a localized string means editing **three** files in sync:
-
-1. `Resources.resx` — the English (neutral) value.
-2. `Resources.ru.resx` — the Russian value.
-3. `Resources.Designer.cs` — a new `public static string Key => ...` property.
-
-Miss the third and XAML/C# cannot reference the key; miss either resx and one language falls back to
-the other (or to the key-less default).
 
 ## Culture wiring: only UICulture changes
 
@@ -106,7 +111,7 @@ logged AND shown in the notification panel (`ExceptionReporter.ReportAndLog` log
 `"{context}: {ex.Message}"`). Logs must stay English (they align with the English log templates) while the
 panel must localize. A `LocalizedText` (in `SemiStep.UI.Localization`) carries a resx key and resolves it
 two ways: `.Invariant` for the log (`GetString(key, CultureInfo.InvariantCulture)`) and `.Localized` for the
-panel (`GetString(key, Resources.Culture)`). Call sites build it compile-safely against the designer accessor,
+panel (`GetString(key, Resources.Culture)`). Call sites build it compile-safely against the generated accessor,
 `new LocalizedText(nameof(Resources.CopyStepFailed))` — a typo fails the build because the accessor must exist.
 `ReportThrownExceptions`, `ExceptionReporter.ReportAndLog`, and `MainWindowViewModel.Guarded`/`OnSubscriptionError`
 take `LocalizedText`; so the same fault logs English and shows the current-culture value from one key.

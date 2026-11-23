@@ -4,7 +4,12 @@
     <OutputType>WinExe</OutputType>
     <AssemblyName>SemiStep</AssemblyName>
     <ApplicationIcon>logo.ico</ApplicationIcon>
+    <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Localization/Resources.resx" GenerateSource="true"/>
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="SemiStep.Tests"/>
@@ -21,6 +26,7 @@
     <PackageReference Include="Avalonia.Controls.DataGrid"/>
     <PackageReference Include="Avalonia.Controls.ColorPicker"/>
     <PackageReference Include="Avalonia.Win32"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" PrivateAssets="all"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
     <PackageReference Include="Microsoft.Extensions.Logging"/>
     <PackageReference Include="Serilog"/>

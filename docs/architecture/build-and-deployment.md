@@ -15,7 +15,7 @@ not at the repository root.
   source, must not turn restore red with no commit in the repository. The warnings still appear in
   the build log.
 - **`AnalysisLevel` is deliberately absent.** Without it the rule set derives from
-  `TargetFramework` and stays fixed at net10.0's. `global.json` uses `rollForward: latestFeature`,
+  `TargetFramework` and stays fixed at net11.0's. `global.json` uses `rollForward: latestFeature`,
   so the SDK floats across feature bands; setting `AnalysisLevel=latest` would let a new band break
   the build with no change in the repository.
 - **`EnforceCodeStyleInBuild=true` plus `dotnet_diagnostic.IDE1006.severity = warning` in
@@ -43,6 +43,18 @@ build gate. They bind through `dotnet format SemiStep.slnx --verify-no-changes` 
 `.git/hooks/pre-commit`, which is not versioned — a fresh clone has no hook — and
 `.github/workflows/ci.yml` runs no `dotnet format` step. Formatting is therefore enforced only on
 machines where someone installed the hook by hand.
+
+## Target runtime and CPU
+
+The projects target `net11.0` with C# 15, and `global.json` pins SDK `11.0.100`. Release publishes
+are self-contained for `win-x64`, so an installed machine needs no separate .NET runtime.
+
+.NET 11 does not start on a CPU without the x86-64-v2 instruction sets (`CX16`, `POPCNT`, `SSE3`,
+`SSSE3`, `SSE4.1`, `SSE4.2`). It exits with "The current CPU is missing one or more of the baseline
+instruction sets". Every CPU that Windows 11 supports has them, but an old industrial PC may not.
+The ReadyToRun images that `PublishReadyToRun=true` produces target x86-64-v3 (AVX2 and others). On
+a CPU with v2 but not v3 the app still runs, and those images fall back to JIT, so startup is
+slower. Source: Microsoft Learn, "Breaking change: Minimum hardware requirements updated" (.NET 11).
 
 ## Release symbols
 

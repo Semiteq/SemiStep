@@ -32,7 +32,7 @@ public sealed class RecipeMetadataRegistry
 		var resolvedActions = ResolvePrimaryActions([.. config.Actions.Values]);
 
 		_actionsById = [];
-		_actionsByName = new Dictionary<string, ActionDefinition>(StringComparer.OrdinalIgnoreCase);
+		_actionsByName = [with(StringComparer.OrdinalIgnoreCase)];
 		foreach (var action in resolvedActions)
 		{
 			_actionsById[action.Id] = action;
@@ -41,13 +41,13 @@ public sealed class RecipeMetadataRegistry
 
 		_allActions = resolvedActions;
 
-		_properties = new Dictionary<string, PropertyTypeDefinition>(StringComparer.OrdinalIgnoreCase);
+		_properties = [with(StringComparer.OrdinalIgnoreCase)];
 		foreach (var (key, property) in config.Properties)
 		{
 			_properties[key] = property;
 		}
 
-		_columns = new Dictionary<string, GridColumnDefinition>(StringComparer.OrdinalIgnoreCase);
+		_columns = [with(StringComparer.OrdinalIgnoreCase)];
 		foreach (var (key, column) in config.Columns)
 		{
 			_columns[key] = column;
@@ -55,7 +55,7 @@ public sealed class RecipeMetadataRegistry
 
 		_allColumns = [.. config.Columns.Values];
 
-		_groups = new Dictionary<string, GroupDefinition>(StringComparer.OrdinalIgnoreCase);
+		_groups = [with(StringComparer.OrdinalIgnoreCase)];
 		foreach (var (key, group) in config.Groups)
 		{
 			_groups[key] = group;

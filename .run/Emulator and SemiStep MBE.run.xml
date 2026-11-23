@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Emulator and SemiStep MBE" type="CompoundRunConfigurationType">
+    <toRun type="DotNetProject" name="PLC emulator MBE" />
+    <toRun type="DotNetProject" name="SemiStep against emulator MBE" />
+    <method v="2">
+      <option name="Build" />
+    </method>
+  </configuration>
+</component>

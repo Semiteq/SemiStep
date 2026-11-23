@@ -39,6 +39,13 @@
     "use_new_terminal": true,
   },
   {
+    "label": "Run emulator and SemiStep MBE",
+    "command": "dotnet build SemiStep.slnx; if ($LASTEXITCODE -eq 0) { Start-Process -FilePath $ZED_WORKTREE_ROOT/SemiStep/Artifacts/bin/SemiStep.Tools.PlcEmulator/debug/SemiStep.Tools.PlcEmulator.exe -ArgumentList '--config-dir',$ZED_WORKTREE_ROOT/ConfigFiles/MBE,'--port','10102'; dotnet run --no-build --project SemiStep/SemiStep.UI/SemiStep.UI.csproj -- --config-dir $ZED_WORKTREE_ROOT/ConfigFiles/MBE --log-file $ZED_WORKTREE_ROOT/SemiStep/Artifacts/logs/semistep.log --logging-level verbose --plc-endpoint 127.0.0.1:10102 }",
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "reveal": "always",
+    "use_new_terminal": true,
+  },
+  {
     "label": "Test All",
     "command": "dotnet",
     "args": ["test", "SemiStep/SemiStep.Tests/SemiStep.Tests.csproj"],

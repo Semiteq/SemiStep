@@ -1,4 +1,9 @@
-﻿namespace SemiStep.Tests.Helpers;
+﻿using AwesomeAssertions;
+
+using SemiStep.Core.Configuration;
+using SemiStep.Core.Configuration.Facade;
+
+namespace SemiStep.Tests.Helpers;
 
 /// <summary>
 /// Locates a shipped equipment config under the repository's <c>ConfigFiles/&lt;name&gt;</c>
@@ -7,6 +12,13 @@
 /// </summary>
 public static class ShippedConfigLocator
 {
+	public static async Task<AppConfiguration> LoadAsync(string equipmentName)
+	{
+		var loaded = await ConfigFacade.LoadAndValidateAsync(GetConfigDirectory(equipmentName));
+		loaded.IsSuccess.Should().BeTrue();
+		return loaded.Value;
+	}
+
 	public static string GetConfigDirectory(string equipmentName)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(equipmentName);

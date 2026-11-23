@@ -1,0 +1,22 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="SemiStep.Tools.PlcEmulator.Ui.ErrorWindow"
+        Title="PLC emulator - cannot start"
+        Width="600" Height="360" CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource SemiColorBackground1}">
+    <Grid Margin="16" RowDefinitions="Auto,*,Auto">
+        <TextBlock Grid.Row="0" Text="The emulator cannot start:" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8" />
+        <ScrollViewer Grid.Row="1">
+            <ItemsControl x:Name="ErrorList">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,2" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+        <Button Grid.Row="2" Content="Exit" Theme="{DynamicResource SolidButton}" Classes="Primary"
+                HorizontalAlignment="Right" Margin="0,16,0,0" IsDefault="True" Click="OnExitClick" />
+    </Grid>
+</Window>

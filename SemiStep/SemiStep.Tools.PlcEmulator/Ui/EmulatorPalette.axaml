@@ -1,0 +1,11 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <FontFamily x:Key="MonospaceFontFamily">Consolas, Cascadia Mono, Courier New</FontFamily>
+    <SolidColorBrush x:Key="ChangedValueBrush" Color="#FFCC80" />
+    <SolidColorBrush x:Key="ErrorTextBrush" Color="#DB3B4B" />
+    <SolidColorBrush x:Key="StateRunningBrush" Color="#208A3C" />
+    <SolidColorBrush x:Key="StateIdleBrush" Color="#818594" />
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="DataGridCellCurrentBorderBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="DataGridCellFocusBorderBrush" Color="Transparent" />
+</ResourceDictionary>

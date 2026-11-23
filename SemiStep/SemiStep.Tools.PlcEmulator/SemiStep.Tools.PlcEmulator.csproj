@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine"/>
+    <PackageReference Include="Avalonia"/>
+    <PackageReference Include="Avalonia.Desktop"/>
+    <PackageReference Include="Avalonia.HarfBuzz"/>
+    <PackageReference Include="Avalonia.Controls.DataGrid"/>
+    <PackageReference Include="Semi.Avalonia"/>
+    <PackageReference Include="Semi.Avalonia.DataGrid"/>
+    <PackageReference Include="ReactiveUI.Avalonia"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SemiStep.Core\SemiStep.Core.csproj"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SemiStep.Tests"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="native\*" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest"/>
+  </ItemGroup>
+
+</Project>

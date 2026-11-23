@@ -52,6 +52,23 @@ Release builds emit portable PDBs (`<DebugType>portable</DebugType>` in the Rele
 line numbers into the Serilog stack traces coming off installed machines, which is the primary
 diagnostic for a deployed PLC-integration application.
 
+## PLC emulator and snap7.dll
+
+`SemiStep.Tools.PlcEmulator` is a development tool with its own window. It serves the PLC memory
+over S7 through the native `snap7.dll`. The repository commits the x64 DLL in
+`SemiStep/SemiStep.Tools.PlcEmulator/native/`, and the project copies everything in that folder to
+the output (`<Content Include="native\*" ...>`). The build downloads nothing and needs no network
+access.
+
+The emulator is in `SemiStep.slnx`. `SemiStep.Tests` references it. Building `SemiStep.UI` alone
+does not build it.
+
+The installer does not ship the emulator. `Installer/SemiStep.iss` copies one binary folder,
+`SrcBinDir` (`SemiStep\Artifacts\publish\SemiStep.UI\release_win-x64`), plus the three preset
+configuration folders. The emulator is not in the UI publish output, so neither it nor
+`snap7.dll` reaches an installed machine. The LGPLv3 notice and licence texts
+are in `SemiStep/SemiStep.Tools.PlcEmulator/native/`.
+
 ## Assembly name casing
 
 **The assembly is `SemiStep`.** Every `avares://` URI and every XAML `assembly=` reference carries

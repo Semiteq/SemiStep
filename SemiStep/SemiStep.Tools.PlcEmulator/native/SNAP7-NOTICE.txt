@@ -1,0 +1,20 @@
+snap7.dll
+=========
+
+This folder holds snap7.dll (x64, 244,224 bytes), the native library of the Snap7 project. The PLC
+emulator loads it to serve the S7 protocol.
+
+SHA-256: 17336585c8f5ebe55d6db85152bfd64d5456f6c30b26ac862980af85f725072d
+
+Snap7 is copyright Davide Nardella and is licensed under the GNU Lesser General Public License
+version 3 (LGPLv3). Source code: https://snap7.sourceforge.net/
+
+The file is the unmodified x64 build taken from the S7netplus repository
+(https://github.com/S7NetPlus/s7netplus), commit 9198fc168659934792d1b70e029c95a9c652f9e1,
+path S7.Net.UnitTest/runtimes/win-x64/native/snap7.dll.
+
+The LGPLv3 is a set of additions to the GNU General Public License version 3, so both texts sit
+next to the DLL: LGPL-3.0-LICENSE.txt and GPL-3.0-LICENSE.txt.
+
+The emulator loads the DLL dynamically and does not modify it. You can replace the file with a
+build of the Snap7 source.

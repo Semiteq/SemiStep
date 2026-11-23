@@ -1,0 +1,164 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:SemiStep.Tools.PlcEmulator.Ui"
+        x:Class="SemiStep.Tools.PlcEmulator.Ui.MainWindow"
+        x:DataType="ui:MainWindowViewModel"
+        Title="{Binding Title}"
+        Width="1100" Height="720" MinWidth="820" MinHeight="480"
+        Background="{DynamicResource SemiColorBackground1}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://SemiStep.Tools.PlcEmulator/Ui/EmulatorPalette.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Window.Styles>
+        <Style Selector="Border.cell">
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Border.cell.changed">
+            <Setter Property="Background" Value="{DynamicResource ChangedValueBrush}" />
+        </Style>
+        <Style Selector="TextBlock.message">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        </Style>
+        <Style Selector="TextBlock.message.error">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorTextBrush}" />
+        </Style>
+        <Style Selector="TextBlock.state">
+            <Setter Property="Foreground" Value="{DynamicResource StateIdleBrush}" />
+        </Style>
+        <Style Selector="TextBlock.state.active">
+            <Setter Property="Foreground" Value="{DynamicResource StateRunningBrush}" />
+        </Style>
+        <Style Selector="TextBlock.client">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        </Style>
+        <Style Selector="TextBlock.client.connected">
+            <Setter Property="Foreground" Value="{DynamicResource StateRunningBrush}" />
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="16" RowDefinitions="Auto,16,*,8,40">
+
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,24,Auto,*,Auto">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock Classes="state" Classes.active="{Binding State.IsActive}"
+                           Text="{Binding StateGlyph}" FontSize="14" VerticalAlignment="Center" />
+                <TextBlock x:Name="StateTextBlock" Text="{Binding State.Text}" FontWeight="SemiBold" FontSize="14"
+                           VerticalAlignment="Center" MinWidth="260" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                <Button x:Name="StartButton" Content="Start" Classes="Primary" Theme="{DynamicResource SolidButton}"
+                        Command="{Binding Start}" MinWidth="88" Height="32" />
+                <Button x:Name="StopButton" Content="Stop" Command="{Binding Stop}" MinWidth="88" Height="32" />
+                <Button x:Name="ContinueButton" Content="Continue" Command="{Binding Continue}"
+                        MinWidth="88" Height="32" />
+            </StackPanel>
+            <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                <TextBlock Foreground="{DynamicResource SemiColorText2}">
+                    <Run Text="Config:" /> <Run Text="{Binding ConfigText}" Foreground="{DynamicResource SemiColorText0}" />
+                </TextBlock>
+                <TextBlock Foreground="{DynamicResource SemiColorText2}">
+                    <Run Text="Listening:" /> <Run Text="{Binding Endpoint}" Foreground="{DynamicResource SemiColorText0}" />
+                </TextBlock>
+                <TextBlock x:Name="ClientTextBlock" Classes="client" Classes.connected="{Binding IsClientConnected}"
+                           Text="{Binding ClientText}" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2" ColumnDefinitions="220,16,*">
+            <Border Grid.Column="0" Background="{DynamicResource PanelBackgroundBrush}" CornerRadius="4"
+                    BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="1">
+                <ListBox ItemsSource="{Binding Blocks}" SelectedItem="{Binding SelectedBlock}"
+                         SelectionMode="Single,AlwaysSelected" Padding="4" Background="Transparent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="ui:DataBlockViewModel">
+                            <StackPanel Spacing="4" Margin="0,4">
+                                <TextBlock>
+                                    <Run Text="{Binding Header}" FontWeight="SemiBold" />
+                                    <Run Text="{Binding Title}" />
+                                </TextBlock>
+                                <TextBlock Text="{Binding SizeText}" Foreground="{DynamicResource SemiColorText2}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <Border Grid.Column="2" Background="{DynamicResource PanelBackgroundBrush}" CornerRadius="4"
+                    BorderBrush="{DynamicResource SemiColorBorder}" BorderThickness="1">
+                <Grid RowDefinitions="Auto,Auto,*" Margin="16">
+                    <TextBlock Grid.Row="0" FontWeight="SemiBold" FontSize="14">
+                        <Run Text="{Binding SelectedBlock.Header}" />
+                        <Run Text="{Binding SelectedBlock.Title}" />
+                    </TextBlock>
+                    <TextBlock Grid.Row="1" x:Name="SubtitleTextBlock" Margin="0,4,0,8" Text="{Binding SubtitleText}"
+                               Foreground="{DynamicResource SemiColorText2}" />
+                    <DataGrid x:Name="MemoryGrid" Grid.Row="2" ItemsSource="{Binding SelectedBlock.Rows}"
+                              IsReadOnly="{Binding State.IsActive}"
+                              AutoGenerateColumns="False" CanUserSortColumns="False"
+                              CanUserResizeColumns="True" SelectionMode="Single"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              RowHeight="28"
+                              BeginningEdit="OnBeginningEdit" CellEditEnding="OnCellEditEnding">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Offset" Width="90" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate x:DataType="ui:MemoryRowViewModel">
+                                        <Border Classes="cell" Classes.changed="{Binding IsChanged}">
+                                            <TextBlock Text="{Binding Offset}" VerticalAlignment="Center"
+                                                       FontFamily="{DynamicResource MonospaceFontFamily}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Name" Width="200" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate x:DataType="ui:MemoryRowViewModel">
+                                        <Border Classes="cell" Classes.changed="{Binding IsChanged}">
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Type" Width="110" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate x:DataType="ui:MemoryRowViewModel">
+                                        <Border Classes="cell" Classes.changed="{Binding IsChanged}">
+                                            <TextBlock Text="{Binding TypeName}" VerticalAlignment="Center" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Value" Width="*" MinWidth="200">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate x:DataType="ui:MemoryRowViewModel">
+                                        <Border Classes="cell" Classes.changed="{Binding IsChanged}">
+                                            <TextBlock Text="{Binding Value}" VerticalAlignment="Center"
+                                                       FontFamily="{DynamicResource MonospaceFontFamily}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate x:DataType="ui:MemoryRowViewModel">
+                                        <TextBox Text="{Binding Value, Mode=OneWay}"
+                                                 FontFamily="{DynamicResource MonospaceFontFamily}"
+                                                 VerticalAlignment="Stretch" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <TextBlock Grid.Row="4" x:Name="MessageTextBlock" Classes="message" Classes.error="{Binding Message.IsError}"
+                   Text="{Binding Message.Text}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                   VerticalAlignment="Top" />
+    </Grid>
+</Window>

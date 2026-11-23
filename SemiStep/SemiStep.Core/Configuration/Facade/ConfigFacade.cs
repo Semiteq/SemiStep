@@ -133,7 +133,7 @@ public static class ConfigFacade
 		List<Dto.ActionDto> actions,
 		GridStyleOptions gridStyle,
 		Dto.ConnectionDto? connection,
-		Dto.AppUiOptionsDto? appUi)
+		AppUiOptions appUiOptions)
 	{
 		var mappedProperties = PropertyMapper.MapMany(properties)
 			.ToDictionary(p => p.Id, StringComparer.OrdinalIgnoreCase);
@@ -167,8 +167,6 @@ public static class ConfigFacade
 
 		var plcConfiguration = ConnectionMapper.Map(connection);
 
-		var appUiOptions = AppUiOptionsMapper.Map(appUi);
-
 		return Result.Ok(new AppConfiguration(
 			mappedProperties, mappedColumns, mappedGroups,
 			mappedActions, gridStyle, plcConfiguration, appUiOptions));
@@ -181,5 +179,5 @@ public static class ConfigFacade
 		List<Dto.ActionDto> Actions,
 		Dto.GridStyleOptionsDto? GridStyle,
 		Dto.ConnectionDto? Connection,
-		Dto.AppUiOptionsDto? AppUi);
+		AppUiOptions AppUi);
 }

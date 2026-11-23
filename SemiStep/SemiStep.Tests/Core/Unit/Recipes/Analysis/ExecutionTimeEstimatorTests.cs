@@ -59,7 +59,7 @@ public sealed class ExecutionTimeEstimatorTests
 			Actions: actions,
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default,
-			Ui: AppUiOptions.Default);
+			Ui: new AppUiOptions("ru"));
 
 		return new RecipeMetadataRegistry(config);
 	}

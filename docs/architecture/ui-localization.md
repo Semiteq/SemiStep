@@ -4,9 +4,9 @@
 
 The static application chrome (menus, toolbar, status-bar labels, dialogs, view-model literals) is
 localized through .NET `.resx` resources selected by a `locale` setting read from the equipment YAML
-config. Two languages ship: Russian (default) and English. Domain text (column headers, action names,
-group items) comes from YAML `ui_name` and is not part of this mechanism; logs, diagnostics, and
-number/date formatting stay English/invariant.
+config. Two languages ship: Russian (`ru`) and English (`en`). The presets set `ru`. Domain text
+(column headers, action names, group items) comes from YAML `ui_name` and is not part of this
+mechanism; logs, diagnostics, and number/date formatting stay English/invariant.
 
 ## The `locale` setting
 
@@ -14,20 +14,26 @@ Locale lives in its own equipment-config file, `{configDir}/ui/app.yaml`, a sibl
 `grid_style.yaml` in the `ui/` folder. One key:
 
 ```yaml
-locale: ru   # or en; absent/invalid -> ru
+locale: ru   # ru or en
 ```
 
-It is loaded as its own config section, mirroring the `GridStyle` pattern:
-`AppUiOptionsLoader` reads the file, `AppUiOptionsMapper` maps the DTO to the immutable
-`AppUiOptions(string Locale)` record, and `ConfigFacade` bundles it onto `AppConfiguration.Ui`.
+The file and the key are required. Every preset (`MBE`, `MOCVD`, `RIE`) ships `ui/app.yaml` with
+`locale: ru`. No code path holds a default locale.
 
-Unlike `GridStyleLoader`, which fails when its file is absent, `AppUiOptionsLoader` returns
-`Ok(null)` when `ui/app.yaml` or the `ui/` directory is missing — the file is optional and its
-absence does not fail the config load; the mapper converts null to `AppUiOptions.Default`. The mapper
-also returns `Default` (locale `ru`) when the DTO or the `locale` value is null or blank; it does not
-validate the culture. An invalid-but-present culture is caught later in `UiCultureSelector.Resolve`,
-which falls back to `ru`. So the default UI language is `ru` whenever the file, the key, or a valid
-value is missing.
+It is loaded as its own config section, like `GridStyle`: `AppUiOptionsLoader` reads the file and
+`ConfigFacade` bundles the immutable `AppUiOptions(string Locale)` record onto `AppConfiguration.Ui`.
+`AppUiOptionsLoader` reports these problems in the loading step, together with every other loading
+problem:
+
+- `ui/app.yaml` is missing (`AppFileNotFoundError`, names the file path);
+- the `locale` key is missing, null or blank, or the file is empty or misspells the key
+  (`MissingKeyError`, names the key and the file);
+- the value is not `ru` or `en` (`UnsupportedLocaleError`, names the value and the accepted values).
+
+The loader trims the value and compares it case-insensitively, so `RU` and ` ru ` load as `ru`.
+The loader returns the lower-case value. The accepted list lives only in Core, in
+`AppUiOptionsLoader`. A value such as `de` is rejected on purpose: the UI has no `de` resources, so
+it would show the English neutral text without a warning.
 
 ## The resx model: English is the neutral fallback
 
@@ -75,10 +81,10 @@ the other (or to the key-less default).
 
 Config is loaded on a worker thread (`Program.cs` `StartupAsync`), which sets the process-global
 `CultureInfo.DefaultThreadCurrentUICulture` and `Resources.Culture` from
-`UiCultureSelector.Resolve(config.Ui.Locale)` after a successful load. `UiCultureSelector.Resolve`
-returns the requested culture, or `ru` on null/blank input, on `CultureNotFoundException`, and on
-ICU's synthesized custom-culture LCID `0x1000` (which ICU produces for structurally-valid but unknown
-tags instead of throwing).
+`CultureInfo.GetCultureInfo(config.Ui.Locale)` after a successful load. The loader has already
+limited `Ui.Locale` to `ru` or `en`, so there is no selector and no fallback. `Program` sets no
+culture before the config is read: the only UI before that point is `ErrorWindow`, which has
+hard-coded English text.
 
 `CurrentCulture` is **never** assigned. Resource lookup keys off `UICulture`; number/date formatting
 and Serilog timestamps key off `CurrentCulture` and stay invariant/English. So `{elapsed:0.0}`, step

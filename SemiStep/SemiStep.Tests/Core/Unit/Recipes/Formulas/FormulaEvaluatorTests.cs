@@ -648,7 +648,7 @@ public sealed class FormulaEvaluatorTests
 			Actions: actions,
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default,
-			Ui: AppUiOptions.Default));
+			Ui: new AppUiOptions("ru")));
 	}
 
 	private static RecipeMetadataRegistry BuildRegistryWithoutFormula()
@@ -683,7 +683,7 @@ public sealed class FormulaEvaluatorTests
 			Actions: actions,
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default,
-			Ui: AppUiOptions.Default);
+			Ui: new AppUiOptions("ru"));
 	}
 
 	private static void EnsureStringSentinelProperty(Dictionary<string, PropertyTypeDefinition> properties)

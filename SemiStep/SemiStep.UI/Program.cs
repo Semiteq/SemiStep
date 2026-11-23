@@ -30,10 +30,6 @@ public static class Program
 	[STAThread]
 	public static int Main(string[] args)
 	{
-		// Baseline UI culture before config load. Harmless: the only pre-config UI is
-		// ErrorWindow, which is hardcoded English and does not depend on culture/resx.
-		CultureInfo.DefaultThreadCurrentUICulture = UiCultureSelector.Resolve(null);
-
 		var options = StartupOptions.Parse(args);
 		var exitCode = 0;
 
@@ -124,9 +120,9 @@ public static class Program
 
 		Log.Information("Configuration loaded successfully");
 
-		// Override the UI culture from the loaded locale. Only UICulture changes; CurrentCulture
+		// Set the UI culture from the loaded locale. Only UICulture changes; CurrentCulture
 		// stays invariant so number/date formatting and logs remain English.
-		var uiCulture = UiCultureSelector.Resolve(result.Value.Ui.Locale);
+		var uiCulture = CultureInfo.GetCultureInfo(result.Value.Ui.Locale);
 		CultureInfo.DefaultThreadCurrentUICulture = uiCulture;
 		Resources.Culture = uiCulture;
 

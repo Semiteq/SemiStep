@@ -30,9 +30,9 @@ public sealed class RecipeSession(
 	private readonly FormulaEvaluator _formulaEvaluator = formulaEvaluator;
 	private readonly ILogger<RecipeSession> _logger = logger;
 	private readonly RecipeMetadataRegistry _recipeMetadataRegistry = recipeMetadataRegistry;
-	private readonly List<Recipe> _redoStack = new(MaxHistoryDepth);
+	private readonly List<Recipe> _redoStack = [with(MaxHistoryDepth)];
 	private readonly IPlcSyncService _syncService = syncService;
-	private readonly List<Recipe> _undoStack = new(MaxHistoryDepth);
+	private readonly List<Recipe> _undoStack = [with(MaxHistoryDepth)];
 
 	public Recipe Current => Snapshot.IsSuccess
 		? Snapshot.Value.Recipe

@@ -281,14 +281,17 @@ the coverage test enumerates, so a swapped format argument fails it. There is no
 Some tests still match text:
 
 - config loader and config mapper tests whose errors are plain text: the section loaders
-  (`connection/`, `properties/`, `columns/`, `groups/`, `actions/`, `ui/app.yaml`) and the domain
-  mappers. The grid-style loader and mapper errors are public typed, see "The style-editor surface
-  localizes by type";
+  (`connection/`, `properties/`, `columns/`, `groups/`, `actions/`), the parse error of the
+  `ui/app.yaml` loader, and the domain mappers. The `ui/app.yaml` loader reports a missing file, a
+  missing key and an unsupported value as typed errors, see below. The grid-style loader and mapper
+  errors are public typed, see "The style-editor surface localizes by type";
 - the PLC monitor timing tests, because their display text is the product contract;
 - older tests outside the 2026-11-18 cleanup. They move to typed checks when someone touches them.
 
-Two loading errors are typed but not localized: `DuplicateKeyError` (key, first file, repeat file) and
-`UnexpectedFileError` (file, folder, accepted names). Both are `internal sealed`, because they exist only
+Five loading errors are typed but not localized: `DuplicateKeyError` (key, first file, repeat file),
+`UnexpectedFileError` (file, folder, accepted names), `AppFileNotFoundError` (file path),
+`MissingKeyError` (key, file name) and `UnsupportedLocaleError` (value, file name, accepted values).
+The last three come from `AppUiOptionsLoader`. All five are `internal sealed`, because they exist only
 on the English startup path, and they reach the startup window as English `Message` text. Tests assert
 their type and properties, not their wording.
 

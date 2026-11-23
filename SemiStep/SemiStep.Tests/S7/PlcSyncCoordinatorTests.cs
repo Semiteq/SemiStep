@@ -69,7 +69,7 @@ public sealed class PlcSyncCoordinatorTests
 			Actions: new Dictionary<int, ActionDefinition>(),
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default,
-			Ui: AppUiOptions.Default);
+			Ui: new AppUiOptions("ru"));
 
 		return new RecipeMetadataRegistry(config);
 	}

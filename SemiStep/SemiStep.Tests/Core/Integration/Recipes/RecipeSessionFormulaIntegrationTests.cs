@@ -177,7 +177,7 @@ public sealed class RecipeSessionFormulaIntegrationTests
 			Actions: actions,
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default,
-			Ui: AppUiOptions.Default);
+			Ui: new AppUiOptions("ru"));
 
 		var registry = new RecipeMetadataRegistry(configuration);
 		var analyzer = new RecipeAnalyzer(registry);

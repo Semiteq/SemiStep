@@ -50,6 +50,13 @@ stops startup the same way. Files with other extensions are ignored. The scan ru
 The shared YAML deserializer also rejects a key repeated exactly inside one file as a parse error that
 names the key.
 
+Every named file that a loader requires is part of the delivery, and its absence stops startup:
+`connection/connection.yaml`, `ui/grid_style.yaml` and `ui/app.yaml`. The presets ship all three. A
+new required file needs its own file in every preset and an error that names the missing path.
+`ui/grid_style.yaml` and `ui/app.yaml` report typed errors; `connection/connection.yaml` reports
+plain text. The style editor does not read `ui/app.yaml`: if someone deletes the file while
+SemiStep runs, the editor still works, and the next start fails.
+
 The file header documents the accepted hex formats (`#RRGGBB`, `#AARRGGBB`); the
 writer preserves that header on save.
 

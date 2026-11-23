@@ -1,4 +1,6 @@
-﻿using SemiStep.Tests.Helpers;
+﻿using AwesomeAssertions;
+
+using SemiStep.Tests.Helpers;
 
 using Xunit;
 
@@ -15,6 +17,8 @@ public sealed class ShippedPresetLoadTests
 	[InlineData("RIE")]
 	public async Task ShippedPreset_LoadsThroughFacade(string equipmentName)
 	{
-		await ShippedConfigLocator.LoadAsync(equipmentName);
+		var configuration = await ShippedConfigLocator.LoadAsync(equipmentName);
+
+		configuration.Ui.Locale.Should().Be("ru");
 	}
 }

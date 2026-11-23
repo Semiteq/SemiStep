@@ -73,4 +73,16 @@ public sealed class LoaderFailLoudTests
 			e.Message.Contains("grid_style.yaml", StringComparison.OrdinalIgnoreCase));
 	}
 
+	[Fact]
+	public async Task GroupsLoader_WithEmptyGroupBody_FailsNamingTheGroup()
+	{
+		using var tempDir = TestDataCopier.CreateEmptyTempDirectory();
+		TestDataCopier.WriteYaml(tempDir, Path.Combine("groups", "a.yaml"), "valves:\n  1: Open\nmygroup:\n");
+
+		var result = await GroupsSectionLoader.LoadAsync(tempDir.Path);
+
+		result.IsFailed.Should().BeTrue();
+		result.Errors.Should().ContainSingle(e =>
+			e.Message.Contains("a.yaml") && e.Message.Contains("mygroup"));
+	}
 }

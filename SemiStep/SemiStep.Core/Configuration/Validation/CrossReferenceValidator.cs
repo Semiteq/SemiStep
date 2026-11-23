@@ -37,7 +37,7 @@ internal static class CrossReferenceValidator
 		List<ActionDto> actions,
 		List<Result> validationResults)
 	{
-		// Duplicate action ids are already rejected by ActionsSectionLoader; last-write-wins here.
+		// Duplicate action ids are already rejected by MergeSectionLoader; last-write-wins here.
 		var actionsById = new Dictionary<int, ActionDto>();
 		foreach (var action in actions)
 		{

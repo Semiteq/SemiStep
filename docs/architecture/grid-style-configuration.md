@@ -35,11 +35,20 @@ consume tokens via `DynamicResource` to stay dark-ready.
 ## YAML is the single source of truth
 
 `grid_style.yaml` is the only style file. The other config sections (`actions/`, `columns/`,
-`groups/`, `properties/`) are loaded by globbing `*.yaml` in their subfolder and merging. Grid styles
-are the deliberate exception: `GridStyleLoader.LoadAsync` reads exactly one file —
-`{configDir}/ui/grid_style.yaml` — never globbed, never merged. That keeps the editor's write target
-unambiguous: one config-dir maps to one style file. If styles were ever split across `ui/*.yaml`,
-write-back would have no single target, so single-file is intentional.
+`groups/`, `properties/`) read every `*.yaml` file in their subfolder, in ordinal name order, and merge
+them. A key that appears twice under the section's key comparison (case-insensitive for property ids,
+column keys and group ids, numeric for action ids) stops startup with `DuplicateKeyError`, which names
+the key and both files. Grid styles are the deliberate exception: `GridStyleLoader.LoadAsync` reads
+exactly one file, `{configDir}/ui/grid_style.yaml`, never merged. That keeps the editor's write target
+unambiguous: one config-dir maps to one style file.
+
+`ConfigFolderPolicy` owns the rule for the six folders. `connection/` accepts only `connection.yaml`,
+and `ui/` accepts only `grid_style.yaml` and `app.yaml` (names match case-insensitively). Any other
+`.yaml` or `.yml` file there stops startup with `UnexpectedFileError`. A `.yml` file in a merge folder
+stops startup the same way. Files with other extensions are ignored. The scan runs only at startup
+(`ConfigFacade.LoadAllSectionsAsync`), so the style editor still opens when `ui/` holds an extra file.
+The shared YAML deserializer also rejects a key repeated exactly inside one file as a parse error that
+names the key.
 
 The file header documents the accepted hex formats (`#RRGGBB`, `#AARRGGBB`); the
 writer preserves that header on save.

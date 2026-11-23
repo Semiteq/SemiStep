@@ -1,5 +1,6 @@
 ﻿using AwesomeAssertions;
 
+using SemiStep.Core.Configuration.Loaders;
 using SemiStep.Tests.Config.Helpers;
 
 using Xunit;
@@ -17,10 +18,9 @@ public sealed class ActionErrorTests
 		var result = await ConfigTestHelper.LoadInvalidCaseAsync("DuplicateActionId");
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e =>
-				e.Message.Contains("Duplicate action Id", StringComparison.OrdinalIgnoreCase) &&
-				e.Message.Contains("10"),
-			"error should identify '10' as the duplicate action Id");
+		result.Errors.OfType<DuplicateKeyError>().Should().ContainSingle()
+			.Which.Should().Match<DuplicateKeyError>(e =>
+				e.Key == "10" && e.FirstFileName == "service.yaml" && e.RepeatFileName == "service2.yaml");
 	}
 
 	[Fact]

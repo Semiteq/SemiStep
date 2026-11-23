@@ -2,28 +2,20 @@
 
 using SemiStep.Core.Configuration.Dto;
 
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
-
 namespace SemiStep.Core.Configuration.Loaders;
 
 internal static class GridStyleLoader
 {
-	private static readonly IDeserializer _deserializer = new DeserializerBuilder()
-		.WithNamingConvention(UnderscoredNamingConvention.Instance)
-		.IgnoreUnmatchedProperties()
-		.Build();
-
 	public static async Task<Result<GridStyleOptionsDto?>> LoadAsync(string configDirectory)
 	{
-		var uiDir = Path.Combine(configDirectory, "ui");
+		var uiDir = Path.Combine(configDirectory, ConfigFolderPolicy.UiFolder);
 
 		if (!Directory.Exists(uiDir))
 		{
 			return Result.Fail<GridStyleOptionsDto?>(new GridStyleConfigNotFoundError(uiDir));
 		}
 
-		var filePath = Path.Combine(uiDir, "grid_style.yaml");
+		var filePath = Path.Combine(uiDir, ConfigFolderPolicy.GridStyleFileName);
 
 		if (!File.Exists(filePath))
 		{
@@ -34,7 +26,7 @@ internal static class GridStyleLoader
 		{
 			var content = await File.ReadAllTextAsync(filePath);
 
-			return Result.Ok(_deserializer.Deserialize<GridStyleOptionsDto?>(content));
+			return Result.Ok(YamlConfigDeserializer.Instance.Deserialize<GridStyleOptionsDto?>(content));
 		}
 		catch (Exception ex)
 		{

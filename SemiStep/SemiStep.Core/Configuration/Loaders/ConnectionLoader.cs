@@ -2,9 +2,6 @@
 
 using SemiStep.Core.Configuration.Dto;
 
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
-
 namespace SemiStep.Core.Configuration.Loaders;
 
 internal static class ConnectionLoader
@@ -12,21 +9,16 @@ internal static class ConnectionLoader
 	private const string SupportedConnectionFileVersion = "1.0";
 	private const string SupportedConnectionProtocol = "1.0";
 
-	private static readonly IDeserializer _deserializer = new DeserializerBuilder()
-		.WithNamingConvention(UnderscoredNamingConvention.Instance)
-		.IgnoreUnmatchedProperties()
-		.Build();
-
 	public static async Task<Result<ConnectionDto?>> LoadAsync(string configDirectory)
 	{
-		var connectionDir = Path.Combine(configDirectory, "connection");
+		var connectionDir = Path.Combine(configDirectory, ConfigFolderPolicy.ConnectionFolder);
 
 		if (!Directory.Exists(connectionDir))
 		{
 			return Result.Fail($"Required config not found: {connectionDir}");
 		}
 
-		var filePath = Path.Combine(connectionDir, "connection.yaml");
+		var filePath = Path.Combine(connectionDir, ConfigFolderPolicy.ConnectionFileName);
 
 		if (!File.Exists(filePath))
 		{
@@ -38,7 +30,7 @@ internal static class ConnectionLoader
 		try
 		{
 			var content = await File.ReadAllTextAsync(filePath);
-			dto = _deserializer.Deserialize<ConnectionDto?>(content);
+			dto = YamlConfigDeserializer.Instance.Deserialize<ConnectionDto?>(content);
 		}
 		catch (Exception ex)
 		{

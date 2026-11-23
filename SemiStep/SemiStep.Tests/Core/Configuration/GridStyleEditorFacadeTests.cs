@@ -31,6 +31,17 @@ public sealed class GridStyleEditorFacadeTests
 	}
 
 	[Fact]
+	public async Task Load_WithExtraFileInUiFolder_StillLoads()
+	{
+		using var tempDir = CopyShippedConfig("MBE");
+		File.WriteAllText(Path.Combine(tempDir.Path, "ui", "extra.yaml"), "a: 1\n");
+
+		var result = await new GridStyleEditorFacade().Load(tempDir.Path);
+
+		result.IsSuccess.Should().BeTrue();
+	}
+
+	[Fact]
 	public async Task Load_MissingConfigDir_ReturnsFail()
 	{
 		var missingDir = Path.Combine(Path.GetTempPath(), "SemiStep.NoSuchConfig", Guid.NewGuid().ToString("N"));

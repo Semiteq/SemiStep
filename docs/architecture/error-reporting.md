@@ -186,7 +186,10 @@ the dropped `ex.Message` is logged at each consumer, and the `ExceptionalError` 
   `LogWarning` after setting the localized `ErrorMessage`.
 - **Startup consumer** — `GridStyleLoader`/`GridStyleMapper` are also on the startup config-load path
   (`ConfigFacade.LoadAndValidateAsync`, consumed by `Program.cs`), which logs the same nested
-  `ExceptionalError` so a YAML parse detail is not lost at launch.
+  `ExceptionalError` so a YAML parse detail is not lost at launch. The startup window shows `Message`
+  only, so `ConfigFacade` replaces a `GridStyleLoadFailedError` on that path with a plain error whose
+  message ends with the parser text (for example the repeated key). The style editor keeps the
+  headline-only type.
 
 `SaveCommand.ThrownExceptions` (a command-pipeline throw, before any file is written) is distinct: it commits
 to `Resources.SaveFailed` alone (no `grid_style.yaml` in the wording, since no file was touched), with the raw
@@ -277,9 +280,17 @@ the coverage test enumerates, so a swapped format argument fails it. There is no
 
 Some tests still match text:
 
-- config loader and config mapper tests, because those errors are plain text with no typed surface;
+- config loader and config mapper tests whose errors are plain text: the section loaders
+  (`connection/`, `properties/`, `columns/`, `groups/`, `actions/`, `ui/app.yaml`) and the domain
+  mappers. The grid-style loader and mapper errors are public typed, see "The style-editor surface
+  localizes by type";
 - the PLC monitor timing tests, because their display text is the product contract;
 - older tests outside the 2026-11-18 cleanup. They move to typed checks when someone touches them.
+
+Two loading errors are typed but not localized: `DuplicateKeyError` (key, first file, repeat file) and
+`UnexpectedFileError` (file, folder, accepted names). Both are `internal sealed`, because they exist only
+on the English startup path, and they reach the startup window as English `Message` text. Tests assert
+their type and properties, not their wording.
 
 ### The log path is unchanged (always English)
 

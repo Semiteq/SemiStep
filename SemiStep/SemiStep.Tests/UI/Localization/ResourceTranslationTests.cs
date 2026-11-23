@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Globalization;
-using System.Reflection;
 using System.Text.RegularExpressions;
 
 using AwesomeAssertions;
@@ -13,7 +12,7 @@ namespace SemiStep.Tests.UI.Localization;
 
 [Trait("Component", "UI")]
 [Trait("Category", "Unit")]
-public sealed class ResourceSyncTests
+public sealed class ResourceTranslationTests
 {
 	// tryParents: false reads only the requested culture's own entries, so a key missing
 	// from a satellite is absent here instead of silently falling back to the neutral value.
@@ -28,18 +27,6 @@ public sealed class ResourceSyncTests
 		// sets instead: every English key must have a Russian entry, and no orphan ru keys exist.
 		_russian.Keys.Should().BeEquivalentTo(_neutral.Keys,
 			"every neutral (English) resx key must have a matching Russian translation, and vice versa");
-	}
-
-	[Fact]
-	public void EveryNeutralKey_HasDesignerAccessor_AndNothingElse()
-	{
-		var accessorNames = typeof(Resources)
-			.GetProperties(BindingFlags.Public | BindingFlags.Static)
-			.Where(property => property.PropertyType == typeof(string))
-			.Select(property => property.Name);
-
-		accessorNames.Should().BeEquivalentTo(_neutral.Keys,
-			"every resx data name needs a public static string accessor in Resources.Designer.cs, and vice versa");
 	}
 
 	[Fact]

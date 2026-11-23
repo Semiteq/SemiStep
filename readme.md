@@ -85,4 +85,9 @@ dotnet run --project SemiStep/SemiStep.UI/SemiStep.UI.csproj
 
 # Тесты
 dotnet test SemiStep/SemiStep.Tests/SemiStep.Tests.csproj
+
+# Эмулятор ПЛК (откроется окно) и приложение, подключённое к нему (описание: SemiStep/SemiStep.Tools.PlcEmulator/README.md)
+# В Rider: конфигурация "Emulator and SemiStep MBE"
+dotnet run --project SemiStep/SemiStep.Tools.PlcEmulator/SemiStep.Tools.PlcEmulator.csproj -- --config-dir ConfigFiles/MBE --port 10102
+dotnet run --project SemiStep/SemiStep.UI/SemiStep.UI.csproj -- --config-dir ConfigFiles/MBE --plc-endpoint 127.0.0.1:10102
 ```

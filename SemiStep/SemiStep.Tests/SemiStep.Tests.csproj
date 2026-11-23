@@ -15,12 +15,14 @@
     <PackageReference Include="Avalonia.Headless.XUnit"/>
     <PackageReference Include="AwesomeAssertions"/>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing"/>
     <PackageReference Include="Serilog"/>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SemiStep.Core\SemiStep.Core.csproj"/>
     <ProjectReference Include="..\SemiStep.UI\SemiStep.UI.csproj"/>
+    <ProjectReference Include="..\SemiStep.Tools.PlcEmulator\SemiStep.Tools.PlcEmulator.csproj"/>
   </ItemGroup>
 
   <ItemGroup>

@@ -4,6 +4,7 @@ using FluentResults;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using SemiStep.Core.Configuration;
 using SemiStep.Core.Configuration.Facade;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.S7;
@@ -27,13 +28,14 @@ public static class Program
 	internal static readonly string PinnedReconciliationSource = typeof(PlcLifecycleManager).FullName!;
 
 	[STAThread]
-	public static void Main(string[] args)
+	public static int Main(string[] args)
 	{
 		// Baseline UI culture before config load. Harmless: the only pre-config UI is
 		// ErrorWindow, which is hardcoded English and does not depend on culture/resx.
 		CultureInfo.DefaultThreadCurrentUICulture = UiCultureSelector.Resolve(null);
 
 		var options = StartupOptions.Parse(args);
+		var exitCode = 0;
 
 		CreateLogger(
 			options.LogFilePath,
@@ -43,6 +45,7 @@ public static class Program
 		try
 		{
 			var outcome = ValidateStartup(options);
+			exitCode = outcome.Errors is null ? 0 : 1;
 
 			// The catch must not re-launch: once App.Run has initialised Avalonia, a second
 			// BuildAvaloniaApp() would throw "Application has already been initialized".
@@ -58,11 +61,14 @@ public static class Program
 		catch (Exception ex)
 		{
 			Log.Fatal(ex, "Application terminated unexpectedly");
+			exitCode = 1;
 		}
 		finally
 		{
 			Log.CloseAndFlushAsync().AsTask().GetAwaiter().GetResult();
 		}
+
+		return exitCode;
 	}
 
 	private static StartupOutcome ValidateStartup(StartupOptions options)
@@ -78,9 +84,23 @@ public static class Program
 		}
 	}
 
+	/// <summary>A malformed PLC endpoint option fails before the configuration loads, so it is never silently dropped.</summary>
+	internal static async Task<Result<AppConfiguration>> LoadConfigurationAsync(StartupOptions options)
+	{
+		if (options.PlcEndpointOverride is { IsFailed: true } invalidEndpoint)
+		{
+			return Result.Fail(invalidEndpoint.Errors);
+		}
+
+		var loaded = await ConfigFacade.LoadAndValidateAsync(options.ConfigDir);
+		return loaded.IsSuccess && options.PlcEndpointOverride is { IsSuccess: true } endpoint
+			? Result.Ok(endpoint.Value.ApplyTo(loaded.Value))
+			: loaded;
+	}
+
 	private static async Task<StartupOutcome> StartupAsync(StartupOptions options)
 	{
-		var result = await ConfigFacade.LoadAndValidateAsync(options.ConfigDir);
+		var result = await LoadConfigurationAsync(options);
 
 		if (result.IsFailed)
 		{
@@ -110,10 +130,15 @@ public static class Program
 		CultureInfo.DefaultThreadCurrentUICulture = uiCulture;
 		Resources.Culture = uiCulture;
 
+		return StartupOutcome.Succeeded(BuildServices(options, result.Value));
+	}
+
+	internal static ServiceProvider BuildServices(StartupOptions options, AppConfiguration configuration)
+	{
 		var services =
 			new ServiceCollection()
 				.AddSingleton(options)
-				.AddSingleton(result.Value)
+				.AddSingleton(configuration)
 				.AddRecipe()
 				.AddS7()
 				.AddCsv()
@@ -122,7 +147,7 @@ public static class Program
 
 		services.AddLogging(b => b.AddSerilog(Log.Logger, dispose: false));
 
-		return StartupOutcome.Succeeded(services.BuildServiceProvider());
+		return services.BuildServiceProvider();
 	}
 
 	private static void CreateLogger(

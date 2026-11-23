@@ -1,12 +1,18 @@
-﻿using Serilog.Events;
+﻿using FluentResults;
+
+using Serilog.Events;
 
 namespace SemiStep.UI;
 
 public sealed record StartupOptions(
 	string ConfigDir,
 	string LogFilePath,
-	LogEventLevel LoggingLevel)
+	LogEventLevel LoggingLevel,
+	Result<PlcEndpoint>? PlcEndpointOverride = null)
 {
+	private const string PlcEndpointOption = "--plc-endpoint";
+	private const string PlcEndpointAssignmentPrefix = PlcEndpointOption + "=";
+
 	public const string DefaultConfigDir =
 		@"C:\DISTR\Config\SemiStep\MBE";
 
@@ -21,6 +27,7 @@ public sealed record StartupOptions(
 		var configDir = DefaultConfigDir;
 		var logFilePath = DefaultLogFilePath;
 		var logLevel = DefaultLoggingLevel;
+		Result<PlcEndpoint>? plcEndpoint = null;
 
 		for (var i = 0; i < args.Length; i++)
 		{
@@ -37,13 +44,31 @@ public sealed record StartupOptions(
 				case "--logging-level" when i + 1 < args.Length:
 					logLevel = ParseLogLevel(args[++i]);
 					break;
+
+				case PlcEndpointOption:
+					plcEndpoint = ParsePlcEndpoint(i + 1 < args.Length ? args[++i] : null);
+					break;
+
+				case var argument when argument.StartsWith(PlcEndpointAssignmentPrefix, StringComparison.Ordinal):
+					plcEndpoint = ParsePlcEndpoint(argument[PlcEndpointAssignmentPrefix.Length..]);
+					break;
 			}
 		}
 
 		return new StartupOptions(
 			configDir,
 			logFilePath,
-			logLevel);
+			logLevel,
+			plcEndpoint);
+	}
+
+	private static Result<PlcEndpoint> ParsePlcEndpoint(string? value)
+	{
+		var parsed = PlcEndpoint.Parse(value);
+		return parsed.IsSuccess
+			? parsed
+			: Result.Fail(
+				$"Option {PlcEndpointOption} requires a value in the form host:port: {parsed.Errors[0].Message}.");
 	}
 
 	private static LogEventLevel ParseLogLevel(string value)

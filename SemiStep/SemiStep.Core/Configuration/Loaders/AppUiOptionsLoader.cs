@@ -2,21 +2,13 @@
 
 using SemiStep.Core.Configuration.Dto;
 
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
-
 namespace SemiStep.Core.Configuration.Loaders;
 
 internal static class AppUiOptionsLoader
 {
-	private static readonly IDeserializer _deserializer = new DeserializerBuilder()
-		.WithNamingConvention(UnderscoredNamingConvention.Instance)
-		.IgnoreUnmatchedProperties()
-		.Build();
-
 	public static async Task<Result<AppUiOptionsDto?>> LoadAsync(string configDirectory)
 	{
-		var filePath = Path.Combine(configDirectory, "ui", "app.yaml");
+		var filePath = Path.Combine(configDirectory, ConfigFolderPolicy.UiFolder, ConfigFolderPolicy.AppFileName);
 
 		// Optional file: absence yields defaults, unlike the required grid_style.yaml.
 		if (!File.Exists(filePath))
@@ -28,7 +20,7 @@ internal static class AppUiOptionsLoader
 		{
 			var content = await File.ReadAllTextAsync(filePath);
 
-			return Result.Ok(_deserializer.Deserialize<AppUiOptionsDto?>(content));
+			return Result.Ok(YamlConfigDeserializer.Instance.Deserialize<AppUiOptionsDto?>(content));
 		}
 		catch (Exception ex)
 		{

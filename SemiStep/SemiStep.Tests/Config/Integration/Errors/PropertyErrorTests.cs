@@ -1,5 +1,6 @@
 ﻿using AwesomeAssertions;
 
+using SemiStep.Core.Configuration.Loaders;
 using SemiStep.Tests.Config.Helpers;
 
 using Xunit;
@@ -17,10 +18,9 @@ public sealed class PropertyErrorTests
 		var result = await ConfigTestHelper.LoadInvalidCaseAsync("DuplicatePropertyId");
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e =>
-				e.Message.Contains("Duplicate PropertyTypeId", StringComparison.OrdinalIgnoreCase) &&
-				e.Message.Contains("int", StringComparison.OrdinalIgnoreCase),
-			"error should identify 'int' as the duplicate PropertyTypeId");
+		result.Errors.OfType<DuplicateKeyError>().Should().ContainSingle()
+			.Which.Should().Match<DuplicateKeyError>(e =>
+				e.Key == "int" && e.FirstFileName == "properties.yaml" && e.RepeatFileName == "properties2.yaml");
 	}
 
 	[Fact]

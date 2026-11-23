@@ -85,11 +85,12 @@ public static class ConfigFacade
 		var appUiResult = await AppUiOptionsLoader.LoadAsync(configDirectory);
 
 		var merged = Result.Merge(
+			ConfigFolderPolicy.Scan(configDirectory),
 			propertiesResult.ToResult(),
 			columnsResult.ToResult(),
 			groupsResult.ToResult(),
 			actionsResult.ToResult(),
-			gridStyleResult.ToResult(),
+			WithParserDetail(gridStyleResult.ToResult()),
 			connectionResult.ToResult(),
 			appUiResult.ToResult());
 
@@ -108,6 +109,21 @@ public static class ConfigFacade
 			appUiResult.Value);
 
 		return Result.Ok(sections).WithReasons(merged.Reasons);
+	}
+
+	/// <summary>The style editor localizes GridStyleLoadFailedError by type; the startup window shows Message only.</summary>
+	private static Result WithParserDetail(Result gridStyleResult)
+	{
+		return gridStyleResult.IsSuccess
+			? gridStyleResult
+			: Result.Fail(gridStyleResult.Errors.Select(AppendParserDetail));
+	}
+
+	private static IError AppendParserDetail(IError error)
+	{
+		return error is GridStyleLoadFailedError && error.Reasons.OfType<ExceptionalError>().FirstOrDefault() is { } cause
+			? new Error($"{error.Message}: {cause.Exception.Message}").CausedBy(cause.Exception)
+			: error;
 	}
 
 	private static Result<AppConfiguration> MapToDomain(

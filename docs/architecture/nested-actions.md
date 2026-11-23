@@ -165,7 +165,8 @@ enforces, at load, with a clear message each:
 - no shared column across branches of one root — a column reachable within a single root via two
   different selector conditions is rejected at config load (OR-activation is unsupported);
 - action ids are unique (enforced earlier by the loader across files; uniqueness across files
-  and for subaction ids is checked by `ActionsSectionLoader`, not `ValidateReferenceGraph`).
+  and for subaction ids is checked by the shared merge skeleton `MergeSectionLoader`, not
+  `ValidateReferenceGraph`).
 
 A column may carry only a **single** activation path. OR-activation is not supported, so a
 subaction reachable from two branches of the **same** root is rejected — this includes two

@@ -1,5 +1,6 @@
 ﻿using AwesomeAssertions;
 
+using SemiStep.Core.Configuration.Loaders;
 using SemiStep.Tests.Config.Helpers;
 
 using Xunit;
@@ -57,9 +58,9 @@ public sealed class NestedActionReferenceTests
 		var result = await ConfigTestHelper.LoadInvalidCaseAsync("NestedDuplicateId");
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e =>
-			e.Message.Contains("Duplicate action Id", StringComparison.OrdinalIgnoreCase)
-			&& e.Message.Contains("3001", StringComparison.OrdinalIgnoreCase));
+		result.Errors.OfType<DuplicateKeyError>().Should().ContainSingle()
+			.Which.Should().Match<DuplicateKeyError>(e =>
+				e.Key == "3001" && e.FirstFileName == "service.yaml" && e.RepeatFileName == "service2.yaml");
 	}
 
 	[Fact]

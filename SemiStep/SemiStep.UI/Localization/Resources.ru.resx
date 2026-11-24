@@ -232,6 +232,15 @@
   <data name="LastSyncAgoFormat" xml:space="preserve">
     <value>{0} с назад</value>
   </data>
+  <data name="LastSyncOver30SecondsAgo" xml:space="preserve">
+    <value>> 30 с назад</value>
+  </data>
+  <data name="LastSyncOverMinuteAgo" xml:space="preserve">
+    <value>> 1 мин назад</value>
+  </data>
+  <data name="LastSyncOverHourAgo" xml:space="preserve">
+    <value>> 1 ч назад</value>
+  </data>
   <data name="LastSyncPrefix" xml:space="preserve">
     <value>Синхр.: {0}</value>
   </data>

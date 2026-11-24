@@ -48,6 +48,8 @@ public sealed class UIFixture : IAsyncLifetime
 	// click-away clear must reach sibling surfaces built from the same fixture.
 	public ChangedCellClickAwayBroadcaster ClickAwayBroadcaster { get; } = new();
 
+	public HistoricalScheduler Scheduler { get; } = new(new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero));
+
 	public ValueTask InitializeAsync()
 	{
 		return InitializeAsync("WithGroups");
@@ -172,7 +174,7 @@ public sealed class UIFixture : IAsyncLifetime
 		var plcMonitor = new PlcMonitorViewModel(
 			Coordinator,
 			RecipeMetadataRegistry,
-			new HistoricalScheduler());
+			Scheduler);
 
 		var gridStyleEditorViewModelFactory = styleEditorFactory ?? new Func<GridStyleEditorViewModel>(
 			() => new GridStyleEditorViewModel(
@@ -190,6 +192,7 @@ public sealed class UIFixture : IAsyncLifetime
 			MessagePanel,
 			plcMonitor,
 			gridStyleEditorViewModelFactory,
+			Scheduler,
 			logger ?? NullLogger<MainWindowViewModel>.Instance);
 	}
 

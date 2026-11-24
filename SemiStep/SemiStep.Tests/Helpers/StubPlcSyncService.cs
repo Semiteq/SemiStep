@@ -44,6 +44,8 @@ public sealed class StubPlcSyncService : IPlcSyncService, IDisposable
 	/// </summary>
 	public Action? OnNextNotifyRecipeChanged { get; set; }
 
+	public Task PendingSync { get; set; } = Task.CompletedTask;
+
 	/// <summary>Pushes a new PLC state snapshot to subscribers of <see cref="PlcState"/>.</summary>
 	public void PushPlcState(PlcSessionSnapshot state)
 	{
@@ -64,6 +66,11 @@ public sealed class StubPlcSyncService : IPlcSyncService, IDisposable
 		var hook = OnNextNotifyRecipeChanged;
 		OnNextNotifyRecipeChanged = null;
 		hook?.Invoke();
+	}
+
+	public Task WaitForPendingSyncAsync(CancellationToken ct = default)
+	{
+		return PendingSync.WaitAsync(ct);
 	}
 
 	public void ResetForDisable()

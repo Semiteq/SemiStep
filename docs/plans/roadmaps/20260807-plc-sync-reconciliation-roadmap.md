@@ -50,16 +50,17 @@ reading what is there and without a log line.
 
 Two mechanisms produce that state and one more can hide a genuine conflict:
 
-- **Torn write.** `DisableSync` (`PlcLifecycleManager.cs:183`) calls `ResetForDisable` →
+- **Torn write.** `PlcLifecycleManager.DisableSync` calls `ResetForDisable` →
   `PlcSyncCoordinator.ResetForDisable` (`Sync/PlcSyncCoordinator.cs`), which cancels the current
   debounce token. That is the same token handed to `WriteRecipeWithRetryAsync`
   (`PlcSyncCoordinator.RunAttemptAsync` → `SyncPendingRecipeAsync` → `PlcSyncExecutor.WriteAsync`), so
   a disable landing between the two managing-area writes aborts the transaction with `Committed`
   false and the arrays half old, half new. The cancellation is then swallowed as an expected
   cancellation (`PlcSyncCoordinator.RunAttemptAsync`). `DisableSync` also disconnects the socket
-  (`PlcLifecycleManager.cs:191`) without waiting: `WaitForPendingSyncAsync` exists on the coordinator
-  (`PlcSyncCoordinator.WaitForPendingSyncAsync`) but is absent from `IPlcSyncService`
-  (`IPlcSyncService.cs:8-29`) and is never called on this path.
+  without waiting: `WaitForPendingSyncAsync` exists on the coordinator
+  (`PlcSyncCoordinator.WaitForPendingSyncAsync`) but is absent from `IPlcSyncService` and is never
+  called on this path.
+  Slice plc-write-atomic fixes this defect.
 - **Push racing the compare.** `EnableSync` sets sync enabled (`:129`) before it connects (`:130`),
   and every recipe mutation notifies the sync service while enabled
   (`Recipes/RecipeSession.cs:625-631`). An edit made during the connect schedules a debounced write
@@ -198,7 +199,7 @@ Each named guard is a hypothesis the owning slice plan must confirm fires at HEA
 - **Scope:** Make the recipe write transaction untearable by a sync disable. Separate the debounce
   cancellation from the write cancellation in `PlcSyncCoordinator` so `ResetForDisable` can cancel a
   pending debounce without aborting a write already inside `WriteRecipeDataAsync`, and make
-  `DisableSync` (`PlcLifecycleManager.cs:183-197`) wait for the in-flight write, bounded, before it
+  `PlcLifecycleManager.DisableSync` wait for the in-flight write, bounded, before it
   disconnects. That requires `PlcSyncCoordinator.WaitForPendingSyncAsync` on
   `IPlcSyncService`. The invariant to prove: no operator action can leave the PLC with
   `Committed == false`; only a hard failure or process death can, and both are logged.
@@ -212,9 +213,9 @@ Each named guard is a hypothesis the owning slice plan must confirm fires at HEA
 - **Stacking base:** master
 - **Scope guard:** no change to the write protocol itself (order, offsets, retry count) and no
   change to the reconciliation.
-- **Plan:** —
+- **Plan:** `docs/plans/20261124-plc-write-atomic.md`
 - **PR:** —
-- **Branch:** —
+- **Branch:** `torn-write-on-disable`
 
 ### Slice plc-push-gate — Status: BLOCKED — held for the hardware test after plc-write-atomic; set to PENDING if the race is observed, DROPPED if it is not
 - **Scope:** Hold the debounced auto-push until the reconciliation has read the PLC, so an edit made
@@ -253,8 +254,15 @@ sees the dialog on the toggle that used to swallow it. Each step names one obser
    local and PLC step counts. This is the #158 repro.
 3. Answer "keep local". The PLC takes the shortened recipe; the status returns to synced.
 4. Repeat step 2 and answer "load from PLC". The grid takes the PLC recipe; no further write follows.
-5. Edit a step and, within one second, disable sync. Re-enable it. The dialog appears rather than a
-   silent switch to synced — the write either finished or is reported, never left half-applied.
+5. Two disable checks. Start the application with `--logging-level Information`: the lines
+   `Recipe synced to PLC successfully` and `Disconnected from PLC` are written at Information. (a)
+   Edit a step and, within one second, disable sync: the debounce is cancelled, no write reaches the
+   PLC (no `Recipe synced to PLC successfully` line) and the log has no coordinator warning. (b) Edit
+   a step, wait for synced (`Recipe synced to PLC successfully`), disable sync: the log shows
+   `Disconnected from PLC` with no warning. Re-enable sync after (a) and after (b): the reconciliation
+   outcome line reads Identical or ConflictRaised, never NotCommitted. A disable while the write
+   itself runs lasts milliseconds and cannot be timed by hand; only the headless tests in
+   `PlcSyncCoordinatorWriteTokenTests` prove that branch.
 6. Pull the network cable, then enable sync. The message panel reports the read failure and the
    status does not read synced; the PLC keeps its recipe.
 7. Enable sync and edit a step while the connection is still being established. If the dialog is

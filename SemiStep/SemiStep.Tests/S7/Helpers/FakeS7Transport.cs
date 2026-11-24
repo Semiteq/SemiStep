@@ -23,6 +23,8 @@ internal sealed class FakeS7Transport : IS7Transport
 	/// <summary>When set, a read awaits the returned task before answering.</summary>
 	public Func<int, CancellationToken, Task>? BeforeRead { get; set; }
 
+	public Func<int, CancellationToken, Task>? BeforeWrite { get; set; }
+
 	public bool IsConnected { get; private set; } = true;
 
 	public void SetConnected(bool connected)
@@ -66,9 +68,14 @@ internal sealed class FakeS7Transport : IS7Transport
 			: new byte[count];
 	}
 
-	public Task WriteBytesAsync(int dbNumber, int startByte, byte[] data, CancellationToken ct = default)
+	public async Task WriteBytesAsync(int dbNumber, int startByte, byte[] data, CancellationToken ct = default)
 	{
 		ct.ThrowIfCancellationRequested();
+
+		if (BeforeWrite is { } beforeWrite)
+		{
+			await beforeWrite(dbNumber, ct);
+		}
 
 		if (WriteException is not null)
 		{
@@ -76,6 +83,5 @@ internal sealed class FakeS7Transport : IS7Transport
 		}
 
 		WriteLog.Add((dbNumber, startByte, (byte[])data.Clone()));
-		return Task.CompletedTask;
 	}
 }

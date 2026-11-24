@@ -109,10 +109,18 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 	/// <summary>Number of times <see cref="DisconnectAsync"/> was called.</summary>
 	public int DisconnectCallCount { get; private set; }
 
+	public bool DisconnectShouldFail { get; set; }
+
+	public Action? OnDisconnect { get; set; }
+
 	public Task DisconnectAsync()
 	{
 		DisconnectCallCount++;
-		return Task.CompletedTask;
+		OnDisconnect?.Invoke();
+
+		return DisconnectShouldFail
+			? throw new InvalidOperationException("Stub PLC disconnect failure")
+			: Task.CompletedTask;
 	}
 
 	/// <summary>Number of times <see cref="ReadManagingAreaAsync"/> was called.</summary>

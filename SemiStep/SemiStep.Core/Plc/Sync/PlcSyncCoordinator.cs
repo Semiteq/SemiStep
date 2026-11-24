@@ -4,13 +4,15 @@ using FluentResults;
 
 using Microsoft.Extensions.Logging;
 
+using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 
 namespace SemiStep.Core.Plc.Sync;
 
 /// <summary>
-/// The sync state machine: status, debounce, pending recipe and in-flight attempt under one state lock.
+/// The sync state machine: status, debounce, pending recipe, in-flight attempt and its write token
+/// under one state lock.
 /// </summary>
 internal sealed class PlcSyncCoordinator(
 	PlcTransactionExecutor transactionExecutor,
@@ -41,6 +43,7 @@ internal sealed class PlcSyncCoordinator(
 	private Recipe? _pendingRecipe;
 	private CancellationTokenSource? _debounceCts;
 	private CancellationTokenSource? _runningAttempt;
+	private CancellationTokenSource? _writeCts;
 	private Task? _syncTask;
 	private bool _disposed;
 
@@ -136,7 +139,11 @@ internal sealed class PlcSyncCoordinator(
 		Transition(() =>
 		{
 			var snapshot = _status == PlcSyncStatus.Syncing ? SetStatusLocked(PlcSyncStatus.Failed) : null;
-			return new TransitionResult(snapshot, new ConnectionLostError(), CancelAttemptLocked());
+			return new TransitionResult(
+				snapshot,
+				new ConnectionLostError(),
+				CancelAttemptLocked(),
+				TakeWriteSourceLocked());
 		});
 	}
 
@@ -180,7 +187,20 @@ internal sealed class PlcSyncCoordinator(
 		}
 
 		debounceCts?.Cancel();
-		WaitForSyncTaskOnDispose(taskToWait);
+		if (!SyncTaskEndedWithinDisposeBound(taskToWait))
+		{
+			_logger.LogWarning(
+				"Sync attempt did not complete within {Timeout} during disposal; cancelling it",
+				_disposeWaitTimeout);
+			CancellationTokenSource? writeCts;
+			lock (_stateLock)
+			{
+				writeCts = TakeWriteSourceLocked();
+			}
+
+			Retire(writeCts);
+		}
+
 		debounceCts?.Dispose();
 
 		lock (_emissionGate)
@@ -192,23 +212,25 @@ internal sealed class PlcSyncCoordinator(
 		}
 	}
 
-	private void WaitForSyncTaskOnDispose(Task? taskToWait)
+	private bool SyncTaskEndedWithinDisposeBound(Task? taskToWait)
 	{
 		if (taskToWait is null)
 		{
-			return;
+			return true;
 		}
 
 		try
 		{
-			taskToWait.Wait(_disposeWaitTimeout);
+			return taskToWait.Wait(_disposeWaitTimeout);
 		}
 		catch (AggregateException ex) when (ex.Flatten().InnerExceptions.All(e => e is OperationCanceledException))
 		{
+			return true;
 		}
 		catch (AggregateException ex)
 		{
 			_logger.LogWarning(ex, "Sync task did not complete cleanly during disposal");
+			return true;
 		}
 	}
 
@@ -290,22 +312,92 @@ internal sealed class PlcSyncCoordinator(
 			return;
 		}
 
+		var writeCts = new CancellationTokenSource();
+		var writeToken = writeCts.Token;
 		var isSyncing = ApplyOutcome(
 			attempt,
-			() => new TransitionResult(SetStatusLocked(PlcSyncStatus.Syncing), null, null));
+			() =>
+			{
+				_writeCts = writeCts;
+				return new TransitionResult(SetStatusLocked(PlcSyncStatus.Syncing), null, null);
+			});
 		if (!isSyncing)
 		{
+			writeCts.Dispose();
 			return;
 		}
 
-		var writeResult = await _executor.WriteAsync(recipeToSync, ct);
-		if (writeResult.IsFailed)
+		await WriteAndApplyAsync(attempt, recipeToSync, writeCts, writeToken);
+	}
+
+	/// <summary>
+	/// The write runs on its own token, so a reset or a dispose inside its bound never tears the transaction.
+	/// </summary>
+	private async Task WriteAndApplyAsync(
+		CancellationTokenSource attempt,
+		Recipe recipe,
+		CancellationTokenSource writeCts,
+		CancellationToken writeToken)
+	{
+		Result writeResult;
+		try
 		{
-			ApplyFailure(attempt, writeResult.Errors[0]);
+			writeResult = await _executor.WriteAsync(recipe, writeToken);
+		}
+		catch (OperationCanceledException)
+		{
+			_logger.LogWarning("Recipe write was cancelled; the PLC may hold an uncommitted recipe");
+			throw;
+		}
+		finally
+		{
+			ReleaseWriteSource(writeCts);
+		}
+
+		if (writeResult.IsSuccess)
+		{
+			ApplyOutcome(attempt, CompleteWriteLocked);
 			return;
 		}
 
-		ApplyOutcome(attempt, CompleteWriteLocked);
+		var isCurrent = ApplyFailure(attempt, writeResult.Errors[0]);
+		if (!isCurrent)
+		{
+			_logger.LogWarning(
+				"Recipe write failed and its outcome was dropped as stale; the PLC may hold an uncommitted recipe");
+		}
+		else if (writeResult.HasError<NotConnectedError>())
+		{
+			_logger.LogWarning(
+				"Recipe write failed: not connected to PLC; the PLC may hold an uncommitted recipe");
+		}
+	}
+
+	private CancellationTokenSource? TakeWriteSourceLocked()
+	{
+		var writeCts = _writeCts;
+		_writeCts = null;
+
+		return writeCts;
+	}
+
+	/// <summary>Bypasses the disposed check, so a source the attempt still owns is disposed after Dispose.</summary>
+	private void ReleaseWriteSource(CancellationTokenSource writeCts)
+	{
+		bool isOwned;
+		lock (_stateLock)
+		{
+			isOwned = ReferenceEquals(_writeCts, writeCts);
+			if (isOwned)
+			{
+				_writeCts = null;
+			}
+		}
+
+		if (isOwned)
+		{
+			writeCts.Dispose();
+		}
 	}
 
 	private Recipe? ConsumePendingRecipe(CancellationTokenSource attempt)
@@ -337,9 +429,9 @@ internal sealed class PlcSyncCoordinator(
 		return new TransitionResult(snapshot, null, StartDebounceLocked());
 	}
 
-	private void ApplyFailure(CancellationTokenSource attempt, IError fault)
+	private bool ApplyFailure(CancellationTokenSource attempt, IError fault)
 	{
-		ApplyOutcome(attempt, () =>
+		return ApplyOutcome(attempt, () =>
 		{
 			_runningAttempt = null;
 			return new TransitionResult(SetStatusLocked(PlcSyncStatus.Failed), fault, null);
@@ -400,6 +492,7 @@ internal sealed class PlcSyncCoordinator(
 		finally
 		{
 			Retire(result.Retired);
+			Retire(result.RetiredWrite);
 		}
 	}
 
@@ -441,5 +534,6 @@ internal sealed class PlcSyncCoordinator(
 	private readonly record struct TransitionResult(
 		PlcSessionSnapshot? Snapshot,
 		IError? Fault,
-		CancellationTokenSource? Retired);
+		CancellationTokenSource? Retired,
+		CancellationTokenSource? RetiredWrite = null);
 }

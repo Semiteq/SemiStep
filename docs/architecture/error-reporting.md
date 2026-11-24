@@ -224,7 +224,9 @@ Rule-B envelope `PlcCommandFailedError`. `NotConnectedError`, `ProtocolVersionMi
 `PlcTransactionExecutor` returns `NotConnectedError` from two places: its `IsConnected` pre-check, and its
 catch sites when `S7Driver` raises `DriverNotConnectedException` because a disconnect dropped the PLC
 instance after the pre-check. That exception never reaches a caller above `S7Service`. The executor logs
-one `Debug` line without the stack. The `S7Service` keep-alive loop also calls the driver directly and
+one `Debug` line without the stack. When a started recipe write ends without a line above `Debug` from any
+other source, `PlcSyncCoordinator` logs one Warning: the write was cancelled, it failed with
+`NotConnectedError`, or it failed after its outcome was dropped as stale. The `S7Service` keep-alive loop also calls the driver directly and
 treats any exception as a lost connection. Every other transport exception still becomes
 `PlcCommandFailedError`.
 

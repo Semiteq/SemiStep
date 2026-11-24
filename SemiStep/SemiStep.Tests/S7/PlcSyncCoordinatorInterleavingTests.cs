@@ -30,14 +30,14 @@ public sealed class PlcSyncCoordinatorInterleavingTests
 
 	private static CancellationToken TestToken => TestContext.Current.CancellationToken;
 
-	private static (PlcSyncCoordinator Coordinator, FakeS7Transport Transport, ReadHold Hold) BuildHeld()
+	private static (PlcSyncCoordinator Coordinator, FakeS7Transport Transport, TransportHold Hold) BuildHeld()
 	{
 		var stringDbNumber = PlcSyncCoordinatorTests.BuildTestConfiguration().Layout.StringDb.DbNumber;
 
 		return BuildHeld(stringDbNumber, LastReadOfTransaction, TaskCreationOptions.RunContinuationsAsynchronously);
 	}
 
-	private static (PlcSyncCoordinator Coordinator, FakeS7Transport Transport, ReadHold Hold) BuildHeldPrecheck(
+	private static (PlcSyncCoordinator Coordinator, FakeS7Transport Transport, TransportHold Hold) BuildHeldPrecheck(
 		TaskCreationOptions releaseOptions)
 	{
 		var executionDbNumber = PlcSyncCoordinatorTests.BuildTestConfiguration().Layout.ExecutionDb.DbNumber;
@@ -45,14 +45,14 @@ public sealed class PlcSyncCoordinatorInterleavingTests
 		return BuildHeld(executionDbNumber, PrecheckRead, releaseOptions);
 	}
 
-	private static (PlcSyncCoordinator Coordinator, FakeS7Transport Transport, ReadHold Hold) BuildHeld(
+	private static (PlcSyncCoordinator Coordinator, FakeS7Transport Transport, TransportHold Hold) BuildHeld(
 		int dbNumber,
-		int heldRead,
+		int heldCall,
 		TaskCreationOptions releaseOptions)
 	{
 		var (coordinator, transport, _) = PlcSyncCoordinatorTests.Build(connected: true);
-		var hold = new ReadHold(dbNumber, heldRead, releaseOptions);
-		transport.BeforeRead = hold.OnRead;
+		var hold = new TransportHold(dbNumber, heldCall, releaseOptions);
+		transport.BeforeRead = hold.OnCall;
 
 		return (coordinator, transport, hold);
 	}
@@ -230,11 +230,8 @@ public sealed class PlcSyncCoordinatorInterleavingTests
 		coordinator.NotifyRecipeChanged(Recipe.Empty, isValid: true);
 
 		var disposeTask = Task.Run(coordinator.Dispose, TestToken);
-		await TestHelpers.WaitUntilAsync(
-			() => hold.HeldToken.IsCancellationRequested,
-			_waitTimeout,
-			_pollInterval,
-			TestToken);
+		await Task.Delay(_disposeBlockProbe, TestToken);
+		disposeTask.IsCompleted.Should().BeFalse("Dispose must wait for the write in flight");
 		var writesAtDispose = transport.WriteLog.Count;
 
 		hold.Release();
@@ -339,41 +336,5 @@ public sealed class PlcSyncCoordinatorInterleavingTests
 
 		await emitter.WaitAsync(_waitTimeout, TestToken);
 		await disposeTask.WaitAsync(_waitTimeout, TestToken);
-	}
-
-	/// <summary>Holds the n-th read of one DB until the test releases it.</summary>
-	private sealed class ReadHold(int dbNumber, int heldRead, TaskCreationOptions releaseOptions)
-	{
-		private readonly TaskCompletionSource _reached = new(TaskCreationOptions.RunContinuationsAsynchronously);
-		private readonly TaskCompletionSource _release = new(releaseOptions);
-		private int _reads;
-
-		public Task Reached => _reached.Task;
-
-		public CancellationToken HeldToken { get; private set; }
-
-		/// <summary>The held read ignores its cancellation token, so a released attempt completes as written.</summary>
-		public Task OnRead(int readDbNumber, CancellationToken ct)
-		{
-			if (readDbNumber != dbNumber || Interlocked.Increment(ref _reads) != heldRead)
-			{
-				return Task.CompletedTask;
-			}
-
-			HeldToken = ct;
-			_reached.SetResult();
-
-			return _release.Task;
-		}
-
-		public void Release()
-		{
-			_release.SetResult();
-		}
-
-		public void Fail(Exception exception)
-		{
-			_release.SetException(exception);
-		}
 	}
 }

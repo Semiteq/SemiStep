@@ -4,6 +4,7 @@ using AwesomeAssertions;
 
 using FluentResults;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
@@ -43,7 +44,7 @@ public sealed class PlcSyncCoordinatorTests
 	internal static (
 		PlcSyncCoordinator Coordinator,
 		FakeS7Transport Transport,
-		StubS7ServiceForSync ConnectionService) Build(bool connected = false)
+		StubS7ServiceForSync ConnectionService) Build(bool connected = false, ILoggerFactory? loggerFactory = null)
 	{
 		var transport = new FakeS7Transport();
 		transport.SetConnected(connected);
@@ -55,7 +56,7 @@ public sealed class PlcSyncCoordinatorTests
 		var executor = new PlcTransactionExecutor(
 			transport, converter, arrayCodec, configuration, NullLogger<PlcTransactionExecutor>.Instance);
 		var coordinator = new PlcSyncCoordinator(
-			executor, connectionService, NullLoggerFactory.Instance);
+			executor, connectionService, loggerFactory ?? NullLoggerFactory.Instance);
 
 		return (coordinator, transport, connectionService);
 	}

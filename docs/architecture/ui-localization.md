@@ -51,6 +51,12 @@ that need plural-neutral Russian phrasing or invariant-culture number formatting
 `Ошибок: {0}`, last-sync elapsed text) are folded into view-model properties rather than formatted in
 XAML.
 
+The last-sync elapsed text is a set of bucket strings, one resource per bucket: `LastSyncAgoFormat`
+(`{0} s ago`, whole seconds below 30 s), `LastSyncOver30SecondsAgo`, `LastSyncOverMinuteAgo` and
+`LastSyncOverHourAgo`. Only the first bucket carries a number. A number next to a Russian noun needs
+plural forms (`1 минута` / `3 минуты` / `5 минут`), and resx cannot select one for a single label.
+`MainWindowViewModel` picks the bucket from the injected `IScheduler.Now`.
+
 ## The generated accessor
 
 `Microsoft.CodeAnalysis.ResxSourceGenerator` writes the accessor. `Directory.Packages.props` pins the
@@ -92,7 +98,7 @@ culture before the config is read: the only UI before that point is `ErrorWindow
 hard-coded English text.
 
 `CurrentCulture` is **never** assigned. Resource lookup keys off `UICulture`; number/date formatting
-and Serilog timestamps key off `CurrentCulture` and stay invariant/English. So `{elapsed:0.0}`, step
+and Serilog timestamps key off `CurrentCulture` and stay invariant/English. So the last-sync seconds, step
 counts, and log timestamps stay invariant regardless of UI language — the surrounding words localize,
 the numbers do not. Log message templates stay hardcoded English by design. The operational/error/status
 strings the operator sees (command-fault contexts, report/success messages, file-picker titles) localize —

@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Reactive;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
@@ -29,6 +30,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	private readonly CompositeDisposable _disposables = [];
 	private readonly ILogger<MainWindowViewModel> _logger;
 	private readonly Func<GridStyleEditorViewModel> _gridStyleEditorViewModelFactory;
+	private readonly IScheduler _scheduler;
 	private readonly ObservableAsPropertyHelper<bool> _isTransposedOrientation;
 
 	public MainWindowViewModel(
@@ -40,11 +42,13 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		MessagePanelViewModel messagePanel,
 		PlcMonitorViewModel plcMonitor,
 		Func<GridStyleEditorViewModel> gridStyleEditorViewModelFactory,
+		IScheduler scheduler,
 		ILogger<MainWindowViewModel> logger)
 	{
 		_coordinator = coordinator;
 		_logger = logger;
 		_gridStyleEditorViewModelFactory = gridStyleEditorViewModelFactory;
+		_scheduler = scheduler;
 		RecipeGrid = recipeGrid;
 		RecipeCommands = recipeCommands;
 		Clipboard = clipboard;
@@ -166,7 +170,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public string PlcSyncStatusText => MapSyncStatus(_coordinator.SyncStatus);
 
-	public string LastSyncTimeText => FormatLastSyncTime(_coordinator.LastSyncTime);
+	public string LastSyncTimeText => FormatLastSyncTime(_coordinator.LastSyncTime, _scheduler.Now);
 
 	public void Dispose()
 	{
@@ -314,16 +318,27 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		};
 	}
 
-	private static string FormatLastSyncTime(DateTimeOffset? lastSyncTime)
+	private static string FormatLastSyncTime(DateTimeOffset? lastSyncTime, DateTimeOffset now)
 	{
 		var value = lastSyncTime is null
 			? Resources.LastSyncNever
-			: string.Format(
-				CultureInfo.InvariantCulture,
-				Resources.LastSyncAgoFormat,
-				(DateTimeOffset.UtcNow - lastSyncTime.Value).TotalSeconds.ToString("0.0", CultureInfo.InvariantCulture));
+			: FormatSyncAge(now - lastSyncTime.Value);
 
 		return string.Format(CultureInfo.InvariantCulture, Resources.LastSyncPrefix, value);
+	}
+
+	private static string FormatSyncAge(TimeSpan age)
+	{
+		return age.TotalSeconds switch
+		{
+			>= 3600 => Resources.LastSyncOverHourAgo,
+			>= 60 => Resources.LastSyncOverMinuteAgo,
+			>= 30 => Resources.LastSyncOver30SecondsAgo,
+			_ => string.Format(
+				CultureInfo.InvariantCulture,
+				Resources.LastSyncAgoFormat,
+				Math.Max(0, (int)age.TotalSeconds))
+		};
 	}
 
 	private string BuildWindowTitle()

@@ -232,6 +232,15 @@
   <data name="LastSyncAgoFormat" xml:space="preserve">
     <value>{0} s ago</value>
   </data>
+  <data name="LastSyncOver30SecondsAgo" xml:space="preserve">
+    <value>> 30 s ago</value>
+  </data>
+  <data name="LastSyncOverMinuteAgo" xml:space="preserve">
+    <value>> 1 min ago</value>
+  </data>
+  <data name="LastSyncOverHourAgo" xml:space="preserve">
+    <value>> 1 h ago</value>
+  </data>
   <data name="LastSyncPrefix" xml:space="preserve">
     <value>Last sync: {0}</value>
   </data>

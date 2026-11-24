@@ -13,29 +13,6 @@ namespace SemiStep.Tests.Core.Unit.Properties;
 public sealed class RecipeMetadataRegistryColumnPropertyReferenceTests
 {
 	[Fact]
-	public void Constructor_ColumnReferencesUnknownProperty_Throws()
-	{
-		var columns = new Dictionary<string, GridColumnDefinition>(StringComparer.OrdinalIgnoreCase)
-		{
-			["dangling"] = new GridColumnDefinition(
-				Key: "dangling",
-				ColumnType: "text",
-				UiName: "Dangling",
-				PropertyTypeId: "ghost",
-				ReadOnly: false,
-				SaveToCsv: false)
-		};
-
-		var action = () => TestRecipeMetadataRegistryFactory.Build(
-			[TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: 32)],
-			columns: columns);
-
-		action.Should().Throw<InvalidOperationException>()
-			.WithMessage("*dangling*")
-			.WithMessage("*ghost*");
-	}
-
-	[Fact]
 	public void Constructor_ColumnWithEmptyPropertyTypeId_IsAllowed()
 	{
 		var columns = new Dictionary<string, GridColumnDefinition>(StringComparer.OrdinalIgnoreCase)

@@ -47,7 +47,8 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 		// (the row's group items — empty for a wait step).
 		var actionCell = factory.Create(row, FindDescriptor(ActionColumn))
 			.Should().BeOfType<ComboBoxCellViewModel>().Subject;
-		actionCell.Items.Should().BeEquivalentTo(_fixture.RecipeMetadataRegistry.GetActionComboBoxItems());
+		actionCell.Items.Should().BeEquivalentTo(_fixture.RecipeMetadataRegistry.GetAllActions()
+			.Select(action => new ComboBoxItemViewModel(action.Id, action.UiName)));
 		var targetCell = factory.Create(row, FindDescriptor(RecipeTestDriver.TargetColumn))
 			.Should().BeOfType<ComboBoxCellViewModel>().Subject;
 		targetCell.Items.Should().BeEquivalentTo(row.GroupItemsByColumn[RecipeTestDriver.TargetColumn]);
@@ -76,7 +77,8 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 		var row = CreateRow(RecipeTestDriver.WaitActionId);
 		var cell = (ComboBoxCellViewModel)CreateFactory().Create(row, FindDescriptor(ActionColumn));
 
-		cell.Items.Should().BeEquivalentTo(_fixture.RecipeMetadataRegistry.GetActionComboBoxItems());
+		cell.Items.Should().BeEquivalentTo(_fixture.RecipeMetadataRegistry.GetAllActions()
+			.Select(action => new ComboBoxItemViewModel(action.Id, action.UiName)));
 		cell.Value.Should().Be(RecipeTestDriver.WaitActionId);
 	}
 
@@ -265,15 +267,17 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 	{
 		var (services, session, _) = await CoreTestHelper.BuildAsync("Standalone/NestedActionsValid");
 		var registry = services.GetRequiredService<RecipeMetadataRegistry>();
+		var comboBoxItemsProvider = new ComboBoxItemsProvider(registry);
 		session.AppendStep(300);
 		var step = session.Current.Steps[0];
 		var action = registry.GetAction(step.ActionKey).Value;
 		var row = new RecipeRowViewModel(
 			1, step, action, registry,
+			comboBoxItemsProvider,
 			RecipeRowViewModel.BuildInapplicableColumns(action, step, registry));
 		var descriptor = ParameterDescriptor.BuildFromRegistry(registry)
 			.Single(candidate => candidate.ParameterKey == "branch_sel");
-		var cell = new ParameterCellViewModelFactory(registry).Create(row, descriptor);
+		var cell = new ParameterCellViewModelFactory(registry, comboBoxItemsProvider).Create(row, descriptor);
 		var selectorEdits = new List<SelectorEdit>();
 		var propertyWrites = new List<(string Key, string? Value)>();
 		row.SelectorValueChanged += selectorEdits.Add;
@@ -315,6 +319,7 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 			step,
 			action,
 			_fixture.RecipeMetadataRegistry,
+			_fixture.ComboBoxItemsProvider,
 			ParameterDescriptor.BuildFromRegistry(_fixture.RecipeMetadataRegistry),
 			factory.Create);
 		var changedProperties = new List<string?>();
@@ -338,12 +343,13 @@ public sealed class ParameterCellViewModelTests : IAsyncLifetime
 		var inapplicableColumns = RecipeRowViewModel.BuildInapplicableColumns(
 			action, step, _fixture.RecipeMetadataRegistry);
 
-		return new RecipeRowViewModel(1, step, action, _fixture.RecipeMetadataRegistry, inapplicableColumns);
+		return new RecipeRowViewModel(
+			1, step, action, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider, inapplicableColumns);
 	}
 
 	private ParameterCellViewModelFactory CreateFactory()
 	{
-		return new ParameterCellViewModelFactory(_fixture.RecipeMetadataRegistry);
+		return new ParameterCellViewModelFactory(_fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider);
 	}
 
 	private ParameterDescriptor FindDescriptor(string parameterKey)

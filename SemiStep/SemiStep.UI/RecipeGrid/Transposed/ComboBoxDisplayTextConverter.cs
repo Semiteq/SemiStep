@@ -2,8 +2,6 @@
 
 using Avalonia.Data.Converters;
 
-using SemiStep.Core.Recipes;
-
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
 internal sealed class ComboBoxDisplayTextConverter : IMultiValueConverter

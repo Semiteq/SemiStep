@@ -26,6 +26,7 @@ public static class UiDi
 		services.AddSingleton<MessagePanelViewModel>();
 		services.AddSingleton<RecipeCoordinator>();
 		services.AddSingleton<ChangedCellClickAwayBroadcaster>();
+		services.AddSingleton<ComboBoxItemsProvider>();
 		services.AddSingleton<CanonicalRecipeGridSurface>();
 		services.AddSingleton<TransposedRecipeGridSurface>();
 		services.AddSingleton<ActiveRecipeGridSurface>();

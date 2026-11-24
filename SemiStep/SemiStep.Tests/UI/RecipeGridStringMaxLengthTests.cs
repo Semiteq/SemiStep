@@ -38,7 +38,8 @@ public sealed class RecipeGridStringMaxLengthTests : IAsyncLifetime
 		propertyDefinition.MaxLength.Should().NotBeNull(
 			"the test configuration must declare MaxLength on the string property for this assertion to be meaningful");
 
-		var columnBuilder = new ColumnBuilder(GridStyleOptions.Default, _fixture.RecipeMetadataRegistry);
+		var columnBuilder = new ColumnBuilder(
+			GridStyleOptions.Default, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider);
 		var grid = new DataGrid();
 		columnBuilder.BuildColumns(grid);
 
@@ -86,6 +87,7 @@ public sealed class RecipeGridStringMaxLengthTests : IAsyncLifetime
 			step,
 			firstAction,
 			_fixture.RecipeMetadataRegistry,
+			_fixture.ComboBoxItemsProvider,
 			new HashSet<string>(StringComparer.OrdinalIgnoreCase));
 	}
 }

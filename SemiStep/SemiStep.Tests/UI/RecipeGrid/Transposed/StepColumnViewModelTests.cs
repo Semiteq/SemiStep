@@ -148,6 +148,7 @@ public sealed class StepColumnViewModelTests : IAsyncLifetime
 			step,
 			action,
 			_fixture.RecipeMetadataRegistry,
+			_fixture.ComboBoxItemsProvider,
 			descriptors,
 			cellFactory ?? ((row, descriptor) => new TestParameterCellViewModel(row, descriptor)));
 	}

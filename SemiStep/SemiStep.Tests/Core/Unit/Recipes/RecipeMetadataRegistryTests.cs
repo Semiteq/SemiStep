@@ -14,77 +14,6 @@ namespace SemiStep.Tests.Core.Unit.Recipes;
 [Trait("Area", "RecipeMetadataRegistry")]
 public sealed class RecipeMetadataRegistryTests
 {
-	private const string ValveGroupId = "valve";
-
-	private static RecipeMetadataRegistry BuildRegistry()
-	{
-		var groups = new Dictionary<string, GroupDefinition>(StringComparer.OrdinalIgnoreCase)
-		{
-			[ValveGroupId] = new GroupDefinition(
-				GroupId: ValveGroupId,
-				Items: new Dictionary<int, string>
-				{
-					[2] = "Close",
-					[1] = "Open"
-				})
-		};
-
-		var config = new AppConfiguration(
-			Properties: TestRecipeMetadataRegistryFactory.DefaultStringProperty(),
-			Columns: new Dictionary<string, GridColumnDefinition>(),
-			Groups: groups,
-			Actions: new Dictionary<int, ActionDefinition>(),
-			GridStyle: GridStyleOptions.Default,
-			PlcConfiguration: PlcConfiguration.Default,
-			Ui: new AppUiOptions("ru"));
-
-		return new RecipeMetadataRegistry(config);
-	}
-
-	[Fact]
-	public void GetComboBoxItems_ReturnsItemsForKnownGroup_OrderedById()
-	{
-		var registry = BuildRegistry();
-
-		var items = registry.GetComboBoxItems(ValveGroupId);
-
-		items.Should().HaveCount(2);
-		items[0].Should().Be(new ComboBoxItemViewModel(1, "Open"));
-		items[1].Should().Be(new ComboBoxItemViewModel(2, "Close"));
-	}
-
-	[Fact]
-	public void GetComboBoxItems_ReturnsEmpty_ForUnknownGroup_WithoutThrowing()
-	{
-		var registry = BuildRegistry();
-
-		var items = registry.GetComboBoxItems("nonexistent_group");
-
-		items.Should().BeEmpty();
-	}
-
-	[Fact]
-	public void GetComboBoxItems_ReturnsSameReference_OnRepeatedCalls()
-	{
-		var registry = BuildRegistry();
-
-		var first = registry.GetComboBoxItems(ValveGroupId);
-		var second = registry.GetComboBoxItems(ValveGroupId);
-
-		second.Should().BeSameAs(first);
-	}
-
-	[Fact]
-	public void GetActionComboBoxItems_ExcludesSubactions()
-	{
-		var registry = BuildNestedRegistry();
-
-		var items = registry.GetActionComboBoxItems();
-
-		items.Select(item => item.Id).Should().Equal(300);
-		items.Should().NotContain(item => item.Id == 3002);
-	}
-
 	[Fact]
 	public void GetAction_PrimaryProperties_EqualResolverUnion()
 	{
@@ -128,24 +57,6 @@ public sealed class RecipeMetadataRegistryTests
 
 		registry.ActionExists(3002).IsFailed.Should().BeTrue();
 		registry.GetAllActions().Should().OnlyContain(action => action.Role == ActionRole.Action);
-	}
-
-	[Fact]
-	public void GetActionComboBoxItems_BackwardCompat_NoTargetsNoRole_MatchesPlainActions()
-	{
-		var plainActions = new Dictionary<int, ActionDefinition>
-		{
-			[10] = Action(10, "Open", Column("a", "int")),
-			[20] = Action(20, "Close", Column("b", "int"))
-		};
-
-		var registry = BuildRegistryWith(plainActions);
-
-		var items = registry.GetActionComboBoxItems();
-
-		items.Should().Equal(
-			new ComboBoxItemViewModel(10, "Open"),
-			new ComboBoxItemViewModel(20, "Close"));
 	}
 
 	private static RecipeMetadataRegistry BuildNestedRegistry()
@@ -269,11 +180,6 @@ public sealed class RecipeMetadataRegistryTests
 			Ui: new AppUiOptions("ru"));
 
 		return new RecipeMetadataRegistry(config);
-	}
-
-	private static ActionDefinition Action(int id, string uiName, params ActionPropertyDefinition[] columns)
-	{
-		return new ActionDefinition(id, uiName, DeployDuration.LongLasting, columns, null, ActionRole.Action);
 	}
 
 	private static ActionPropertyDefinition Column(string key, string propertyTypeId)

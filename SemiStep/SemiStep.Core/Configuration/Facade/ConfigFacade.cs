@@ -31,7 +31,9 @@ public static class ConfigFacade
 			return Propagate(gridStyleResult, loadResult);
 		}
 
-		var xrefResult = CrossReferenceValidator.Validate(properties, columns, groups, actions);
+		var xrefResult = Result.Merge(
+			CrossReferenceValidator.Validate(properties, columns, groups, actions),
+			StringMaxLengthValidator.Validate(properties));
 		if (xrefResult.IsFailed)
 		{
 			return Propagate(xrefResult, loadResult);
@@ -52,9 +54,11 @@ public static class ConfigFacade
 
 		var config = mapResult.Value;
 
-		var plcResult = PlcConfigurationValidator.Validate(config.PlcConfiguration);
-		return plcResult.IsFailed
-			? Propagate(plcResult, loadResult, xrefResult, defaultsResult)
+		var mappedConfigResult = Result.Merge(
+			ActionTreeValidator.Validate([.. config.Actions.Values]),
+			PlcConfigurationValidator.Validate(config.PlcConfiguration));
+		return mappedConfigResult.IsFailed
+			? Propagate(mappedConfigResult, loadResult, xrefResult, defaultsResult)
 			: Result.Ok(config)
 			.WithReasons(loadResult.Reasons)
 			.WithReasons(xrefResult.Reasons)

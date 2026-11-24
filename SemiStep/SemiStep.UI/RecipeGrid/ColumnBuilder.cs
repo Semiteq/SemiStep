@@ -12,7 +12,8 @@ namespace SemiStep.UI.RecipeGrid;
 
 public sealed class ColumnBuilder(
 	GridStyleOptions gridStyle,
-	RecipeMetadataRegistry recipeMetadataRegistry)
+	RecipeMetadataRegistry recipeMetadataRegistry,
+	ComboBoxItemsProvider comboBoxItemsProvider)
 {
 	private const string ReadOnlyColumnClass = "read-only-column";
 	private const string StepNumberColumnClass = "step-number-column";
@@ -22,7 +23,7 @@ public sealed class ColumnBuilder(
 	// header would not wrap. See docs/architecture/recipe-grid-column-sizing.md.
 	private readonly IDataTemplate _wrappingHeaderTemplate = BuildWrappingHeaderTemplate(gridStyle);
 
-	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(recipeMetadataRegistry, gridStyle);
+	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(comboBoxItemsProvider, gridStyle);
 
 	private readonly TextCellFactory _textCellFactory = new(gridStyle);
 	private readonly ColumnWidthCalculator _widthCalculator = new(recipeMetadataRegistry, gridStyle);

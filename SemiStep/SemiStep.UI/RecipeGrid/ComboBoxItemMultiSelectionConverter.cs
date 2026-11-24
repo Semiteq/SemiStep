@@ -3,8 +3,6 @@
 using Avalonia;
 using Avalonia.Data.Converters;
 
-using SemiStep.Core.Recipes;
-
 namespace SemiStep.UI.RecipeGrid;
 
 /// <summary>

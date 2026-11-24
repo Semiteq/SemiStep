@@ -93,8 +93,10 @@ only one activation path, so the second branch would be greyed wrongly.
 
 ## Load-time resolver
 
-`ActionTreeResolver` (`SemiStep.Core/Recipes/ActionTreeResolver.cs`) runs once at registry
-construction over the raw mapped actions. For every `role: action` root it walks each selector
+`ActionTreeResolver` (`SemiStep.Core/Recipes/ActionTreeResolver.cs`) runs twice over the raw
+mapped actions. `ActionTreeValidator` runs it at config load, after `MapToDomain`, so a failure
+reaches the startup error window. The registry constructor runs it again to build its own
+collections. For every `role: action` root it walks each selector
 column's `targets` transitively and produces a resolved primary `ActionDefinition`. Subactions
 are consumed during the walk and are not part of the output, so they never reach the registry's
 `_actionsById` / `_allActions` / `_actionsByName`, the dropdown, or `GetDefaultActionId()`.
@@ -177,7 +179,9 @@ two different primary actions) is allowed; each root resolves it independently w
 The `role: action`/`role: subaction` rule fires regardless of depth — a subaction whose own
 selector targets a `role: action` also fails. The resolver additionally guards against cycles
 (defense-in-depth alongside the validator) and rejects a column key reachable with conflicting
-property types or, within one root, with different activation paths.
+property types or, within one root, with different activation paths. Resolver rejections (cycle,
+conflicting property type, shared activation path) fail the config load through `Result` and show
+in the startup error window.
 
 ### Known gaps
 

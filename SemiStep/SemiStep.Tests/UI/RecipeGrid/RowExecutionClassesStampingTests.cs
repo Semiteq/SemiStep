@@ -81,7 +81,9 @@ public sealed class RowExecutionClassesStampingTests : IAsyncLifetime
 	{
 		var action = _fixture.RecipeMetadataRegistry.GetAction(RecipeTestDriver.WaitActionId).Value;
 		var step = new Step(RecipeTestDriver.WaitActionId, []);
-		var row = new RecipeRowViewModel(stepNumber, step, action, _fixture.RecipeMetadataRegistry, new HashSet<string>())
+		var row = new RecipeRowViewModel(
+			stepNumber, step, action, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider,
+			new HashSet<string>())
 		{
 			ForDepth = forDepth,
 		};

@@ -46,6 +46,7 @@ public sealed class TransposedSelectorEditTests : IAsyncLifetime
 	private MessagePanelViewModel _messagePanel = null!;
 	private RecipeCoordinator _coordinator = null!;
 	private RecipeMetadataRegistry _registry = null!;
+	private ComboBoxItemsProvider _comboBoxItemsProvider = null!;
 	private TransposedRecipeGridSurface _surface = null!;
 
 	public async ValueTask InitializeAsync()
@@ -54,6 +55,7 @@ public sealed class TransposedSelectorEditTests : IAsyncLifetime
 		_services = services;
 		var registry = services.GetRequiredService<RecipeMetadataRegistry>();
 		_registry = registry;
+		_comboBoxItemsProvider = new ComboBoxItemsProvider(registry);
 		_messagePanel = new MessagePanelViewModel();
 
 		_coordinator = new RecipeCoordinator(
@@ -70,6 +72,7 @@ public sealed class TransposedSelectorEditTests : IAsyncLifetime
 		_surface = new TransposedRecipeGridSurface(
 			_coordinator,
 			registry,
+			_comboBoxItemsProvider,
 			_services.GetRequiredService<SemiStep.Core.Configuration.AppConfiguration>().GridStyle,
 			_messagePanel,
 			_clickAwayBroadcaster,
@@ -143,7 +146,8 @@ public sealed class TransposedSelectorEditTests : IAsyncLifetime
 		using var canonicalSurface = new CanonicalRecipeGridSurface(
 			_coordinator,
 			_registry,
-			new ColumnBuilder(gridStyle, _registry),
+			_comboBoxItemsProvider,
+			new ColumnBuilder(gridStyle, _registry, _comboBoxItemsProvider),
 			_messagePanel,
 			_clickAwayBroadcaster,
 			NullLogger<CanonicalRecipeGridSurface>.Instance);

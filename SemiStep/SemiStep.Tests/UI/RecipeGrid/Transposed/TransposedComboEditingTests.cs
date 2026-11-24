@@ -8,11 +8,11 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
-using SemiStep.Core.Recipes;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.Coordinator;
+using SemiStep.UI.RecipeGrid;
 using SemiStep.UI.RecipeGrid.Transposed;
 using SemiStep.UI.Styles;
 
@@ -135,7 +135,7 @@ public sealed class TransposedComboEditingTests : IAsyncLifetime
 			var comboBox = EnterComboEdit(stepListBox, 0, ActionColumnKey);
 			mutations.Should().BeEmpty("the lazy build's initial same-value selection must not write anything");
 
-			var forLoopItem = _fixture.RecipeMetadataRegistry.GetActionComboBoxItems()
+			var forLoopItem = _fixture.ComboBoxItemsProvider.ActionItems
 				.Single(item => item.Id == RecipeTestDriver.ForLoopActionId);
 
 			comboBox.SelectedItem = forLoopItem;
@@ -256,7 +256,7 @@ public sealed class TransposedComboEditingTests : IAsyncLifetime
 
 	private string ActionDisplayText(int actionId)
 	{
-		return _fixture.RecipeMetadataRegistry.GetActionComboBoxItems()
+		return _fixture.ComboBoxItemsProvider.ActionItems
 			.Single(item => item.Id == actionId)
 			.DisplayText;
 	}

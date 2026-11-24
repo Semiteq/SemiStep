@@ -11,11 +11,13 @@ public sealed class StepColumnViewModel : IDisposable
 		Step step,
 		ActionDefinition action,
 		RecipeMetadataRegistry recipeMetadataRegistry,
+		ComboBoxItemsProvider comboBoxItemsProvider,
 		IReadOnlyList<ParameterDescriptor> parameterDescriptors,
 		Func<RecipeRowViewModel, ParameterDescriptor, ParameterCellViewModel> cellFactory)
 	{
 		var inapplicableColumns = RecipeRowViewModel.BuildInapplicableColumns(action, step, recipeMetadataRegistry);
-		Row = new RecipeRowViewModel(stepNumber, step, action, recipeMetadataRegistry, inapplicableColumns);
+		Row = new RecipeRowViewModel(
+			stepNumber, step, action, recipeMetadataRegistry, comboBoxItemsProvider, inapplicableColumns);
 
 		// A column never scrolled to or keyboard-traversed never builds its per-parameter cell VMs.
 		// Cells is UI-thread-only, so the default locking Lazy mode is unnecessary overhead.

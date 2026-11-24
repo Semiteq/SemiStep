@@ -47,49 +47,7 @@ public sealed class RecipeMetadataRegistryStringMaxLengthTests
 			TestPropertyTypeDefinitionBuilder.CreateString("note", maxLength: 64)
 		]);
 
-		action.Should().Throw<InvalidOperationException>()
-			.WithMessage("*comment*")
-			.WithMessage("*note*");
-	}
-
-	[Fact]
-	public void Constructor_StringPropertyWithNullMaxLength_Throws()
-	{
-		var action = () => TestRecipeMetadataRegistryFactory.Build(
-		[
-			TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: null)
-		]);
-
-		action.Should().Throw<InvalidOperationException>()
-			.WithMessage("*max_length*")
-			.WithMessage("*comment*");
-	}
-
-	[Theory]
-	[InlineData(0)]
-	[InlineData(-1)]
-	public void Constructor_StringPropertyWithNonPositiveMaxLength_Throws(int maxLength)
-	{
-		var action = () => TestRecipeMetadataRegistryFactory.Build(
-		[
-			TestPropertyTypeDefinitionBuilder.CreateString("comment", maxLength: maxLength)
-		]);
-
-		action.Should().Throw<InvalidOperationException>()
-			.WithMessage("*comment*");
-	}
-
-	[Fact]
-	public void Constructor_NoStringProperty_Throws()
-	{
-		var action = () => TestRecipeMetadataRegistryFactory.Build(
-		[
-			TestPropertyTypeDefinitionBuilder.CreateFloat("temperature")
-		]);
-
-		action.Should().Throw<InvalidOperationException>()
-			.WithMessage("*no property*")
-			.WithMessage("*system_type*");
+		action.Should().Throw<InvalidOperationException>();
 	}
 
 	[Fact]

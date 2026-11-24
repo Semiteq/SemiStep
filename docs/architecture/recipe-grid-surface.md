@@ -82,9 +82,17 @@ everything except item construction:
 - the `RecipeCoordinator.Mutated` subscription and `Dispose` (items dispose themselves —
   hence the `IDisposable` constraint);
 - the `RecipeMetadataRegistry` reference, exposed to the derived item factories as a
-  `protected` property;
+  `protected` property. The registry does not build combo-box items, see the paragraph after
+  this list;
 - one `ExecutionHighlightTracker` per surface, constructed over `Items.Count` /
   `RowOf(Items[i])`.
+
+**Combo-box items.** The action list and one list per group come from `ComboBoxItemsProvider`
+(`SemiStep.UI/RecipeGrid/ComboBoxItemsProvider.cs`), a `UiDi` singleton built from the same
+registry. Each derived surface takes the provider in its constructor and passes it to the rows or
+step columns it creates. `ColumnBuilder` takes it for the canonical action cell template, and the
+transposed `ParameterCellViewModelFactory` reads `ActionItems` for the action cell view models. The
+provider builds every list once at construction, so rows of the same group share one list instance.
 
 **Post-mutation tail refresh.** The tail treats its two projections differently:
 
@@ -111,7 +119,7 @@ Two abstract hooks carry all the orientation-specific knowledge:
   `BuildInapplicableColumns` and news up a `RecipeRowViewModel`; transposed news up a
   `StepColumnViewModel` with `ParameterDescriptors` and its cell factory delegate).
 
-The derived classes are ~50 lines each: the constructor (public signature unchanged), the two
+The derived classes are ~50 lines each: the constructor, the two
 hooks, and the view-facing extras listed in their bullets above.
 
 **Unified execution tracker.** `ExecutionHighlightTracker` consumes a

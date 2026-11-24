@@ -8,9 +8,11 @@ public sealed class ParameterCellViewModelFactory
 
 	private readonly IReadOnlyDictionary<string, int?> _maxLengthByColumn;
 
-	public ParameterCellViewModelFactory(RecipeMetadataRegistry recipeMetadataRegistry)
+	public ParameterCellViewModelFactory(
+		RecipeMetadataRegistry recipeMetadataRegistry,
+		ComboBoxItemsProvider comboBoxItemsProvider)
 	{
-		var actionItems = recipeMetadataRegistry.GetActionComboBoxItems();
+		var actionItems = comboBoxItemsProvider.ActionItems;
 		_actionItemsProvider = () => actionItems;
 		_maxLengthByColumn = StringColumnMaxLengths.Build(recipeMetadataRegistry);
 	}

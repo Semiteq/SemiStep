@@ -45,9 +45,11 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void CanonicalInitialize_UnknownActionKey_ThrowsWithStepNumberAndKey()
 	{
+		var registry = BuildRegistryWithoutWaitAction();
 		using var surface = new CanonicalRecipeGridSurface(
 			_fixture.Coordinator,
-			BuildRegistryWithoutWaitAction(),
+			registry,
+			new ComboBoxItemsProvider(registry),
 			_fixture.ColumnBuilder,
 			_fixture.MessagePanel,
 			_fixture.ClickAwayBroadcaster,
@@ -62,9 +64,11 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void TransposedInitialize_UnknownActionKey_ThrowsWithStepNumberAndKey()
 	{
+		var registry = BuildRegistryWithoutWaitAction();
 		using var surface = new TransposedRecipeGridSurface(
 			_fixture.Coordinator,
-			BuildRegistryWithoutWaitAction(),
+			registry,
+			new ComboBoxItemsProvider(registry),
 			_fixture.AppConfiguration.GridStyle,
 			_fixture.MessagePanel,
 			_fixture.ClickAwayBroadcaster,
@@ -79,9 +83,11 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void CanonicalMutation_UnknownActionKey_ReportsErrorAndKeepsSiblingSubscribersAlive()
 	{
+		var registry = BuildRegistryWithoutWaitAction();
 		using var surface = new CanonicalRecipeGridSurface(
 			_fixture.Coordinator,
-			BuildRegistryWithoutWaitAction(),
+			registry,
+			new ComboBoxItemsProvider(registry),
 			_fixture.ColumnBuilder,
 			_fixture.MessagePanel,
 			_fixture.ClickAwayBroadcaster,
@@ -102,9 +108,11 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void TransposedMutation_UnknownActionKey_ReportsErrorAndKeepsSiblingSubscribersAlive()
 	{
+		var registry = BuildRegistryWithoutWaitAction();
 		using var surface = new TransposedRecipeGridSurface(
 			_fixture.Coordinator,
-			BuildRegistryWithoutWaitAction(),
+			registry,
+			new ComboBoxItemsProvider(registry),
 			_fixture.AppConfiguration.GridStyle,
 			_fixture.MessagePanel,
 			_fixture.ClickAwayBroadcaster,

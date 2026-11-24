@@ -9,7 +9,6 @@ using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
-using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
@@ -60,7 +59,6 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 			_session,
 			services.GetRequiredService<PlcLifecycleManager>(),
 			services.GetRequiredService<CsvService>(),
-			services.GetRequiredService<ImportedRecipeValidator>(),
 			services.GetRequiredService<AppConfiguration>(),
 			_registry,
 			_messagePanel,

@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
-using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
@@ -62,7 +61,6 @@ public sealed class TransposedSelectorEditTests : IAsyncLifetime
 			session,
 			services.GetRequiredService<PlcLifecycleManager>(),
 			services.GetRequiredService<CsvService>(),
-			services.GetRequiredService<ImportedRecipeValidator>(),
 			services.GetRequiredService<SemiStep.Core.Configuration.AppConfiguration>(),
 			registry,
 			_messagePanel,

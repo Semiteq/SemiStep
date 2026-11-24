@@ -7,7 +7,6 @@ using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
-using SemiStep.Core.Recipes.Helpers;
 
 namespace SemiStep.Core.Plc;
 
@@ -18,7 +17,6 @@ public sealed class PlcLifecycleManager(
 	IS7ExecutionStream executionStream,
 	IPlcSyncService syncService,
 	IPlcSyncOwnership syncOwnership,
-	ImportedRecipeValidator importedRecipeValidator,
 	ILogger<PlcLifecycleManager> logger) : IDisposable
 {
 	internal const string SyncEnableCancelledMessage = "PLC sync enable cancelled";
@@ -42,7 +40,6 @@ public sealed class PlcLifecycleManager(
 
 	private readonly IS7Connection _connection = connection;
 	private readonly IS7ExecutionStream _executionStream = executionStream;
-	private readonly ImportedRecipeValidator _importedRecipeValidator = importedRecipeValidator;
 	private readonly CancellationTokenSource _lifetimeCts = new();
 	private readonly ILogger<PlcLifecycleManager> _logger = logger;
 	private readonly Lock _pendingLock = new();
@@ -236,7 +233,7 @@ public sealed class PlcLifecycleManager(
 
 	public Result ApplyRecipeFromPlc(Recipe recipe)
 	{
-		return ValidateAndLoad(recipe);
+		return _session.LoadAsCurrentValidated(recipe);
 	}
 
 	/// <summary>
@@ -256,11 +253,6 @@ public sealed class PlcLifecycleManager(
 		}
 
 		_reconnectApplyCallback = callback;
-	}
-
-	private Result ValidateAndLoad(Recipe recipe)
-	{
-		return _session.LoadAsCurrentValidated(recipe, _importedRecipeValidator);
 	}
 
 	public Result ResolveConflict(bool keepLocal)

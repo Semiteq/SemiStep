@@ -2,9 +2,12 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
+using SemiStep.Core.Plc;
 using SemiStep.Core.Recipes;
-using SemiStep.Core.Recipes.Helpers;
+using SemiStep.Core.Recipes.Analysis.Warnings;
+using SemiStep.Core.Recipes.Errors;
 using SemiStep.Tests.Core.Helpers;
+using SemiStep.Tests.Helpers;
 
 using Xunit;
 
@@ -670,9 +673,7 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 			UnknownActionId,
 			[]));
 
-		var validator = harness.Services.GetRequiredService<ImportedRecipeValidator>();
-
-		var result = harness.Session.LoadAsCurrentValidated(bogusRecipe, validator);
+		var result = harness.Session.LoadAsCurrentValidated(bogusRecipe);
 
 		result.IsFailed.Should().BeTrue();
 		harness.Session.Current.StepCount.Should().Be(1, "validation failure must not replace the live recipe");
@@ -689,9 +690,7 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 			.AppendStep(BuildPauseStep(harness))
 			.AppendStep(BuildWaitStep(harness, 7f));
 
-		var validator = harness.Services.GetRequiredService<ImportedRecipeValidator>();
-
-		var result = harness.Session.LoadAsCurrentValidated(validRecipe, validator);
+		var result = harness.Session.LoadAsCurrentValidated(validRecipe);
 
 		result.IsSuccess.Should().BeTrue();
 		harness.Session.Current.StepCount.Should().Be(2);
@@ -752,12 +751,444 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 
 	#endregion
 
+	#region Sync notification pins
+
+	[Fact]
+	public async Task Apply_Accepted_NotifiesSyncOnceWithPostChangeState()
+	{
+		var harness = await BuildHarnessAsync();
+		var sync = EnableSync(harness);
+
+		harness.Session.Apply(harness.Session.Current.AppendStep(BuildWaitStep(harness, 5f))).IsSuccess
+			.Should().BeTrue();
+
+		ShouldHaveSingleNotificationOfCurrentState(harness, sync);
+	}
+
+	[Fact]
+	public async Task Undo_Accepted_NotifiesSyncOnceWithPostChangeState()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		var sync = EnableSync(harness);
+
+		harness.Session.Undo().IsSuccess.Should().BeTrue();
+
+		ShouldHaveSingleNotificationOfCurrentState(harness, sync);
+	}
+
+	[Fact]
+	public async Task Redo_Accepted_NotifiesSyncOnceWithPostChangeState()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		harness.Session.Undo().IsSuccess.Should().BeTrue();
+		var sync = EnableSync(harness);
+
+		harness.Session.Redo().IsSuccess.Should().BeTrue();
+
+		ShouldHaveSingleNotificationOfCurrentState(harness, sync);
+	}
+
+	[Fact]
+	public async Task Reset_NotifiesSyncOnceWithPostChangeState()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		var sync = EnableSync(harness);
+
+		harness.Session.Reset();
+
+		ShouldHaveSingleNotificationOfCurrentState(harness, sync);
+	}
+
+	[Fact]
+	public async Task LoadAsCurrent_Success_NotifiesSyncOnceWithPostChangeState()
+	{
+		var harness = await BuildHarnessAsync();
+		var sync = EnableSync(harness);
+
+		harness.Session.LoadAsCurrent(Recipe.Empty.AppendStep(BuildPauseStep(harness))).IsSuccess
+			.Should().BeTrue();
+
+		ShouldHaveSingleNotificationOfCurrentState(harness, sync);
+	}
+
+	[Fact]
+	public async Task LoadAsCurrent_FailedAnalysis_NotifiesSyncOnceWithPostChangeState()
+	{
+		var harness = await BuildHarnessAsync();
+		var failingRecipe = BuildRecipeFailingAnalysis(harness);
+		var sync = EnableSync(harness);
+
+		harness.Session.LoadAsCurrent(failingRecipe).IsFailed.Should().BeTrue();
+
+		ShouldHaveSingleNotificationOfCurrentState(harness, sync);
+	}
+
+	[Fact]
+	public async Task RejectedEdit_DoesNotNotifySync()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		var sync = EnableSync(harness);
+
+		harness.Session.UpdateStepProperty(0, DurationColumn, "not a number").IsFailed.Should().BeTrue();
+
+		sync.NotifyRecipeChangedCalls.Should().BeEmpty();
+	}
+
+	[Fact]
+	public async Task UndoOnEmptyStack_DoesNotNotifySync()
+	{
+		var harness = await BuildHarnessAsync();
+		var sync = EnableSync(harness);
+
+		harness.Session.Undo().IsFailed.Should().BeTrue();
+
+		sync.NotifyRecipeChangedCalls.Should().BeEmpty();
+	}
+
+	[Fact]
+	public async Task LoadAsCurrentValidated_Rejected_DoesNotNotifySync()
+	{
+		var harness = await BuildHarnessAsync();
+		var sync = EnableSync(harness);
+		var bogusRecipe = Recipe.Empty.AppendStep(new Step(UnknownActionId, []));
+
+		harness.Session.LoadAsCurrentValidated(bogusRecipe).IsFailed.Should().BeTrue();
+
+		sync.NotifyRecipeChangedCalls.Should().BeEmpty();
+	}
+
+	#endregion
+
+	#region History pins
+
+	[Fact]
+	public async Task ThreeUndos_ThenThreeRedos_RestoreEachStateInOrder()
+	{
+		var harness = await BuildHarnessAsync();
+		harness.Session.AppendStep(WaitActionId).IsSuccess.Should().BeTrue();
+		harness.Session.AppendStep(PauseActionId).IsSuccess.Should().BeTrue();
+		harness.Session.AppendStep(WaitActionId).IsSuccess.Should().BeTrue();
+
+		harness.Session.Undo().IsSuccess.Should().BeTrue();
+		harness.Session.Undo().IsSuccess.Should().BeTrue();
+		harness.Session.Undo().IsSuccess.Should().BeTrue();
+		harness.Session.Current.StepCount.Should().Be(0);
+
+		harness.Session.Redo().IsSuccess.Should().BeTrue();
+		harness.Session.Current.Steps.Select(s => s.ActionKey).Should().Equal(WaitActionId);
+
+		harness.Session.Redo().IsSuccess.Should().BeTrue();
+		harness.Session.Current.Steps.Select(s => s.ActionKey).Should().Equal(WaitActionId, PauseActionId);
+
+		harness.Session.Redo().IsSuccess.Should().BeTrue();
+		harness.Session.Current.Steps.Select(s => s.ActionKey).Should()
+			.Equal(WaitActionId, PauseActionId, WaitActionId);
+
+		var fourthRedo = harness.Session.Redo();
+
+		fourthRedo.Errors.Should().ContainSingle().Which.Should().BeOfType<NoStateToRedoError>();
+	}
+
+	[Fact]
+	public async Task HistoryDepth_KeepsTheLatestHundredUndoEntries()
+	{
+		var harness = await BuildHarnessAsync();
+		for (var i = 0; i < 101; i++)
+		{
+			harness.Session.AppendStep(PauseActionId).IsSuccess.Should().BeTrue();
+		}
+
+		harness.Session.UndoCount.Should().Be(100);
+
+		for (var i = 0; i < 100; i++)
+		{
+			harness.Session.Undo().IsSuccess.Should().BeTrue();
+		}
+
+		harness.Session.Current.StepCount.Should().Be(1, "the entry for the empty recipe was dropped by the cap");
+		harness.Session.Undo().Errors.Should().ContainSingle().Which.Should().BeOfType<NoStateToUndoError>();
+	}
+
+	[Fact]
+	public async Task EmptyStacks_FailWithTypedErrors()
+	{
+		var harness = await BuildHarnessAsync();
+
+		harness.Session.Undo().Errors.Should().ContainSingle().Which.Should().BeOfType<NoStateToUndoError>();
+		harness.Session.Redo().Errors.Should().ContainSingle().Which.Should().BeOfType<NoStateToRedoError>();
+	}
+
+	[Fact]
+	public async Task UndoAndRedo_AfterMarkSaved_SetDirty()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+
+		harness.Session.MarkSaved();
+		harness.Session.Undo().IsSuccess.Should().BeTrue();
+		harness.Session.IsDirty.Should().BeTrue();
+
+		harness.Session.MarkSaved();
+		harness.Session.Redo().IsSuccess.Should().BeTrue();
+		harness.Session.IsDirty.Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task LoadAsCurrent_Success_SetsDirty()
+	{
+		var harness = await BuildHarnessAsync();
+		harness.Session.MarkSaved();
+
+		harness.Session.LoadAsCurrent(Recipe.Empty.AppendStep(BuildPauseStep(harness))).IsSuccess
+			.Should().BeTrue();
+
+		harness.Session.IsDirty.Should().BeTrue();
+	}
+
+	[Fact]
+	public async Task LoadAsCurrent_FailedAnalysis_ClearsHistoryEmptiesCurrentAndKeepsLastValid()
+	{
+		var harness = await BuildHarnessAsync();
+		var failingRecipe = BuildRecipeFailingAnalysis(harness);
+		AppendWait(harness, 1f);
+		harness.Session.Undo().IsSuccess.Should().BeTrue();
+		var lastValidBefore = harness.Session.LastValidRecipe;
+		harness.Session.MarkSaved();
+
+		harness.Session.LoadAsCurrent(failingRecipe).IsFailed.Should().BeTrue();
+
+		harness.Session.Snapshot.IsFailed.Should().BeTrue();
+		harness.Session.Current.StepCount.Should().Be(0);
+		harness.Session.LastValidRecipe.Should().BeSameAs(lastValidBefore);
+		harness.Session.CanUndo.Should().BeFalse();
+		harness.Session.CanRedo.Should().BeFalse();
+		harness.Session.IsDirty.Should().BeTrue();
+	}
+
+	#endregion
+
+	#region Index pins
+
+	[Theory]
+	[InlineData(-1)]
+	[InlineData(2)]
+	public async Task StepIndexOutOfRange_FailsWithStepIndexError(int index)
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		AppendWait(harness, 10f);
+
+		var result = harness.Session.RemoveStep(index);
+
+		result.Errors.Should().ContainSingle().Which.Should().BeOfType<StepIndexOutOfRangeError>();
+		harness.Session.Current.StepCount.Should().Be(2);
+	}
+
+	[Theory]
+	[InlineData(-1)]
+	[InlineData(3)]
+	public async Task InsertIndexOutOfRange_FailsWithInsertIndexError(int index)
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		AppendWait(harness, 10f);
+
+		var result = harness.Session.InsertStep(index, PauseActionId);
+
+		result.Errors.Should().ContainSingle().Which.Should().BeOfType<InsertIndexOutOfRangeError>();
+		harness.Session.Current.StepCount.Should().Be(2);
+	}
+
+	[Theory]
+	[InlineData(-1)]
+	[InlineData(2)]
+	public async Task StepEditWithBadIndex_FailsWithStepIndexError(int index)
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		AppendWait(harness, 10f);
+
+		var propertyResult = harness.Session.UpdateStepProperty(index, DurationColumn, "3");
+		var selectorResult = harness.Session.UpdateStepForSelectorChange(index, TargetColumn, "2", [], []);
+
+		propertyResult.Errors.Should().ContainSingle().Which.Should().BeOfType<StepIndexOutOfRangeError>();
+		selectorResult.Errors.Should().ContainSingle().Which.Should().BeOfType<StepIndexOutOfRangeError>();
+		harness.Session.Current.StepCount.Should().Be(2);
+	}
+
+	[Fact]
+	public async Task InsertAtStepCount_Succeeds()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		AppendWait(harness, 10f);
+
+		harness.Session.InsertStep(2, PauseActionId).IsSuccess.Should().BeTrue();
+
+		harness.Session.Current.Steps[2].ActionKey.Should().Be(PauseActionId);
+	}
+
+	[Fact]
+	public async Task BadIndexAndUnknownAction_ReportTheIndexError()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+
+		harness.Session.InsertStep(99, UnknownActionId).Errors
+			.Should().ContainSingle().Which.Should().BeOfType<InsertIndexOutOfRangeError>();
+		harness.Session.ChangeStepAction(99, UnknownActionId).Errors
+			.Should().ContainSingle().Which.Should().BeOfType<StepIndexOutOfRangeError>();
+	}
+
+	[Fact]
+	public async Task RemoveSteps_DuplicateIndices_RemoveTheStepOnce()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		harness.Session.AppendStep(PauseActionId).IsSuccess.Should().BeTrue();
+		AppendWait(harness, 15f);
+
+		harness.Session.RemoveSteps([1, 1]).IsSuccess.Should().BeTrue();
+
+		harness.Session.Current.Steps.Select(s => s.ActionKey).Should().Equal(WaitActionId, WaitActionId);
+	}
+
+	[Fact]
+	public async Task RemoveSteps_FailsOnFirstBadIndexInInputOrder()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		AppendWait(harness, 10f);
+
+		var result = harness.Session.RemoveSteps([7, 0, 5]);
+
+		result.Errors.Should().ContainSingle().Which.Should().BeOfType<StepIndexOutOfRangeError>()
+			.Which.Index.Should().Be(7);
+		harness.Session.Current.StepCount.Should().Be(2);
+	}
+
+	#endregion
+
+	#region Tail pins
+
+	[Fact]
+	public async Task AppendStep_WithAnalysisWarning_CarriesTheWarning()
+	{
+		var harness = await BuildHarnessAsync();
+
+		var result = harness.Session.AppendStep(ForLoopActionId);
+
+		result.IsSuccess.Should().BeTrue();
+		result.Reasons.OfType<UnclosedForLoopWarning>().Should().ContainSingle();
+	}
+
+	[Fact]
+	public async Task UpdateStepProperty_WithAnalysisWarning_CarriesTheWarning()
+	{
+		var harness = await BuildHarnessAsync();
+		harness.Session.AppendStep(ForLoopActionId).IsSuccess.Should().BeTrue();
+		harness.Session.AppendStep(WaitActionId).IsSuccess.Should().BeTrue();
+
+		var result = harness.Session.UpdateStepProperty(1, DurationColumn, "3");
+
+		result.IsSuccess.Should().BeTrue();
+		result.Reasons.OfType<UnclosedForLoopWarning>().Should().ContainSingle();
+	}
+
+	[Fact]
+	public async Task RemoveSteps_SuggestsLowestRemovedIndex()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		AppendWait(harness, 10f);
+		AppendWait(harness, 15f);
+		AppendWait(harness, 20f);
+
+		var result = harness.Session.RemoveSteps([2, 0]);
+
+		result.Value.SuggestedSelectionIndex.Should().Be(0);
+	}
+
+	[Fact]
+	public async Task RemoveSteps_ClampsSuggestionToLastRow()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		AppendWait(harness, 10f);
+		AppendWait(harness, 15f);
+		AppendWait(harness, 20f);
+
+		var result = harness.Session.RemoveSteps([3, 2]);
+
+		result.Value.SuggestedSelectionIndex.Should().Be(1);
+	}
+
+	[Fact]
+	public async Task RemoveStep_SuggestsSameIndex_WhenMiddleRowRemoved()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		AppendWait(harness, 10f);
+		AppendWait(harness, 15f);
+
+		var result = harness.Session.RemoveStep(1);
+
+		result.Value.SuggestedSelectionIndex.Should().Be(1);
+	}
+
+	[Fact]
+	public async Task RemoveSteps_AllSteps_SuggestsNoSelection()
+	{
+		var harness = await BuildHarnessAsync();
+		AppendWait(harness, 5f);
+		AppendWait(harness, 10f);
+
+		var result = harness.Session.RemoveSteps([0, 1]);
+
+		result.Value.SuggestedSelectionIndex.Should().BeNull();
+	}
+
+	#endregion
+
 	#region Helpers
 
 	private static async Task<Harness> BuildHarnessAsync()
 	{
 		var (services, session, _) = await CoreTestHelper.BuildAsync("WithGroups");
 		return new Harness(services, session);
+	}
+
+	private static StubPlcSyncService EnableSync(Harness harness)
+	{
+		var sync = (StubPlcSyncService)harness.Services.GetRequiredService<IPlcSyncService>();
+		sync.SetSyncEnabled(true);
+		sync.NotifyRecipeChangedCalls.Clear();
+		return sync;
+	}
+
+	private static void ShouldHaveSingleNotificationOfCurrentState(Harness harness, StubPlcSyncService sync)
+	{
+		var call = sync.NotifyRecipeChangedCalls.Should().ContainSingle().Which;
+		call.Recipe.Should().BeSameAs(harness.Session.Current);
+		call.IsValid.Should().Be(harness.Session.IsValid);
+	}
+
+	/// <summary>Builds a recipe whose analysis fails: a fourth nested loop exceeds the depth limit.</summary>
+	private static Recipe BuildRecipeFailingAnalysis(Harness harness)
+	{
+		var recipe = Recipe.Empty.AppendStep(BuildWaitStep(harness, 1f));
+		for (var i = 0; i < 4; i++)
+		{
+			recipe = recipe.AppendStep(BuildStep(harness, ForLoopActionId));
+		}
+
+		return recipe
+			.AppendStep(BuildWaitStep(harness, 1f))
+			.AppendStep(BuildStep(harness, EndForLoopActionId));
 	}
 
 	private static void AppendWait(Harness harness, float durationSeconds)
@@ -784,8 +1215,13 @@ public sealed class RecipeSessionBehaviourCharacterizationTests
 
 	private static Step BuildPauseStep(Harness harness)
 	{
+		return BuildStep(harness, PauseActionId);
+	}
+
+	private static Step BuildStep(Harness harness, int actionId)
+	{
 		var registry = harness.Services.GetRequiredService<RecipeMetadataRegistry>();
-		var action = registry.GetAction(PauseActionId).Value;
+		var action = registry.GetAction(actionId).Value;
 
 		return StepInitializer.Create(action, registry);
 	}

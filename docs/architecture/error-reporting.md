@@ -131,15 +131,15 @@ localize by type on both routes that carry them to the panel:
   Russian, e.g. `"Шаг 3: Столбец «gas»: Значение 5 больше максимума 4 для «amount»"` — no gate change was
   needed; the decorators placed in slice 3 already compose the now-typed inner.
 - **Interactive-edit path (undecorated).** `RecipeSession.UpdateStepProperty` →
-  `ParseAndValidateColumnValue` → `PropertyValidator`/registry bubbles the typed error straight to the panel
-  with no decorator, so it localizes standalone.
+  `StepMutationValidator.ParseColumnValue` → `PropertyValidator`/registry bubbles the typed error straight to
+  the panel with no decorator, so it localizes standalone.
 
-The remaining lower-frequency recipe producers now localize by type too: `RecipeSession`
-(undo/redo-empty and insert/step index errors), `PropertyParser` (parse failures), `RecipeAnalyzer`
-(max loop-nesting depth), and `LoopParser` (iteration-count unsupported type) all raise typed errors
-instead of `Result.Fail(string)`. `ImportedRecipeValidator` no longer raises its own unknown-action
-string — it forwards the registry's typed `ActionByIdNotFoundError`. With these typed, `Localize(Inner)`
-renders them localized rather than falling through to `.Message`.
+The remaining lower-frequency recipe producers now localize by type too: `RecipeSession` (undo/redo-empty
+errors), `StepMutationValidator` (insert/step index errors), `PropertyParser` (parse failures),
+`RecipeAnalyzer` (max loop-nesting depth), and `LoopParser` (iteration-count unsupported type) all raise
+typed errors instead of `Result.Fail(string)`. `ImportedRecipeValidator` no longer raises its own
+unknown-action string — it forwards the registry's typed `ActionByIdNotFoundError`. With these typed,
+`Localize(Inner)` renders them localized rather than falling through to `.Message`.
 
 The CSV **and clipboard** import producers now localize by type too. `CsvRowConverter`/`CsvFileSerializer`/`CsvService`
 raise typed leaves (`ActionColumnNotFoundError`, `ActionColumnEmptyError`, `ActionValueNotIntegerError`,

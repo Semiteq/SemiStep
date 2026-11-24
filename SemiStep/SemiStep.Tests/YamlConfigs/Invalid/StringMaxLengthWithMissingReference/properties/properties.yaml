@@ -1,0 +1,29 @@
+# Invalid: max_length 0 plus a column with an unknown property_type_id
+
+int:
+  system_type: int
+  format_kind: numeric
+  units: ""
+
+float:
+  system_type: float
+  format_kind: numeric
+  units: ""
+
+enum:
+  system_type: int
+  format_kind: numeric
+  units: ""
+
+time:
+  system_type: float
+  format_kind: time_hms
+  units: "s"
+  min: 0
+  max: 86400
+
+string:
+  system_type: string
+  format_kind: numeric
+  units: ""
+  max_length: 0

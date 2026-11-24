@@ -133,7 +133,7 @@ public sealed class RieEtchManualBranchConfigTests
 	{
 		var registry = await BuildRieRegistryAsync();
 
-		var dropdownIds = registry.GetActionComboBoxItems().Select(item => item.Id).ToList();
+		var dropdownIds = registry.GetAllActions().Select(action => action.Id).ToList();
 
 		dropdownIds.Should().NotContain(3002);
 		dropdownIds.Should().NotContain(3003);

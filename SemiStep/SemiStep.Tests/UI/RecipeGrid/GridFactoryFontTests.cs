@@ -98,7 +98,7 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void ComboBoxCell_CarriesConfiguredCellFont()
 	{
-		var factory = new ComboBoxCellFactory(_fixture.RecipeMetadataRegistry, NonDefaultStyle());
+		var factory = new ComboBoxCellFactory(_fixture.ComboBoxItemsProvider, NonDefaultStyle());
 		var columnDef = _fixture.RecipeMetadataRegistry.GetColumn("action").Value;
 
 		var column = (DataGridTemplateColumn)factory.CreateActionColumn(columnDef, new DataGridLength(100));
@@ -145,7 +145,8 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 
 	private DataGrid BuildGrid(GridStyleOptions gridStyle)
 	{
-		var columnBuilder = new ColumnBuilder(gridStyle, _fixture.RecipeMetadataRegistry);
+		var columnBuilder = new ColumnBuilder(
+			gridStyle, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider);
 		var grid = new DataGrid();
 		columnBuilder.BuildColumns(grid);
 

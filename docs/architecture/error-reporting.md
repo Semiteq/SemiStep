@@ -297,12 +297,21 @@ Some tests still match text:
 - the PLC monitor timing tests, because their display text is the product contract;
 - older tests outside the 2026-11-18 cleanup. They move to typed checks when someone touches them.
 
-Five loading errors are typed but not localized: `DuplicateKeyError` (key, first file, repeat file),
+Five loader errors are typed but not localized: `DuplicateKeyError` (key, first file, repeat file),
 `UnexpectedFileError` (file, folder, accepted names), `AppFileNotFoundError` (file path),
 `MissingKeyError` (key, file name) and `UnsupportedLocaleError` (value, file name, accepted values).
-The last three come from `AppUiOptionsLoader`. All five are `internal sealed`, because they exist only
-on the English startup path, and they reach the startup window as English `Message` text. Tests assert
-their type and properties, not their wording.
+`AppUiOptionsLoader` reports the last three of these.
+
+Five validator errors are typed but not localized in the same way. `StringMaxLengthValidator` reports
+four of them in the cross-reference stage of `ConfigFacade`: `NoStringPropertyError` (no properties),
+`StringMaxLengthMissingError` (`PropertyTypeId`), `StringMaxLengthNotPositiveError` (`PropertyTypeId`,
+`MaxLength`) and `StringMaxLengthConflictError` (`MaxLengths`, the distinct positive values).
+`ActionTreeValidator` runs after `MapToDomain` and reports the fifth, `NoPrimaryActionsError` (no
+properties), when the resolved action tree has no primary action. It passes a failure of
+`ActionTreeResolver` through as the resolver's plain untyped error.
+
+All ten are `internal sealed`, because they exist only on the English startup path, and they reach the
+startup window as English `Message` text. Tests assert their type and properties, not their wording.
 
 ### The log path is unchanged (always English)
 

@@ -201,7 +201,9 @@ public sealed class ExecutionHighlightTrackerJumpTests : IAsyncLifetime
 		for (var i = 0; i < count; i++)
 		{
 			var step = new Step(RecipeTestDriver.WaitActionId, []);
-			rows.Add(new RecipeRowViewModel(i + 1, step, action, _fixture.RecipeMetadataRegistry, new HashSet<string>()));
+			rows.Add(new RecipeRowViewModel(
+				i + 1, step, action, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider,
+				new HashSet<string>()));
 		}
 
 		return rows;

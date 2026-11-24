@@ -26,12 +26,14 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 {
 	private RecipeSession _session = null!;
 	private RecipeMetadataRegistry _recipeMetadataRegistry = null!;
+	private ComboBoxItemsProvider _comboBoxItemsProvider = null!;
 
 	public async ValueTask InitializeAsync()
 	{
 		var (services, session, _) = await CoreTestHelper.BuildAsync("WithGroups");
 		_session = session;
 		_recipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
+		_comboBoxItemsProvider = new ComboBoxItemsProvider(_recipeMetadataRegistry);
 		_session.Reset();
 	}
 
@@ -46,7 +48,8 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var step = _session.Current.Steps[0];
 		var action = _recipeMetadataRegistry.GetAction(step.ActionKey).Value;
 		var inapplicableColumns = BuildInapplicableColumns(action, step);
-		return new RecipeRowViewModel(1, step, action, _recipeMetadataRegistry, inapplicableColumns);
+		return new RecipeRowViewModel(
+			1, step, action, _recipeMetadataRegistry, _comboBoxItemsProvider, inapplicableColumns);
 	}
 
 	private IReadOnlySet<string> BuildInapplicableColumns(ActionDefinition action, Step step)
@@ -71,8 +74,10 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		var action = _recipeMetadataRegistry.GetAction(step.ActionKey).Value;
 		var inapplicable = BuildInapplicableColumns(action, step);
 
-		var first = new RecipeRowViewModel(1, step, action, _recipeMetadataRegistry, inapplicable);
-		var second = new RecipeRowViewModel(2, step, action, _recipeMetadataRegistry, inapplicable);
+		var first = new RecipeRowViewModel(
+			1, step, action, _recipeMetadataRegistry, _comboBoxItemsProvider, inapplicable);
+		var second = new RecipeRowViewModel(
+			2, step, action, _recipeMetadataRegistry, _comboBoxItemsProvider, inapplicable);
 
 		second.ColumnUnits.Should().BeSameAs(first.ColumnUnits);
 		second.ColumnFormatKinds.Should().BeSameAs(first.ColumnFormatKinds);

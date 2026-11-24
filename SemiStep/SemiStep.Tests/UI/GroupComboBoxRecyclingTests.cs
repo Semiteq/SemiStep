@@ -150,18 +150,21 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 					DefaultValue: null),
 			]);
 
-		var registry = BuildTwoGroupRegistry();
+		var registry = BuildTwoGroupRegistry(firstAction, secondAction);
+		var comboBoxItemsProvider = new ComboBoxItemsProvider(registry);
 		var firstRow = new RecipeRowViewModel(
 			1,
 			new Step(9001, []),
 			firstAction,
 			registry,
+			comboBoxItemsProvider,
 			new HashSet<string>());
 		var secondRow = new RecipeRowViewModel(
 			2,
 			new Step(9002, []),
 			secondAction,
 			registry,
+			comboBoxItemsProvider,
 			new HashSet<string>());
 
 		// Re-resolve the template against the synthetic registry. The CellTemplate is wired via
@@ -182,7 +185,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		secondItems.Select(item => item.DisplayText).Should().BeEquivalentTo("gamma", "delta");
 	}
 
-	private static RecipeMetadataRegistry BuildTwoGroupRegistry()
+	private static RecipeMetadataRegistry BuildTwoGroupRegistry(params ActionDefinition[] actions)
 	{
 		var groups = new Dictionary<string, GroupDefinition>(StringComparer.OrdinalIgnoreCase)
 		{
@@ -212,7 +215,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 			Properties: properties,
 			Columns: columns,
 			Groups: groups,
-			Actions: new Dictionary<int, ActionDefinition>(),
+			Actions: actions.ToDictionary(action => action.Id),
 			GridStyle: GridStyleOptions.Default,
 			PlcConfiguration: PlcConfiguration.Default,
 			Ui: new AppUiOptions("ru"));
@@ -288,7 +291,8 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 
 	private IDataTemplate GetGroupColumnCellTemplate()
 	{
-		var columnBuilder = new ColumnBuilder(GridStyleOptions.Default, _fixture.RecipeMetadataRegistry);
+		var columnBuilder = new ColumnBuilder(
+			GridStyleOptions.Default, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider);
 		var grid = new DataGrid();
 		columnBuilder.BuildColumns(grid);
 
@@ -307,7 +311,8 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		var action = _fixture.RecipeMetadataRegistry.GetAction(actionId).Value;
 		var step = new Step(actionId, []);
 		var inapplicableColumns = BuildInapplicableColumns(action, step);
-		return new RecipeRowViewModel(1, step, action, _fixture.RecipeMetadataRegistry, inapplicableColumns);
+		return new RecipeRowViewModel(
+			1, step, action, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider, inapplicableColumns);
 	}
 
 	private IReadOnlySet<string> BuildInapplicableColumns(ActionDefinition action, Step step)

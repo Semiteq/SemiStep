@@ -11,8 +11,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 
-using SemiStep.Core.Recipes;
-
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
 internal sealed class TransposedCellTemplateFactory(

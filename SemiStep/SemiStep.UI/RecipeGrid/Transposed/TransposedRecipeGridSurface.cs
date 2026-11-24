@@ -13,6 +13,7 @@ namespace SemiStep.UI.RecipeGrid.Transposed;
 public class TransposedRecipeGridSurface(
 	RecipeCoordinator coordinator,
 	RecipeMetadataRegistry recipeMetadataRegistry,
+	ComboBoxItemsProvider comboBoxItemsProvider,
 	GridStyleOptions gridStyle,
 	MessagePanelViewModel messagePanel,
 	ChangedCellClickAwayBroadcaster changedCellClickAwayBroadcaster,
@@ -22,7 +23,8 @@ public class TransposedRecipeGridSurface(
 {
 	// Field initializers run before the base constructor subscribes to coordinator events,
 	// so a callback can never observe a half-constructed surface.
-	private readonly ParameterCellViewModelFactory _parameterCellViewModelFactory = new(recipeMetadataRegistry);
+	private readonly ParameterCellViewModelFactory _parameterCellViewModelFactory =
+		new(recipeMetadataRegistry, comboBoxItemsProvider);
 
 	public GridStyleOptions GridStyle { get; } = gridStyle;
 
@@ -43,6 +45,7 @@ public class TransposedRecipeGridSurface(
 			step,
 			action,
 			RecipeMetadataRegistry,
+			comboBoxItemsProvider,
 			ParameterDescriptors,
 			_parameterCellViewModelFactory.Create);
 	}

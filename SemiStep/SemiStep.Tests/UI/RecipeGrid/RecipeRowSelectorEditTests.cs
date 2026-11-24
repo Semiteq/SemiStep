@@ -67,10 +67,12 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 			NullLogger<RecipeCoordinator>.Instance);
 		_coordinator.Initialize();
 
+		var comboBoxItemsProvider = new ComboBoxItemsProvider(_registry);
 		_surface = new CanonicalRecipeGridSurface(
 			_coordinator,
 			_registry,
-			new ColumnBuilder(GridStyleOptions.Default, _registry),
+			comboBoxItemsProvider,
+			new ColumnBuilder(GridStyleOptions.Default, _registry, comboBoxItemsProvider),
 			_messagePanel,
 			new ChangedCellClickAwayBroadcaster(),
 			NullLogger<CanonicalRecipeGridSurface>.Instance);

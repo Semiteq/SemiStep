@@ -1,0 +1,14 @@
+# Valid control for ActionDuplicateColumnKeyConflictingType: action 10 lists column 'comment'
+# twice with the same property_type_id
+
+10:
+  ui_name: "Wait"
+  deploy_duration: longlasting
+  columns:
+    - key: step_duration
+      default_value: "10"
+      property_type_id: time
+    - key: comment
+      property_type_id: string
+    - key: comment
+      property_type_id: string

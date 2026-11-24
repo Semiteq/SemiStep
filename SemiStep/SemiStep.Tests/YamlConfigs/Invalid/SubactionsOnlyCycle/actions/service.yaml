@@ -1,0 +1,21 @@
+# Invalid: the config holds only two subactions that target each other
+
+3001:
+  ui_name: "Branch A"
+  role: subaction
+  deploy_duration: immediate
+  columns:
+    - key: branch_sel
+      group_name: match_mode
+      property_type_id: enum
+      targets: { 1: 3002 }
+
+3002:
+  ui_name: "Branch B"
+  role: subaction
+  deploy_duration: immediate
+  columns:
+    - key: branch_sel
+      group_name: match_mode
+      property_type_id: enum
+      targets: { 1: 3001 }

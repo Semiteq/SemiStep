@@ -13,6 +13,7 @@ public sealed class RecipeRowViewModel(
 	Step step,
 	ActionDefinition action,
 	RecipeMetadataRegistry recipeMetadataRegistry,
+	ComboBoxItemsProvider comboBoxItemsProvider,
 	IReadOnlySet<string> inapplicableColumns)
 	: ReactiveObject, IDisposable
 {
@@ -21,7 +22,8 @@ public sealed class RecipeRowViewModel(
 	// Cached per action (stable ActionDefinition instance makes the reference key safe); weak table drops entries when an action is collected.
 	private static readonly ConditionalWeakTable<ActionDefinition, ActionColumnMetadata> _actionMetadataCache = [];
 
-	private readonly ActionColumnMetadata _actionMetadata = GetActionMetadata(action, recipeMetadataRegistry);
+	private readonly ActionColumnMetadata _actionMetadata =
+		GetActionMetadata(action, recipeMetadataRegistry, comboBoxItemsProvider);
 
 	internal Step CurrentStep { get; private set; } = step;
 
@@ -342,7 +344,8 @@ public sealed class RecipeRowViewModel(
 
 	private static ActionColumnMetadata GetActionMetadata(
 		ActionDefinition action,
-		RecipeMetadataRegistry recipeMetadataRegistry)
+		RecipeMetadataRegistry recipeMetadataRegistry,
+		ComboBoxItemsProvider comboBoxItemsProvider)
 	{
 		return _actionMetadataCache.GetValue(
 			action,
@@ -352,13 +355,14 @@ public sealed class RecipeRowViewModel(
 				return new ActionColumnMetadata(
 					units,
 					formatKinds,
-					BuildGroupItemsByColumn(resolvedAction, recipeMetadataRegistry));
+					BuildGroupItemsByColumn(resolvedAction, recipeMetadataRegistry, comboBoxItemsProvider));
 			});
 	}
 
 	private static IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> BuildGroupItemsByColumn(
 		ActionDefinition actionDefinition,
-		RecipeMetadataRegistry recipeMetadataRegistry)
+		RecipeMetadataRegistry recipeMetadataRegistry,
+		ComboBoxItemsProvider comboBoxItemsProvider)
 	{
 		// Pre-populate group-bound columns with empty lists so a recycle onto an action lacking the property doesn't throw KeyNotFoundException.
 		var result = new Dictionary<string, IReadOnlyList<ComboBoxItemViewModel>>(StringComparer.OrdinalIgnoreCase);
@@ -384,7 +388,7 @@ public sealed class RecipeRowViewModel(
 				continue;
 			}
 
-			result[actionProperty.Key] = recipeMetadataRegistry.GetComboBoxItems(actionProperty.GroupName);
+			result[actionProperty.Key] = comboBoxItemsProvider.GetGroupItems(actionProperty.GroupName);
 		}
 
 		return result;

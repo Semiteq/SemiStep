@@ -37,7 +37,8 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 	[AvaloniaFact]
 	public void BuildColumns_CalledTwice_DoesNotAccumulateColumns()
 	{
-		var columnBuilder = new ColumnBuilder(GridStyleOptions.Default, _fixture.RecipeMetadataRegistry);
+		var columnBuilder = new ColumnBuilder(
+			GridStyleOptions.Default, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider);
 		var grid = new DataGrid();
 
 		columnBuilder.BuildColumns(grid);
@@ -97,7 +98,7 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 	public void BuildColumns_ReadOnlyColumn_HasReadOnlyColumnClass()
 	{
 		var registry = BuildRegistryWithReadOnlyVariants();
-		var columnBuilder = new ColumnBuilder(GridStyleOptions.Default, registry);
+		var columnBuilder = new ColumnBuilder(GridStyleOptions.Default, registry, new ComboBoxItemsProvider(registry));
 		var grid = new DataGrid();
 
 		columnBuilder.BuildColumns(grid);
@@ -174,7 +175,8 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 
 	private DataGrid BuildGrid()
 	{
-		var columnBuilder = new ColumnBuilder(GridStyleOptions.Default, _fixture.RecipeMetadataRegistry);
+		var columnBuilder = new ColumnBuilder(
+			GridStyleOptions.Default, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider);
 		var grid = new DataGrid();
 		columnBuilder.BuildColumns(grid);
 		return grid;
@@ -192,7 +194,8 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 		var action = _fixture.RecipeMetadataRegistry.GetAction(actionId).Value;
 		var step = new Step(actionId, []);
 		var inapplicableColumns = BuildInapplicableColumns(action, step);
-		return new RecipeRowViewModel(1, step, action, _fixture.RecipeMetadataRegistry, inapplicableColumns);
+		return new RecipeRowViewModel(
+			1, step, action, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider, inapplicableColumns);
 	}
 
 	private IReadOnlySet<string> BuildInapplicableColumns(ActionDefinition action, Step step)

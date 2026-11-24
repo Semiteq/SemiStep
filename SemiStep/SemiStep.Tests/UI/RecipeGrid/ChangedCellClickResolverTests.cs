@@ -20,12 +20,14 @@ public sealed class ChangedCellClickResolverTests : IAsyncLifetime
 {
 	private RecipeSession _session = null!;
 	private RecipeMetadataRegistry _recipeMetadataRegistry = null!;
+	private ComboBoxItemsProvider _comboBoxItemsProvider = null!;
 
 	public async ValueTask InitializeAsync()
 	{
 		var (services, session, _) = await CoreTestHelper.BuildAsync("WithGroups");
 		_session = session;
 		_recipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
+		_comboBoxItemsProvider = new ComboBoxItemsProvider(_recipeMetadataRegistry);
 		_session.Reset();
 	}
 
@@ -148,6 +150,7 @@ public sealed class ChangedCellClickResolverTests : IAsyncLifetime
 		var step = _session.Current.Steps[stepIndex];
 		var action = _recipeMetadataRegistry.GetAction(step.ActionKey).Value;
 		var inapplicableColumns = RecipeRowViewModel.BuildInapplicableColumns(action, step, _recipeMetadataRegistry);
-		return new RecipeRowViewModel(stepIndex + 1, step, action, _recipeMetadataRegistry, inapplicableColumns);
+		return new RecipeRowViewModel(
+			stepIndex + 1, step, action, _recipeMetadataRegistry, _comboBoxItemsProvider, inapplicableColumns);
 	}
 }

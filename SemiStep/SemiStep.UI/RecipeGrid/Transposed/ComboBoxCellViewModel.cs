@@ -1,6 +1,4 @@
-﻿using SemiStep.Core.Recipes;
-
-namespace SemiStep.UI.RecipeGrid.Transposed;
+﻿namespace SemiStep.UI.RecipeGrid.Transposed;
 
 public sealed class ComboBoxCellViewModel(
 	RecipeRowViewModel recipeRowViewModel,

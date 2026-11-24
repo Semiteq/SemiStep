@@ -37,6 +37,7 @@ public sealed class UIFixture : IAsyncLifetime
 	public StubPlcSyncService PlcSyncService { get; private set; } = null!;
 	public StubS7Service S7Service { get; private set; } = null!;
 	public RecipeMetadataRegistry RecipeMetadataRegistry { get; private set; } = null!;
+	public ComboBoxItemsProvider ComboBoxItemsProvider { get; private set; } = null!;
 	public AppConfiguration AppConfiguration { get; private set; } = null!;
 	public MessagePanelViewModel MessagePanel { get; private set; } = null!;
 	public CsvService CsvService { get; private set; } = null!;
@@ -63,6 +64,7 @@ public sealed class UIFixture : IAsyncLifetime
 		PlcSyncService = (StubPlcSyncService)services.GetRequiredService<IPlcSyncService>();
 		S7Service = services.GetRequiredService<StubS7Service>();
 		RecipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
+		ComboBoxItemsProvider = new ComboBoxItemsProvider(RecipeMetadataRegistry);
 		AppConfiguration = services.GetRequiredService<AppConfiguration>();
 		MessagePanel = new MessagePanelViewModel();
 		StubS7 = services.GetRequiredService<StubS7Service>();
@@ -78,7 +80,7 @@ public sealed class UIFixture : IAsyncLifetime
 			MessagePanel,
 			NullLogger<RecipeCoordinator>.Instance);
 		Coordinator.Initialize();
-		ColumnBuilder = new ColumnBuilder(AppConfiguration.GridStyle, RecipeMetadataRegistry);
+		ColumnBuilder = new ColumnBuilder(AppConfiguration.GridStyle, RecipeMetadataRegistry, ComboBoxItemsProvider);
 	}
 
 	// Surface disposal is idempotent, so suites that dispose their surfaces explicitly and
@@ -101,6 +103,7 @@ public sealed class UIFixture : IAsyncLifetime
 		var surface = new CanonicalRecipeGridSurface(
 			Coordinator,
 			RecipeMetadataRegistry,
+			ComboBoxItemsProvider,
 			ColumnBuilder,
 			MessagePanel,
 			ClickAwayBroadcaster,
@@ -116,6 +119,7 @@ public sealed class UIFixture : IAsyncLifetime
 		var surface = new TransposedRecipeGridSurface(
 			Coordinator,
 			RecipeMetadataRegistry,
+			ComboBoxItemsProvider,
 			AppConfiguration.GridStyle,
 			MessagePanel,
 			ClickAwayBroadcaster,

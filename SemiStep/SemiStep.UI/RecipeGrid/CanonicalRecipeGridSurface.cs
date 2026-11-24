@@ -12,6 +12,7 @@ namespace SemiStep.UI.RecipeGrid;
 public class CanonicalRecipeGridSurface(
 	RecipeCoordinator coordinator,
 	RecipeMetadataRegistry recipeMetadataRegistry,
+	ComboBoxItemsProvider comboBoxItemsProvider,
 	ColumnBuilder columnBuilder,
 	MessagePanelViewModel messagePanel,
 	ChangedCellClickAwayBroadcaster changedCellClickAwayBroadcaster,
@@ -37,6 +38,7 @@ public class CanonicalRecipeGridSurface(
 			step,
 			action,
 			RecipeMetadataRegistry,
+			comboBoxItemsProvider,
 			inapplicableColumns);
 	}
 }

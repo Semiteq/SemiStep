@@ -417,7 +417,7 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 	{
 		var (_, stepListBox) = ShowView();
 		var comboBox = EnterComboEdit(stepListBox, 0, "action");
-		var forLoopItem = _fixture.RecipeMetadataRegistry.GetActionComboBoxItems()
+		var forLoopItem = _fixture.ComboBoxItemsProvider.ActionItems
 			.Single(item => item.Id == RecipeTestDriver.ForLoopActionId);
 
 		comboBox.SelectedItem = forLoopItem;

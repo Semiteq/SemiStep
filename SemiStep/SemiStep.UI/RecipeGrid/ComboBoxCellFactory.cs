@@ -11,7 +11,7 @@ using SemiStep.Core.Recipes;
 
 namespace SemiStep.UI.RecipeGrid;
 
-internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataRegistry, GridStyleOptions gridStyle)
+internal sealed class ComboBoxCellFactory(ComboBoxItemsProvider comboBoxItemsProvider, GridStyleOptions gridStyle)
 {
 	public DataGridColumn CreateActionColumn(GridColumnDefinition columnDef, DataGridLength width)
 	{
@@ -41,7 +41,7 @@ internal sealed class ComboBoxCellFactory(RecipeMetadataRegistry recipeMetadataR
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateActionCellTemplate(bool isColumnReadOnly)
 	{
-		var items = recipeMetadataRegistry.GetActionComboBoxItems();
+		var items = comboBoxItemsProvider.ActionItems;
 		var selectionConverter = new ComboBoxItemSelectionConverter(items);
 
 		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>

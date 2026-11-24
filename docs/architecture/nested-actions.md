@@ -209,7 +209,8 @@ mutation; ordinary (non-selector) edits do not trigger an applicability recomput
 
 ## One-undo-unit selector edit
 
-The undo boundary is `RecipeSession.Apply` — one call, one undo snapshot.
+The undo boundary is `RecipeSession.Apply`: one call, one undo snapshot. The undo and redo stacks
+live in `RecipeHistory` (`SemiStep.Core/Recipes/RecipeHistory.cs`), which `Apply` pushes to.
 `RecipeSession.UpdateStepForSelectorChange` (`SemiStep.Core/Recipes/RecipeSession.cs`) builds a
 single updated step that sets the selector value, drops the keys that became inactive, seeds
 defaults for the keys that became active, runs any formula recalc, and calls `Apply` exactly once.

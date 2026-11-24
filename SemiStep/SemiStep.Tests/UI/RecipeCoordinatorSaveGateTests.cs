@@ -11,7 +11,6 @@ using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard;
-using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
@@ -90,14 +89,12 @@ public sealed class RecipeCoordinatorSaveGateTests
 
 		var recipeMetadataRegistry = services.GetRequiredService<RecipeMetadataRegistry>();
 		var panel = new MessagePanelViewModel();
-		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
 		var appConfiguration = services.GetRequiredService<AppConfiguration>();
 		var csvService = services.GetRequiredService<CsvService>();
 		var coordinator = new RecipeCoordinator(
 			session,
 			plc,
 			csvService,
-			importedRecipeValidator,
 			appConfiguration,
 			recipeMetadataRegistry,
 			panel,

@@ -8,6 +8,7 @@ using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis;
 using SemiStep.Core.Recipes.Errors;
 using SemiStep.Core.Recipes.Formulas;
+using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Helpers;
 
 using Xunit;
@@ -65,6 +66,7 @@ public sealed class RecipeSessionValueRangeTests
 			new RecipeAnalyzer(registry),
 			registry,
 			new FormulaEvaluator(registry, NullLogger<FormulaEvaluator>.Instance),
+			new ImportedRecipeValidator(registry),
 			new StubPlcSyncService(),
 			NullLogger<RecipeSession>.Instance);
 	}

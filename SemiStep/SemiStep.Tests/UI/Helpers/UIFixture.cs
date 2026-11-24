@@ -68,13 +68,11 @@ public sealed class UIFixture : IAsyncLifetime
 		AppConfiguration = services.GetRequiredService<AppConfiguration>();
 		MessagePanel = new MessagePanelViewModel();
 		StubS7 = services.GetRequiredService<StubS7Service>();
-		var importedRecipeValidator = services.GetRequiredService<ImportedRecipeValidator>();
 		CsvService = services.GetRequiredService<CsvService>();
 		Coordinator = new RecipeCoordinator(
 			Session,
 			Plc,
 			CsvService,
-			importedRecipeValidator,
 			AppConfiguration,
 			RecipeMetadataRegistry,
 			MessagePanel,

@@ -12,6 +12,7 @@ using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis;
 using SemiStep.Core.Recipes.Formulas;
+using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Config.Helpers;
 using SemiStep.Tests.Helpers;
 
@@ -177,6 +178,7 @@ public sealed class RecipeSessionSelectorSeedIntegrationTests
 			analyzer,
 			registry,
 			evaluator,
+			new ImportedRecipeValidator(registry),
 			sync,
 			NullLogger<RecipeSession>.Instance);
 	}

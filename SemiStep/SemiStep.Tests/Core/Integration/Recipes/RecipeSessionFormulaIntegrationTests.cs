@@ -12,6 +12,7 @@ using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Analysis;
 using SemiStep.Core.Recipes.Formulas;
 using SemiStep.Core.Recipes.Formulas.Errors;
+using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Helpers;
 
 using Xunit;
@@ -188,6 +189,7 @@ public sealed class RecipeSessionFormulaIntegrationTests
 			analyzer,
 			registry,
 			evaluator,
+			new ImportedRecipeValidator(registry),
 			sync,
 			NullLogger<RecipeSession>.Instance);
 

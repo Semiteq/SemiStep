@@ -13,7 +13,6 @@ using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
-using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 
 using SemiStep.UI.Localization;
@@ -27,9 +26,6 @@ public sealed class RecipeCoordinator : IDisposable
 	private readonly IDisposable _canEditRecipeConnection;
 	private readonly CsvService _csvService;
 	private readonly Lock _disposeLock = new();
-
-	// Hopped to MainThreadScheduler once and shared via Publish().RefCount(); subscribers add no ObserveOn.
-	private readonly ImportedRecipeValidator _importedRecipeValidator;
 	private readonly ILogger<RecipeCoordinator> _logger;
 	private readonly MessagePanelViewModel _messagePanel;
 	private readonly PlcLifecycleManager _plc;
@@ -47,7 +43,6 @@ public sealed class RecipeCoordinator : IDisposable
 		RecipeSession session,
 		PlcLifecycleManager plc,
 		CsvService csvService,
-		ImportedRecipeValidator importedRecipeValidator,
 		AppConfiguration appConfiguration,
 		RecipeMetadataRegistry recipeMetadataRegistry,
 		MessagePanelViewModel messagePanel,
@@ -56,7 +51,6 @@ public sealed class RecipeCoordinator : IDisposable
 		_session = session;
 		_plc = plc;
 		_csvService = csvService;
-		_importedRecipeValidator = importedRecipeValidator;
 		_appConfiguration = appConfiguration;
 		_recipeMetadataRegistry = recipeMetadataRegistry;
 		_messagePanel = messagePanel;
@@ -84,8 +78,12 @@ public sealed class RecipeCoordinator : IDisposable
 		CanEditRecipe = canEditConnectable;
 	}
 
+	// PlcRecipeConflictDetected, PlcStateChanged and ExecutionState hop to MainThreadScheduler once and are
+	// shared via Publish().RefCount(); subscribers add no ObserveOn.
 	public IObservable<(Recipe Local, Recipe Plc)> PlcRecipeConflictDetected { get; }
 	public IObservable<PlcSessionSnapshot> PlcStateChanged { get; }
+	public IObservable<PlcExecutionInfo> ExecutionState { get; }
+
 	public IObservable<bool> CanEditRecipe { get; }
 
 	public event Action<MutationSignal>? Mutated;
@@ -104,7 +102,6 @@ public sealed class RecipeCoordinator : IDisposable
 	public bool IsConnecting => _connectionState == PlcConnectionState.Connecting;
 	public bool IsRecipeActive => _plc.IsRecipeActive;
 	public bool IsSyncEnabled => _plc.IsSyncEnabled;
-	public IObservable<PlcExecutionInfo> ExecutionState { get; }
 	public PlcSyncStatus SyncStatus => _plc.SyncStatus;
 	public DateTimeOffset? LastSyncTime => _plc.LastSyncTime;
 
@@ -324,7 +321,7 @@ public sealed class RecipeCoordinator : IDisposable
 			? loadResult.ToResult()
 			: await Dispatcher.UIThread.InvokeAsync(() =>
 			{
-				var validateResult = _session.LoadAsCurrentValidated(loadResult.Value, _importedRecipeValidator);
+				var validateResult = _session.LoadAsCurrentValidated(loadResult.Value);
 				if (validateResult.IsFailed)
 				{
 					return validateResult;

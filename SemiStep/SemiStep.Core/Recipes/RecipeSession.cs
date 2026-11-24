@@ -12,27 +12,26 @@ using SemiStep.Core.Shared;
 namespace SemiStep.Core.Recipes;
 
 /// <summary>
-/// Owns the live recipe, its undo/redo history, the dirty-flag state, and the
-/// mutation methods that produce new recipe revisions. Coordinates analyzer and
-/// formula-evaluator passes on each mutation and synchronises accepted snapshots
-/// with the PLC sync service.
+/// Owns the live recipe, its dirty flag and the mutations that produce new revisions; runs analyzer and
+/// formula passes and notifies PLC sync. History lives in <see cref="RecipeHistory"/>, input checks in
+/// <see cref="StepMutationValidator"/>.
 /// </summary>
 public sealed class RecipeSession(
 	RecipeAnalyzer analyzer,
 	RecipeMetadataRegistry recipeMetadataRegistry,
 	FormulaEvaluator formulaEvaluator,
+	ImportedRecipeValidator importedRecipeValidator,
 	IPlcSyncService syncService,
 	ILogger<RecipeSession> logger)
 {
-	private const int MaxHistoryDepth = 100;
-
 	private readonly RecipeAnalyzer _analyzer = analyzer;
 	private readonly FormulaEvaluator _formulaEvaluator = formulaEvaluator;
+	private readonly RecipeHistory _history = new();
+	private readonly ImportedRecipeValidator _importedRecipeValidator = importedRecipeValidator;
 	private readonly ILogger<RecipeSession> _logger = logger;
 	private readonly RecipeMetadataRegistry _recipeMetadataRegistry = recipeMetadataRegistry;
-	private readonly List<Recipe> _redoStack = [with(MaxHistoryDepth)];
+	private readonly StepMutationValidator _stepMutationValidator = new(recipeMetadataRegistry);
 	private readonly IPlcSyncService _syncService = syncService;
-	private readonly List<Recipe> _undoStack = [with(MaxHistoryDepth)];
 
 	public Recipe Current => Snapshot.IsSuccess
 		? Snapshot.Value.Recipe
@@ -47,11 +46,11 @@ public sealed class RecipeSession(
 
 	public Result<RecipeSnapshot> Snapshot { get; private set; } = Result.Ok(RecipeSnapshot.Empty);
 
-	public bool CanUndo => _undoStack.Count > 0;
+	public bool CanUndo => _history.UndoCount > 0;
 
-	internal int UndoCount => _undoStack.Count;
+	internal int UndoCount => _history.UndoCount;
 
-	public bool CanRedo => _redoStack.Count > 0;
+	public bool CanRedo => _history.CanRedo;
 
 	public Result Apply(Recipe newRecipe)
 	{
@@ -61,7 +60,7 @@ public sealed class RecipeSession(
 			return snapshot.ToResult();
 		}
 
-		PushHistory(Current);
+		_history.Push(Current);
 		UpdateSnapshot(snapshot);
 		NotifySyncIfEnabled();
 
@@ -70,63 +69,43 @@ public sealed class RecipeSession(
 
 	public Result Undo()
 	{
-		if (_undoStack.Count == 0)
+		var previous = _history.PeekUndo();
+		if (previous is null)
 		{
 			_logger.LogInformation("Undo requested but no state available");
 			return Result.Fail(new NoStateToUndoError());
 		}
 
-		var previousIndex = _undoStack.Count - 1;
-		var previous = _undoStack[previousIndex];
-
-		var snapshot = _analyzer.Analyze(previous);
-		if (snapshot.IsFailed)
+		var result = RestoreFromHistory(previous, _history.CommitUndo);
+		if (result.IsSuccess)
 		{
-			return snapshot.ToResult();
+			_logger.LogInformation("Undo applied: restored recipe with {StepCount} steps", Current.StepCount);
 		}
 
-		_redoStack.Add(Current);
-		_undoStack.RemoveAt(previousIndex);
-		UpdateSnapshot(snapshot);
-
-		NotifySyncIfEnabled();
-
-		_logger.LogInformation("Undo applied: restored recipe with {StepCount} steps", Current.StepCount);
-
-		return Result.Ok().WithReasons(snapshot.Reasons);
+		return result;
 	}
 
 	public Result Redo()
 	{
-		if (_redoStack.Count == 0)
+		var next = _history.PeekRedo();
+		if (next is null)
 		{
 			_logger.LogInformation("Redo requested but no state available");
 			return Result.Fail(new NoStateToRedoError());
 		}
 
-		var nextIndex = _redoStack.Count - 1;
-		var next = _redoStack[nextIndex];
-
-		var snapshot = _analyzer.Analyze(next);
-		if (snapshot.IsFailed)
+		var result = RestoreFromHistory(next, _history.CommitRedo);
+		if (result.IsSuccess)
 		{
-			return snapshot.ToResult();
+			_logger.LogInformation("Redo applied: restored recipe with {StepCount} steps", Current.StepCount);
 		}
 
-		_undoStack.Add(Current);
-		_redoStack.RemoveAt(nextIndex);
-		UpdateSnapshot(snapshot);
-
-		NotifySyncIfEnabled();
-
-		_logger.LogInformation("Redo applied: restored recipe with {StepCount} steps", Current.StepCount);
-
-		return Result.Ok().WithReasons(snapshot.Reasons);
+		return result;
 	}
 
 	public Result Reset()
 	{
-		ClearHistory();
+		_history.Clear();
 		ResetSnapshotToEmpty();
 
 		var snapshot = _analyzer.Analyze(Recipe.Empty);
@@ -159,7 +138,7 @@ public sealed class RecipeSession(
 	/// </summary>
 	public Result LoadAsCurrent(Recipe recipe)
 	{
-		ClearHistory();
+		_history.Clear();
 		var snapshot = _analyzer.Analyze(recipe);
 		UpdateSnapshot(snapshot);
 		NotifySyncIfEnabled();
@@ -179,15 +158,12 @@ public sealed class RecipeSession(
 	}
 
 	/// <summary>
-	/// Validates an untrusted recipe via <paramref name="validator"/> and, on success, loads it
-	/// as the current recipe. On validation failure, no state is mutated and the validation
-	/// <see cref="Result"/> is returned. Used by all untrusted-recipe ingress points
-	/// (CSV file load, PLC read, reconnect reconciliation) to avoid duplicating the
-	/// validate-then-load pattern at each call site.
+	/// Validates an untrusted recipe (CSV file, PLC read, reconnect reconciliation) and loads it only when
+	/// validation passes; on failure no state changes and the validation <see cref="Result"/> is returned.
 	/// </summary>
-	public Result LoadAsCurrentValidated(Recipe recipe, ImportedRecipeValidator validator)
+	public Result LoadAsCurrentValidated(Recipe recipe)
 	{
-		var validation = validator.Validate(recipe);
+		var validation = _importedRecipeValidator.Validate(recipe);
 		return validation.IsFailed ? validation : LoadAsCurrent(recipe);
 	}
 
@@ -205,17 +181,8 @@ public sealed class RecipeSession(
 		}
 
 		var step = StepInitializer.Create(actionResult.Value, _recipeMetadataRegistry);
-		var newRecipe = Current.AppendStep(step);
 
-		var applyResult = Apply(newRecipe);
-		if (applyResult.IsFailed)
-		{
-			return applyResult.ToResult<MutationOutcome>();
-		}
-
-		var lastIndex = Current.StepCount - 1;
-		return Result.Ok(new MutationOutcome(lastIndex))
-			.WithReasons(applyResult.Reasons);
+		return ApplyWithOutcome(Current.AppendStep(step), stepCount => stepCount - 1);
 	}
 
 	public Result<MutationOutcome> InsertStep(int index, int actionId)
@@ -226,7 +193,7 @@ public sealed class RecipeSession(
 			actionId,
 			Current.StepCount);
 
-		var indexCheck = ValidateInsertIndex(Current, index);
+		var indexCheck = StepMutationValidator.CheckInsertIndex(Current, index);
 		if (indexCheck.IsFailed)
 		{
 			return indexCheck.ToResult<MutationOutcome>();
@@ -239,13 +206,8 @@ public sealed class RecipeSession(
 		}
 
 		var step = StepInitializer.Create(actionResult.Value, _recipeMetadataRegistry);
-		var newRecipe = Current.InsertStep(index, step);
 
-		var applyResult = Apply(newRecipe);
-		return applyResult.IsFailed
-			? applyResult.ToResult<MutationOutcome>()
-			: Result.Ok(new MutationOutcome(index))
-			.WithReasons(applyResult.Reasons);
+		return ApplyWithOutcome(Current.InsertStep(index, step), _ => index);
 	}
 
 	public Result<MutationOutcome> RemoveStep(int index)
@@ -255,23 +217,15 @@ public sealed class RecipeSession(
 			index,
 			Current.StepCount);
 
-		var indexCheck = ValidateStepIndex(Current, index);
+		var indexCheck = StepMutationValidator.CheckStepIndex(Current, index);
 		if (indexCheck.IsFailed)
 		{
 			return indexCheck.ToResult<MutationOutcome>();
 		}
 
-		var newRecipe = Current.RemoveStep(index);
-		var applyResult = Apply(newRecipe);
-		if (applyResult.IsFailed)
-		{
-			return applyResult.ToResult<MutationOutcome>();
-		}
-
-		var stepCount = Current.StepCount;
-		int? suggested = stepCount > 0 ? Math.Min(index, stepCount - 1) : null;
-		return Result.Ok(new MutationOutcome(suggested))
-			.WithReasons(applyResult.Reasons);
+		return ApplyWithOutcome(
+			Current.RemoveStep(index),
+			stepCount => stepCount > 0 ? Math.Min(index, stepCount - 1) : null);
 	}
 
 	public Result<MutationOutcome> RemoveSteps(IReadOnlyList<int> indices)
@@ -286,24 +240,16 @@ public sealed class RecipeSession(
 		var current = Current;
 		foreach (var i in distinctIndices)
 		{
-			var indexCheck = ValidateStepIndex(current, i);
+			var indexCheck = StepMutationValidator.CheckStepIndex(current, i);
 			if (indexCheck.IsFailed)
 			{
 				return indexCheck.ToResult<MutationOutcome>();
 			}
 		}
 
-		var newRecipe = current.RemoveSteps(distinctIndices);
-		var applyResult = Apply(newRecipe);
-		if (applyResult.IsFailed)
-		{
-			return applyResult.ToResult<MutationOutcome>();
-		}
-
-		var stepCount = Current.StepCount;
-		int? suggested = stepCount > 0 ? Math.Min(distinctIndices.Min(), stepCount - 1) : null;
-		return Result.Ok(new MutationOutcome(suggested))
-			.WithReasons(applyResult.Reasons);
+		return ApplyWithOutcome(
+			current.RemoveSteps(distinctIndices),
+			stepCount => stepCount > 0 ? Math.Min(distinctIndices.Min(), stepCount - 1) : null);
 	}
 
 	public Result<MutationOutcome> InsertSteps(int startIndex, IReadOnlyList<Step> steps)
@@ -314,18 +260,13 @@ public sealed class RecipeSession(
 			steps.Count,
 			Current.StepCount);
 
-		var indexCheck = ValidateInsertIndex(Current, startIndex);
+		var indexCheck = StepMutationValidator.CheckInsertIndex(Current, startIndex);
 		if (indexCheck.IsFailed)
 		{
 			return indexCheck.ToResult<MutationOutcome>();
 		}
 
-		var newRecipe = Current.InsertSteps(startIndex, steps);
-		var applyResult = Apply(newRecipe);
-		return applyResult.IsFailed
-			? applyResult.ToResult<MutationOutcome>()
-			: Result.Ok(new MutationOutcome(startIndex))
-			.WithReasons(applyResult.Reasons);
+		return ApplyWithOutcome(Current.InsertSteps(startIndex, steps), _ => startIndex);
 	}
 
 	public Result<MutationOutcome> ChangeStepAction(int stepIndex, int newActionId)
@@ -336,7 +277,7 @@ public sealed class RecipeSession(
 			newActionId,
 			Current.StepCount);
 
-		var indexCheck = ValidateStepIndex(Current, stepIndex);
+		var indexCheck = StepMutationValidator.CheckStepIndex(Current, stepIndex);
 		if (indexCheck.IsFailed)
 		{
 			return indexCheck.ToResult<MutationOutcome>();
@@ -349,13 +290,8 @@ public sealed class RecipeSession(
 		}
 
 		var step = StepInitializer.Create(actionResult.Value, _recipeMetadataRegistry);
-		var newRecipe = Current.ReplaceStep(stepIndex, step);
 
-		var applyResult = Apply(newRecipe);
-		return applyResult.IsFailed
-			? applyResult.ToResult<MutationOutcome>()
-			: Result.Ok(new MutationOutcome(stepIndex))
-			.WithReasons(applyResult.Reasons);
+		return ApplyWithOutcome(Current.ReplaceStep(stepIndex, step), _ => stepIndex);
 	}
 
 	public Result UpdateStepProperty(int stepIndex, string columnKey, string value)
@@ -366,24 +302,17 @@ public sealed class RecipeSession(
 			columnKey,
 			Current.StepCount);
 
-		var indexCheck = ValidateStepIndex(Current, stepIndex);
-		if (indexCheck.IsFailed)
-		{
-			return indexCheck;
-		}
-
 		var current = Current;
-		var step = current.Steps[stepIndex];
-
-		var actionResult = _recipeMetadataRegistry.GetAction(step.ActionKey);
+		var actionResult = _stepMutationValidator.ResolveStepAction(current, stepIndex);
 		if (actionResult.IsFailed)
 		{
 			return actionResult.ToResult();
 		}
 
 		var action = actionResult.Value;
+		var step = current.Steps[stepIndex];
 
-		var valueResult = ParseAndValidateColumnValue(action, columnKey, value);
+		var valueResult = _stepMutationValidator.ParseColumnValue(action, columnKey, value);
 		if (valueResult.IsFailed)
 		{
 			return valueResult.ToResult();
@@ -427,24 +356,17 @@ public sealed class RecipeSession(
 			columnsToSeed.Count,
 			Current.StepCount);
 
-		var indexCheck = ValidateStepIndex(Current, stepIndex);
-		if (indexCheck.IsFailed)
-		{
-			return indexCheck;
-		}
-
 		var current = Current;
-		var step = current.Steps[stepIndex];
-
-		var actionResult = _recipeMetadataRegistry.GetAction(step.ActionKey);
+		var actionResult = _stepMutationValidator.ResolveStepAction(current, stepIndex);
 		if (actionResult.IsFailed)
 		{
 			return actionResult.ToResult();
 		}
 
 		var action = actionResult.Value;
+		var step = current.Steps[stepIndex];
 
-		var selectorResult = ParseAndValidateColumnValue(action, selectorKey, value);
+		var selectorResult = _stepMutationValidator.ParseColumnValue(action, selectorKey, value);
 		if (selectorResult.IsFailed)
 		{
 			return selectorResult.ToResult();
@@ -486,41 +408,13 @@ public sealed class RecipeSession(
 		return Apply(newRecipe);
 	}
 
-	private Result<PropertyValue> ParseAndValidateColumnValue(
-		ActionDefinition action,
-		string columnKey,
-		string value)
+	private Result<MutationOutcome> ApplyWithOutcome(Recipe newRecipe, Func<int, int?> selectionForStepCount)
 	{
-		var actionPropertyResult = action.FindProperty(columnKey);
-		if (actionPropertyResult.IsFailed)
-		{
-			return actionPropertyResult.ToResult<PropertyValue>();
-		}
-
-		var actionProperty = actionPropertyResult.Value;
-
-		var propertyDefinitionResult = _recipeMetadataRegistry.GetProperty(actionProperty.PropertyTypeId);
-		if (propertyDefinitionResult.IsFailed)
-		{
-			return propertyDefinitionResult.ToResult<PropertyValue>();
-		}
-
-		var parseResult = PropertyParser.Parse(value, propertyDefinitionResult.Value);
-		if (parseResult.IsFailed)
-		{
-			return parseResult;
-		}
-
-		var parsedValue = parseResult.Value;
-
-		var typeCheck = PropertyValidator.Validate(propertyDefinitionResult.Value, parsedValue.Value);
-		if (typeCheck.IsFailed)
-		{
-			return typeCheck.ToResult<PropertyValue>();
-		}
-
-		var groupCheck = PropertyValidator.ValidateGroupValue(actionProperty, parsedValue, _recipeMetadataRegistry);
-		return groupCheck.IsFailed ? groupCheck.ToResult<PropertyValue>() : Result.Ok(parsedValue);
+		var applyResult = Apply(newRecipe);
+		return applyResult.IsFailed
+			? applyResult.ToResult<MutationOutcome>()
+			: Result.Ok(new MutationOutcome(selectionForStepCount(Current.StepCount)))
+				.WithReasons(applyResult.Reasons);
 	}
 
 	private Result<Step> TryApplyFormulaRecalc(Step step, ActionDefinition action, string columnKey, int stepIndex)
@@ -572,22 +466,19 @@ public sealed class RecipeSession(
 		IsDirty = false;
 	}
 
-	private void PushHistory(Recipe recipe)
+	private Result RestoreFromHistory(Recipe target, Action<Recipe> commitMove)
 	{
-		_redoStack.Clear();
-
-		if (_undoStack.Count >= MaxHistoryDepth)
+		var snapshot = _analyzer.Analyze(target);
+		if (snapshot.IsFailed)
 		{
-			_undoStack.RemoveAt(0);
+			return snapshot.ToResult();
 		}
 
-		_undoStack.Add(recipe);
-	}
+		commitMove(Current);
+		UpdateSnapshot(snapshot);
+		NotifySyncIfEnabled();
 
-	private void ClearHistory()
-	{
-		_undoStack.Clear();
-		_redoStack.Clear();
+		return Result.Ok().WithReasons(snapshot.Reasons);
 	}
 
 	private void NotifySyncIfEnabled()
@@ -596,15 +487,5 @@ public sealed class RecipeSession(
 		{
 			_syncService.NotifyRecipeChanged(Current, IsValid);
 		}
-	}
-
-	private static Result ValidateInsertIndex(Recipe recipe, int index)
-	{
-		return index < 0 || index > recipe.Steps.Count ? Result.Fail(new InsertIndexOutOfRangeError(index, recipe.Steps.Count)) : Result.Ok();
-	}
-
-	private static Result ValidateStepIndex(Recipe recipe, int index)
-	{
-		return index < 0 || index >= recipe.Steps.Count ? Result.Fail(new StepIndexOutOfRangeError(index, recipe.Steps.Count)) : Result.Ok();
 	}
 }

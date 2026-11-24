@@ -15,13 +15,31 @@ feed that computation) come from and how they reach the screen.
 ## Visual theme vs config palette (the theming contract)
 
 The app chrome (buttons, scrollbars, inputs, window surfaces) is themed by **Semi.Avalonia**, retinted
-toward JetBrains/IntelliJ "New UI" tokens — **Light variant only**. The retint is applied by overriding
-Semi's semantic-token keys (`SemiColorPrimary`, `SemiColorText0..3`, `SemiColorBackground0..3`,
-`SemiColorBorder`, `SemiColorDisabledText`, the `*CornerRadius` keys → 4) plus the static tokens in
-`Styles/ColorPalette.axaml`, all in `App.axaml`. The UI font is the native system Segoe UI (set via
-`ChromeFontFamily` in `Styles/ColorPalette.axaml`); the grid uses that same Segoe family with OpenType
-tabular figures (`+tnum`) so digit columns align without a monospaced font. There are no embedded fonts
-(no `Assets/Fonts`).
+toward JetBrains/IntelliJ "New UI" tokens, **Light variant only**. The retint overrides Semi's
+component keys (`TextBoxForeground`, `ButtonSolidPrimaryBackground`, `CheckBoxCheckedDefaultBackground`,
+`MenuItemForeground`, `DataGridCellCurrentBorderBrush` and others) in the `Light` theme dictionary in
+`App.axaml`, plus the `*CornerRadius` component keys and the static tokens in `Styles/ColorPalette.axaml`.
+The interactive controls get a corner radius of 4. `DataGridRowCornerRadius` is 0, which removes the
+row pointer-over halo.
+
+Semi's control themes read the component keys with `DynamicResource`, so an override in `App.axaml`
+reaches the control. Semi's component keys alias the `SemiColor*` primitives with `StaticResource` inside
+Semi's own dictionaries, so an app override of a primitive does not reach a Semi control. The
+exception is a separate Semi theme assembly that aliases a primitive without defining it: the
+DataGrid theme and the ColorPicker theme resolve such a primitive from the app. Four primitives stay
+in the `Light` dictionary. `SemiColorText0`, `SemiColorText2` and `SemiColorBorder` stay because
+SemiStep's own setters and the DataGrid theme read them. `SemiColorPrimary` stays because the
+ColorPicker theme reads it for the selected tab and the RGB/HSV switch in the color picker flyout.
+
+`ThemeTests` (`SemiStep.Tests/UI/Styles/ThemeTests.cs`) guards the chrome color keys of text, windows,
+buttons, checkboxes, text boxes and menus, and the `SemiColorPrimary` accent of the color view. It
+realises each control and reads the painted brush back for each state, so a Semi update that stops
+reading a key fails the test instead of changing the look. The
+`DataGrid*` and `*CornerRadius` keys have no theme test.
+
+The UI font is the native system Segoe UI (set via `ChromeFontFamily` in `Styles/ColorPalette.axaml`);
+the grid uses that same Segoe family with OpenType tabular figures (`+tnum`) so digit columns align
+without a monospaced font. There are no embedded fonts (no `Assets/Fonts`).
 
 The boundary between that fixed theme and per-equipment config is exact: **the brush keys the two
 installers push from `grid_style.yaml`** (`CellPaletteInstaller`, `ExecutionPaletteInstaller`, listed in

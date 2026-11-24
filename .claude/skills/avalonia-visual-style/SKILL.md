@@ -12,7 +12,7 @@ How to give an Avalonia 12 desktop app the IntelliJ "New UI" aesthetic: flat sur
 ## The two-layer model
 
 1. **Design tokens** — JetBrains' own values (below), grouped as a named palette → semantic roles → component usage. Never hardcode a hex at a control; map it to a role.
-2. **Avalonia realization** — a vendor base theme (Semi.Avalonia) supplies control templates; you retint it by **overriding the `DynamicResource` keys its ControlThemes consume**, per theme variant. You do not fork or retemplate to recolor.
+2. **Avalonia realization**: a vendor base theme (Semi.Avalonia) supplies control templates; you retint it by **overriding the component keys its control templates read through `DynamicResource`**, per theme variant. You do not fork or retemplate to recolor.
 
 ## JetBrains Int UI design tokens
 
@@ -107,55 +107,71 @@ Semi ships Light + Dark (plus four custom variants); `RequestedThemeVariant="Lig
 
 ### Token override — the retint mechanism
 
-Semi assigns brushes/dimensions via `{DynamicResource <Key>}` in its ControlThemes. Override by **redefining the same key at a higher scope** — live, no retemplate.
+Semi's keys have three tiers. Only the component tier moves a control.
 
-Dimensions (single value) go straight in `Application.Resources`:
+- **Component keys (override these):** the keys a control template reads through `{DynamicResource}`, named for the control, the part and the state: `TextBoxForeground`, `TextBoxFocusBorderBrush`, `ButtonSolidPrimaryBackground`, `ButtonSolidPrimaryPointeroverBackground`, `CheckBoxCheckedDefaultBackground`, `MenuItemDisabledForeground`, `ButtonCornerRadius`. DataGrid has its own set: `DataGridCellBackground`, `DataGridRowSelectedBackground`, `DataGridCellCurrentBorderBrush`, `DataGridCellMinHeight`.
+- **Semantic primitives:** `SemiColorPrimary`, `SemiColorText0..3`, `SemiColorFill0..2`, `SemiColorBackground0..4`, `SemiColorBorder`, `SemiColorDisabledText`. Semi's own dictionaries alias a component key to a primitive with `{StaticResource}`. The alias resolves inside the dictionary that defines the primitive, which is Semi's own, so it does not see an app-level override. An app-level primitive override reaches two kinds of consumer. The first is AXAML that reads the primitive through `DynamicResource`, such as the app's own setters. The second is a separate Semi theme assembly that aliases the primitive but does not define it: `Semi.Avalonia.DataGrid` and `Semi.Avalonia.ColorPicker` use `StaticResource`, find no definition in their own dictionaries and resolve the key from the app. The ColorPicker theme aliases its selected-tab foreground and its RGB/HSV switch colors to `SemiColorPrimary` this way. Before deleting a primitive override, read the `Light.axaml` of every such theme the app includes and check that none aliases the primitive.
+- **Raw palette:** `Semi{Color}{0..9}` (for example `SemiBlue3`). Same rule as the primitives.
 
-```xml
-<Application.Resources>
-  <CornerRadius x:Key="ButtonCornerRadius">4</CornerRadius>
-</Application.Resources>
-```
-
-Colors go **per variant** in `ThemeDictionaries` (so light/dark stay correct), consumed via `DynamicResource`:
+Override the component key in the theme-variant dictionary. Colors go per variant in `ThemeDictionaries`, so light and dark stay correct. A dimension (single value) goes straight in `Application.Resources`:
 
 ```xml
 <Application.Resources>
   <ResourceDictionary>
+    <CornerRadius x:Key="ButtonCornerRadius">4</CornerRadius>
     <ResourceDictionary.ThemeDictionaries>
       <ResourceDictionary x:Key="Light">
-        <SolidColorBrush x:Key="SemiColorPrimary" Color="#3574F0"/>
+        <!-- the full key list: the Light dictionary in SemiStep/SemiStep.UI/App.axaml -->
+        <SolidColorBrush x:Key="ButtonSolidPrimaryBackground" Color="#3574F0"/>
+        <SolidColorBrush x:Key="ButtonSolidPrimaryBorderBrush" Color="#3574F0"/>
+        <SolidColorBrush x:Key="ButtonSolidPrimaryPointeroverBackground" Color="#3369D6"/>
+        <SolidColorBrush x:Key="ButtonSolidPrimaryPointeroverBorderBrush" Color="#3369D6"/>
+        <SolidColorBrush x:Key="ButtonSolidPrimaryPressedBackground" Color="#315FBD"/>
+        <SolidColorBrush x:Key="ButtonSolidPrimaryPressedBorderBrush" Color="#315FBD"/>
+        <SolidColorBrush x:Key="CheckBoxCheckedPointeroverBackground" Color="#3369D6"/>
+        <SolidColorBrush x:Key="CheckBoxPointeroverBorderBrush" Color="#3574F0"/>
+        <SolidColorBrush x:Key="MenuItemPointeroverForeground" Color="#000000"/>
+        <SolidColorBrush x:Key="TextBoxFocusBorderBrush" Color="#3574F0"/>
+        <SolidColorBrush x:Key="TextBoxForeground" Color="#000000"/>
       </ResourceDictionary>
       <ResourceDictionary x:Key="Dark">
-        <SolidColorBrush x:Key="SemiColorPrimary" Color="#3574F0"/>
+        <!-- the same keys with the dark values -->
       </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
   </ResourceDictionary>
 </Application.Resources>
 ```
 
-Semi's keys are three tiers; **retarget the semantic tier** for a whole-app shift:
+A state has its own key: rest, `Pointerover`, `Pressed`, `Disabled`, `Focus`, `Checked`. Override every state the design colors, or the state keeps Semi's stock value.
 
-- Raw palette: `Semi{Color}{0..9}` (e.g. `SemiBlue3`).
-- **Semantic (retarget these):** `SemiColorPrimary`, `SemiColorText0..3`, `SemiColorFill0..2`, `SemiColorBackground0..3`, `SemiColorBorder`, `SemiColorDisabledText`, `SemiShadowElevated`.
-- Control keys: `ButtonCornerRadius`, `ButtonDefaultPrimaryForeground`, and DataGrid keys `DataGridCellBackground`, `DataGridCellMinHeight`, `DataGridRowBackground`, `DataGridRowSelectedBackground`, `DataGridRowPointeroverBackground`, `DataGridCellCurrentBorderBrush`, `DataGridCellFocusBorderBrush`.
+**Confirm every key by reading a realised control.** Show the control in a window and read the brush it paints, from the template part that paints it. `Application.TryGetResource` returns the declaration whether or not a control reads it, so a lookup proves nothing. Reach hover and press with headless pointer input and focus with `Focus()`. Assert that the state's pseudo-class is present before reading the brush. The worked example is `ThemeTests` in `SemiStep.Tests/UI/Styles/ThemeTests.cs`: one test per control family, one assertion per overridden key. A key that a theme update renames or stops reading fails its test.
 
-To find the exact key a control property uses, read that control's AXAML in the Semi repo (`/src/Semi.Avalonia/Controls/<Control>.axaml` for the setter; `/src/Semi.Avalonia/Themes/Shared/...` for the default value).
+To find the component key a control reads, search Semi's AXAML for the control (`/src/Semi.Avalonia/Controls/<Control>.axaml` for the setter and the template part, `/src/Semi.Avalonia/Themes/Shared/...` for the default value). Then confirm it with the realised-control read above.
 
-**JetBrains → Semi semantic mapping (the core retint):**
+**JetBrains role to Semi component key (Light values from the tokens above):**
 
-| JetBrains role | Semi key | Light | Dark |
-|---|---|---|---|
-| accent | `SemiColorPrimary` | `#3574F0` | `#3574F0` |
-| content bg | `SemiColorBackground0` | `#FFFFFF` | `#1E1F22` |
-| panel bg | `SemiColorBackground1` | `#F7F8FA` | `#2B2D30` |
-| primary text | `SemiColorText0` | `#000000` | `#DFE1E5` |
-| secondary text | `SemiColorText2` | `#818594` | `#6F737A` |
-| disabled text | `SemiColorDisabledText` | `#A8ADBD` | `#5A5D63` |
-| divider/border | `SemiColorBorder` | `#EBECF0` | `#393B40` |
-| radius (all) | `*CornerRadius` | `4` | `4` |
+| JetBrains role | Semi component key | Light |
+|---|---|---|
+| primary action fill | `ButtonSolidPrimaryBackground`, `ButtonSolidPrimaryBorderBrush` | `#3574F0` |
+| primary action hover | `ButtonSolidPrimaryPointeroverBackground`, `ButtonSolidPrimaryPointeroverBorderBrush` | `#3369D6` |
+| primary action pressed | `ButtonSolidPrimaryPressedBackground`, `ButtonSolidPrimaryPressedBorderBrush` | `#315FBD` |
+| default button caption | `ButtonDefaultPrimaryForeground` | `#3574F0` |
+| focus ring on input | `TextBoxFocusBorderBrush` | `#3574F0` |
+| checked checkbox | `CheckBoxCheckedDefaultBackground`, `CheckBoxCheckedDefaultBorderBrush` | `#3574F0` |
+| checked checkbox hover | `CheckBoxCheckedPointeroverBackground`, `CheckBoxCheckedPointeroverBorderBrush` | `#3369D6` |
+| checked checkbox pressed | `CheckBoxCheckedPressedBackground`, `CheckBoxCheckedPressedBorderBrush` | `#315FBD` |
+| unchecked checkbox border, hover / pressed | `CheckBoxPointeroverBorderBrush` / `CheckBoxPressedBorderBrush` | `#3574F0` / `#315FBD` |
+| primary text | `WindowDefaultForeground` (a plain `TextBlock` label inherits it from the window), `TextBoxForeground`, `CheckBoxForeground`, `MenuItemForeground`, `MenuItemPointeroverForeground` | `#000000` |
+| primary text of `SelectableTextBlock` and `Label` | `TextBlockDefaultForeground` (Semi's plain `TextBlock` theme has no rest foreground setter) | `#000000` |
+| secondary text | `MenuItemInputGestureTextForeground`, `TextBoxPlaceholderForeground` | `#818594` |
+| disabled text | `TextBlockDisabledForeground`, `ButtonDefaultDisabledForeground`, `TextBoxDisabledForeground`, `CheckBoxDisabledForeground`, `MenuItemDisabledForeground`, `MenuItemDisabledInputGestureTextForeground` | `#A8ADBD` |
+| radius (all) | `*CornerRadius` | `4` |
 
-(Verify each `SemiColorBackground*`/`Fill*` index against the shipped value before overriding — the index→surface mapping is Semi's, read it from the Palette demo or the variant token files in `Semi.Avalonia.Tokens.Palette`.)
+The full list of overridden keys is the `Light` dictionary in `SemiStep/SemiStep.UI/App.axaml`.
+
+`SemiColorBorder` (`#EBECF0`, divider and border) is a primitive, not a component key. SemiStep keeps its override because the DataGrid theme reads it.
+
+For dark, apply the dark hex from the tokens above to the same keys in the `Dark` dictionary. Surface keys (`SemiColorBackground*`, `SemiColorFill*`) are primitives: find the component key that paints the surface you want before overriding, and verify the index-to-surface mapping against the shipped value (Palette demo, or the variant token files in `Semi.Avalonia.Tokens.Palette`).
 
 ### Fonts
 
@@ -182,7 +198,7 @@ URI is always `avares://Assembly/Path#Internal Family Name` — the `#name` is t
 
 Value precedence high→low: local/inline > **Style setter** (`Application.Styles`/`Window.Styles`, selector-gated) > **ControlTheme setter** (vendor default) > inherited > default. So a Style setter always beats a vendor ControlTheme setter for the same property. Three override options, least invasive first:
 
-1. Override the `DynamicResource` keys the vendor ControlTheme consumes (color/dimension) — smallest blast radius, preferred.
+1. Override the component keys the vendor ControlTheme reads (color/dimension). For color this is the cheapest option; the primitives do not reach a control (see Token override). A component key applies app-wide, to every window.
 2. Add a Style selector that sets the property directly — wins over the ControlTheme setter (how bespoke DataGrid cell theming survives a base-theme swap).
 3. Replace the whole ControlTheme (retemplate) — only when structure must change.
 
@@ -200,7 +216,8 @@ Swapping Fluent→Semi DataGrid is low-risk: Semi's `DataGridCell` ControlTheme 
 - **Font without `#FamilyName` silently falls back.** Use the internal family name; wrap bare `Application.Resources` font declarations in `MergedDictionaries`.
 - **Semi's GitHub README version table is stale** (stops ~11.3.7). NuGet is the source of truth — pin all `Semi.Avalonia*` to one 12.0.x line.
 - **Don't fork the vendor theme to recolor.** Tokens + targeted Styles cover the retint; forking inherits maintenance of the whole template.
-- **Don't scatter hex at controls.** Map every color to a semantic key so dark mode is a dictionary swap, not a hunt.
+- **Primitive overrides look right and move nothing.** Overriding `SemiColorPrimary` or `SemiColorText1` leaves buttons, menus, text boxes and checkboxes on Semi's stock colors. Override the component key and read it back from a realised control. The same override still reaches a separate Semi theme assembly that does not define the primitive (DataGrid, ColorPicker), so check those themes before deleting it.
+- **Don't scatter hex at controls.** Map every color to a component key so dark mode is a dictionary swap, not a hunt.
 - **One accent only.** Resist coloring secondary actions; JetBrains' restraint is the look.
 
 ## References

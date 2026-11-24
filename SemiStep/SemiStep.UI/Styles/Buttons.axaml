@@ -6,8 +6,8 @@
         <Setter Property="Padding" Value="12,4" />
     </Style>
 
-    <!-- primary → Semi SolidButton (retinted SemiColorPrimary). MinWidth here, not on the global
-         Button selector, so the compact recipe-toolbar buttons stay narrow. -->
+    <!-- primary → Semi SolidButton (retinted through the ButtonSolidPrimary* component keys in App.axaml).
+         MinWidth here, not on the global Button selector, so the compact recipe-toolbar buttons stay narrow. -->
     <Style Selector="Button.primary">
         <Setter Property="Theme" Value="{DynamicResource SolidButton}" />
         <Setter Property="MinWidth" Value="75" />

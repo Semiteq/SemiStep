@@ -25,19 +25,49 @@
                  Light ThemeDictionary below). -->
             <CornerRadius x:Key="DataGridRowCornerRadius">0</CornerRadius>
 
-            <!-- JetBrains Int UI (Light) retint of Semi semantic tokens. Light variant only;
-                 the app runs RequestedThemeVariant="Light". Background0 = content/window surface,
-                 Background1 = the panel surface (the one role the app tints off white). -->
+            <!-- JetBrains Int UI (Light) retint through Semi's component keys; the mechanism is in
+                 docs/architecture/grid-style-configuration.md. SemiColorText0, SemiColorText2 and
+                 SemiColorBorder stay because SemiStep's own setters and the DataGrid theme read them;
+                 SemiColorPrimary stays because the ColorPicker theme reads it for its tab and RGB/HSV
+                 accent. ThemeTests reads each chrome color key back from a realised control. -->
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="SemiColorPrimary" Color="#3574F0" />
                     <SolidColorBrush x:Key="SemiColorText0" Color="#000000" />
-                    <SolidColorBrush x:Key="SemiColorText1" Color="#000000" Opacity="0.8" />
                     <SolidColorBrush x:Key="SemiColorText2" Color="#818594" />
-                    <SolidColorBrush x:Key="SemiColorText3" Color="#A8ADBD" />
-                    <SolidColorBrush x:Key="SemiColorBackground1" Color="#F7F8FA" />
                     <SolidColorBrush x:Key="SemiColorBorder" Color="#EBECF0" />
-                    <SolidColorBrush x:Key="SemiColorDisabledText" Color="#A8ADBD" />
+
+                    <SolidColorBrush x:Key="TextBlockDefaultForeground" Color="#000000" />
+                    <SolidColorBrush x:Key="WindowDefaultForeground" Color="#000000" />
+                    <SolidColorBrush x:Key="TextBoxForeground" Color="#000000" />
+                    <SolidColorBrush x:Key="CheckBoxForeground" Color="#000000" />
+                    <SolidColorBrush x:Key="MenuItemForeground" Color="#000000" />
+                    <SolidColorBrush x:Key="MenuItemPointeroverForeground" Color="#000000" />
+                    <SolidColorBrush x:Key="MenuItemInputGestureTextForeground" Color="#818594" />
+                    <SolidColorBrush x:Key="TextBoxPlaceholderForeground" Color="#818594" />
+                    <SolidColorBrush x:Key="TextBlockDisabledForeground" Color="#A8ADBD" />
+                    <SolidColorBrush x:Key="ButtonDefaultDisabledForeground" Color="#A8ADBD" />
+                    <SolidColorBrush x:Key="TextBoxDisabledForeground" Color="#A8ADBD" />
+                    <SolidColorBrush x:Key="CheckBoxDisabledForeground" Color="#A8ADBD" />
+                    <SolidColorBrush x:Key="MenuItemDisabledForeground" Color="#A8ADBD" />
+                    <SolidColorBrush x:Key="MenuItemDisabledInputGestureTextForeground" Color="#A8ADBD" />
+
+                    <SolidColorBrush x:Key="ButtonDefaultPrimaryForeground" Color="#3574F0" />
+                    <SolidColorBrush x:Key="ButtonSolidPrimaryBackground" Color="#3574F0" />
+                    <SolidColorBrush x:Key="ButtonSolidPrimaryBorderBrush" Color="#3574F0" />
+                    <SolidColorBrush x:Key="TextBoxFocusBorderBrush" Color="#3574F0" />
+                    <SolidColorBrush x:Key="CheckBoxCheckedDefaultBackground" Color="#3574F0" />
+                    <SolidColorBrush x:Key="CheckBoxCheckedDefaultBorderBrush" Color="#3574F0" />
+                    <SolidColorBrush x:Key="CheckBoxPointeroverBorderBrush" Color="#3574F0" />
+                    <SolidColorBrush x:Key="ButtonSolidPrimaryPointeroverBackground" Color="#3369D6" />
+                    <SolidColorBrush x:Key="ButtonSolidPrimaryPointeroverBorderBrush" Color="#3369D6" />
+                    <SolidColorBrush x:Key="CheckBoxCheckedPointeroverBackground" Color="#3369D6" />
+                    <SolidColorBrush x:Key="CheckBoxCheckedPointeroverBorderBrush" Color="#3369D6" />
+                    <SolidColorBrush x:Key="ButtonSolidPrimaryPressedBackground" Color="#315FBD" />
+                    <SolidColorBrush x:Key="ButtonSolidPrimaryPressedBorderBrush" Color="#315FBD" />
+                    <SolidColorBrush x:Key="CheckBoxCheckedPressedBackground" Color="#315FBD" />
+                    <SolidColorBrush x:Key="CheckBoxCheckedPressedBorderBrush" Color="#315FBD" />
+                    <SolidColorBrush x:Key="CheckBoxPressedBorderBrush" Color="#315FBD" />
 
                     <!-- Neutralize Semi's row pointer-over highlight (the inset "halo"). Selection is
                          painted at cell level by CellPaletteInstaller, so the selected-on-hover variant

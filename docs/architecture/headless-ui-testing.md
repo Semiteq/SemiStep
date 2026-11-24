@@ -22,6 +22,14 @@ stand-in. See `SemiStep.Tests/UI/MainWindow/MainWindowExitFlowTests.cs` for a wo
 
 Call `Dispatcher.UIThread.RunJobs()` after triggering such work and before asserting on its effect.
 
+## The headless dispatcher runs on a pool thread
+
+The headless dispatcher thread is a thread-pool thread, so `Thread.IsThreadPoolThread` is true inside an
+`[AvaloniaFact]` body. A test that checks whether code left the UI thread asserts on
+`SynchronizationContext.Current` instead: it is `AvaloniaSynchronizationContext` on the dispatcher and
+`null` in a loop that `Task.Run` started. A new background loop in Core starts with `Task.Run`, so it never
+captures the caller's context.
+
 ## Interaction handlers are resolved LIFO
 
 ReactiveUI `Interaction<TInput, TOutput>` invokes registered handlers in LIFO order. A test handler

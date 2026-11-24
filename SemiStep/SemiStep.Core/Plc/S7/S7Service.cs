@@ -22,13 +22,16 @@ internal sealed class S7Service(
 
 	private readonly ILogger<S7Service> _logger = logger;
 	private readonly Lock _stateLock = new();
+
+	// Every field below is guarded by _stateLock: the UI connect/disconnect path writes them, and the
+	// keep-alive, poll and reconnect loops (thread pool) read and write them.
 	private PlcConnectionState _state = PlcConnectionState.Disconnected;
 	private bool _autoReconnectEnabled;
+	private PlcConnectionSettings? _settings;
 	private CancellationTokenSource? _reconnectCts;
 	private Task? _reconnectTask;
 	private CancellationTokenSource? _keepAliveCts;
 	private Task? _keepAliveTask;
-	private PlcConnectionSettings? _settings;
 
 	public PlcConnectionState State
 	{
@@ -70,16 +73,24 @@ internal sealed class S7Service(
 
 	public async Task ConnectAsync(PlcConnectionSettings settings)
 	{
-		_settings = settings;
-		_autoReconnectEnabled = true;
+		lock (_stateLock)
+		{
+			_settings = settings;
+			_autoReconnectEnabled = true;
+		}
 
 		await ConnectInternalAsync();
 	}
 
 	public async Task DisconnectAsync()
 	{
-		_autoReconnectEnabled = false;
-		var reconnectTaskToAwait = StopReconnectLoop();
+		Task? reconnectTaskToAwait;
+		lock (_stateLock)
+		{
+			_autoReconnectEnabled = false;
+			reconnectTaskToAwait = StopReconnectLoop();
+		}
+
 		if (reconnectTaskToAwait is not null)
 		{
 			try
@@ -163,27 +174,30 @@ internal sealed class S7Service(
 		executionMonitor.Stop();
 		_logger.LogWarning("PLC connection lost");
 
-		if (_autoReconnectEnabled && _settings is not null)
-		{
-			StartReconnectLoop();
-		}
+		StartReconnectLoop();
 	}
 
 	private async Task ConnectInternalAsync()
 	{
-		if (_settings is null)
+		PlcConnectionSettings? settings;
+		lock (_stateLock)
+		{
+			settings = _settings;
+		}
+
+		if (settings is null)
 		{
 			throw new InvalidOperationException("Connection settings not configured");
 		}
 
 		State = PlcConnectionState.Connecting;
-		_logger.LogInformation("Connecting to PLC at {IpAddress}...", _settings.IpAddress);
+		_logger.LogInformation("Connecting to PLC at {IpAddress}...", settings.IpAddress);
 
 		try
 		{
-			await transport.ConnectAsync(_settings);
+			await transport.ConnectAsync(settings);
 			State = PlcConnectionState.Connected;
-			_logger.LogInformation("Connected to PLC at {IpAddress}", _settings.IpAddress);
+			_logger.LogInformation("Connected to PLC at {IpAddress}", settings.IpAddress);
 
 			executionMonitor.Start();
 			StartKeepAlive();
@@ -191,7 +205,7 @@ internal sealed class S7Service(
 		catch (Exception ex)
 		{
 			State = PlcConnectionState.Disconnected;
-			_logger.LogError(ex, "Failed to connect to PLC at {IpAddress}", _settings.IpAddress);
+			_logger.LogError(ex, "Failed to connect to PLC at {IpAddress}", settings.IpAddress);
 
 			throw;
 		}
@@ -201,13 +215,17 @@ internal sealed class S7Service(
 	{
 		lock (_stateLock)
 		{
-			if (_keepAliveTask is not null)
+			// A loss between the Connected flip and this call has already run StopKeepAlive.
+			if (_keepAliveTask is not null || _state != PlcConnectionState.Connected)
 			{
 				return;
 			}
 
-			_keepAliveCts = new CancellationTokenSource();
-			_keepAliveTask = KeepAliveLoopAsync(_keepAliveCts.Token);
+			var keepAliveCts = new CancellationTokenSource();
+			// Taken now: a stop can dispose the source before the loop starts, and .Token would then throw.
+			var token = keepAliveCts.Token;
+			_keepAliveCts = keepAliveCts;
+			_keepAliveTask = Task.Run(() => KeepAliveLoopAsync(token), CancellationToken.None);
 		}
 	}
 
@@ -256,13 +274,16 @@ internal sealed class S7Service(
 	{
 		lock (_stateLock)
 		{
-			if (_reconnectTask is not null)
+			if (!_autoReconnectEnabled || _state != PlcConnectionState.Disconnected || _reconnectTask is not null)
 			{
 				return;
 			}
 
-			_reconnectCts = new CancellationTokenSource();
-			_reconnectTask = ReconnectLoopAsync(_reconnectCts.Token);
+			var reconnectCts = new CancellationTokenSource();
+			// Taken now: a stop can dispose the source before the loop starts, and .Token would then throw.
+			var token = reconnectCts.Token;
+			_reconnectCts = reconnectCts;
+			_reconnectTask = Task.Run(() => ReconnectLoopAsync(reconnectCts, token), CancellationToken.None);
 		}
 	}
 
@@ -281,25 +302,51 @@ internal sealed class S7Service(
 		}
 	}
 
-	private async Task ReconnectLoopAsync(CancellationToken ct)
+	private async Task ReconnectLoopAsync(CancellationTokenSource reconnectCts, CancellationToken ct)
+	{
+		try
+		{
+			await RetryConnectAsync(ct);
+		}
+		finally
+		{
+			ReleaseReconnectLoop(reconnectCts);
+		}
+	}
+
+	private void ReleaseReconnectLoop(CancellationTokenSource reconnectCts)
+	{
+		lock (_stateLock)
+		{
+			if (_reconnectCts != reconnectCts)
+			{
+				return;
+			}
+
+			_reconnectCts = null;
+			_reconnectTask = null;
+
+			// A loss between the Connected flip and this release found this loop still registered.
+			StartReconnectLoop();
+		}
+
+		reconnectCts.Dispose();
+	}
+
+	private async Task RetryConnectAsync(CancellationToken ct)
 	{
 		var delay = _reconnectInitialDelay;
 
-		while (!ct.IsCancellationRequested && _autoReconnectEnabled)
+		while (!ct.IsCancellationRequested)
 		{
 			try
 			{
 				await Task.Delay(delay, ct);
 				await ConnectInternalAsync();
 
-				lock (_stateLock)
-				{
-					_reconnectTask = null;
-				}
-
 				return;
 			}
-			catch (OperationCanceledException)
+			catch (OperationCanceledException) when (ct.IsCancellationRequested)
 			{
 				return;
 			}

@@ -68,7 +68,7 @@ Two mechanisms produce that state and one more can hide a genuine conflict:
 
 Ruled out as suspects, both by code read: recipe equality is structural, not reference-based
 (`Recipes/Recipe.cs:47`, `Recipes/Step.cs:13`), and every transport round-trip is serialised by one
-semaphore inside the single `S7Driver` instance (`S7/S7Driver.cs:11,46-58`, registered as a
+semaphore inside the single `S7Driver` instance (`S7/S7Driver.cs:11,45-57`, registered as a
 singleton at `S7/S7Di.cs:18-19`), so concurrent reads cannot interleave on the wire.
 
 ## Target end state

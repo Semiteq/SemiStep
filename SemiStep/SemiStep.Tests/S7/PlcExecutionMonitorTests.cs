@@ -1,4 +1,6 @@
-﻿using AwesomeAssertions;
+﻿using System.Diagnostics;
+
+using AwesomeAssertions;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -261,5 +263,79 @@ public sealed class PlcExecutionMonitorTests
 		monitor.Dispose();
 
 		completed.Should().BeTrue("Dispose() must call OnCompleted on the observable subject");
+	}
+
+	[Fact]
+	public void Stop_AfterDispose_DoesNotThrow()
+	{
+		var (monitor, _) = BuildMonitor();
+		monitor.Dispose();
+
+		var stop = monitor.Stop;
+
+		stop.Should().NotThrow("a connection-lost callback can still call Stop() after the owner disposed the monitor");
+	}
+
+	[Fact]
+	public async Task Stop_CalledFromConnectionLostCallback_ReturnsWithoutWaitingForItself()
+	{
+		var configuration = BuildTestConfiguration();
+		var transport = new FakeS7Transport();
+		var converter = new RecipeConverter(BuildMinimalRecipeMetadataRegistry());
+		var executor = new PlcTransactionExecutor(
+			transport, converter, TestArrayCodecFactory.Create(configuration), configuration,
+			NullLogger<PlcTransactionExecutor>.Instance);
+		var stopDuration = new TaskCompletionSource<TimeSpan>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		PlcExecutionMonitor? monitor = null;
+		monitor = new PlcExecutionMonitor(
+			executor,
+			configuration.ProtocolSettings,
+			onConnectionLost: () =>
+			{
+				var stopwatch = Stopwatch.StartNew();
+				monitor!.Stop();
+				stopDuration.TrySetResult(stopwatch.Elapsed);
+			},
+			NullLogger<PlcExecutionMonitor>.Instance);
+
+		monitor.Start(TestContext.Current.CancellationToken);
+		transport.SetConnected(false);
+
+		var elapsed = await stopDuration.Task.WaitAsync(
+			TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+
+		elapsed.Should().BeLessThan(TimeSpan.FromSeconds(1),
+			"Stop() called from inside the poll loop's own callback must not wait for that loop");
+	}
+
+	// Contract pin: passes on master too and guards the concurrent Start/Stop contract.
+	[Fact]
+	public async Task StartAndStop_FromManyThreads_DoNotThrowAndLeaveNoLoopRunning()
+	{
+		var (monitor, transport) = BuildMonitor();
+		monitor.State.Subscribe(_ => { });
+
+		var workers = Enumerable.Range(0, 8)
+			.Select(_ => Task.Run(() =>
+			{
+				for (var iteration = 0; iteration < 50; iteration++)
+				{
+					monitor.Start(TestContext.Current.CancellationToken);
+					monitor.Stop();
+				}
+			}, TestContext.Current.CancellationToken))
+			.ToArray();
+
+		await Task.WhenAll(workers);
+		monitor.Stop();
+		var readCountAfterStop = transport.ExecutionReadCount;
+
+		// (c) Defensive settle: negative assertion - allow several 50 ms poll intervals for any
+		// orphaned loop to read again. No observable predicate exists for "no further read happens".
+		await Task.Delay(200, TestContext.Current.CancellationToken);
+
+		transport.ExecutionReadCount.Should().Be(readCountAfterStop,
+			"no poll loop may survive the final Stop()");
 	}
 }

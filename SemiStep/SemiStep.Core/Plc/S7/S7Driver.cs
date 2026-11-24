@@ -9,36 +9,35 @@ namespace SemiStep.Core.Plc.S7;
 internal sealed class S7Driver : IS7Driver
 {
 	private readonly TransportSerializer _serializer = new();
+
+	// Written by connect/disconnect (UI or reconnect thread), read by the poll, keep-alive and sync threads;
+	// every access goes through Volatile or Interlocked.
 	private S7NetPlc? _plc;
 
-	public bool IsConnected => _plc?.IsConnected ?? false;
+	public bool IsConnected => Volatile.Read(ref _plc)?.IsConnected ?? false;
 
 	public async ValueTask DisposeAsync()
 	{
-		if (_plc is not null)
-		{
-			await DisconnectAsync();
-		}
-
+		await DisconnectAsync();
 		_serializer.Dispose();
 	}
 
 	public async Task ConnectAsync(PlcConnectionSettings settings)
 	{
-		_plc = new S7NetPlc(
+		var plc = new S7NetPlc(
 			S7NetCpuType.S71500,
 			settings.IpAddress,
 			settings.Port,
 			(short)settings.Rack,
 			(short)settings.Slot);
+		Volatile.Write(ref _plc, plc);
 
-		await _plc.OpenAsync();
+		await plc.OpenAsync();
 	}
 
 	public Task DisconnectAsync()
 	{
-		_plc?.Close();
-		_plc = null;
+		Interlocked.Exchange(ref _plc, null)?.Close();
 
 		return Task.CompletedTask;
 	}
@@ -46,14 +45,19 @@ internal sealed class S7Driver : IS7Driver
 	public Task<byte[]> ReadBytesAsync(int dbNumber, int startByte, int count, CancellationToken ct = default)
 	{
 		return _serializer.RunAsync(
-			() => _plc!.ReadBytesAsync(S7NetDataType.DataBlock, dbNumber, startByte, count, ct),
+			() => RequirePlc().ReadBytesAsync(S7NetDataType.DataBlock, dbNumber, startByte, count, ct),
 			ct);
 	}
 
 	public Task WriteBytesAsync(int dbNumber, int startByte, byte[] data, CancellationToken ct = default)
 	{
 		return _serializer.RunAsync(
-			() => _plc!.WriteBytesAsync(S7NetDataType.DataBlock, dbNumber, startByte, data, ct),
+			() => RequirePlc().WriteBytesAsync(S7NetDataType.DataBlock, dbNumber, startByte, data, ct),
 			ct);
+	}
+
+	private S7NetPlc RequirePlc()
+	{
+		return Volatile.Read(ref _plc) ?? throw new DriverNotConnectedException();
 	}
 }

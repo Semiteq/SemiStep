@@ -1,4 +1,6 @@
-﻿using SemiStep.Core.Plc.Configuration;
+﻿using System.Collections.Concurrent;
+
+using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.S7;
 
 namespace SemiStep.Tests.S7.Helpers;
@@ -11,12 +13,16 @@ internal sealed class FakeS7Driver : IS7Driver
 {
 	private readonly Dictionary<int, Exception> _dbReadExceptions = [];
 	private readonly Dictionary<int, Func<int, int, byte[]>> _dbReadFactories = [];
+	private readonly ConcurrentQueue<DriverCall> _calls = new();
 
 	public bool IsConnected { get; private set; }
 
-	public List<(int DbNumber, int StartByte, int Count)> ReadLog { get; } = [];
-
 	public List<(int DbNumber, int StartByte, byte[] Data)> WriteLog { get; } = [];
+
+	/// <summary>Every connect and read call, from any thread.</summary>
+	public IReadOnlyCollection<DriverCall> Calls => _calls;
+
+	public int ConnectCount => _calls.Count(call => call.IsConnect);
 
 	/// <summary>
 	/// Directly sets the connected state, bypassing <see cref="ConnectAsync"/> and
@@ -45,6 +51,7 @@ internal sealed class FakeS7Driver : IS7Driver
 
 	public Task ConnectAsync(PlcConnectionSettings settings)
 	{
+		_calls.Enqueue(new DriverCall(IsConnect: true, DbNumber: null, SynchronizationContext.Current is not null));
 		IsConnected = true;
 		return Task.CompletedTask;
 	}
@@ -64,7 +71,7 @@ internal sealed class FakeS7Driver : IS7Driver
 	public Task<byte[]> ReadBytesAsync(int dbNumber, int startByte, int count, CancellationToken ct = default)
 	{
 		ct.ThrowIfCancellationRequested();
-		ReadLog.Add((dbNumber, startByte, count));
+		_calls.Enqueue(new DriverCall(IsConnect: false, dbNumber, SynchronizationContext.Current is not null));
 
 		return _dbReadExceptions.TryGetValue(dbNumber, out var exception)
 			? throw exception
@@ -79,4 +86,7 @@ internal sealed class FakeS7Driver : IS7Driver
 		WriteLog.Add((dbNumber, startByte, (byte[])data.Clone()));
 		return Task.CompletedTask;
 	}
+
+	/// <summary>One driver call: a connect, or a read of <see cref="DbNumber"/>.</summary>
+	internal sealed record DriverCall(bool IsConnect, int? DbNumber, bool OnSynchronizationContext);
 }

@@ -20,6 +20,9 @@ internal sealed class FakeS7Transport : IS7Transport
 	/// <summary>Ordered log of every read call received (dbNumber, startByte, count).</summary>
 	public List<(int DbNumber, int StartByte, int Count)> ReadLog { get; } = [];
 
+	/// <summary>When set, a read awaits the returned task before answering.</summary>
+	public Func<int, CancellationToken, Task>? BeforeRead { get; set; }
+
 	public bool IsConnected { get; private set; } = true;
 
 	public void SetConnected(bool connected)
@@ -45,17 +48,22 @@ internal sealed class FakeS7Transport : IS7Transport
 		_dbReadFactories[dbNumber] = responseFactory;
 	}
 
-	public Task<byte[]> ReadBytesAsync(int dbNumber, int startByte, int count, CancellationToken ct = default)
+	public async Task<byte[]> ReadBytesAsync(int dbNumber, int startByte, int count, CancellationToken ct = default)
 	{
 		ct.ThrowIfCancellationRequested();
 		ReadLog.Add((dbNumber, startByte, count));
 
+		if (BeforeRead is { } beforeRead)
+		{
+			await beforeRead(dbNumber, ct);
+		}
+
 		var key = (dbNumber, startByte, count);
 		return _readResponses.TryGetValue(key, out var response)
-			? Task.FromResult(response)
+			? response
 			: _dbReadFactories.TryGetValue(dbNumber, out var factory)
-			? Task.FromResult(factory(startByte, count))
-			: Task.FromResult(new byte[count]);
+			? factory(startByte, count)
+			: new byte[count];
 	}
 
 	public Task WriteBytesAsync(int dbNumber, int startByte, byte[] data, CancellationToken ct = default)

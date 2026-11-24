@@ -38,6 +38,8 @@ public sealed class PlcLifecycleManager(
 		ShortOutcomeTemplate
 		+ ", PLC {PlcStepCount} steps, committed {Committed}, conflict subscriber {HasConflictSubscriber}";
 
+	private static readonly TimeSpan _disableWriteWaitTimeout = TimeSpan.FromSeconds(5);
+
 	private readonly IS7Connection _connection = connection;
 	private readonly IS7ExecutionStream _executionStream = executionStream;
 	private readonly ImportedRecipeValidator _importedRecipeValidator = importedRecipeValidator;
@@ -177,11 +179,14 @@ public sealed class PlcLifecycleManager(
 		ReleaseOwnershipLease();
 	}
 
+	/// <summary>
+	/// The lease is released last: until the write in flight and the session end, another instance must not write.
+	/// </summary>
 	public async Task DisableSync()
 	{
 		_syncService.SetSyncEnabled(false);
 		_syncService.ResetForDisable();
-		ReleaseOwnershipLease();
+		await WaitForWriteInFlightAsync();
 
 		try
 		{
@@ -190,6 +195,25 @@ public sealed class PlcLifecycleManager(
 		catch (Exception ex)
 		{
 			_logger.LogWarning("Error while disconnecting from PLC: {Message}", ex.Message);
+		}
+		finally
+		{
+			ReleaseOwnershipLease();
+		}
+	}
+
+	private async Task WaitForWriteInFlightAsync()
+	{
+		using var timeout = new CancellationTokenSource(_disableWriteWaitTimeout);
+		try
+		{
+			await _syncService.WaitForPendingSyncAsync(timeout.Token);
+		}
+		catch (OperationCanceledException) when (timeout.IsCancellationRequested)
+		{
+			_logger.LogWarning(
+				"Sync attempt did not finish within {Timeout}; disconnecting from PLC anyway",
+				_disableWriteWaitTimeout);
 		}
 	}
 

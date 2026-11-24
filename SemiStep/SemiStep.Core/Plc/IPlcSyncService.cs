@@ -13,6 +13,11 @@ public interface IPlcSyncService
 
 	void HandleConnectionLost();
 
+	/// <summary>
+	/// Completes when the attempt in flight at the call has ended; throws when <paramref name="ct"/> cancels first.
+	/// </summary>
+	Task WaitForPendingSyncAsync(CancellationToken ct = default);
+
 	void SetSyncEnabled(bool value);
 
 	void UpdateConnectionState(PlcConnectionState state);

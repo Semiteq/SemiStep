@@ -221,12 +221,14 @@ Rule-B envelope `PlcCommandFailedError`. `NotConnectedError`, `ProtocolVersionMi
 `RecipeLengthMismatchError` live in `SemiStep.Core/Plc/S7/Protocol/`; the five sync-side faults in
 `SemiStep.Core/Plc/Sync/`.
 
-**Un-laundering the fault seam.** `PlcSyncExecutor` used to re-wrap a typed inner's `.Message` in a fresh
+**Un-laundering the fault seam.** The sync executor used to re-wrap a typed inner's `.Message` in a fresh
 `new Error(...)` before emitting the fault, discarding the type so `OnPlcFault`'s single-`IError` seam could
-not localize it. It now forwards the typed inner directly (`reportFault(activeResult.Errors[0])`,
-`reportFault(writeResult.Errors[0])`), so the type reaches `ReasonLocalizer` and the fault renders in the
-current culture. The 6a fault seam is single-error by design: forwarding `Errors[0]` drops any sibling
-errors, which the transient one-slot operation channel could not show anyway.
+not localize it. Now the pre-check step of `PlcSyncExecutor` returns the typed inner (`Errors[0]` of the
+failed read) in its failed outcome. The write step returns the failed `Result`, and `PlcSyncCoordinator` takes
+its `Errors[0]`. The coordinator emits either error on `Faults` unchanged, so the type reaches
+`ReasonLocalizer` and the fault renders in the current culture. The 6a fault seam is single-error by design:
+forwarding `Errors[0]` drops any sibling errors, which the transient one-slot operation channel could not
+show anyway.
 
 **Rule-B envelope.** `PlcCommandFailedError` is a fieldless headline (`"PLC command failed"`): the raw
 transport exception message (a socket/timeout string) is not operator-useful, so it rides `.CausedBy(ex)`
@@ -242,7 +244,7 @@ settled by slice 6c: the genuine-cancel arm returns a plain internal `Result.Fai
 deliberately un-typed so it stays out of the localization coverage gate, while the failure arm forwards
 `ex.Message` as before. A third, still deferred: the codec decode failures (`ExecutionStateCodec`
 and `ManagingAreaCodec` return a plain `new Error("…data length …")` on a short read) are still untyped, so
-when `PlcSyncExecutor` forwards them through `reportFault(activeResult.Errors[0])` a decode-Fail reaches the
+when the sync pre-check forwards them as its failed outcome (`Errors[0]`) a decode-Fail reaches the
 panel as raw English. This is a malformed-wire diagnostic edge like the short-version read, not an
 operator-actionable fault; typing the codec layer is out of scope for this wave. The two malformed-wire
 edges stay free-text until then.

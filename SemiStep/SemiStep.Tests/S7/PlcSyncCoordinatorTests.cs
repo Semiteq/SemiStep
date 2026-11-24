@@ -25,7 +25,7 @@ namespace SemiStep.Tests.S7;
 [Trait("Category", "Unit")]
 public sealed class PlcSyncCoordinatorTests
 {
-	private static PlcConfiguration BuildTestConfiguration()
+	internal static PlcConfiguration BuildTestConfiguration()
 	{
 		var layout = new PlcProtocolLayout(
 			ManagingDb: ManagingDbLayout.Default,
@@ -40,7 +40,7 @@ public sealed class PlcSyncCoordinatorTests
 			layout);
 	}
 
-	private static (
+	internal static (
 		PlcSyncCoordinator Coordinator,
 		FakeS7Transport Transport,
 		StubS7ServiceForSync ConnectionService) Build(bool connected = false)

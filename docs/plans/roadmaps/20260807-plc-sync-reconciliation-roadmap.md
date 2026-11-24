@@ -51,19 +51,20 @@ reading what is there and without a log line.
 Two mechanisms produce that state and one more can hide a genuine conflict:
 
 - **Torn write.** `DisableSync` (`PlcLifecycleManager.cs:183`) calls `ResetForDisable` →
-  `PlcSyncExecutor.Reset()` (`Sync/PlcSyncExecutor.cs:61-70`), which cancels `_debounceCts`. That is
-  the same token handed to `WriteRecipeWithRetryAsync` (`PlcSyncExecutor.cs:144` → `:228`), so a
-  disable landing between the two managing-area writes aborts the transaction with `Committed`
+  `PlcSyncCoordinator.ResetForDisable` (`Sync/PlcSyncCoordinator.cs`), which cancels the current
+  debounce token. That is the same token handed to `WriteRecipeWithRetryAsync`
+  (`PlcSyncCoordinator.RunAttemptAsync` → `SyncPendingRecipeAsync` → `PlcSyncExecutor.WriteAsync`), so
+  a disable landing between the two managing-area writes aborts the transaction with `Committed`
   false and the arrays half old, half new. The cancellation is then swallowed as an expected
-  debounce pre-emption (`PlcSyncExecutor.cs:146-150`). `DisableSync` also disconnects the socket
+  cancellation (`PlcSyncCoordinator.RunAttemptAsync`). `DisableSync` also disconnects the socket
   (`PlcLifecycleManager.cs:191`) without waiting: `WaitForPendingSyncAsync` exists on the coordinator
-  (`Sync/PlcSyncCoordinator.cs:169`) but is absent from `IPlcSyncService` (`IPlcSyncService.cs:8-29`)
-  and is never called on this path.
+  (`PlcSyncCoordinator.WaitForPendingSyncAsync`) but is absent from `IPlcSyncService`
+  (`IPlcSyncService.cs:8-29`) and is never called on this path.
 - **Push racing the compare.** `EnableSync` sets sync enabled (`:129`) before it connects (`:130`),
   and every recipe mutation notifies the sync service while enabled
   (`Recipes/RecipeSession.cs:625-631`). An edit made during the connect schedules a debounced write
-  (1000 ms, `PlcSyncExecutor.cs:23`) that can reach the PLC before the reconciliation's read at
-  `:338` — after which the recipes match and no dialog is due.
+  (1000 ms, `PlcSyncCoordinator.DebounceDelayMilliseconds`) that can reach the PLC before the
+  reconciliation's read at `:338`, after which the recipes match and no dialog is due.
 
 Ruled out as suspects, both by code read: recipe equality is structural, not reference-based
 (`Recipes/Recipe.cs:47`, `Recipes/Step.cs:13`), and every transport round-trip is serialised by one
@@ -90,10 +91,11 @@ the second keeps the commit gate, so a torn PLC recipe still cannot be loaded in
 button press.
 
 `IPlcSyncService` (`Plc/IPlcSyncService.cs:8`) has two implementations: `PlcSyncCoordinator`
-(`Sync/PlcSyncCoordinator.cs:12`) and `StubPlcSyncService`
-(`SemiStep.Tests/Helpers/StubPlcSyncService.cs:11`). Any member added to it lands in both.
+(`Sync/PlcSyncCoordinator.cs`) and `StubPlcSyncService` (`SemiStep.Tests/Helpers/StubPlcSyncService.cs:11`).
+Any member added to it lands in both.
 
-The fault channel already runs end to end as typed `IError`: `PlcSyncCoordinator.EmitFault` →
+The fault channel already runs end to end as typed `IError`: a `PlcSyncCoordinator` transition that
+sets the status and carries the fault, as `HandleConnectionLost` does →
 `Faults` → `RecipeCoordinator.OnPlcFault` (`UI/Coordinator/RecipeCoordinator.cs:520-532`) →
 `MessagePanel.ReportFailure(IError)`, localized by `ReasonLocalizer`
 (`UI/Localization/ReasonLocalizer.cs:45`). Reporting a reconciliation failure reuses errors that
@@ -174,8 +176,9 @@ Each named guard is a hypothesis the owning slice plan must confirm fires at HEA
   longer calls `NotifyLocalRecipe`; it reports the underlying typed error through the existing fault
   seam so the message panel shows it, and leaves the sync status un-synced. Sync stays enabled and
   connected — the next local edit pushes normally. This needs one semantic entry point on
-  `IPlcSyncService` alongside `HandleConnectionLost`, implemented by `PlcSyncCoordinator` as a
-  status change plus `EmitFault`, and by `StubPlcSyncService` as a recorder.
+  `IPlcSyncService` alongside `HandleConnectionLost`, implemented by `PlcSyncCoordinator` as one
+  transition that sets the status and carries the fault, as `HandleConnectionLost` does, and by
+  `StubPlcSyncService` as a recorder.
 - **Issue:** #158 (closes it)
 - **Blast radius:** `IPlcSyncService` gains one member (two implementations); the coordinator gains
   one method; the UI path is the already-wired `Faults` observable.
@@ -193,18 +196,18 @@ Each named guard is a hypothesis the owning slice plan must confirm fires at HEA
 
 ### Slice plc-write-atomic — Status: PENDING
 - **Scope:** Make the recipe write transaction untearable by a sync disable. Separate the debounce
-  cancellation from the write cancellation in `PlcSyncExecutor` so `Reset()` (`:61-70`) can cancel a
+  cancellation from the write cancellation in `PlcSyncCoordinator` so `ResetForDisable` can cancel a
   pending debounce without aborting a write already inside `WriteRecipeDataAsync`, and make
   `DisableSync` (`PlcLifecycleManager.cs:183-197`) wait for the in-flight write, bounded, before it
-  disconnects — which requires `WaitForPendingSyncAsync` (`Sync/PlcSyncCoordinator.cs:169`) on
+  disconnects. That requires `PlcSyncCoordinator.WaitForPendingSyncAsync` on
   `IPlcSyncService`. The invariant to prove: no operator action can leave the PLC with
   `Committed == false`; only a hard failure or process death can, and both are logged.
 - **Issue:** #180 (closes it)
-- **Blast radius:** the sync executor's cancellation model and the disable path. Application
+- **Blast radius:** the attempt token model in `PlcSyncCoordinator` and the disable path. Application
   shutdown still has to cancel promptly, so the bound on the wait is load-bearing.
 - **Risk:** high — this changes cancellation semantics on the path that also runs during exit.
-  `SemiStep.Tests/S7/PlcSyncCoordinatorTests` and the exit flow (`docs/architecture/exit-flow.md`)
-  are the surfaces to re-check.
+  `SemiStep.Tests/S7/PlcSyncCoordinatorTests`, `SemiStep.Tests/S7/PlcSyncCoordinatorInterleavingTests`
+  and the exit flow (`docs/architecture/exit-flow.md`) are the surfaces to re-check.
 - **Depends on:** independent — no file overlap with the reconcile slices beyond `IPlcSyncService`
 - **Stacking base:** master
 - **Scope guard:** no change to the write protocol itself (order, offsets, retry count) and no

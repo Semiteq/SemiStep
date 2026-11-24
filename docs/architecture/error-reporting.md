@@ -221,6 +221,13 @@ Rule-B envelope `PlcCommandFailedError`. `NotConnectedError`, `ProtocolVersionMi
 `RecipeLengthMismatchError` live in `SemiStep.Core/Plc/S7/Protocol/`; the five sync-side faults in
 `SemiStep.Core/Plc/Sync/`.
 
+`PlcTransactionExecutor` returns `NotConnectedError` from two places: its `IsConnected` pre-check, and its
+catch sites when `S7Driver` raises `DriverNotConnectedException` because a disconnect dropped the PLC
+instance after the pre-check. That exception never reaches a caller above `S7Service`. The executor logs
+one `Debug` line without the stack. The `S7Service` keep-alive loop also calls the driver directly and
+treats any exception as a lost connection. Every other transport exception still becomes
+`PlcCommandFailedError`.
+
 **Un-laundering the fault seam.** The sync executor used to re-wrap a typed inner's `.Message` in a fresh
 `new Error(...)` before emitting the fault, discarding the type so `OnPlcFault`'s single-`IError` seam could
 not localize it. Now the pre-check step of `PlcSyncExecutor` returns the typed inner (`Errors[0]` of the

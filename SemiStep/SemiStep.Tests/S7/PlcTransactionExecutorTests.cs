@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.Configuration.Memory;
+using SemiStep.Core.Plc.S7;
 using SemiStep.Core.Plc.S7.Protocol;
 using SemiStep.Core.Plc.S7.Serialization;
 using SemiStep.Core.Plc.Sync;
@@ -304,6 +305,31 @@ public sealed class PlcTransactionExecutorTests
 		result.IsFailed.Should().BeTrue("writing to a disconnected PLC must return a failed result");
 		result.HasError<NotConnectedError>().Should().BeTrue(
 			"the failure reason must be a NotConnectedError");
+	}
+
+	[Fact]
+	public async Task ReadManagingAreaAsync_DriverDroppedPlcInstance_ReturnsNotConnectedError()
+	{
+		var (executor, transport) = BuildExecutor();
+		var managingDb = BuildTestConfiguration().Layout.ManagingDb;
+		transport.SetReadResponseForDb(managingDb.DbNumber, (_, _) => throw new DriverNotConnectedException());
+
+		var result = await executor.ReadManagingAreaAsync(TestContext.Current.CancellationToken);
+
+		result.HasError<NotConnectedError>().Should().BeTrue();
+		result.HasError<PlcCommandFailedError>().Should().BeFalse();
+	}
+
+	[Fact]
+	public async Task WriteRecipeWithRetryAsync_DriverDroppedPlcInstance_ReturnsNotConnectedError()
+	{
+		var (executor, transport) = BuildExecutor();
+		transport.WriteException = new DriverNotConnectedException();
+
+		var result = await executor.WriteRecipeWithRetryAsync(Recipe.Empty, TestContext.Current.CancellationToken);
+
+		result.HasError<NotConnectedError>().Should().BeTrue();
+		result.HasError<PlcCommandFailedError>().Should().BeFalse();
 	}
 
 	[Fact]

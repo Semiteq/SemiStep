@@ -18,11 +18,19 @@ internal sealed class PlcExecutionMonitor(
 	private static readonly TimeSpan _stopTimeout = TimeSpan.FromSeconds(5);
 
 	private readonly ILogger<PlcExecutionMonitor> _logger = logger;
-	private readonly Subject<PlcExecutionInfo> _subject = new();
 
-	private volatile PlcExecutionInfo _lastKnown = PlcExecutionInfo.Empty;
+	// Written by the poll loop (thread pool) and by Stop/StopAsync callers (keep-alive and reconnect
+	// threads, UI disconnect).
+	private readonly ISubject<PlcExecutionInfo> _subject = Subject.Synchronize(new Subject<PlcExecutionInfo>());
+
+	// Guards _pollCts and _pollTask, which Start/Stop callers and the poll loop change from different threads.
+	private readonly Lock _pollLock = new();
+
 	private CancellationTokenSource? _pollCts;
 	private Task? _pollTask;
+
+	// Written by the poll loop and Stop/StopAsync callers, read by S7Service.IsRecipeActive (UI thread).
+	private volatile PlcExecutionInfo _lastKnown = PlcExecutionInfo.Empty;
 
 	public IObservable<PlcExecutionInfo> State => _subject;
 
@@ -32,19 +40,30 @@ internal sealed class PlcExecutionMonitor(
 	{
 		Stop();
 
-		_pollCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
-		_pollTask = PollLoopAsync(_pollCts.Token);
+		lock (_pollLock)
+		{
+			// A concurrent Start can create a loop between Stop() above and this section.
+			_ = CancelAndDetachPollTask();
+
+			var pollCts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
+			// Taken now: a stop can dispose the source before the loop starts, and .Token would then throw.
+			var token = pollCts.Token;
+			_pollCts = pollCts;
+			_pollTask = Task.Run(() => PollLoopAsync(token), CancellationToken.None);
+		}
 	}
 
 	public void Stop()
 	{
-		var taskToWait = CancelAndDetachPollTask();
-
-		// Skip the wait if Stop() is being called from within the poll loop itself
-		// (e.g. via onConnectionLost callback), to avoid deadlock.
-		if (taskToWait is not null && taskToWait.Id != Task.CurrentId)
+		Task? taskToWait;
+		lock (_pollLock)
 		{
-			taskToWait.Wait(_stopTimeout);
+			taskToWait = CancelAndDetachPollTask();
+		}
+
+		if (taskToWait is not null && !taskToWait.Wait(_stopTimeout))
+		{
+			LogStopTimeout();
 		}
 
 		PublishAndTrack(PlcExecutionInfo.Empty);
@@ -52,7 +71,11 @@ internal sealed class PlcExecutionMonitor(
 
 	public async Task StopAsync()
 	{
-		var taskToWait = CancelAndDetachPollTask();
+		Task? taskToWait;
+		lock (_pollLock)
+		{
+			taskToWait = CancelAndDetachPollTask();
+		}
 
 		if (taskToWait is not null)
 		{
@@ -62,7 +85,7 @@ internal sealed class PlcExecutionMonitor(
 			}
 			catch (TimeoutException)
 			{
-				_logger.LogWarning("Execution monitor poll loop did not stop within 5 seconds");
+				LogStopTimeout();
 			}
 		}
 
@@ -73,7 +96,6 @@ internal sealed class PlcExecutionMonitor(
 	{
 		Stop();
 		_subject.OnCompleted();
-		_subject.Dispose();
 	}
 
 	private Task? CancelAndDetachPollTask()
@@ -88,10 +110,32 @@ internal sealed class PlcExecutionMonitor(
 		return taskToWait;
 	}
 
+	private void LogStopTimeout()
+	{
+		_logger.LogWarning("Execution monitor poll loop did not stop within 5 seconds");
+	}
+
 	private void PublishAndTrack(PlcExecutionInfo info)
 	{
 		_lastKnown = info;
 		_subject.OnNext(info);
+	}
+
+	private bool TryDetachCurrentLoop(CancellationToken ct)
+	{
+		lock (_pollLock)
+		{
+			if (ct.IsCancellationRequested)
+			{
+				return false;
+			}
+
+			_pollCts?.Dispose();
+			_pollCts = null;
+			_pollTask = null;
+
+			return true;
+		}
 	}
 
 	private async Task PollLoopAsync(CancellationToken ct)
@@ -103,13 +147,18 @@ internal sealed class PlcExecutionMonitor(
 				await Task.Delay(protocolSettings.PollingIntervalMs, ct);
 				var result = await transactionExecutor.ReadExecutionStateAsync(ct);
 
+				if (ct.IsCancellationRequested)
+				{
+					return;
+				}
+
 				if (result.IsFailed)
 				{
 					if (result.Errors.OfType<NotConnectedError>().Any())
 					{
 						_logger.LogDebug("Execution monitor stopping: PLC not connected");
 
-						if (!(_pollCts?.IsCancellationRequested ?? true))
+						if (TryDetachCurrentLoop(ct))
 						{
 							onConnectionLost();
 						}

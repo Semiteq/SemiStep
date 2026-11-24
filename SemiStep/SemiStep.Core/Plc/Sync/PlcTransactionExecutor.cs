@@ -133,6 +133,10 @@ internal sealed class PlcTransactionExecutor
 					$"Protocol version read returned {bytes.Length} bytes, expected {sizeof(int)}")
 				: Result.Ok(BinaryPrimitives.ReadInt32BigEndian(bytes));
 		}
+		catch (DriverNotConnectedException)
+		{
+			return DriverNotConnected();
+		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
 			_logger.LogWarning(ex, "PLC protocol version read failed");
@@ -169,6 +173,10 @@ internal sealed class PlcTransactionExecutor
 		{
 			var bytes = await _transport.ReadBytesAsync(dbNumber, 0, size, ct);
 			return decode(bytes);
+		}
+		catch (DriverNotConnectedException)
+		{
+			return DriverNotConnected();
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
@@ -221,6 +229,10 @@ internal sealed class PlcTransactionExecutor
 
 			return Result.Ok(new PlcRecipeData(intValues, floatValues, stringValues, StepCount: stepCount));
 		}
+		catch (DriverNotConnectedException)
+		{
+			return DriverNotConnected();
+		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
 			_logger.LogWarning(ex, "PLC recipe data read failed");
@@ -253,6 +265,10 @@ internal sealed class PlcTransactionExecutor
 				? writeLinesResult
 				: await WriteManagingAreaAsync(
 				new ManagingAreaPcData(Committed: true, RecipeLines: data.StepCount), ct);
+		}
+		catch (DriverNotConnectedException)
+		{
+			return DriverNotConnected();
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
@@ -301,10 +317,20 @@ internal sealed class PlcTransactionExecutor
 
 			return Result.Ok();
 		}
+		catch (DriverNotConnectedException)
+		{
+			return DriverNotConnected();
+		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
 			_logger.LogError(ex, "PLC managing-area write failed");
 			return Result.Fail(new PlcCommandFailedError().CausedBy(ex));
 		}
+	}
+
+	private Result DriverNotConnected()
+	{
+		_logger.LogDebug("PLC operation failed: the driver holds no PLC instance");
+		return Result.Fail(new NotConnectedError());
 	}
 }

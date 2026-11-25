@@ -123,6 +123,10 @@ internal sealed class ComboBoxCellFactory(ComboBoxItemsProvider comboBoxItemsPro
 		};
 		GridFontApplier.ApplyCellFont(comboBox, gridStyle);
 
+		// With keyboard XY navigation allowed, a closed ComboBox leaves Up and Down unhandled, so the DataGrid moves
+		// the row instead of the key changing the cell value.
+		XYFocus.SetNavigationModes(comboBox, XYFocusNavigationModes.Enabled);
+
 		return comboBox;
 	}
 

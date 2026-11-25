@@ -1,8 +1,11 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using SemiStep.UI.RecipeGrid;
 
@@ -56,6 +59,26 @@ public sealed class CanonicalGridWindow : IDisposable
 	{
 		Window.KeyPress(key, modifiers, physicalKey, null);
 		Dispatcher.UIThread.RunJobs();
+	}
+
+	public void TypeText(string text)
+	{
+		Window.KeyTextInput(text);
+		Dispatcher.UIThread.RunJobs();
+	}
+
+	public void Wheel(Control control, double notches)
+	{
+		Window.MouseWheel(CenterOf(control), new Vector(0, notches));
+		Dispatcher.UIThread.RunJobs();
+	}
+
+	public double VerticalScrollOffset()
+	{
+		return DataGrid.GetVisualDescendants()
+			.OfType<ScrollBar>()
+			.First(scrollBar => scrollBar.Orientation == Orientation.Vertical)
+			.Value;
 	}
 
 	public object? FocusedElement()

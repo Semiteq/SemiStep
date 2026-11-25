@@ -25,6 +25,7 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 			RecipeGrid.SelectionChanged += OnSelectionChanged;
 			RecipeGrid.CellPointerPressed += OnCellPointerPressed;
 			new ComboBoxPressOpener(RecipeGrid).Attach().DisposeWith(disposables);
+			new ClosedComboInputGuard(RecipeGrid).Attach().DisposeWith(disposables);
 
 			var selectionRequestsSubscription = new SerialDisposable()
 				.DisposeWith(disposables);
@@ -79,7 +80,7 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 	}
 
 	// Click-away rule: a changed (orange) cell clears the moment any OTHER cell is pressed. This is
-	// not an edit, so it must run even while the grid is read-only during PLC sync — no IsReadOnly
+	// not an edit, so it must run even while the grid is read-only during PLC sync, with no IsReadOnly
 	// guard. The clear routes through the surface so the sibling orientation surface clears too.
 	private void OnCellPointerPressed(object? sender, DataGridCellPointerPressedEventArgs e)
 	{

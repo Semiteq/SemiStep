@@ -71,7 +71,9 @@ everything except item construction:
   bulk remove, action-change rebuild, full rebuild — the inserting and removing ones renumber
   the items they shift), the one non-structural in-place property update, the stale-signal
   guards (log-and-return — they protect against signal-vs-projection races, not against bad
-  data), and the post-mutation tail (selection reconcile, step start times, loop depths);
+  data), the change-mark capture before the item mutation and the restore after a
+  `RecipeReplaced` rebuild (see "Undo and redo" in `cell-change-highlight.md`), and the
+  post-mutation tail (selection reconcile, step start times, loop depths);
 - the reactive contract members (`CanDeleteStep`, `IsReadOnly`, `EditorMustClose`,
   `SelectedStepIndex`/`SelectedStepIndices`, `SelectionRequests`) and the selection plumbing
   (`UpdateSelection`, `RequestSelection`, `CollectSelectedSteps`);

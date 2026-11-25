@@ -81,6 +81,42 @@ public sealed class ExecutionTimeEstimatorTests
 		return RecipeSnapshot.Create(recipe, total, startTimes, loops, singleIterations);
 	}
 
+	private static RecipeSnapshot BuildSingleLoopSnapshot()
+	{
+		// Layout: [For x3] body(10) [End_For], total 30 sec
+		var recipe = new Recipe(ImmutableList.Create(
+			BuildStep(ImmediateActionId, 0f), // 0: For
+			BuildStep(LongLastingActionId, 10f), // 1: body
+			BuildStep(ImmediateActionId, 0f))); // 2: End_For
+		var loops = new[]
+		{
+			new LoopInfo(StartIndex: 0, EndIndex: 2, Depth: 1, Iterations: 3)
+		};
+		return BuildSnapshot(recipe, loops, BuildRegistry());
+	}
+
+	private static RecipeSnapshot BuildReferenceSnapshot()
+	{
+		// Layout: wait(2) [For x3] wait(2) [For x5] wait(2) wait(2) [End_For] [End_For] wait(2)
+		// inner pass 4 sec, outer pass 2 + 5 * 4 = 22 sec, total 2 + 3 * 22 + 2 = 70 sec
+		var recipe = new Recipe(ImmutableList.Create(
+			BuildStep(LongLastingActionId, 2f), // 0
+			BuildStep(ImmediateActionId, 0f), // 1: outer For
+			BuildStep(LongLastingActionId, 2f), // 2
+			BuildStep(ImmediateActionId, 0f), // 3: inner For
+			BuildStep(LongLastingActionId, 2f), // 4
+			BuildStep(LongLastingActionId, 2f), // 5
+			BuildStep(ImmediateActionId, 0f), // 6: inner End_For
+			BuildStep(ImmediateActionId, 0f), // 7: outer End_For
+			BuildStep(LongLastingActionId, 2f))); // 8
+		var loops = new[]
+		{
+			new LoopInfo(StartIndex: 1, EndIndex: 7, Depth: 1, Iterations: 3),
+			new LoopInfo(StartIndex: 3, EndIndex: 6, Depth: 2, Iterations: 5)
+		};
+		return BuildSnapshot(recipe, loops, BuildRegistry());
+	}
+
 	private static PlcExecutionInfo Info(
 		int actualLine,
 		float stepCurrentTime,
@@ -154,28 +190,79 @@ public sealed class ExecutionTimeEstimatorTests
 	}
 
 	[Fact]
-	public void TimeLeftInRecipe_SingleLoop_OneCompletedIteration_RecipeRemainderShrinksByOneIteration()
+	public void TimeLeftInRecipe_SingleLoop_SecondPass_RecipeRemainderShrinksByOnePass()
 	{
-		var registry = BuildRegistry();
-		const float StepSeconds = 10f;
+		var snapshot = BuildSingleLoopSnapshot();
+
+		var atFirstPass = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 0f, count1: 1));
+		var atSecondPass = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 0f, count1: 2));
+
+		atFirstPass.Should().Be(TimeSpan.FromSeconds(30));
+		atSecondPass.Should().Be(TimeSpan.FromSeconds(20));
+	}
+
+	[Fact]
+	public void TimeLeftInRecipe_LoopCounterZero_CountsLikeFirstPass()
+	{
+		var snapshot = BuildSingleLoopSnapshot();
+
+		var atZero = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 0f, count1: 0));
+		var atFirstPass = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 0f, count1: 1));
+
+		atZero.Should().Be(atFirstPass);
+	}
+
+	[Fact]
+	public void TimeLeftInRecipe_GarbageCounterAboveIterations_BoundsAtLastPass()
+	{
 		var recipe = new Recipe(ImmutableList.Create(
-			BuildStep(ImmediateActionId, 0f), // 0: For
-			BuildStep(LongLastingActionId, StepSeconds), // 1: body
-			BuildStep(ImmediateActionId, 0f))); // 2: End_For
+			BuildStep(ImmediateActionId, 0f),
+			BuildStep(LongLastingActionId, 600f),
+			BuildStep(ImmediateActionId, 0f)));
 		var loops = new[]
 		{
 			new LoopInfo(StartIndex: 0, EndIndex: 2, Depth: 1, Iterations: 3)
 		};
-		var snapshot = BuildSnapshot(recipe, loops, registry);
+		var snapshot = BuildSnapshot(recipe, loops, BuildRegistry());
 
-		var atFirstIter = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 0f, count1: 0));
-		var atSecondIter = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 0f, count1: 1));
+		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(1, 0f, count1: int.MaxValue));
 
-		(atFirstIter - atSecondIter).Should().Be(TimeSpan.FromSeconds(StepSeconds));
+		result.Should().Be(TimeSpan.FromSeconds(600));
 	}
 
 	[Fact]
-	public void TimeLeftInRecipe_NestedLoops_AllThreeCountersContribute()
+	public void TimeLeftInRecipe_ReferenceRecipe_TotalIsSeventySeconds()
+	{
+		var snapshot = BuildReferenceSnapshot();
+
+		snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(70));
+	}
+
+	[Theory]
+	// 0-based; plan lines 6, 5, 7, 8 ...
+	[InlineData(5, 1, 5, 48)]
+	[InlineData(4, 2, 2, 40)]
+	[InlineData(6, 1, 5, 46)]
+	[InlineData(6, 2, 5, 24)]
+	[InlineData(7, 0, 0, 46)]
+	[InlineData(7, 3, 0, 2)]
+	public void TimeLeftInRecipe_ReferenceRecipe_CountsPassesBeforeCurrentOne(
+		int actualLineIndex,
+		int outerPass,
+		int innerPass,
+		int expectedSecondsLeft)
+	{
+		var snapshot = BuildReferenceSnapshot();
+
+		var result = ExecutionTimeEstimator.TimeLeftInRecipe(
+			snapshot,
+			Info(actualLineIndex, 0f, count1: outerPass, count2: innerPass));
+
+		result.Should().Be(TimeSpan.FromSeconds(expectedSecondsLeft));
+	}
+
+	[Fact]
+	public void TimeLeftInRecipe_NestedLoops_BothCountersContribute()
 	{
 		var registry = BuildRegistry();
 		const float OuterStepSeconds = 4f;
@@ -198,19 +285,14 @@ public sealed class ExecutionTimeEstimatorTests
 		};
 		var snapshot = BuildSnapshot(recipe, loops, registry);
 
-		// Step 3 (inner body), outer completed=1, inner completed=2
-		var info = Info(3, stepCurrentTime: 0f, count1: 1, count2: 2);
+		// Step 3 (inner body), outer pass 2, inner pass 3
+		var info = Info(3, stepCurrentTime: 0f, count1: 2, count2: 3);
 		var result = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, info);
 
-		// stepStart[3] = 4 (outer body) + 0 (inner For) = 4 sec (in first iteration accounting)
-		// outer single = 4 + 3*3 = 13 sec; inner single = 3 sec
-		// loopOffset = 1 * 13 + 2 * 3 = 19 sec
-		// consumed = 4 + 19 + 0 = 23 sec
-		// total = 13 * 2 = 26 sec
-		// left = 3 sec (which is the inner body remaining + closing iterations)
-		var expectedConsumed = TimeSpan.FromSeconds(4) + TimeSpan.FromSeconds(13) + TimeSpan.FromSeconds(6);
-		var expected = snapshot.TotalDuration - expectedConsumed;
-		result.Should().Be(expected);
+		// stepStart[3] = 4 sec (first-pass accounting); outer pass = 4 + 3 * 3 = 13 sec; inner pass = 3 sec
+		// consumed = 4 + (2 - 1) * 13 + (3 - 1) * 3 = 23 sec of a 26 sec total
+		snapshot.TotalDuration.Should().Be(TimeSpan.FromSeconds(26));
+		result.Should().Be(TimeSpan.FromSeconds(3));
 	}
 
 	[Fact]
@@ -235,13 +317,14 @@ public sealed class ExecutionTimeEstimatorTests
 		};
 		var snapshot = BuildSnapshot(recipe, loops, registry);
 
-		// In second loop body, with one iteration of second loop completed.
-		// First loop is NOT in EnclosingLoops for index 4 — verifies depth-based mapping.
-		var withCount = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(4, 0f, count1: 1));
-		var withoutCount = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(4, 0f, count1: 0));
+		// In the second loop body; the first loop is NOT in EnclosingLoops for index 4.
+		// total = 2 * 5 + 4 * 7 = 38 sec; stepStart[4] = 10 sec
+		var atFirstPass = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(4, 0f, count1: 1));
+		var atSecondPass = ExecutionTimeEstimator.TimeLeftInRecipe(snapshot, Info(4, 0f, count1: 2));
 
-		(withoutCount - withCount).Should().Be(TimeSpan.FromSeconds(SecondBodySeconds),
-			"only the second loop's single-iteration duration should be subtracted, never the first loop's");
+		atFirstPass.Should().Be(TimeSpan.FromSeconds(28));
+		(atFirstPass - atSecondPass).Should().Be(TimeSpan.FromSeconds(SecondBodySeconds),
+			"only the second loop's single-pass duration should be subtracted, never the first loop's");
 	}
 
 	[Fact]

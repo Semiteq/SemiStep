@@ -30,7 +30,7 @@ namespace SemiStep.Tests.UI.Helpers;
 
 public sealed class UIFixture : IAsyncLifetime
 {
-	private readonly List<IDisposable> _createdSurfaces = [];
+	private readonly List<IDisposable> _ownedDisposables = [];
 
 	public RecipeSession Session { get; private set; } = null!;
 	public PlcLifecycleManager Plc { get; private set; } = null!;
@@ -85,9 +85,9 @@ public sealed class UIFixture : IAsyncLifetime
 	// suites that rely on this teardown (e.g. via CreateMainWindowViewModel) both stay clean.
 	public ValueTask DisposeAsync()
 	{
-		foreach (var surface in _createdSurfaces)
+		foreach (var owned in _ownedDisposables)
 		{
-			surface.Dispose();
+			owned.Dispose();
 		}
 
 		Coordinator.Dispose();
@@ -106,7 +106,7 @@ public sealed class UIFixture : IAsyncLifetime
 			MessagePanel,
 			ClickAwayBroadcaster,
 			logger ?? NullLogger<CanonicalRecipeGridSurface>.Instance);
-		_createdSurfaces.Add(surface);
+		_ownedDisposables.Add(surface);
 
 		return surface;
 	}
@@ -122,7 +122,7 @@ public sealed class UIFixture : IAsyncLifetime
 			MessagePanel,
 			ClickAwayBroadcaster,
 			logger ?? NullLogger<TransposedRecipeGridSurface>.Instance);
-		_createdSurfaces.Add(surface);
+		_ownedDisposables.Add(surface);
 
 		return surface;
 	}
@@ -177,6 +177,7 @@ public sealed class UIFixture : IAsyncLifetime
 			Coordinator,
 			RecipeMetadataRegistry,
 			Scheduler);
+		_ownedDisposables.Add(plcMonitor);
 
 		var gridStyleEditorViewModelFactory = styleEditorFactory ?? new Func<GridStyleEditorViewModel>(
 			() => new GridStyleEditorViewModel(

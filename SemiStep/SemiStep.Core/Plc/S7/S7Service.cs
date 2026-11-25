@@ -23,6 +23,9 @@ internal sealed class S7Service(
 	private readonly ILogger<S7Service> _logger = logger;
 	private readonly Lock _stateLock = new();
 
+	// The container calls DisposeAsync once per registration that resolved this instance.
+	private int _disposeStarted;
+
 	// Every field below is guarded by _stateLock: the UI connect/disconnect path writes them, and the
 	// keep-alive, poll and reconnect loops (thread pool) read and write them.
 	private PlcConnectionState _state = PlcConnectionState.Disconnected;
@@ -58,9 +61,13 @@ internal sealed class S7Service(
 
 	public async ValueTask DisposeAsync()
 	{
+		if (Interlocked.Exchange(ref _disposeStarted, 1) == 1)
+		{
+			return;
+		}
+
 		await DisconnectAsync();
 		executionMonitor.Dispose();
-		await transport.DisposeAsync();
 	}
 
 	public bool IsConnected => State == PlcConnectionState.Connected;

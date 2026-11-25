@@ -58,4 +58,25 @@ public static class S7Di
 		services.AddSingleton(sp => sp.GetRequiredService<AppConfiguration>().PlcConfiguration.ProtocolSettings);
 		return services;
 	}
+
+	/// <summary>
+	/// The order of <see cref="PlcLifecycleManager.DisableSync"/>: a started recipe write ends, the PLC
+	/// disconnects, and only then the container disposes the rest and the sync ownership lease is released.
+	/// </summary>
+	public static async ValueTask DisposeInShutdownOrderAsync<TProvider>(this TProvider provider)
+		where TProvider : IServiceProvider, IAsyncDisposable
+	{
+		try
+		{
+			provider.GetService<PlcSyncCoordinator>()?.Dispose();
+			if (provider.GetService<IS7Connection>() is { } connection)
+			{
+				await connection.DisposeAsync();
+			}
+		}
+		finally
+		{
+			await provider.DisposeAsync();
+		}
+	}
 }

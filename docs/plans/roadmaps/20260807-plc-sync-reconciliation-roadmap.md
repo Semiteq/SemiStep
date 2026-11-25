@@ -195,7 +195,7 @@ Each named guard is a hypothesis the owning slice plan must confirm fires at HEA
 - **PR:** —
 - **Branch:** —
 
-### Slice plc-write-atomic — Status: PENDING
+### Slice plc-write-atomic — Status: DONE
 - **Scope:** Make the recipe write transaction untearable by a sync disable. Separate the debounce
   cancellation from the write cancellation in `PlcSyncCoordinator` so `ResetForDisable` can cancel a
   pending debounce without aborting a write already inside `WriteRecipeDataAsync`, and make
@@ -213,8 +213,8 @@ Each named guard is a hypothesis the owning slice plan must confirm fires at HEA
 - **Stacking base:** master
 - **Scope guard:** no change to the write protocol itself (order, offsets, retry count) and no
   change to the reconciliation.
-- **Plan:** `docs/plans/20261124-plc-write-atomic.md`
-- **PR:** —
+- **Plan:** `docs/plans/completed/20261124-plc-write-atomic.md`
+- **PR:** #215
 - **Branch:** `torn-write-on-disable`
 
 ### Slice plc-push-gate — Status: BLOCKED — held for the hardware test after plc-write-atomic; set to PENDING if the race is observed, DROPPED if it is not

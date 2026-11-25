@@ -2,6 +2,7 @@
 
 using AwesomeAssertions;
 
+using SemiStep.Tests.Helpers;
 using SemiStep.UI;
 
 using Serilog;
@@ -93,17 +94,5 @@ public sealed class PinnedLogSourceTests
 		}
 
 		return capturingSink.Events;
-	}
-
-	private sealed class CapturingSink : ILogEventSink
-	{
-		private readonly List<LogEvent> _events = [];
-
-		public IReadOnlyList<LogEvent> Events => _events;
-
-		public void Emit(LogEvent logEvent)
-		{
-			_events.Add(logEvent);
-		}
 	}
 }

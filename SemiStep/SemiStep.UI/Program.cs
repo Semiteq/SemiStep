@@ -27,11 +27,15 @@ public static class Program
 	/// </summary>
 	internal static readonly string PinnedReconciliationSource = typeof(PlcLifecycleManager).FullName!;
 
+	/// <summary>The coordinator's 5 s write wait plus 5 s for the PLC disconnect.</summary>
+	private static readonly TimeSpan _teardownBound = TimeSpan.FromSeconds(10);
+
 	[STAThread]
 	public static int Main(string[] args)
 	{
 		var options = StartupOptions.Parse(args);
 		var exitCode = 0;
+		ServiceProvider? provider = null;
 
 		CreateLogger(
 			options.LogFilePath,
@@ -42,6 +46,7 @@ public static class Program
 		{
 			var outcome = ValidateStartup(options);
 			exitCode = outcome.Errors is null ? 0 : 1;
+			provider = outcome.Provider;
 
 			// The catch must not re-launch: once App.Run has initialised Avalonia, a second
 			// BuildAvaloniaApp() would throw "Application has already been initialized".
@@ -51,7 +56,7 @@ public static class Program
 			}
 			else
 			{
-				App.Run(outcome.Provider!);
+				App.Run(provider!);
 			}
 		}
 		catch (Exception ex)
@@ -61,10 +66,31 @@ public static class Program
 		}
 		finally
 		{
+			if (provider is not null)
+			{
+				DisposeServices(provider, _teardownBound);
+			}
+
 			Log.CloseAndFlushAsync().AsTask().GetAwaiter().GetResult();
 		}
 
 		return exitCode;
+	}
+
+	internal static void DisposeServices(ServiceProvider provider, TimeSpan bound)
+	{
+		try
+		{
+			var teardown = Task.Run(() => provider.DisposeInShutdownOrderAsync().AsTask());
+			if (!teardown.Wait(bound))
+			{
+				Log.Warning("Service teardown did not finish within {Bound}; exiting anyway", bound);
+			}
+		}
+		catch (AggregateException ex)
+		{
+			Log.Error(ex.Flatten(), "Service teardown failed");
+		}
 	}
 
 	private static StartupOutcome ValidateStartup(StartupOptions options)
@@ -213,9 +239,9 @@ public static class Program
 		}
 	}
 
-	private readonly record struct StartupOutcome(IServiceProvider? Provider, IReadOnlyList<string>? Errors)
+	private readonly record struct StartupOutcome(ServiceProvider? Provider, IReadOnlyList<string>? Errors)
 	{
-		public static StartupOutcome Succeeded(IServiceProvider provider)
+		public static StartupOutcome Succeeded(ServiceProvider provider)
 		{
 			return new StartupOutcome(provider, null);
 		}

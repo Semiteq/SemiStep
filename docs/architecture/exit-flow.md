@@ -28,22 +28,53 @@ There is no code path that calls `IClassicDesktopStyleApplicationLifetime.Shutdo
 raised `Closing` but ignored `e.Cancel`) was its only such call site; it has been removed. Every
 app exit now routes through `MainWindow.Close()` and runs the dirty guard.
 
-## PLC recipe write at exit
+## PLC recipe write at sync disable
 
 A recipe write runs on its own cancellation token, separate from the sync debounce. A sync disable
 does not cancel it: `PlcLifecycleManager.DisableSync` waits for it up to 5 s, then disconnects, then
-releases the sync ownership lease. `PlcSyncCoordinator.Dispose` waits up to 5 s for a started write,
-and only after that bound cancels it and logs a warning. The write therefore ends whole unless the
-connection drops, the PLC stalls past the bound, or the process dies.
+releases the sync ownership lease. The write therefore ends whole unless the connection drops, the
+PLC stalls past the bound, or the process dies. The exit keeps the same order, see
+[Service teardown at exit](#service-teardown-at-exit).
 
-Nothing calls `PlcSyncCoordinator.Dispose` in production today: the service container is never
-disposed (#112). When #112 adds container disposal, it must dispose the coordinator explicitly before
-`PlcLifecycleManager` and the container. The container disposes singletons in reverse creation order,
-and `PlcLifecycleManager` is created after the coordinator, so it would otherwise release the lease
-before the coordinator waits for the write. That disposal order was observed on
-Microsoft.Extensions.DependencyInjection 10.0.0; #112 confirms it on 11.0.0, the version the project
-pins, and for the S7Di shape, where `IPlcSyncService` is a factory that forwards to the
-`PlcSyncCoordinator` registration.
+## Service teardown at exit
+
+`Program.Main` disposes the service container once, after `App.Run` returns (or throws) and before
+the log flush. `Program.DisposeServices` runs `S7Di.DisposeInShutdownOrderAsync` on a pool thread and
+waits for it at most 10 s. A timeout logs one warning, a failure logs one error, and the exit code
+does not change. Past the bound the OS closes the socket and the sync ownership lock file, as it
+does on Windows session end.
+
+The teardown follows the order of `PlcLifecycleManager.DisableSync`:
+
+1. `PlcSyncCoordinator.Dispose` cancels the debounce and waits up to 5 s for a started write. Past
+   that bound it cancels the write and logs a warning. An edit still in the 1 s debounce is dropped
+   on purpose, because only a started write completes.
+2. `IS7Connection.DisposeAsync` disconnects from the PLC.
+3. The container disposes the rest. `PlcLifecycleManager.Dispose` releases the lease.
+
+The order is explicit because the container disposes singletons in reverse capture order, and
+`PlcLifecycleManager` is captured after the coordinator and the S7 forwards it depends on. Left to the
+container, the lease release and the disconnect would both run before the write wait (probed on
+Microsoft.Extensions.DependencyInjection 11.0.0). The container calls `DisposeAsync` once per
+registration that resolved an instance, so `S7Service` guards its teardown and leaves the `S7Driver`
+it did not create to the container. Sync `Dispose` throws, because `S7Service` and `S7Driver`
+implement only `IAsyncDisposable`.
+
+A throw is handled differently per step. In step 3 the container's `DisposeAsync` continues past a
+service that throws and rethrows at the end. A throw in step 1 or 2 skips the rest of those steps,
+but the routine runs step 3 in a `finally`, so the container still disposes and the lease is
+released. The exception then reaches `Program.DisposeServices`, which logs one error.
+
+Automated tests cover:
+
+- `ShutdownOrderTests`: the order with a held write, the dropped debounced edit, and the container
+  step after a connection that throws.
+- `S7ServiceDisposeTests`: the `S7Service` dispose guard and the transport it leaves undisposed.
+- `ServiceTeardownTests`: the real container after the main window closes, the real container that
+  never connected, the bound and the failure path.
+
+Checked by hand only: `StartWithClassicDesktopLifetime` returning and the process exit, the teardown
+after `App.Run` throws, and Windows session end.
 
 ## Style-editor restart path
 

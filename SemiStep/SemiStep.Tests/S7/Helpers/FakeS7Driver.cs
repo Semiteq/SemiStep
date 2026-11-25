@@ -24,6 +24,8 @@ internal sealed class FakeS7Driver : IS7Driver
 
 	public int ConnectCount => _calls.Count(call => call.IsConnect);
 
+	public int DisposeCount { get; private set; }
+
 	/// <summary>
 	/// Directly sets the connected state, bypassing <see cref="ConnectAsync"/> and
 	/// <see cref="DisconnectAsync"/>. Useful for simulating mid-session connection drops.
@@ -64,6 +66,7 @@ internal sealed class FakeS7Driver : IS7Driver
 
 	public ValueTask DisposeAsync()
 	{
+		DisposeCount++;
 		IsConnected = false;
 		return ValueTask.CompletedTask;
 	}

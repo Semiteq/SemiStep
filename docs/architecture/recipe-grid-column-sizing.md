@@ -81,10 +81,11 @@ For each type, `PropertyRepresentatives` yields:
 
 - string types → a capped `'0'` sample (`MaxStringSampleLength` = 12). Production string max_length
   is 64/255; sampling uncapped would let one text column dominate the FullHD budget.
-- numeric/time types → **both** `Max` and `Min`, each formatted with the type's units. Both extents
-  matter because for a symmetric range the negative `Min` is wider than `Max` by the minus sign:
-  `pressure_pa` (−200000…200000) renders "−200000 Па", wider than "200000 Па". Time formats via
-  HMS, so `time` (max 86400) renders "24:00:00 с".
+- numeric/time types → **both** `Max` and `Min`, numeric ones formatted with the type's units. Both
+  extents matter because for a symmetric range the negative `Min` is wider than `Max` by the minus
+  sign: `pressure_pa` (−200000…200000) renders "−200000 Па", wider than "200000 Па". A `time_hms`
+  type formats as hh:mm:ss with no unit, so `time` (max 86400) renders "24:00:00"; the YAML `units`
+  text stays but is not shown or measured.
 
 ## Chrome allowance (font-proportional)
 
@@ -100,7 +101,7 @@ budget tuned for one font:
   floor.
 
 The content budget is sized for the tightest case: a column whose representative equals the rendered
-cell exactly, which is the HH:MM:SS time columns ("00:00:00 с"). Other columns get visual slack for
+cell exactly, which is the HH:MM:SS time columns ("00:00:00"). Other columns get visual slack for
 free because their representative is a range extreme wider than typical cells; the time columns do
 not, so they set the floor for the multiple. The header budget must also clear the header padding
 (6px per side); the multiple covers both consumers, so do not lower it.

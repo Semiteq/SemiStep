@@ -1,4 +1,5 @@
-﻿using System.Reactive.Subjects;
+﻿using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 using FluentResults;
 
@@ -14,10 +15,7 @@ namespace SemiStep.Core.Plc.Sync;
 /// The sync state machine: status, debounce, pending recipe, in-flight attempt and its write token
 /// under one state lock.
 /// </summary>
-internal sealed class PlcSyncCoordinator(
-	PlcTransactionExecutor transactionExecutor,
-	IS7Connection connection,
-	ILoggerFactory loggerFactory) : IPlcSyncService, IDisposable
+internal sealed class PlcSyncCoordinator : IPlcSyncService, IDisposable
 {
 	private const int DebounceDelayMilliseconds = 1000;
 
@@ -30,22 +28,45 @@ internal sealed class PlcSyncCoordinator(
 	private readonly BehaviorSubject<PlcSessionSnapshot> _subject = new(
 		PlcSessionSnapshot.InitialState);
 	private readonly Subject<IError> _faults = new();
-	private readonly PlcSyncExecutor _executor = new(
-		transactionExecutor,
-		connection,
-		loggerFactory.CreateLogger<PlcSyncExecutor>());
-	private readonly ILogger<PlcSyncCoordinator> _logger = loggerFactory.CreateLogger<PlcSyncCoordinator>();
+	private readonly PlcSyncExecutor _executor;
+	private readonly ILogger<PlcSyncCoordinator> _logger;
+	private readonly IDisposable _runEndSubscription;
 
-	// Guarded by _stateLock; written from the UI caller, the sync pool task and the S7 connection callback.
+	// Guarded by _stateLock; written from the UI caller, the sync pool task, the S7 connection callback
+	// and the execution monitor poll.
 	private PlcConnectionState _connectionState = PlcConnectionState.Disconnected;
 	private bool _isSyncEnabled;
 	private PlcSyncStatus _status = PlcSyncStatus.Idle;
 	private Recipe? _pendingRecipe;
+	private bool _isLatestRecipeValid;
+	private bool _isParkedUntilRunEnd;
+	private bool _hasRunEndedDuringAttempt;
 	private CancellationTokenSource? _debounceCts;
 	private CancellationTokenSource? _runningAttempt;
 	private CancellationTokenSource? _writeCts;
 	private Task? _syncTask;
 	private bool _disposed;
+
+	public PlcSyncCoordinator(
+		PlcTransactionExecutor transactionExecutor,
+		IS7Connection connection,
+		IS7ExecutionStream executionStream,
+		ILoggerFactory loggerFactory)
+	{
+		_executor = new PlcSyncExecutor(
+			transactionExecutor,
+			connection,
+			loggerFactory.CreateLogger<PlcSyncExecutor>());
+		_logger = loggerFactory.CreateLogger<PlcSyncCoordinator>();
+		_runEndSubscription = executionStream.ExecutionState
+			.Select(info => info.RecipeActive)
+			.DistinctUntilChanged()
+			.Skip(1)
+			.Where(isActive => !isActive)
+			.Subscribe(
+				_ => OnRunEnded(),
+				ex => _logger.LogError(ex, "Execution state stream failed"));
+	}
 
 	public bool IsSyncEnabled
 	{
@@ -69,19 +90,6 @@ internal sealed class PlcSyncCoordinator(
 		}
 	}
 
-	public DateTimeOffset? LastSyncTime
-	{
-		get
-		{
-			lock (_stateLock)
-			{
-				return field;
-			}
-		}
-
-		private set;
-	}
-
 	public IObservable<PlcSessionSnapshot> PlcState => _subject;
 
 	public IObservable<IError> Faults => _faults;
@@ -93,6 +101,7 @@ internal sealed class PlcSyncCoordinator(
 			Transition(() =>
 			{
 				_pendingRecipe = null;
+				_isLatestRecipeValid = false;
 				return new TransitionResult(SetStatusLocked(PlcSyncStatus.OutOfSync), null, null);
 			});
 			return;
@@ -101,6 +110,7 @@ internal sealed class PlcSyncCoordinator(
 		StartDebounceWhen(() =>
 		{
 			_pendingRecipe = recipe;
+			_isLatestRecipeValid = true;
 			if (_runningAttempt is null)
 			{
 				return true;
@@ -186,6 +196,7 @@ internal sealed class PlcSyncCoordinator(
 			_syncTask = null;
 		}
 
+		_runEndSubscription.Dispose();
 		debounceCts?.Cancel();
 		if (!SyncTaskEndedWithinDisposeBound(taskToWait))
 		{
@@ -257,6 +268,8 @@ internal sealed class PlcSyncCoordinator(
 		var ct = attempt.Token;
 		_debounceCts = attempt;
 		_runningAttempt = attempt;
+		_isParkedUntilRunEnd = false;
+		_hasRunEndedDuringAttempt = false;
 		_syncTask = Task.Run(() => RunAttemptAsync(attempt, ct));
 
 		return retired;
@@ -267,6 +280,8 @@ internal sealed class PlcSyncCoordinator(
 		var retired = _debounceCts;
 		_debounceCts = null;
 		_pendingRecipe = null;
+		_isParkedUntilRunEnd = false;
+		_hasRunEndedDuringAttempt = false;
 
 		return retired;
 	}
@@ -301,6 +316,12 @@ internal sealed class PlcSyncCoordinator(
 		}
 
 		var precheck = await _executor.CheckCanSyncAsync(ct);
+		if (precheck is SyncPrecheckOutcome.Failed { Error: RecipeActiveError recipeActive })
+		{
+			ApplyOutcome(attempt, () => ParkUntilRunEndLocked(recipeToSync, recipeActive));
+			return;
+		}
+
 		if (precheck is SyncPrecheckOutcome.Failed failed)
 		{
 			ApplyFailure(attempt, failed.Error);
@@ -417,7 +438,6 @@ internal sealed class PlcSyncCoordinator(
 
 	private TransitionResult CompleteWriteLocked()
 	{
-		LastSyncTime = DateTimeOffset.UtcNow;
 		var snapshot = SetStatusLocked(PlcSyncStatus.Synced);
 		if (_pendingRecipe is null)
 		{
@@ -453,6 +473,39 @@ internal sealed class PlcSyncCoordinator(
 		});
 
 		return applied;
+	}
+
+	/// <summary>Keeps the newest valid recipe for the run end, or retries at once if the run already ended.</summary>
+	private TransitionResult ParkUntilRunEndLocked(Recipe recipeToSync, RecipeActiveError recipeActive)
+	{
+		_runningAttempt = null;
+		if (_isLatestRecipeValid)
+		{
+			_pendingRecipe ??= recipeToSync;
+		}
+
+		if (_hasRunEndedDuringAttempt && _pendingRecipe is not null)
+		{
+			return new TransitionResult(null, recipeActive, StartDebounceLocked());
+		}
+
+		_isParkedUntilRunEnd = true;
+		return new TransitionResult(null, recipeActive, null);
+	}
+
+	/// <summary>Writes the recipe a run parked; the pre-check still decides whether the PLC takes it.</summary>
+	private void OnRunEnded()
+	{
+		StartDebounceWhen(() =>
+		{
+			if (_runningAttempt is not null)
+			{
+				_hasRunEndedDuringAttempt = true;
+				return false;
+			}
+
+			return _isParkedUntilRunEnd && _pendingRecipe is not null;
+		});
 	}
 
 	private void EndAttempt(CancellationTokenSource attempt)

@@ -56,7 +56,7 @@ public sealed class PlcSyncCoordinatorTests
 		var executor = new PlcTransactionExecutor(
 			transport, converter, arrayCodec, configuration, NullLogger<PlcTransactionExecutor>.Instance);
 		var coordinator = new PlcSyncCoordinator(
-			executor, connectionService, loggerFactory ?? NullLoggerFactory.Instance);
+			executor, connectionService, connectionService, loggerFactory ?? NullLoggerFactory.Instance);
 
 		return (coordinator, transport, connectionService);
 	}
@@ -187,31 +187,6 @@ public sealed class PlcSyncCoordinatorTests
 			cancellationToken: TestContext.Current.CancellationToken);
 
 		coordinator.Status.Should().Be(PlcSyncStatus.Synced);
-	}
-
-	[Fact]
-	public async Task NotifyRecipeChanged_IsValidTrue_Connected_SetsLastSyncTime()
-	{
-		var (coordinator, transport, connectionService) = Build(connected: true);
-
-		var layout = BuildTestConfiguration().Layout;
-		transport.SetReadResponseForDb(layout.IntDb.DbNumber, (_, count) => new byte[count]);
-		transport.SetReadResponseForDb(layout.FloatDb.DbNumber, (_, count) => new byte[count]);
-		transport.SetReadResponseForDb(layout.StringDb.DbNumber, (_, count) => new byte[count]);
-
-		var before = DateTimeOffset.UtcNow;
-		coordinator.NotifyRecipeChanged(Recipe.Empty, isValid: true);
-		await coordinator.WaitForPendingSyncAsync(TestContext.Current.CancellationToken);
-
-		// (a) Observable state: poll LastSyncTime until the sync completion stamps it.
-		await TestHelpers.WaitUntilAsync(
-			() => coordinator.LastSyncTime is not null,
-			timeout: TimeSpan.FromMilliseconds(2500),
-			pollInterval: TimeSpan.FromMilliseconds(20),
-			cancellationToken: TestContext.Current.CancellationToken);
-
-		coordinator.LastSyncTime.Should().NotBeNull();
-		coordinator.LastSyncTime!.Value.Should().BeOnOrAfter(before);
 	}
 
 	[Fact]
@@ -386,6 +361,6 @@ public sealed class PlcSyncCoordinatorTests
 			"the fault must carry the typed error so the panel localizes it by type");
 		transport.WriteLog.Should().BeEmpty(
 			"no write may reach the PLC while a recipe is active");
-		coordinator.Status.Should().Be(PlcSyncStatus.Failed);
+		coordinator.Status.Should().NotBe(PlcSyncStatus.Failed, "an active recipe defers the sync, it is not a sync error");
 	}
 }

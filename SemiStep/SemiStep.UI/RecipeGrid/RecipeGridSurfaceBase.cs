@@ -567,7 +567,6 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	private void RefreshStepStartTimes(int fromIndex)
 	{
 		var stepStartTimes = _coordinator.Snapshot.StepStartTimes;
-		var startTimeUnits = TimeFormatHelper.ResolveStartTimeUnits(RecipeMetadataRegistry);
 		for (var i = fromIndex; i < Items.Count; i++)
 		{
 			string formattedTime;
@@ -577,7 +576,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 				formattedTime = TimeFormatHelper.FormatValue(
 					rawSeconds,
 					TimeFormatHelper.TimeHmsFormat,
-					startTimeUnits);
+					units: null);
 			}
 			else
 			{

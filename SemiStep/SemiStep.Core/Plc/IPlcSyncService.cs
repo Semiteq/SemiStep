@@ -26,8 +26,6 @@ public interface IPlcSyncService
 
 	PlcSyncStatus Status { get; }
 
-	DateTimeOffset? LastSyncTime { get; }
-
 	IObservable<PlcSessionSnapshot> PlcState { get; }
 
 	IObservable<IError> Faults { get; }

@@ -63,20 +63,14 @@ colors:
   grid_line: "#E0E0E0"
 
 status_bar:
-  background: "#F0F0F0"
+  background: "#F7F8FA"
   foreground: "#000000"
+  # Top and bottom only; the bar keeps fixed 12 px side insets.
   padding: 5
-  item_spacing: 10
-  # Status-bar text and the step/recipe timer label/value fonts are configurable in-app.
+  # The status-bar font is configurable in-app and applies to every bar text, timers included.
   font_size: 12
   weight: 400
   italic: false
-  timer_label_font_size: 12
-  timer_label_weight: 400
-  timer_label_italic: false
-  timer_value_font_size: 20
-  timer_value_weight: 400
-  timer_value_italic: false
 
 validation_panel:
   background: "#FFFFFF"
@@ -87,13 +81,13 @@ validation_panel:
 
 chrome:
   info: "#1976D2"
-  connected: "#44BB44"
-  disconnected: "#FF4444"
+  connected: "#208A3C"
+  disconnected: "#DB3B4B"
   panel_background: "#F8F8F8"
   panel_header_background: "#EEEEEE"
   subtle_border: "#D0D0D0"
   separator: "#C0C0C0"
-  secondary_foreground: "#888888"
+  secondary_foreground: "#6C707E"
   grid_border: "#808080"
   grid_background: "#FFFFFF"
   header_foreground: "#000000"

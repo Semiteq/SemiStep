@@ -33,8 +33,6 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 	public const int MaxRowHeight = 400;
 	public const int MinPadding = 0;
 	public const int MaxPadding = 100;
-	public const int MinSpacing = 0;
-	public const int MaxSpacing = 100;
 	public const int MinPanelMaxHeight = 20;
 	public const int MaxPanelMaxHeight = 2000;
 
@@ -318,9 +316,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 		{
 			options.Fonts.HeaderFontWeight,
 			options.Fonts.CellFontWeight,
-			options.StatusBar.Weight,
-			options.StatusBar.TimerLabelWeight,
-			options.StatusBar.TimerValueWeight
+			options.StatusBar.Weight
 		};
 
 		foreach (var weight in seededWeights.Distinct())
@@ -349,10 +345,7 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 			&& InRange(Layout.CellPaddingRight, MinPadding, MaxPadding)
 			&& InRange(Layout.CellPaddingBottom, MinPadding, MaxPadding)
 			&& InRange(StatusBar.Padding, MinPadding, MaxPadding)
-			&& InRange(StatusBar.ItemSpacing, MinSpacing, MaxSpacing)
 			&& InRange(StatusBar.FontSize, MinFontSize, MaxFontSize)
-			&& InRange(StatusBar.TimerLabelFontSize, MinFontSize, MaxFontSize)
-			&& InRange(StatusBar.TimerValueFontSize, MinFontSize, MaxFontSize)
 			&& InRange(ValidationPanel.MaxHeight, MinPanelMaxHeight, MaxPanelMaxHeight);
 	}
 

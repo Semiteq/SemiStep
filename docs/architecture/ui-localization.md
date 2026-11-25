@@ -48,14 +48,25 @@ Two resource files live in `SemiStep.UI/Localization`:
 Resources are referenced from AXAML via `{x:Static l:Resources.Key}` (with
 `xmlns:l="clr-namespace:SemiStep.UI.Localization"`) and from C# via `Resources.Key`. Composite labels
 that need plural-neutral Russian phrasing or invariant-culture number formatting (`Шагов: {0}`,
-`Ошибок: {0}`, last-sync elapsed text) are folded into view-model properties rather than formatted in
+`Ошибок: {0}`, the last-exchange age from `PlcLinkView.Build`) are folded into view-model properties rather than formatted in
 XAML.
 
-The last-sync elapsed text is a set of bucket strings, one resource per bucket: `LastSyncAgoFormat`
-(`{0} s ago`, whole seconds below 30 s), `LastSyncOver30SecondsAgo`, `LastSyncOverMinuteAgo` and
-`LastSyncOverHourAgo`. Only the first bucket carries a number. A number next to a Russian noun needs
-plural forms (`1 минута` / `3 минуты` / `5 минут`), and resx cannot select one for a single label.
-`MainWindowViewModel` picks the bucket from the injected `IScheduler.Now`.
+The last-exchange age is a set of bucket strings, one resource per bucket: `LinkAgeSecondsFormat`
+(`{0} s ago`, whole seconds below 30 s), `LinkAgeOver30Seconds`, `LinkAgeOverMinute` and
+`LinkAgeOverHour`; `LinkNever` stands in before the first successful read. Only the first bucket
+carries a number. A number next to a Russian noun needs plural forms (`1 минута` / `3 минуты` /
+`5 минут`), and resx cannot select one for a single label. `PlcLinkView` picks the bucket from the
+injected `IScheduler.Now` and the last successful PLC read (`RecipeCoordinator.LastExchangeTime`).
+
+The status-bar strings follow the same rule: the link texts (`Link*`), the execution texts
+(`ExecutionRunningFormat`, `ExecutionRunningStepOnlyFormat`, `ExecutionRunning`, `ExecutionIdle`,
+`ExecutionNoData`, `ExecutionLockToolTip`),
+the loop texts (`LoopPass*`, `LoopLevel*`), the timer captions (`StatusStepLabel`, `StatusRecipeLabel`,
+`StepTimerRunningCaption`, `RecipeTimerRunningCaption`, `RecipeTimerIdleCaption`) and
+`WindowTitleRunningSuffix` live in both resx files and fit the fixed slots in both languages. The step
+and pass numbers are padded with U+2007 figure spaces to the digit count of their total.
+`ExecutionRunningStepOnlyFormat` carries no total: it shows the PLC step when that step is past the
+local recipe's step count, and that number is not padded.
 
 ## The generated accessor
 

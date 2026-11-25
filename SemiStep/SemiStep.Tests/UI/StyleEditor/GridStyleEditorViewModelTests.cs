@@ -68,18 +68,13 @@ public sealed class GridStyleEditorViewModelTests
 	[AvaloniaTheory]
 	[InlineData(5)]
 	[InlineData(73)]
-	public void CanSave_IsFalse_WhenAnyStatusBarFontSizeOutOfRange(int fontSize)
+	public void CanSave_IsFalse_WhenStatusBarFontSizeOutOfRange(int fontSize)
 	{
-		var statusBarFont = CreateViewModel(GridStyleOptions.Default);
-		var timerValueFont = CreateViewModel(GridStyleOptions.Default);
-		var timerLabelFont = CreateViewModel(GridStyleOptions.Default);
+		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		statusBarFont.StatusBar.FontSize = fontSize;
-		timerValueFont.StatusBar.TimerValueFontSize = fontSize;
-		timerLabelFont.StatusBar.TimerLabelFontSize = fontSize;
+		viewModel.StatusBar.FontSize = fontSize;
 
-		new[] { statusBarFont.CanSave, timerValueFont.CanSave, timerLabelFont.CanSave }
-			.Should().Equal(false, false, false);
+		viewModel.CanSave.Should().BeFalse();
 	}
 
 	[AvaloniaFact]

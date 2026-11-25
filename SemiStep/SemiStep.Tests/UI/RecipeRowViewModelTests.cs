@@ -12,7 +12,6 @@ using Microsoft.Extensions.DependencyInjection;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Tests.Core.Helpers;
-using SemiStep.Tests.Helpers;
 
 using SemiStep.UI.RecipeGrid;
 
@@ -277,44 +276,6 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 
 		row.ColumnUnits.Should().ContainKey(columnKey)
 			.WhoseValue.Should().Be(ConfiguredUnitsOfColumn(columnKey));
-	}
-
-	[AvaloniaFact]
-	public void ColumnUnits_StartTimeColumn_EqualsDurationPropertyUnits()
-	{
-		var row = CreateRow(RecipeTestDriver.WaitActionId);
-		var durationUnits = ConfiguredUnitsOfColumn(RecipeTestDriver.StepDurationColumn);
-
-		durationUnits.Should().NotBeNullOrEmpty();
-		row.ColumnUnits.Should().ContainKey("step_start_time")
-			.WhoseValue.Should().Be(durationUnits);
-	}
-
-	[Fact]
-	public void StartTimeUnits_DurationPropertyWithEmptyUnits_AreEmpty()
-	{
-		var duration = TestPropertyTypeDefinitionBuilder.CreateFloat("time") with { Units = "" };
-		var durationColumn = new GridColumnDefinition(
-			Key: StepValueParser.StepDurationColumnKey,
-			ColumnType: ColumnTypes.PropertyField,
-			UiName: "Duration",
-			PropertyTypeId: "time",
-			ReadOnly: false,
-			SaveToCsv: true);
-		var registry = TestRecipeMetadataRegistryFactory.Build(
-			[duration, .. TestRecipeMetadataRegistryFactory.DefaultStringProperty().Values],
-			columns: new Dictionary<string, GridColumnDefinition> { [durationColumn.Key] = durationColumn });
-
-		TimeFormatHelper.ResolveStartTimeUnits(registry).Should().BeEmpty();
-	}
-
-	[Fact]
-	public void StartTimeUnits_NoDurationColumn_AreNull()
-	{
-		var registry = TestRecipeMetadataRegistryFactory.Build(
-			TestRecipeMetadataRegistryFactory.DefaultStringProperty().Values);
-
-		TimeFormatHelper.ResolveStartTimeUnits(registry).Should().BeNull();
 	}
 
 	private string? ConfiguredUnitsOfColumn(string columnKey)

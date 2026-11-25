@@ -16,6 +16,8 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 
 	public bool IsConnected { get; set; } = true;
 
+	public DateTimeOffset? LastExchangeTime { get; set; }
+
 	public bool IsRecipeActive => false;
 
 	/// <summary>

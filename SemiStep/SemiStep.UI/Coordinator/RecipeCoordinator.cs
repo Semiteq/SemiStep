@@ -12,6 +12,7 @@ using ReactiveUI;
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.State;
+using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Import;
 
@@ -103,7 +104,7 @@ public sealed class RecipeCoordinator : IDisposable
 	public bool IsRecipeActive => _plc.IsRecipeActive;
 	public bool IsSyncEnabled => _plc.IsSyncEnabled;
 	public PlcSyncStatus SyncStatus => _plc.SyncStatus;
-	public DateTimeOffset? LastSyncTime => _plc.LastSyncTime;
+	public DateTimeOffset? LastExchangeTime => _plc.LastExchangeTime;
 
 	public RecipeCoordinator Initialize()
 	{
@@ -506,6 +507,13 @@ public sealed class RecipeCoordinator : IDisposable
 		{
 			if (_disposed)
 			{
+				return;
+			}
+
+			if (error is RecipeActiveError)
+			{
+				_logger.LogInformation("PLC sync deferred: {Message}", error.Message);
+				_messagePanel.ReportInfo(ReasonLocalizer.Localize(error));
 				return;
 			}
 

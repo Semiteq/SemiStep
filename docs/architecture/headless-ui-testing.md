@@ -17,8 +17,8 @@ stand-in. See `SemiStep.Tests/UI/MainWindow/MainWindowExitFlowTests.cs` for a wo
 `RunJobs` remains necessary only to pump work the test never awaits:
 
 - fire-and-forget `async void` continuations (e.g. a `Closing` event handler that awaits a dialog);
-- `ObserveOn(RxApp.MainThreadScheduler)` deliveries, such as the `MainWindowViewModel` sync-time
-  `Observable.Interval` tick that reposts `LastSyncTimeText` on the UI scheduler.
+- `ObserveOn(RxApp.MainThreadScheduler)` deliveries, such as the `RecipeCoordinator.PlcStateChanged`
+  snapshots that the status-bar link slot (`PlcLinkViewModel`) reads.
 
 Call `Dispatcher.UIThread.RunJobs()` after triggering such work and before asserting on its effect.
 

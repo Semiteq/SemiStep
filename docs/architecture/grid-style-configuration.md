@@ -132,28 +132,31 @@ The typed record is projected into `Application.Resources` at startup so XAML ca
 - `CellPaletteInstaller.Install` pushes `SolidColorBrush` objects for the read-only / disabled / changed
   cell palettes, selection, grid line, status-bar and validation-panel colors, the app-wide
   `ErrorBrush` / `WarningBrush` (driven by the validation-panel severity colors), and all app-chrome
-  brushes (`InfoBrush`, `ConnectedBrush`, `DisconnectedBrush`, `LocalModeBrush`, `ConnectingBrush`,
-  `PanelBackgroundBrush`,
+  brushes (`InfoBrush`, `ConnectedBrush`, `DisconnectedBrush`, `PanelBackgroundBrush`,
   `PanelHeaderBackgroundBrush`, `SubtleBorderBrush`, `SeparatorBrush`, `SecondaryForegroundBrush`,
   `GridBorderBrush`, `GridBackgroundBrush`, `HeaderForegroundBrush`).
 - `ExecutionPaletteInstaller.Install` pushes the per-depth execution row brushes plus the
   current-step-marker brush.
 
-The four sync chrome brushes (`ConnectedBrush`, `DisconnectedBrush`, `LocalModeBrush`,
-`ConnectingBrush`, from the `chrome:` aliases `connected`, `disconnected`, `local_mode`,
-`connecting`) are still installed but have no reader: the status-bar sync button they painted is
-gone. The sync switch is a `ToggleSwitch` at the right end of the recipe toolbar, with a neutral
+The status-bar link dot reads two chrome brushes: `ConnectedBrush` (`chrome.connected`, green
+`#208A3C`) for a live link and `DisconnectedBrush` (`chrome.disconnected`, red `#DB3B4B`) for no link
+or a sync error. The hollow dot of a connect or disconnect in flight strokes with
+`SecondaryForegroundBrush` (`chrome.secondary_foreground`, `#6C707E`). The keys `chrome.local_mode` and
+`chrome.connecting` are deleted; a `grid_style.yaml` that still holds them, or the deleted
+`status_bar` keys below, loads with no message, because `YamlConfigDeserializer` ignores unmatched
+keys. The sync switch is a `ToggleSwitch` at the right end of the recipe toolbar, with a neutral
 grey checked track from `ToolbarSwitchTrackBrush` (`Styles/ColorPalette.axaml`), scoped to the
 toolbar through Semi's `ToggleSwitchContainer*Background` component keys. While `ToggleSyncCommand`
 runs, the disabled checked track is `ToolbarDisabledBrush` grey, never green. The keyed
 `ToolbarSyncSwitch` theme in `RecipeToolBar.axaml` puts the caption left of the track on the button
 line, so the toolbar keeps the height of its buttons and a click on the caption also toggles. It
-shows only sync on or off; the link state has no indicator until the status bar is rebuilt.
+shows only sync on or off; the link state is the status bar's link slot.
 
 Alongside the brushes, the cell installer pushes a few **numeric / layout** resources that XAML
-consumes directly: `StatusBarPadding` (a `Thickness`), `StatusBarItemSpacing` (a `double`), and
-`ValidationPanelMaxHeight` (a `double`). These let the status bar and message panel read their layout
-from config without a code-side calculation. The status-bar **font** resources are described in the
+consumes directly: `StatusBarPadding` (a `Thickness`) and `ValidationPanelMaxHeight` (a `double`).
+`status_bar.padding` is the top and bottom inset only (5 in the presets); the bar's 12 px side insets,
+its fixed slot widths and its `MinHeight` of 38 are fixed in `AppStatusBar.axaml`. The status-bar
+ground is `status_bar.background` `#F7F8FA`. The status-bar **font** resources are described in the
 font-model section below.
 
 ## Grid orientation
@@ -187,19 +190,17 @@ orientation: rows_as_steps   # canonical (rows = steps); or columns_as_steps (tr
 ## The font model
 
 Fonts span every text role the palette drives. The model is one **global font family** plus
-**per-role size, weight, and italic**. There are five roles:
+**per-role size, weight, and italic**. There are three roles:
 
 | Role | Where it renders | Default size | Default weight | Default italic |
 | --- | --- | --- | --- | --- |
 | Grid header | column header text | 14 | 700 (Bold) | false |
 | Grid cell | cell / numbering / combo text | 12 | 400 (Normal) | false |
-| Status-bar text | all non-timer status text | 12 | 400 | false |
-| Status-bar timer **label** | `Шаг:` / `Рецепт:` captions | 14 | 400 | false |
-| Status-bar timer **value** | the two countdown readouts | 24 | 400 | false |
+| Status-bar text | every status-bar text, timers included | 12 | 400 | false |
 
-The earlier single `StatusBarTimerFontSize` (one size for both label and value) is **replaced** by the
-two timer roles, so the caption and the countdown can carry independent fonts. With the shipped config
-the label renders at 14 and the value at 24 — they no longer share one size.
+The six `status_bar.timer_label_*` / `timer_value_*` keys and `status_bar.item_spacing` are deleted: the
+timers render in the bar font, so a style edit cannot widen them past their fixed slots. The bar root
+sets `TextElement.FontFeatures="+tnum"`, so digits keep one width in any family.
 
 - **Family** is a single `string` on the record (`GridStyleOptions.Fonts.FontFamily`). The default is `""`,
   meaning "grid default": consumers fall back to `GridFonts.DefaultFamily`
@@ -215,8 +216,7 @@ the label renders at 14 and the value at 24 — they no longer share one size.
 
 The status-bar roles use the **`DynamicResource` cascade**: `CellPaletteInstaller.Install` projects
 the typed record into these resource keys, and `AppStatusBar.axaml` binds `TextElement.*` attached
-properties to them (the global family + status-text role on the root `Border`; the timer label/value
-roles set directly on the four timer `TextBlock`s):
+properties to them on the root `Border`:
 
 | Resource key | Type | YAML source |
 | --- | --- | --- |
@@ -224,12 +224,6 @@ roles set directly on the four timer `TextBlock`s):
 | `StatusBarFontSize` | `double` | `status_bar.font_size` |
 | `StatusBarFontWeight` | `FontWeight` | `status_bar.weight` |
 | `StatusBarFontStyle` | `FontStyle` | `status_bar.italic` |
-| `StatusBarTimerLabelFontSize` | `double` | `status_bar.timer_label_font_size` |
-| `StatusBarTimerLabelFontWeight` | `FontWeight` | `status_bar.timer_label_weight` |
-| `StatusBarTimerLabelFontStyle` | `FontStyle` | `status_bar.timer_label_italic` |
-| `StatusBarTimerValueFontSize` | `double` | `status_bar.timer_value_font_size` |
-| `StatusBarTimerValueFontWeight` | `FontWeight` | `status_bar.timer_value_weight` |
-| `StatusBarTimerValueFontStyle` | `FontStyle` | `status_bar.timer_value_italic` |
 
 The grid roles are **code-assigned**, not resources: `GridFontApplier` (used by `ColumnBuilder`,
 `TextCellFactory`, and `ComboBoxCellFactory` in the canonical view, and by
@@ -250,8 +244,15 @@ default, so existing `grid_style.yaml` files load unchanged.
 
 - `fonts:` — `family` (string), `header_size`, `header_weight`, `header_italic`,
   `cell_size`, `cell_weight`, `cell_italic`.
-- `status_bar:` — `font_size`, `weight`, `italic`, `timer_label_font_size`, `timer_label_weight`,
-  `timer_label_italic`, `timer_value_font_size`, `timer_value_weight`, `timer_value_italic`.
+- `status_bar:` — `font_size`, `weight`, `italic`.
+
+### Site-edited files
+
+The loader never rewrites a site-edited `grid_style.yaml`. Such a file keeps its old colours
+(`chrome.connected` `#44BB44`, `chrome.disconnected` `#FF4444`, `chrome.secondary_foreground` `#888888`,
+`status_bar.background` `#F0F0F0`) and its own `status_bar.font_size`. Reinstalling the presets, or
+editing those keys, brings the D1b/D2 values listed in "Resources projection". A `status_bar.font_size`
+above 12 may clip the fixed slots; this is a non-goal, and nothing clamps the value.
 
 ## Why the typed record cannot be replaced by raw resources
 

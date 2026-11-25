@@ -1,12 +1,12 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Tests.UI.Helpers;
-using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.Styles;
 
@@ -15,12 +15,11 @@ using Xunit;
 namespace SemiStep.Tests.UI.MainWindow;
 
 [Trait("Component", "UI")]
-[Trait("Area", "MainWindow")]
+[Trait("Area", "StatusBar")]
 [Trait("Category", "Unit")]
 public sealed class AppStatusBarTimerFontTests : IAsyncLifetime
 {
-	private const double TimerLabelFontSize = 16;
-	private const double TimerValueFontSize = 28;
+	private const int BarFontSize = 16;
 
 	private readonly UIFixture _fixture = new();
 	private MainWindowViewModel _viewModel = null!;
@@ -39,42 +38,22 @@ public sealed class AppStatusBarTimerFontTests : IAsyncLifetime
 		return _fixture.DisposeAsync();
 	}
 
-	[AvaloniaFact]
-	public void Timer_LabelAndValueTextBlocks_RenderAtTheirSeparateRoleSizes()
+	[AvaloniaTheory]
+	[InlineData("StepTimerSlot")]
+	[InlineData("RecipeTimerSlot")]
+	public void TimerText_UsesTheBarFontSize(string slotName)
 	{
 		var defaults = GridStyleOptions.Default;
 		var statusBar = ShowStatusBar(defaults with
 		{
-			StatusBar = defaults.StatusBar with
-			{
-				TimerLabelFontSize = (int)TimerLabelFontSize,
-				TimerLabelWeight = 400,
-				TimerValueFontSize = (int)TimerValueFontSize,
-				TimerValueWeight = 700
-			}
+			StatusBar = defaults.StatusBar with { FontSize = BarFontSize }
 		});
 
-		var labels = statusBar.GetVisualDescendants()
-			.OfType<TextBlock>()
-			.Where(textBlock => textBlock.Text == Resources.StatusStepLabel
-				|| textBlock.Text == Resources.StatusRecipeLabel)
-			.ToList();
+		var slot = statusBar.GetLogicalDescendants().OfType<Control>().Single(control => control.Name == slotName);
+		var texts = slot.GetVisualDescendants().OfType<TextBlock>().ToList();
 
-		labels.Should().HaveCount(2, "each timer row carries a step/recipe label TextBlock");
-
-		foreach (var label in labels)
-		{
-			label.FontSize.Should().Be(TimerLabelFontSize,
-				"the timer label TextBlock must bind the label-role size");
-
-			var row = (StackPanel)label.Parent!;
-			var value = row.Children
-				.OfType<TextBlock>()
-				.Single(textBlock => !ReferenceEquals(textBlock, label));
-
-			value.FontSize.Should().Be(TimerValueFontSize,
-				"the paired timer value TextBlock must bind the value-role size, not the label-role size");
-		}
+		texts.Should().NotBeEmpty();
+		texts.Should().AllSatisfy(text => text.FontSize.Should().Be(BarFontSize));
 	}
 
 	private AppStatusBar ShowStatusBar(GridStyleOptions gridStyle)

@@ -18,8 +18,6 @@ public sealed class StubPlcSyncService : IPlcSyncService, IDisposable
 
 	public PlcSyncStatus Status { get; set; } = PlcSyncStatus.Idle;
 
-	public DateTimeOffset? LastSyncTime { get; set; }
-
 	public IObservable<PlcSessionSnapshot> PlcState => _plcStateSubject;
 
 	public IObservable<IError> Faults => _faultsSubject;

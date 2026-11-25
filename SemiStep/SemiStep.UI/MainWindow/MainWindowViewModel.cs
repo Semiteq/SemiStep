@@ -1,16 +1,15 @@
-﻿using System.Globalization;
-using System.Reactive;
+﻿using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 using Microsoft.Extensions.Logging;
 
 using ReactiveUI;
 
 using SemiStep.Core.Configuration;
-using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
 
 using SemiStep.UI.Clipboard;
@@ -28,10 +27,11 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 {
 	private readonly RecipeCoordinator _coordinator;
 	private readonly CompositeDisposable _disposables = [];
+	private readonly Subject<SyncToggleDirection> _syncToggle = new();
 	private readonly ILogger<MainWindowViewModel> _logger;
 	private readonly Func<GridStyleEditorViewModel> _gridStyleEditorViewModelFactory;
-	private readonly IScheduler _scheduler;
 	private readonly ObservableAsPropertyHelper<bool> _isTransposedOrientation;
+	private readonly ObservableAsPropertyHelper<string> _windowTitle;
 
 	public MainWindowViewModel(
 		RecipeCoordinator coordinator,
@@ -41,6 +41,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		RecipeFileViewModel recipeFile,
 		MessagePanelViewModel messagePanel,
 		PlcMonitorViewModel plcMonitor,
+		PlcLinkAddress linkAddress,
 		Func<GridStyleEditorViewModel> gridStyleEditorViewModelFactory,
 		IScheduler scheduler,
 		ILogger<MainWindowViewModel> logger)
@@ -48,7 +49,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		_coordinator = coordinator;
 		_logger = logger;
 		_gridStyleEditorViewModelFactory = gridStyleEditorViewModelFactory;
-		_scheduler = scheduler;
 		RecipeGrid = recipeGrid;
 		RecipeCommands = recipeCommands;
 		Clipboard = clipboard;
@@ -65,6 +65,9 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		OpenStyleEditorCommand = ReactiveCommand.CreateFromTask(ExecuteOpenStyleEditorAsync);
 		ToggleToolBarCommand = ReactiveCommand.Create(ExecuteToggleToolBar);
 		ToggleOrientationCommand = ReactiveCommand.Create(recipeGrid.ToggleOrientation);
+
+		PlcLink = new PlcLinkViewModel(coordinator, linkAddress, _syncToggle.AsObservable(), scheduler)
+			.DisposeWith(_disposables);
 
 		_isTransposedOrientation = recipeGrid
 			.WhenAnyValue(x => x.Orientation)
@@ -84,6 +87,16 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		ToggleOrientationCommand.ReportThrownExceptions(MessagePanel, _logger, new LocalizedText(nameof(Resources.OrientationToggleFailed)))
 			.DisposeWith(_disposables);
 
+		_windowTitle = Observable.FromEvent<MutationSignal>(
+				handler => coordinator.Mutated += handler,
+				handler => coordinator.Mutated -= handler)
+			.Select(_ => Unit.Default)
+			.StartWith(Unit.Default)
+			.CombineLatest(plcMonitor.WhenAnyValue(x => x.IsRecipeActive), (_, isRecipeActive) => isRecipeActive)
+			.Select(BuildWindowTitle)
+			.ToProperty(this, x => x.WindowTitle)
+			.DisposeWith(_disposables);
+
 		_coordinator.Mutated += OnCoordinatorMutated;
 		_disposables.Add(Disposable.Create(() => _coordinator.Mutated -= OnCoordinatorMutated));
 
@@ -99,15 +112,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 					new LocalizedText(nameof(Resources.PlcConflictHandlingFailed)),
 					() => _ = HandleConflictAsync(conflict.Local, conflict.Plc)),
 				OnSubscriptionError(new LocalizedText(nameof(Resources.PlcConflictHandlingFailed))))
-			.DisposeWith(_disposables);
-
-		Observable.Interval(TimeSpan.FromSeconds(1))
-			.ObserveOn(RxSchedulers.MainThreadScheduler)
-			.Subscribe(
-				_ => Guarded(
-					new LocalizedText(nameof(Resources.SyncTimeRefreshFailed)),
-					() => this.RaisePropertyChanged(nameof(LastSyncTimeText))),
-				OnSubscriptionError(new LocalizedText(nameof(Resources.SyncTimeRefreshFailed))))
 			.DisposeWith(_disposables);
 	}
 
@@ -130,6 +134,8 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public PlcMonitorViewModel PlcMonitor { get; }
 
+	public PlcLinkViewModel PlcLink { get; }
+
 	public ReactiveCommand<Unit, Unit> ExitCommand { get; }
 
 	public ReactiveCommand<Unit, Unit> ToggleSyncCommand { get; }
@@ -148,7 +154,7 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		private set => this.RaiseAndSetIfChanged(ref field, value);
 	} = true;
 
-	public string WindowTitle => BuildWindowTitle();
+	public string WindowTitle => _windowTitle.Value;
 
 	public bool IsDirty => _coordinator.IsDirty;
 	public bool CanUndo => _coordinator.CanUndo;
@@ -156,13 +162,10 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public bool IsSyncEnabled => _coordinator.IsSyncEnabled;
 
-	public string PlcSyncStatusText => MapSyncStatus(_coordinator.SyncStatus);
-
-	public string LastSyncTimeText => FormatLastSyncTime(_coordinator.LastSyncTime, _scheduler.Now);
-
 	public void Dispose()
 	{
 		_disposables.Dispose();
+		_syncToggle.OnCompleted();
 		GC.SuppressFinalize(this);
 	}
 
@@ -193,18 +196,27 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	private async Task ExecuteToggleSyncAsync()
 	{
-		if (_coordinator.IsSyncEnabled)
+		var isDisabling = _coordinator.IsSyncEnabled;
+		_syncToggle.OnNext(isDisabling ? SyncToggleDirection.Disabling : SyncToggleDirection.Enabling);
+		try
 		{
-			await _coordinator.DisableSync();
-		}
-		else
-		{
-			var result = await _coordinator.EnableSync();
-
-			if (result.IsFailed)
+			if (isDisabling)
 			{
-				MessagePanel.ReportFailure(result);
+				await _coordinator.DisableSync();
 			}
+			else
+			{
+				var result = await _coordinator.EnableSync();
+
+				if (result.IsFailed)
+				{
+					MessagePanel.ReportFailure(result);
+				}
+			}
+		}
+		finally
+		{
+			_syncToggle.OnNext(SyncToggleDirection.None);
 		}
 
 		RaiseConnectionStateProperties();
@@ -272,7 +284,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	private void RaiseAllStateProperties()
 	{
-		this.RaisePropertyChanged(nameof(WindowTitle));
 		this.RaisePropertyChanged(nameof(IsDirty));
 		this.RaisePropertyChanged(nameof(CanUndo));
 		this.RaisePropertyChanged(nameof(CanRedo));
@@ -282,53 +293,16 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 	private void RaiseConnectionStateProperties()
 	{
 		this.RaisePropertyChanged(nameof(IsSyncEnabled));
-		this.RaisePropertyChanged(nameof(PlcSyncStatusText));
-		this.RaisePropertyChanged(nameof(LastSyncTimeText));
 	}
 
-	private static string MapSyncStatus(PlcSyncStatus status)
-	{
-		return status switch
-		{
-			PlcSyncStatus.Idle => Resources.StatusIdle,
-			PlcSyncStatus.Syncing => Resources.StatusSyncing,
-			PlcSyncStatus.Synced => Resources.StatusSynced,
-			PlcSyncStatus.OutOfSync => string.Empty,
-			PlcSyncStatus.Failed => Resources.StatusFailed,
-			_ => status.ToString()
-		};
-	}
-
-	private static string FormatLastSyncTime(DateTimeOffset? lastSyncTime, DateTimeOffset now)
-	{
-		var value = lastSyncTime is null
-			? Resources.LastSyncNever
-			: FormatSyncAge(now - lastSyncTime.Value);
-
-		return string.Format(CultureInfo.InvariantCulture, Resources.LastSyncPrefix, value);
-	}
-
-	private static string FormatSyncAge(TimeSpan age)
-	{
-		return age.TotalSeconds switch
-		{
-			>= 3600 => Resources.LastSyncOverHourAgo,
-			>= 60 => Resources.LastSyncOverMinuteAgo,
-			>= 30 => Resources.LastSyncOver30SecondsAgo,
-			_ => string.Format(
-				CultureInfo.InvariantCulture,
-				Resources.LastSyncAgoFormat,
-				Math.Max(0, (int)age.TotalSeconds))
-		};
-	}
-
-	private string BuildWindowTitle()
+	private string BuildWindowTitle(bool isRecipeActive)
 	{
 		var fileName = RecipeFile.CurrentFilePath is not null
 			? Path.GetFileNameWithoutExtension(RecipeFile.CurrentFilePath)
 			: Resources.WindowTitleNewRecipe;
 		var dirtyIndicator = IsDirty ? " *" : "";
+		var runningIndicator = isRecipeActive ? Resources.WindowTitleRunningSuffix : "";
 
-		return $"SemiStep - {fileName}{dirtyIndicator}";
+		return $"SemiStep - {fileName}{dirtyIndicator}{runningIndicator}";
 	}
 }

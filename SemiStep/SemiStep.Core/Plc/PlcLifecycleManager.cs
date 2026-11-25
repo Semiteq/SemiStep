@@ -64,7 +64,7 @@ public sealed class PlcLifecycleManager(
 	public IObservable<PlcExecutionInfo> ExecutionState => _executionStream.ExecutionState;
 
 	public PlcSyncStatus SyncStatus => _syncService.Status;
-	public DateTimeOffset? LastSyncTime => _syncService.LastSyncTime;
+	public DateTimeOffset? LastExchangeTime => _connection.LastExchangeTime;
 
 	public IObservable<PlcSessionSnapshot> PlcState => _syncService.PlcState;
 

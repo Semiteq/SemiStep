@@ -21,4 +21,6 @@
 
     <StreamGeometry x:Key="RedoGeometry">M11,3 L14.5,6.5 L11,10 L9.94,8.94 L11.63,7.25 L6.5,7.25 A3,3 0 0 0 6.5,13.25 L9,13.25 L9,14.75 L6.5,14.75 A4.5,4.5 0 0 1 6.5,5.75 L11.63,5.75 L9.94,4.06 Z</StreamGeometry>
 
+    <StreamGeometry x:Key="LockGeometry">F0 M4,7 L4,5 A4,4 0 0 1 12,5 L12,7 L13,7 L13,14.5 L3,14.5 L3,7 Z M5.5,7 L10.5,7 L10.5,5 A2.5,2.5 0 0 0 5.5,5 Z</StreamGeometry>
+
 </ResourceDictionary>

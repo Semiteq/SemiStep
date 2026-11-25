@@ -5,7 +5,6 @@ using AwesomeAssertions;
 using SemiStep.Core.Plc.State;
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
-using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;
 
 using Xunit;
@@ -75,25 +74,5 @@ public sealed class MainWindowViewModelSyncStateTests : IAsyncLifetime
 			cancellationToken: TestContext.Current.CancellationToken);
 
 		raised.Should().Contain(nameof(MainWindowViewModel.IsSyncEnabled));
-	}
-
-	[AvaloniaFact]
-	public void PlcSyncStatusText_ForOutOfSync_ReturnsEmpty()
-	{
-		_fixture.PlcSyncService.Status = PlcSyncStatus.OutOfSync;
-
-		_viewModel.PlcSyncStatusText.Should().BeEmpty();
-	}
-
-	[AvaloniaTheory]
-	[InlineData(PlcSyncStatus.Idle, nameof(Resources.StatusIdle))]
-	[InlineData(PlcSyncStatus.Syncing, nameof(Resources.StatusSyncing))]
-	[InlineData(PlcSyncStatus.Synced, nameof(Resources.StatusSynced))]
-	[InlineData(PlcSyncStatus.Failed, nameof(Resources.StatusFailed))]
-	public void PlcSyncStatusText_ForStatus_IsItsOwnResource(PlcSyncStatus status, string resourceKey)
-	{
-		_fixture.PlcSyncService.Status = status;
-
-		_viewModel.PlcSyncStatusText.Should().Be(Resources.ResourceManager.GetString(resourceKey, Resources.Culture));
 	}
 }

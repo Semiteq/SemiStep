@@ -8,7 +8,37 @@
              x:Class="SemiStep.UI.MainWindow.AppStatusBar"
              x:DataType="local:MainWindowViewModel">
 
+    <UserControl.Styles>
+        <Style Selector="Button.status-slot">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource StatusBarForegroundBrush}" />
+            <!-- The Button theme sets its own font; a slot text keeps the bar's. -->
+            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+            <Setter Property="FontSize" Value="{DynamicResource StatusBarFontSize}" />
+            <Setter Property="FontWeight" Value="{DynamicResource StatusBarFontWeight}" />
+            <Setter Property="FontStyle" Value="{DynamicResource StatusBarFontStyle}" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.status-slot:pointerover /template/ ContentPresenter, Button.status-slot:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Border.status-separator">
+            <Setter Property="Width" Value="1" />
+            <Setter Property="Margin" Value="0,2" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Background" Value="{DynamicResource SeparatorBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <!-- Fixed-width slots: no item moves when a text changes. -->
     <Border Name="StatusBarBorder"
+            MinHeight="38"
             Background="{DynamicResource StatusBarBackgroundBrush}"
             BorderBrush="{DynamicResource SubtleBorderBrush}"
             BorderThickness="0,1,0,0"
@@ -17,150 +47,122 @@
             TextElement.FontSize="{DynamicResource StatusBarFontSize}"
             TextElement.FontWeight="{DynamicResource StatusBarFontWeight}"
             TextElement.FontStyle="{DynamicResource StatusBarFontStyle}"
+            TextElement.FontFeatures="+tnum"
             Padding="{DynamicResource StatusBarPadding}">
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <Grid Name="SlotRow" ColumnDefinitions="12,270,25,200,8,190,25,134,8,154,*,80,12">
 
-            <!-- Error/Warning counts - clickable to toggle log panel -->
-            <Button Grid.Column="0"
+            <Button Name="LinkSlot"
+                    Grid.Column="1"
+                    Width="270"
+                    Classes="status-slot"
+                    HorizontalContentAlignment="Stretch"
+                    Command="{Binding MessagePanel.ShowCommand}"
+                    ToolTip.Tip="{Binding PlcLink.View.ToolTip}">
+                <Grid ColumnDefinitions="12,*">
+                    <Panel Width="8" Height="8" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Ellipse Fill="{DynamicResource ConnectedBrush}"
+                                 IsVisible="{Binding PlcLink.View.IsGreenDot}" />
+                        <Ellipse Fill="{DynamicResource DisconnectedBrush}"
+                                 IsVisible="{Binding PlcLink.View.IsRedDot}" />
+                        <Ellipse Stroke="{DynamicResource SecondaryForegroundBrush}"
+                                 StrokeThickness="1"
+                                 IsVisible="{Binding PlcLink.View.IsHollowDot}" />
+                    </Panel>
+                    <TextBlock Name="LinkText"
+                               Grid.Column="1"
+                               VerticalAlignment="Center"
+                               Text="{Binding PlcLink.View.Text}" />
+                </Grid>
+            </Button>
+
+            <Border Grid.Column="2" Classes="status-separator" />
+
+            <Grid Name="StateStepSlot"
+                  Grid.Column="3"
+                  Width="200"
+                  ColumnDefinitions="20,*"
+                  Background="Transparent"
+                  ToolTip.Tip="{Binding PlcMonitor.ExecutionToolTip}">
+                <PathIcon Name="LockGlyph"
+                          Width="16"
+                          Height="16"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Center"
+                          Data="{StaticResource LockGeometry}"
+                          Foreground="{DynamicResource SecondaryForegroundBrush}"
+                          IsVisible="{Binding PlcMonitor.IsRecipeActive}" />
+                <TextBlock Name="StateStepText"
+                           Grid.Column="1"
+                           VerticalAlignment="Center"
+                           Text="{Binding PlcMonitor.StateStepText}" />
+            </Grid>
+
+            <Panel Name="LoopSlot"
+                   Grid.Column="5"
+                   Width="190"
+                   Background="Transparent"
+                   ToolTip.Tip="{Binding PlcMonitor.ExecutionToolTip}">
+                <TextBlock Name="LoopText"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           Text="{Binding PlcMonitor.LoopText}" />
+            </Panel>
+
+            <Border Grid.Column="6" Classes="status-separator" />
+
+            <StackPanel Name="StepTimerSlot"
+                        Grid.Column="7"
+                        Width="134"
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        VerticalAlignment="Center">
+                <TextBlock Text="{Binding PlcMonitor.TimeLeftInStepCaption}"
+                           Foreground="{DynamicResource SecondaryForegroundBrush}" />
+                <TextBlock Text="{Binding PlcMonitor.TimeLeftInStepText}" />
+            </StackPanel>
+
+            <StackPanel Name="RecipeTimerSlot"
+                        Grid.Column="9"
+                        Width="154"
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        VerticalAlignment="Center">
+                <TextBlock Text="{Binding PlcMonitor.TimeLeftInRecipeCaption}"
+                           Foreground="{DynamicResource SecondaryForegroundBrush}" />
+                <TextBlock Text="{Binding PlcMonitor.TimeLeftInRecipeText}" />
+            </StackPanel>
+
+            <Button Name="CountsSlot"
+                    Grid.Column="11"
+                    Width="80"
+                    Classes="status-slot"
+                    HorizontalContentAlignment="Stretch"
                     Command="{Binding MessagePanel.ToggleCommand}"
-                    IsVisible="{Binding MessagePanel.HasStatusErrors}"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Padding="4,2"
-                    VerticalAlignment="Center"
-                    Cursor="Hand">
-                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource StatusBarItemSpacing}">
-                    <!-- Error count -->
+                    IsHitTestVisible="{Binding MessagePanel.HasStatusErrors}"
+                    ToolTip.Tip="{Binding MessagePanel.StatusErrorSummary}">
+                <!-- One fixed column per count: neither dot moves when a count changes width. -->
+                <Grid ColumnDefinitions="40,40">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="4"
                                 IsVisible="{Binding MessagePanel.HasErrors}">
-                        <Ellipse Width="8" Height="8"
+                        <Ellipse Name="ErrorDot"
+                                 Width="8" Height="8"
                                  Fill="{DynamicResource ErrorBrush}"
                                  VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding MessagePanel.ErrorCountText}"
-                                   Foreground="{DynamicResource ErrorBrush}"
-                                   VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding MessagePanel.ErrorCount}" VerticalAlignment="Center" />
                     </StackPanel>
-
-                    <!-- Warning count -->
-                    <StackPanel Orientation="Horizontal"
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
                                 Spacing="4"
                                 IsVisible="{Binding MessagePanel.HasWarnings}">
-                        <Ellipse Width="8" Height="8"
+                        <Ellipse Name="WarningDot"
+                                 Width="8" Height="8"
                                  Fill="{DynamicResource WarningBrush}"
                                  VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding MessagePanel.WarningCountText}"
-                                   Foreground="{DynamicResource WarningBrush}"
-                                   VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding MessagePanel.WarningCount}" VerticalAlignment="Center" />
                     </StackPanel>
-                </StackPanel>
+                </Grid>
             </Button>
-
-            <!-- Separator (only if errors visible) -->
-            <Border Grid.Column="1"
-                    Width="1"
-                    Background="{DynamicResource SeparatorBrush}"
-                    Margin="12,2"
-                    IsVisible="{Binding MessagePanel.HasStatusErrors}" />
-
-            <StackPanel Grid.Column="2"
-                        Orientation="Horizontal"
-                        Spacing="6"
-                        VerticalAlignment="Center">
-
-                <!-- Sync status label -->
-                <TextBlock Text="{Binding PlcSyncStatusText}"
-                           VerticalAlignment="Center"
-                           Foreground="{DynamicResource SecondaryForegroundBrush}" />
-
-                <!-- Last sync time -->
-                <TextBlock VerticalAlignment="Center"
-                           Foreground="{DynamicResource SecondaryForegroundBrush}"
-                           Text="{Binding LastSyncTimeText}" />
-
-            </StackPanel>
-
-            <!-- Separator before execution info -->
-            <Border Grid.Column="3"
-                    Width="1"
-                    Background="{DynamicResource SeparatorBrush}"
-                    Margin="12,2" />
-
-            <!-- Execution time info (always visible; VM maps idle state via text content) -->
-            <StackPanel Grid.Column="4"
-                        Orientation="Horizontal"
-                        Spacing="{DynamicResource StatusBarItemSpacing}"
-                        VerticalAlignment="Center">
-
-                <!-- Time left in current step -->
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <TextBlock Text="{x:Static l:Resources.StatusStepLabel}"
-                               Foreground="{DynamicResource SecondaryForegroundBrush}"
-                               FontSize="{DynamicResource StatusBarTimerLabelFontSize}"
-                               FontWeight="{DynamicResource StatusBarTimerLabelFontWeight}"
-                               FontStyle="{DynamicResource StatusBarTimerLabelFontStyle}"
-                               VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding PlcMonitor.TimeLeftInStepText}"
-                               FontSize="{DynamicResource StatusBarTimerValueFontSize}"
-                               FontWeight="{DynamicResource StatusBarTimerValueFontWeight}"
-                               FontStyle="{DynamicResource StatusBarTimerValueFontStyle}"
-                               VerticalAlignment="Center" />
-                </StackPanel>
-
-                <!-- Time left in recipe -->
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <TextBlock Text="{x:Static l:Resources.StatusRecipeLabel}"
-                               Foreground="{DynamicResource SecondaryForegroundBrush}"
-                               FontSize="{DynamicResource StatusBarTimerLabelFontSize}"
-                               FontWeight="{DynamicResource StatusBarTimerLabelFontWeight}"
-                               FontStyle="{DynamicResource StatusBarTimerLabelFontStyle}"
-                               VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding PlcMonitor.TimeLeftInRecipeText}"
-                               FontSize="{DynamicResource StatusBarTimerValueFontSize}"
-                               FontWeight="{DynamicResource StatusBarTimerValueFontWeight}"
-                               FontStyle="{DynamicResource StatusBarTimerValueFontStyle}"
-                               VerticalAlignment="Center" />
-                </StackPanel>
-
-            </StackPanel>
-
-            <!-- Separator before FOR loop counters -->
-            <Border Grid.Column="5"
-                    Width="1"
-                    Background="{DynamicResource SeparatorBrush}"
-                    Margin="12,2"
-                    IsVisible="{Binding PlcMonitor.IsRecipeActive}" />
-
-            <!-- FOR loop counters (visible only when recipe is active) -->
-            <StackPanel Grid.Column="6"
-                        Orientation="Horizontal"
-                        Spacing="8"
-                        VerticalAlignment="Center"
-                        IsVisible="{Binding PlcMonitor.IsRecipeActive}">
-
-                <TextBlock Text="{x:Static l:Resources.StatusForLabel}"
-                           Foreground="{DynamicResource SecondaryForegroundBrush}"
-                           VerticalAlignment="Center" />
-
-                <TextBlock Text="{Binding PlcMonitor.ForLoopCount1}"
-                           VerticalAlignment="Center" />
-
-                <TextBlock Text="{Binding PlcMonitor.ForLoopCount2}"
-                           VerticalAlignment="Center" />
-
-                <TextBlock Text="{Binding PlcMonitor.ForLoopCount3}"
-                           VerticalAlignment="Center" />
-
-            </StackPanel>
 
         </Grid>
     </Border>

@@ -24,6 +24,9 @@ internal sealed class PlcTransactionExecutor
 	private readonly PlcProtocolSettings _protocolSettings;
 	private readonly IS7Transport _transport;
 
+	// Written by the execution poll, the keep-alive and UI-started reads on pool threads; read on the UI thread.
+	private long _lastExchangeUtcTicks;
+
 	public PlcTransactionExecutor(
 		IS7Transport transport,
 		RecipeConverter converter,
@@ -39,6 +42,21 @@ internal sealed class PlcTransactionExecutor
 		_logger = logger;
 		_executionCodec = new ExecutionStateCodec(_layout.ExecutionDb);
 		_managingCodec = new ManagingAreaCodec(_layout.ManagingDb);
+	}
+
+	public DateTimeOffset? LastExchangeTime
+	{
+		get
+		{
+			var ticks = Interlocked.Read(ref _lastExchangeUtcTicks);
+			return ticks == 0 ? null : new DateTimeOffset(ticks, TimeSpan.Zero);
+		}
+	}
+
+	/// <summary>Throws on a failed read, as the transport does, so the caller treats it as a lost link.</summary>
+	public async Task KeepAliveReadAsync(CancellationToken ct)
+	{
+		await ReadBytesAsync(_layout.ManagingDb.DbNumber, 0, 1, ct);
 	}
 
 	public async Task<Result<bool>> IsRecipeActiveAsync(CancellationToken ct = default)
@@ -123,7 +141,7 @@ internal sealed class PlcTransactionExecutor
 
 		try
 		{
-			var bytes = await _transport.ReadBytesAsync(
+			var bytes = await ReadBytesAsync(
 				_layout.ManagingDb.DbNumber,
 				_layout.ManagingDb.VersionOffset,
 				sizeof(int),
@@ -171,7 +189,7 @@ internal sealed class PlcTransactionExecutor
 
 		try
 		{
-			var bytes = await _transport.ReadBytesAsync(dbNumber, 0, size, ct);
+			var bytes = await ReadBytesAsync(dbNumber, 0, size, ct);
 			return decode(bytes);
 		}
 		catch (DriverNotConnectedException)
@@ -194,21 +212,21 @@ internal sealed class PlcTransactionExecutor
 
 		try
 		{
-			var intHeaderBytes = await _transport.ReadBytesAsync(
+			var intHeaderBytes = await ReadBytesAsync(
 				_layout.IntDb.DbNumber,
 				0,
 				_layout.IntDb.DataStartOffset,
 				ct);
 			var intCount = ArrayCodec.ReadArrayCurrentSize(intHeaderBytes, _layout.IntDb);
 
-			var floatHeaderBytes = await _transport.ReadBytesAsync(
+			var floatHeaderBytes = await ReadBytesAsync(
 				_layout.FloatDb.DbNumber,
 				0,
 				_layout.FloatDb.DataStartOffset,
 				ct);
 			var floatCount = ArrayCodec.ReadArrayCurrentSize(floatHeaderBytes, _layout.FloatDb);
 
-			var stringHeaderBytes = await _transport.ReadBytesAsync(
+			var stringHeaderBytes = await ReadBytesAsync(
 				_layout.StringDb.DbNumber,
 				0,
 				_layout.StringDb.DataStartOffset,
@@ -219,9 +237,9 @@ internal sealed class PlcTransactionExecutor
 			var floatDataSize = _layout.FloatDb.DataStartOffset + (floatCount * ProtocolConstants.FloatElementSize);
 			var stringDataSize = _layout.StringDb.DataStartOffset + (stringCount * _arrayCodec.WStringElementSize);
 
-			var intData = await _transport.ReadBytesAsync(_layout.IntDb.DbNumber, 0, intDataSize, ct);
-			var floatData = await _transport.ReadBytesAsync(_layout.FloatDb.DbNumber, 0, floatDataSize, ct);
-			var stringData = await _transport.ReadBytesAsync(_layout.StringDb.DbNumber, 0, stringDataSize, ct);
+			var intData = await ReadBytesAsync(_layout.IntDb.DbNumber, 0, intDataSize, ct);
+			var floatData = await ReadBytesAsync(_layout.FloatDb.DbNumber, 0, floatDataSize, ct);
+			var stringData = await ReadBytesAsync(_layout.StringDb.DbNumber, 0, stringDataSize, ct);
 
 			var intValues = _arrayCodec.DecodeIntArray(intData, intCount);
 			var floatValues = _arrayCodec.DecodeFloatArray(floatData, floatCount);
@@ -238,6 +256,14 @@ internal sealed class PlcTransactionExecutor
 			_logger.LogWarning(ex, "PLC recipe data read failed");
 			return Result.Fail(new PlcCommandFailedError().CausedBy(ex));
 		}
+	}
+
+	private async Task<byte[]> ReadBytesAsync(int dbNumber, int startByte, int count, CancellationToken ct)
+	{
+		var bytes = await _transport.ReadBytesAsync(dbNumber, startByte, count, ct);
+		Interlocked.Exchange(ref _lastExchangeUtcTicks, DateTimeOffset.UtcNow.UtcTicks);
+
+		return bytes;
 	}
 
 	private async Task<Result> WriteRecipeDataAsync(PlcRecipeData data, CancellationToken ct)

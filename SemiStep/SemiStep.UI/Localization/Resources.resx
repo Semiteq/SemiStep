@@ -163,9 +163,6 @@
   <data name="StatusRecipeLabel" xml:space="preserve">
     <value>Recipe:</value>
   </data>
-  <data name="StatusForLabel" xml:space="preserve">
-    <value>FOR:</value>
-  </data>
   <data name="MessagePanelClose" xml:space="preserve">
     <value>Close</value>
   </data>
@@ -205,35 +202,17 @@
   <data name="PlcConflictLoadFromPlc" xml:space="preserve">
     <value>Load from PLC</value>
   </data>
-  <data name="StatusIdle" xml:space="preserve">
-    <value>Idle</value>
-  </data>
-  <data name="StatusSyncing" xml:space="preserve">
-    <value>Syncing...</value>
-  </data>
-  <data name="StatusSynced" xml:space="preserve">
-    <value>Synced</value>
-  </data>
-  <data name="StatusFailed" xml:space="preserve">
-    <value>Failed</value>
-  </data>
-  <data name="LastSyncNever" xml:space="preserve">
-    <value>Never</value>
-  </data>
-  <data name="LastSyncAgoFormat" xml:space="preserve">
+  <data name="LinkAgeSecondsFormat" xml:space="preserve">
     <value>{0} s ago</value>
   </data>
-  <data name="LastSyncOver30SecondsAgo" xml:space="preserve">
+  <data name="LinkAgeOver30Seconds" xml:space="preserve">
     <value>> 30 s ago</value>
   </data>
-  <data name="LastSyncOverMinuteAgo" xml:space="preserve">
+  <data name="LinkAgeOverMinute" xml:space="preserve">
     <value>> 1 min ago</value>
   </data>
-  <data name="LastSyncOverHourAgo" xml:space="preserve">
+  <data name="LinkAgeOverHour" xml:space="preserve">
     <value>> 1 h ago</value>
-  </data>
-  <data name="LastSyncPrefix" xml:space="preserve">
-    <value>Last sync: {0}</value>
   </data>
   <data name="WindowTitleNewRecipe" xml:space="preserve">
     <value>New Recipe</value>
@@ -373,17 +352,8 @@
   <data name="EditorPadding" xml:space="preserve">
     <value>Padding</value>
   </data>
-  <data name="EditorItemSpacing" xml:space="preserve">
-    <value>Item spacing</value>
-  </data>
   <data name="EditorText" xml:space="preserve">
     <value>Text</value>
-  </data>
-  <data name="EditorTimerLabel" xml:space="preserve">
-    <value>Timer label</value>
-  </data>
-  <data name="EditorTimerValue" xml:space="preserve">
-    <value>Timer value</value>
   </data>
   <data name="EditorBackground" xml:space="preserve">
     <value>Background</value>
@@ -393,12 +363,6 @@
   </data>
   <data name="EditorDisconnected" xml:space="preserve">
     <value>Disconnected</value>
-  </data>
-  <data name="EditorLocalMode" xml:space="preserve">
-    <value>Local mode</value>
-  </data>
-  <data name="EditorConnecting" xml:space="preserve">
-    <value>Connecting</value>
   </data>
   <data name="EditorMaxHeight" xml:space="preserve">
     <value>Max height</value>
@@ -664,9 +628,6 @@
   <data name="PlcConflictHandlingFailed" xml:space="preserve">
     <value>PLC conflict handling failed</value>
   </data>
-  <data name="SyncTimeRefreshFailed" xml:space="preserve">
-    <value>Sync time refresh failed</value>
-  </data>
   <data name="PlcConflictResolutionFailed" xml:space="preserve">
     <value>PLC conflict resolution failed</value>
   </data>
@@ -744,5 +705,74 @@
   </data>
   <data name="ClearChangeMarksFailed" xml:space="preserve">
     <value>Clearing change marks failed</value>
+  </data>
+  <data name="LinkConnected" xml:space="preserve">
+    <value>PLC: connected</value>
+  </data>
+  <data name="LinkConnecting" xml:space="preserve">
+    <value>PLC: connecting…</value>
+  </data>
+  <data name="LinkDisconnecting" xml:space="preserve">
+    <value>PLC: disconnecting…</value>
+  </data>
+  <data name="LinkSyncOff" xml:space="preserve">
+    <value>sync off</value>
+  </data>
+  <data name="LinkSyncError" xml:space="preserve">
+    <value>PLC: sync error</value>
+  </data>
+  <data name="LinkNoLinkFormat" xml:space="preserve">
+    <value>no link, last exchange {0}</value>
+  </data>
+  <data name="LinkNever" xml:space="preserve">
+    <value>never</value>
+  </data>
+  <data name="LinkAddressFormat" xml:space="preserve">
+    <value>PLC: {0}:{1}</value>
+  </data>
+  <data name="LinkLastExchangeFormat" xml:space="preserve">
+    <value>Last exchange: {0}</value>
+  </data>
+  <data name="ExecutionIdle" xml:space="preserve">
+    <value>Not running</value>
+  </data>
+  <data name="ExecutionRunningFormat" xml:space="preserve">
+    <value>▶ Running: step {0} of {1}</value>
+  </data>
+  <data name="ExecutionRunningStepOnlyFormat" xml:space="preserve">
+    <value>▶ Running: step {0}</value>
+  </data>
+  <data name="ExecutionRunning" xml:space="preserve">
+    <value>▶ Running</value>
+  </data>
+  <data name="ExecutionNoData" xml:space="preserve">
+    <value>no data</value>
+  </data>
+  <data name="ExecutionLockToolTip" xml:space="preserve">
+    <value>While the PLC runs the recipe, editing is blocked. Copying works.</value>
+  </data>
+  <data name="LoopPassFirstFormat" xml:space="preserve">
+    <value>loop {0} of {1}</value>
+  </data>
+  <data name="LoopPassNextFormat" xml:space="preserve">
+    <value>{0} of {1}</value>
+  </data>
+  <data name="LoopLevelFirstFormat" xml:space="preserve">
+    <value>Loop level {0}: {1} of {2}.</value>
+  </data>
+  <data name="LoopLevelNextFormat" xml:space="preserve">
+    <value>Level {0}: {1} of {2}.</value>
+  </data>
+  <data name="WindowTitleRunningSuffix" xml:space="preserve">
+    <value> [running]</value>
+  </data>
+  <data name="StepTimerRunningCaption" xml:space="preserve">
+    <value>Step: left</value>
+  </data>
+  <data name="RecipeTimerRunningCaption" xml:space="preserve">
+    <value>Recipe: left</value>
+  </data>
+  <data name="RecipeTimerIdleCaption" xml:space="preserve">
+    <value>Recipe: total</value>
   </data>
 </root>

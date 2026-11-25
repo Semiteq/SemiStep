@@ -50,6 +50,7 @@ The current probes and their gate methods:
 | `TransposedSelectionCostProbe` | `SelectionChangedCost_StaysFlatAsRecipeGrows` | Same-process selection time ratio at N=4800 vs N=300 (CPU-bound, allocation-neutral). |
 | `GridRetentionProbe` | `Transposed_ScrollRetention_FlatFloor`, `Canonical_ScrollRetention_FlatFloor` | Retained-heap floor does not grow across N scroll cycles; bounded container survivors. |
 | `CoreAllocationProbe` | `Report_PerAppend_CoreAllocation` | Core per-append allocation against the soft baseline (no view). |
+| `ComboPressOpenProbe` | `Canonical_PressOnNewRow_OpensList`, `Transposed_PressOnNewColumn_OpensList` | Record-only: prints the time of each press that opens a combo list on a new row or column; asserts only that the press alone opens the list. |
 
 ### Optional capture prefix (steadier byte telemetry)
 

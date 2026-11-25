@@ -200,12 +200,7 @@ public sealed class TransposedNavigationTests : IAsyncLifetime
 	{
 		var stepListBox = ShowView();
 		var actionCombo = EnterComboEdit(stepListBox, 0, ActionColumnKey);
-		actionCombo.IsDropDownOpen = false;
-		Dispatcher.UIThread.RunJobs();
-
-		actionCombo.Focus();
-		actionCombo.IsDropDownOpen = true;
-		Dispatcher.UIThread.RunJobs();
+		actionCombo.IsDropDownOpen.Should().BeTrue("precondition: edit entry opens the list");
 
 		PressKey(PhysicalKey.ArrowDown);
 

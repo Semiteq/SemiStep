@@ -24,6 +24,7 @@ namespace SemiStep.Tests.UI.RecipeGrid;
 public sealed class RecipeGridHostTests : IAsyncLifetime
 {
 	private const int SeededStepCount = 3;
+	private const string ActionColumnKey = "action";
 
 	private readonly UIFixture _fixture = new();
 	private ActiveRecipeGridSurface _router = null!;
@@ -211,6 +212,52 @@ public sealed class RecipeGridHostTests : IAsyncLifetime
 		host.IsEditing.Should().BeFalse();
 	}
 
+	[AvaloniaTheory]
+	[Trait("Area", "ComboOpen")]
+	[InlineData(0)]
+	[InlineData(2)]
+	public void Lock_ClosesCanonicalListOpenedByPress_AfterOrientationFlips(int flipCount)
+	{
+		var host = ShowHost();
+		FlipOrientation(flipCount);
+		var comboBox = CanonicalActionCombo(FindDataGrid(host), 1);
+		var actionIdBefore = _fixture.Coordinator.CurrentRecipe.Steps[1].ActionKey;
+		Click(comboBox);
+		comboBox.IsDropDownOpen.Should().BeTrue("precondition: the press opens the list");
+		_window!.FocusManager.GetFocusedElement().Should().BeOfType<ComboBoxItem>(
+			"precondition: the open list holds keyboard focus");
+
+		_fixture.SetRecipeActive(true);
+		Dispatcher.UIThread.RunJobs();
+
+		comboBox.IsDropDownOpen.Should().BeFalse("the lock closes the open list after any number of flips");
+		var window = _window!;
+		window.KeyPress(Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown, null);
+		window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+		Dispatcher.UIThread.RunJobs();
+		_fixture.Coordinator.CurrentRecipe.Steps[1].ActionKey.Should().Be(actionIdBefore);
+		((ComboBoxItemViewModel)comboBox.SelectedItem!).Id.Should().Be(actionIdBefore, "the cell shows the recipe value");
+	}
+
+	[AvaloniaTheory]
+	[Trait("Area", "ComboOpen")]
+	[InlineData(1)]
+	[InlineData(3)]
+	public void Lock_ClosesTransposedListOpenedByPress_AfterOrientationFlips(int flipCount)
+	{
+		var host = ShowHost();
+		FlipOrientation(flipCount);
+		var stepListBox = host.GetVisualDescendants().OfType<ListBox>().Single();
+		Click(TransposedActionCell(stepListBox, 1));
+		var comboBox = stepListBox.GetVisualDescendants().OfType<ComboBox>().Single();
+		comboBox.IsDropDownOpen.Should().BeTrue("precondition: the press opens the list");
+
+		_fixture.SetRecipeActive(true);
+		Dispatcher.UIThread.RunJobs();
+
+		comboBox.IsDropDownOpen.Should().BeFalse("the lock closes the open list after any number of flips");
+	}
+
 	[AvaloniaFact]
 	public void ContextMenu_OnWrappingPanel_OpensOnRightClickOverGridRow()
 	{
@@ -257,5 +304,43 @@ public sealed class RecipeGridHostTests : IAsyncLifetime
 		dataGrid.Should().NotBeNull();
 
 		return dataGrid;
+	}
+
+	private void FlipOrientation(int flipCount)
+	{
+		for (var i = 0; i < flipCount; i++)
+		{
+			_router.ToggleOrientation();
+			Dispatcher.UIThread.RunJobs();
+		}
+	}
+
+	private ComboBox CanonicalActionCombo(DataGrid dataGrid, int rowIndex)
+	{
+		var column = dataGrid.Columns.Single(c => Equals(c.Tag, ActionColumnKey));
+
+		return (ComboBox)column.GetCellContent(_router.CanonicalSurface.RecipeRows[rowIndex]);
+	}
+
+	private static Border TransposedActionCell(ListBox stepListBox, int columnIndex)
+	{
+		var container = (ListBoxItem)stepListBox.ContainerFromIndex(columnIndex)!;
+
+		return container.GetVisualDescendants()
+			.OfType<Border>()
+			.Single(border => border.Classes.Contains("transposed-cell")
+				&& border.DataContext is ParameterCellViewModel cell
+				&& cell.Descriptor.ParameterKey == ActionColumnKey);
+	}
+
+	private void Click(Control control)
+	{
+		var window = _window!;
+		var center = control.TranslatePoint(new Point(control.Bounds.Width / 2, control.Bounds.Height / 2), window);
+		center.Should().NotBeNull();
+
+		window.MouseDown(center!.Value, MouseButton.Left);
+		window.MouseUp(center.Value, MouseButton.Left);
+		Dispatcher.UIThread.RunJobs();
 	}
 }

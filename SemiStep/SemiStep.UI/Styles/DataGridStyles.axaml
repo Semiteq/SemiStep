@@ -97,21 +97,6 @@
     </Style>
 
     <!-- ============================================== -->
-    <!-- Grid-level read-only state (PLC sync active).  -->
-    <!-- DataGrid.read-only class is toggled from XAML  -->
-    <!-- via Classes.read-only binding to               -->
-    <!-- CanonicalRecipeGridSurface.IsReadOnly. ComboBox cells -->
-    <!-- live in CellTemplate (never CellEditingTemplate -->
-    <!-- per Avalonia 12 DataGrid issue #236), so       -->
-    <!-- DataGrid.IsReadOnly does not propagate to them -->
-    <!-- automatically; this selector suppresses input. -->
-    <!-- ============================================== -->
-
-    <Style Selector="DataGrid.read-only ComboBox">
-        <Setter Property="IsHitTestVisible" Value="False" />
-    </Style>
-
-    <!-- ============================================== -->
     <!-- Execution state: current and past step row.    -->
     <!-- Row-level classes are toggled by MainWindow's  -->
     <!-- LoadingRow / UnloadingRow handlers driven by   -->

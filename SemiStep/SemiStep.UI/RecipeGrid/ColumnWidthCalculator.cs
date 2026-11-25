@@ -69,7 +69,7 @@ public sealed class ColumnWidthCalculator(
 		var representative = TimeFormatHelper.FormatValue(
 			RepresentativeTimeRawSeconds,
 			TimeFormatHelper.TimeHmsFormat,
-			TimeFormatHelper.ResolveStartTimeUnits(recipeMetadataRegistry));
+			units: null);
 
 		return CalculateWidth([representative], columnDef.UiName);
 	}

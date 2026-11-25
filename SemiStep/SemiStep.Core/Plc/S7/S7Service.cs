@@ -76,6 +76,8 @@ internal sealed class S7Service(
 
 	public IObservable<PlcExecutionInfo> ExecutionState => executionMonitor.State;
 
+	public DateTimeOffset? LastExchangeTime => transactionExecutor.LastExchangeTime;
+
 	public event Action<PlcConnectionState>? StateChanged;
 
 	public async Task ConnectAsync(PlcConnectionSettings settings)
@@ -253,7 +255,6 @@ internal sealed class S7Service(
 
 	private async Task KeepAliveLoopAsync(CancellationToken ct)
 	{
-		var dbNumber = plcConfiguration.Layout.ManagingDb.DbNumber;
 		var intervalMs = plcConfiguration.ProtocolSettings.KeepAliveIntervalMs;
 
 		while (!ct.IsCancellationRequested)
@@ -261,7 +262,7 @@ internal sealed class S7Service(
 			try
 			{
 				await Task.Delay(intervalMs, ct);
-				await transport.ReadBytesAsync(dbNumber, 0, 1, ct);
+				await transactionExecutor.KeepAliveReadAsync(ct);
 			}
 			catch (OperationCanceledException)
 			{

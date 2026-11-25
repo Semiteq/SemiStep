@@ -45,7 +45,6 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 	[AvaloniaTheory]
 	[InlineData(nameof(Resources.PlcStateUpdateFailed))]
 	[InlineData(nameof(Resources.PlcConflictHandlingFailed))]
-	[InlineData(nameof(Resources.SyncTimeRefreshFailed))]
 	public void OnSubscriptionError_ReportsToPanelAndLogsException(string contextKey)
 	{
 		var failure = new InvalidOperationException("boom");
@@ -65,7 +64,7 @@ public sealed class MainWindowViewModelReportingTests : IAsyncLifetime
 	public void Guarded_ThrowInOnNextBody_ReportsToPanelAndLogs_WithoutEscaping()
 	{
 		var failure = new InvalidOperationException("boom");
-		var context = new LocalizedText(nameof(Resources.SyncTimeRefreshFailed));
+		var context = new LocalizedText(nameof(Resources.PlcStateUpdateFailed));
 
 		var act = () => _viewModel.Guarded(context, () => throw failure);
 

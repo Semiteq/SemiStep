@@ -148,8 +148,6 @@ internal static class GridStyleMapper
 			Info: OptionalColor(dto?.Info, defaults.Info, section, "info", errors),
 			Connected: OptionalColor(dto?.Connected, defaults.Connected, section, "connected", errors),
 			Disconnected: OptionalColor(dto?.Disconnected, defaults.Disconnected, section, "disconnected", errors),
-			LocalMode: OptionalColor(dto?.LocalMode, defaults.LocalMode, section, "local_mode", errors),
-			Connecting: OptionalColor(dto?.Connecting, defaults.Connecting, section, "connecting", errors),
 			PanelBackground: OptionalColor(
 				dto?.PanelBackground, defaults.PanelBackground, section, "panel_background", errors),
 			PanelHeaderBackground: OptionalColor(
@@ -201,16 +199,9 @@ internal static class GridStyleMapper
 			Background: OptionalColor(dto?.Background, defaults.Background, section, "background", errors),
 			Foreground: OptionalColor(dto?.Foreground, defaults.Foreground, section, "foreground", errors),
 			Padding: dto?.Padding ?? defaults.Padding,
-			ItemSpacing: dto?.ItemSpacing ?? defaults.ItemSpacing,
 			FontSize: dto?.FontSize ?? defaults.FontSize,
 			Weight: dto?.Weight ?? defaults.Weight,
-			Italic: dto?.Italic ?? defaults.Italic,
-			TimerLabelFontSize: dto?.TimerLabelFontSize ?? defaults.TimerLabelFontSize,
-			TimerLabelWeight: dto?.TimerLabelWeight ?? defaults.TimerLabelWeight,
-			TimerLabelItalic: dto?.TimerLabelItalic ?? defaults.TimerLabelItalic,
-			TimerValueFontSize: dto?.TimerValueFontSize ?? defaults.TimerValueFontSize,
-			TimerValueWeight: dto?.TimerValueWeight ?? defaults.TimerValueWeight,
-			TimerValueItalic: dto?.TimerValueItalic ?? defaults.TimerValueItalic);
+			Italic: dto?.Italic ?? defaults.Italic);
 	}
 
 	private static ValidationPanelStyle MapValidationPanel(

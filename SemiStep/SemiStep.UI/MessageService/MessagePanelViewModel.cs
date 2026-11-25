@@ -35,6 +35,7 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 	{
 		Entries = [];
 		ToggleCommand = ReactiveCommand.Create(() => { IsVisible = !IsVisible; });
+		ShowCommand = ReactiveCommand.Create(() => { IsVisible = true; });
 
 		_hasErrors = this.WhenAnyValue(x => x.ErrorCount)
 			.Select(c => c > 0)
@@ -86,6 +87,8 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 
 	public ReactiveCommand<Unit, Unit> ToggleCommand { get; }
 
+	public ReactiveCommand<Unit, Unit> ShowCommand { get; }
+
 	public int ErrorCount
 	{
 		get;
@@ -128,6 +131,7 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 	{
 		_disposables.Dispose();
 		ToggleCommand.Dispose();
+		ShowCommand.Dispose();
 		GC.SuppressFinalize(this);
 	}
 
@@ -154,6 +158,11 @@ public class MessagePanelViewModel : ReactiveObject, IDisposable
 	}
 
 	public void ReportSuccess(string message)
+	{
+		ReportOperation(MessageSeverity.Info, message);
+	}
+
+	public void ReportInfo(string message)
 	{
 		ReportOperation(MessageSeverity.Info, message);
 	}

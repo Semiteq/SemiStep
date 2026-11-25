@@ -14,12 +14,6 @@ internal sealed class GridStyleChromeColorsDto
 	[YamlMember(Alias = "disconnected", ScalarStyle = ScalarStyle.DoubleQuoted)]
 	public string? Disconnected { get; set; }
 
-	[YamlMember(Alias = "local_mode", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? LocalMode { get; set; }
-
-	[YamlMember(Alias = "connecting", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? Connecting { get; set; }
-
 	[YamlMember(Alias = "panel_background", ScalarStyle = ScalarStyle.DoubleQuoted)]
 	public string? PanelBackground { get; set; }
 

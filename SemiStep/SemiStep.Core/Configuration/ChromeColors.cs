@@ -4,8 +4,6 @@ public sealed record ChromeColors(
 	StyleColor Info,
 	StyleColor Connected,
 	StyleColor Disconnected,
-	StyleColor LocalMode,
-	StyleColor Connecting,
 	StyleColor PanelBackground,
 	StyleColor PanelHeaderBackground,
 	StyleColor SubtleBorder,

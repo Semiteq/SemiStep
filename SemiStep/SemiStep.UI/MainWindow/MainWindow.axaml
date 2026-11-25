@@ -13,6 +13,7 @@
         x:DataType="local:MainWindowViewModel"
         Title="{Binding WindowTitle}"
         Width="1600"
+        MinWidth="1280"
         Height="800">
 
     <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">

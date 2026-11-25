@@ -67,8 +67,6 @@ public sealed class GridStyleMapperTests
 			Info = "#1976D2",
 			Connected = "#44BB44",
 			Disconnected = "#FF4444",
-			LocalMode = "#6C707E",
-			Connecting = "#FFAF0F",
 			PanelBackground = "#F8F8F8",
 			PanelHeaderBackground = "#EEEEEE",
 			SubtleBorder = "#D0D0D0",
@@ -84,8 +82,6 @@ public sealed class GridStyleMapperTests
 		options.Chrome.Info.Should().Be(StyleColor.Parse("#1976D2"));
 		options.Chrome.Connected.Should().Be(StyleColor.Parse("#44BB44"));
 		options.Chrome.Disconnected.Should().Be(StyleColor.Parse("#FF4444"));
-		options.Chrome.LocalMode.Should().Be(StyleColor.Parse("#6C707E"));
-		options.Chrome.Connecting.Should().Be(StyleColor.Parse("#FFAF0F"));
 		options.Chrome.PanelBackground.Should().Be(StyleColor.Parse("#F8F8F8"));
 		options.Chrome.PanelHeaderBackground.Should().Be(StyleColor.Parse("#EEEEEE"));
 		options.Chrome.SubtleBorder.Should().Be(StyleColor.Parse("#D0D0D0"));
@@ -104,8 +100,6 @@ public sealed class GridStyleMapperTests
 		var options = GridStyleMapper.Map(dto).Value;
 
 		options.Chrome.Info.Should().Be(GridStyleOptions.Default.Chrome.Info);
-		options.Chrome.LocalMode.Should().Be(GridStyleOptions.Default.Chrome.LocalMode);
-		options.Chrome.Connecting.Should().Be(GridStyleOptions.Default.Chrome.Connecting);
 		options.Chrome.GridBorder.Should().Be(GridStyleOptions.Default.Chrome.GridBorder);
 		options.Chrome.HeaderForeground.Should().Be(GridStyleOptions.Default.Chrome.HeaderForeground);
 	}
@@ -138,13 +132,7 @@ public sealed class GridStyleMapperTests
 		{
 			FontSize = 16,
 			Weight = 500,
-			Italic = true,
-			TimerLabelFontSize = 18,
-			TimerLabelWeight = 600,
-			TimerLabelItalic = true,
-			TimerValueFontSize = 32,
-			TimerValueWeight = 800,
-			TimerValueItalic = true
+			Italic = true
 		};
 
 		var options = GridStyleMapper.Map(dto).Value;
@@ -152,12 +140,6 @@ public sealed class GridStyleMapperTests
 		options.StatusBar.FontSize.Should().Be(16);
 		options.StatusBar.Weight.Should().Be(500);
 		options.StatusBar.Italic.Should().BeTrue();
-		options.StatusBar.TimerLabelFontSize.Should().Be(18);
-		options.StatusBar.TimerLabelWeight.Should().Be(600);
-		options.StatusBar.TimerLabelItalic.Should().BeTrue();
-		options.StatusBar.TimerValueFontSize.Should().Be(32);
-		options.StatusBar.TimerValueWeight.Should().Be(800);
-		options.StatusBar.TimerValueItalic.Should().BeTrue();
 	}
 
 	[Fact]
@@ -203,12 +185,6 @@ public sealed class GridStyleMapperTests
 		options.StatusBar.FontSize.Should().Be(12);
 		options.StatusBar.Weight.Should().Be(400);
 		options.StatusBar.Italic.Should().BeFalse();
-		options.StatusBar.TimerLabelFontSize.Should().Be(14);
-		options.StatusBar.TimerLabelWeight.Should().Be(400);
-		options.StatusBar.TimerLabelItalic.Should().BeFalse();
-		options.StatusBar.TimerValueFontSize.Should().Be(24);
-		options.StatusBar.TimerValueWeight.Should().Be(400);
-		options.StatusBar.TimerValueItalic.Should().BeFalse();
 	}
 
 	[Fact]
@@ -231,13 +207,7 @@ public sealed class GridStyleMapperTests
 			{
 				FontSize = 18,
 				Weight = 500,
-				Italic = true,
-				TimerLabelFontSize = 19,
-				TimerLabelWeight = 600,
-				TimerLabelItalic = true,
-				TimerValueFontSize = 30,
-				TimerValueWeight = 800,
-				TimerValueItalic = true
+				Italic = true
 			}
 		};
 
@@ -253,34 +223,6 @@ public sealed class GridStyleMapperTests
 		dto.StatusBar!.FontSize.Should().Be(18);
 		dto.StatusBar!.Weight.Should().Be(500);
 		dto.StatusBar!.Italic.Should().BeTrue();
-		dto.StatusBar!.TimerLabelFontSize.Should().Be(19);
-		dto.StatusBar!.TimerLabelWeight.Should().Be(600);
-		dto.StatusBar!.TimerLabelItalic.Should().BeTrue();
-		dto.StatusBar!.TimerValueFontSize.Should().Be(30);
-		dto.StatusBar!.TimerValueWeight.Should().Be(800);
-		dto.StatusBar!.TimerValueItalic.Should().BeTrue();
-	}
-
-	[Fact]
-	public void Map_OptionsToDto_WritesLocalModeChromeColor()
-	{
-		var defaults = GridStyleOptions.Default;
-		var options = defaults with { Chrome = defaults.Chrome with { LocalMode = StyleColor.Parse("#123456") } };
-
-		var dto = GridStyleDtoMapper.Map(options);
-
-		dto.Chrome!.LocalMode.Should().Be("#123456");
-	}
-
-	[Fact]
-	public void Map_OptionsToDto_WritesConnectingChromeColor()
-	{
-		var defaults = GridStyleOptions.Default;
-		var options = defaults with { Chrome = defaults.Chrome with { Connecting = StyleColor.Parse("#123456") } };
-
-		var dto = GridStyleDtoMapper.Map(options);
-
-		dto.Chrome!.Connecting.Should().Be("#123456");
 	}
 
 	private static GridStyleOptionsDto BuildCompleteDto()

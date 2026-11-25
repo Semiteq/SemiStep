@@ -247,4 +247,38 @@ public sealed class MessagePanelViewModelTests
 
 		panel.Entries.Should().BeEmpty();
 	}
+
+	[AvaloniaFact]
+	public void Show_OpensTheHiddenLog()
+	{
+		using var panel = new MessagePanelViewModel();
+		panel.RefreshReasons([new Error("e")]);
+		panel.IsVisible = false;
+
+		panel.ShowCommand.Execute().Subscribe();
+
+		panel.ShowPanel.Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void SecondShow_KeepsTheLogOpen()
+	{
+		using var panel = new MessagePanelViewModel();
+		panel.RefreshReasons([new Error("e")]);
+
+		panel.ShowCommand.Execute().Subscribe();
+		panel.ShowCommand.Execute().Subscribe();
+
+		panel.ShowPanel.Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	public void Show_WithAnEmptyLog_ShowsNoPanel()
+	{
+		using var panel = new MessagePanelViewModel();
+
+		panel.ShowCommand.Execute().Subscribe();
+
+		panel.ShowPanel.Should().BeFalse();
+	}
 }

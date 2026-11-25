@@ -14,6 +14,7 @@ using SemiStep.Core.Recipes.Helpers;
 using SemiStep.Core.Recipes.Import;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
+using SemiStep.UI;
 
 using SemiStep.UI.Clipboard;
 using SemiStep.UI.Coordinator;
@@ -197,6 +198,10 @@ public sealed class UIFixture : IAsyncLifetime
 			recipeFile,
 			MessagePanel,
 			plcMonitor,
+			new PlcLinkAddress(
+				AppConfiguration.PlcConfiguration.Connection.IpAddress,
+				AppConfiguration.PlcConfiguration.Connection.Port,
+				IsOverride: false),
 			gridStyleEditorViewModelFactory,
 			Scheduler,
 			logger ?? NullLogger<MainWindowViewModel>.Instance);

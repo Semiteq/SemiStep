@@ -59,16 +59,9 @@ public sealed class CellPaletteInstallerTests
 				Background: StyleColor.Parse("#F0F0F0"),
 				Foreground: StyleColor.Parse("#111111"),
 				Padding: 5,
-				ItemSpacing: 10,
 				FontSize: 14,
 				Weight: 700,
-				Italic: true,
-				TimerLabelFontSize: 16,
-				TimerLabelWeight: 500,
-				TimerLabelItalic: true,
-				TimerValueFontSize: 28,
-				TimerValueWeight: 600,
-				TimerValueItalic: false),
+				Italic: true),
 			ValidationPanel = new ValidationPanelStyle(
 				Background: StyleColor.Parse("#FBFBFB"),
 				Foreground: StyleColor.Parse("#222222"),
@@ -79,8 +72,6 @@ public sealed class CellPaletteInstallerTests
 				Info: StyleColor.Parse("#1976D2"),
 				Connected: StyleColor.Parse("#44BB44"),
 				Disconnected: StyleColor.Parse("#FF4444"),
-				LocalMode: StyleColor.Parse("#6C707E"),
-				Connecting: StyleColor.Parse("#FFAF0F"),
 				PanelBackground: StyleColor.Parse("#F8F8F8"),
 				PanelHeaderBackground: StyleColor.Parse("#EEEEEE"),
 				SubtleBorder: StyleColor.Parse("#D0D0D0"),
@@ -129,8 +120,6 @@ public sealed class CellPaletteInstallerTests
 		AssertBrush(resources, CellPaletteInstaller.InfoBrushKey, "#1976D2");
 		AssertBrush(resources, CellPaletteInstaller.ConnectedBrushKey, "#44BB44");
 		AssertBrush(resources, CellPaletteInstaller.DisconnectedBrushKey, "#FF4444");
-		AssertBrush(resources, CellPaletteInstaller.LocalModeBrushKey, "#6C707E");
-		AssertBrush(resources, CellPaletteInstaller.ConnectingBrushKey, "#FFAF0F");
 		AssertBrush(resources, CellPaletteInstaller.PanelBackgroundBrushKey, "#F8F8F8");
 		AssertBrush(resources, CellPaletteInstaller.PanelHeaderBackgroundBrushKey, "#EEEEEE");
 		AssertBrush(resources, CellPaletteInstaller.SubtleBorderBrushKey, "#D0D0D0");
@@ -140,8 +129,7 @@ public sealed class CellPaletteInstallerTests
 		AssertBrush(resources, CellPaletteInstaller.GridBackgroundBrushKey, "#FFFFFF");
 		AssertBrush(resources, CellPaletteInstaller.HeaderForegroundBrushKey, "#000000");
 
-		resources[CellPaletteInstaller.StatusBarPaddingKey].Should().Be(new Thickness(5));
-		resources[CellPaletteInstaller.StatusBarItemSpacingKey].Should().Be(10d);
+		resources[CellPaletteInstaller.StatusBarPaddingKey].Should().Be(new Thickness(0, 5, 0, 5));
 		resources[CellPaletteInstaller.StatusBarFontSizeKey].Should().Be(14d);
 		resources[CellPaletteInstaller.ValidationPanelMaxHeightKey].Should().Be(100d);
 		resources[CellPaletteInstaller.RowHeightKey].Should().Be(gridStyle.Layout.RowHeight);
@@ -150,16 +138,10 @@ public sealed class CellPaletteInstallerTests
 			.Which.Name.Should().Be("Arial");
 		resources[CellPaletteInstaller.StatusBarFontWeightKey].Should().Be(FontWeight.Bold);
 		resources[CellPaletteInstaller.StatusBarFontStyleKey].Should().Be(FontStyle.Italic);
-		resources[CellPaletteInstaller.StatusBarTimerLabelFontSizeKey].Should().Be(16d);
-		resources[CellPaletteInstaller.StatusBarTimerLabelFontWeightKey].Should().Be(FontWeight.Medium);
-		resources[CellPaletteInstaller.StatusBarTimerLabelFontStyleKey].Should().Be(FontStyle.Italic);
-		resources[CellPaletteInstaller.StatusBarTimerValueFontSizeKey].Should().Be(28d);
-		resources[CellPaletteInstaller.StatusBarTimerValueFontWeightKey].Should().Be(FontWeight.SemiBold);
-		resources[CellPaletteInstaller.StatusBarTimerValueFontStyleKey].Should().Be(FontStyle.Normal);
 
 		resources.ContainsKey("StatusBarTimerFontSize").Should().BeFalse();
 
-		resources.Count.Should().Be(58);
+		resources.Count.Should().Be(49);
 	}
 
 	[AvaloniaFact]

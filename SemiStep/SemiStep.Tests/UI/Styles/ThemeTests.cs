@@ -22,7 +22,7 @@ namespace SemiStep.Tests.UI.Styles;
 public sealed class ThemeTests
 {
 	private const string Black = "#000000";
-	private const string Secondary = "#818594";
+	private const string Secondary = "#6C707E";
 	private const string Disabled = "#A8ADBD";
 	private const string Accent = "#3574F0";
 	private const string AccentHover = "#3369D6";

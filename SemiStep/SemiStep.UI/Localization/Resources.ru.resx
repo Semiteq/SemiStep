@@ -163,9 +163,6 @@
   <data name="StatusRecipeLabel" xml:space="preserve">
     <value>Рецепт:</value>
   </data>
-  <data name="StatusForLabel" xml:space="preserve">
-    <value>FOR:</value>
-  </data>
   <data name="MessagePanelClose" xml:space="preserve">
     <value>Закрыть</value>
   </data>
@@ -205,35 +202,17 @@
   <data name="PlcConflictLoadFromPlc" xml:space="preserve">
     <value>Загрузить из ПЛК</value>
   </data>
-  <data name="StatusIdle" xml:space="preserve">
-    <value>Ожидание</value>
-  </data>
-  <data name="StatusSyncing" xml:space="preserve">
-    <value>Синхронизация…</value>
-  </data>
-  <data name="StatusSynced" xml:space="preserve">
-    <value>Синхронизировано</value>
-  </data>
-  <data name="StatusFailed" xml:space="preserve">
-    <value>Ошибка</value>
-  </data>
-  <data name="LastSyncNever" xml:space="preserve">
-    <value>Никогда</value>
-  </data>
-  <data name="LastSyncAgoFormat" xml:space="preserve">
+  <data name="LinkAgeSecondsFormat" xml:space="preserve">
     <value>{0} с назад</value>
   </data>
-  <data name="LastSyncOver30SecondsAgo" xml:space="preserve">
+  <data name="LinkAgeOver30Seconds" xml:space="preserve">
     <value>> 30 с назад</value>
   </data>
-  <data name="LastSyncOverMinuteAgo" xml:space="preserve">
+  <data name="LinkAgeOverMinute" xml:space="preserve">
     <value>> 1 мин назад</value>
   </data>
-  <data name="LastSyncOverHourAgo" xml:space="preserve">
+  <data name="LinkAgeOverHour" xml:space="preserve">
     <value>> 1 ч назад</value>
-  </data>
-  <data name="LastSyncPrefix" xml:space="preserve">
-    <value>Синхр.: {0}</value>
   </data>
   <data name="WindowTitleNewRecipe" xml:space="preserve">
     <value>Новый рецепт</value>
@@ -373,17 +352,8 @@
   <data name="EditorPadding" xml:space="preserve">
     <value>Отступ</value>
   </data>
-  <data name="EditorItemSpacing" xml:space="preserve">
-    <value>Интервал элементов</value>
-  </data>
   <data name="EditorText" xml:space="preserve">
     <value>Текст</value>
-  </data>
-  <data name="EditorTimerLabel" xml:space="preserve">
-    <value>Подпись таймера</value>
-  </data>
-  <data name="EditorTimerValue" xml:space="preserve">
-    <value>Значение таймера</value>
   </data>
   <data name="EditorBackground" xml:space="preserve">
     <value>Фон</value>
@@ -393,12 +363,6 @@
   </data>
   <data name="EditorDisconnected" xml:space="preserve">
     <value>Отключено</value>
-  </data>
-  <data name="EditorLocalMode" xml:space="preserve">
-    <value>Локальный режим</value>
-  </data>
-  <data name="EditorConnecting" xml:space="preserve">
-    <value>Подключение</value>
   </data>
   <data name="EditorMaxHeight" xml:space="preserve">
     <value>Макс. высота</value>
@@ -664,9 +628,6 @@
   <data name="PlcConflictHandlingFailed" xml:space="preserve">
     <value>Не удалось обработать конфликт ПЛК</value>
   </data>
-  <data name="SyncTimeRefreshFailed" xml:space="preserve">
-    <value>Не удалось обновить время синхронизации</value>
-  </data>
   <data name="PlcConflictResolutionFailed" xml:space="preserve">
     <value>Не удалось разрешить конфликт ПЛК</value>
   </data>
@@ -744,5 +705,74 @@
   </data>
   <data name="ClearChangeMarksFailed" xml:space="preserve">
     <value>Не удалось снять отметки изменений</value>
+  </data>
+  <data name="LinkConnected" xml:space="preserve">
+    <value>ПЛК: подключено</value>
+  </data>
+  <data name="LinkConnecting" xml:space="preserve">
+    <value>ПЛК: подключение…</value>
+  </data>
+  <data name="LinkDisconnecting" xml:space="preserve">
+    <value>ПЛК: отключение…</value>
+  </data>
+  <data name="LinkSyncOff" xml:space="preserve">
+    <value>синхронизация выключена</value>
+  </data>
+  <data name="LinkSyncError" xml:space="preserve">
+    <value>ПЛК: ошибка синхронизации</value>
+  </data>
+  <data name="LinkNoLinkFormat" xml:space="preserve">
+    <value>нет связи, последний обмен {0}</value>
+  </data>
+  <data name="LinkNever" xml:space="preserve">
+    <value>никогда</value>
+  </data>
+  <data name="LinkAddressFormat" xml:space="preserve">
+    <value>ПЛК: {0}:{1}</value>
+  </data>
+  <data name="LinkLastExchangeFormat" xml:space="preserve">
+    <value>Последний обмен: {0}</value>
+  </data>
+  <data name="ExecutionIdle" xml:space="preserve">
+    <value>Не выполняется</value>
+  </data>
+  <data name="ExecutionRunningFormat" xml:space="preserve">
+    <value>▶ Выполняется: шаг {0} из {1}</value>
+  </data>
+  <data name="ExecutionRunningStepOnlyFormat" xml:space="preserve">
+    <value>▶ Выполняется: шаг {0}</value>
+  </data>
+  <data name="ExecutionRunning" xml:space="preserve">
+    <value>▶ Выполняется</value>
+  </data>
+  <data name="ExecutionNoData" xml:space="preserve">
+    <value>нет данных</value>
+  </data>
+  <data name="ExecutionLockToolTip" xml:space="preserve">
+    <value>Пока ПЛК выполняет рецепт, правка недоступна. Копирование работает.</value>
+  </data>
+  <data name="LoopPassFirstFormat" xml:space="preserve">
+    <value>цикл {0} из {1}</value>
+  </data>
+  <data name="LoopPassNextFormat" xml:space="preserve">
+    <value>{0} из {1}</value>
+  </data>
+  <data name="LoopLevelFirstFormat" xml:space="preserve">
+    <value>Цикл уровня {0}: {1} из {2}.</value>
+  </data>
+  <data name="LoopLevelNextFormat" xml:space="preserve">
+    <value>Уровня {0}: {1} из {2}.</value>
+  </data>
+  <data name="WindowTitleRunningSuffix" xml:space="preserve">
+    <value> [выполняется]</value>
+  </data>
+  <data name="StepTimerRunningCaption" xml:space="preserve">
+    <value>Шаг: осталось</value>
+  </data>
+  <data name="RecipeTimerRunningCaption" xml:space="preserve">
+    <value>Рецепт: осталось</value>
+  </data>
+  <data name="RecipeTimerIdleCaption" xml:space="preserve">
+    <value>Рецепт: всего</value>
   </data>
 </root>

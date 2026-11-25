@@ -167,6 +167,8 @@ public sealed class ShutdownOrderTests
 	{
 		public bool IsConnected => service.IsConnected;
 
+		public DateTimeOffset? LastExchangeTime => service.LastExchangeTime;
+
 		public event Action<PlcConnectionState>? StateChanged
 		{
 			add => service.StateChanged += value;

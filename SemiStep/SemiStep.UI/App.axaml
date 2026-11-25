@@ -35,7 +35,7 @@
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="SemiColorPrimary" Color="#3574F0" />
                     <SolidColorBrush x:Key="SemiColorText0" Color="#000000" />
-                    <SolidColorBrush x:Key="SemiColorText2" Color="#818594" />
+                    <SolidColorBrush x:Key="SemiColorText2" Color="#6C707E" />
                     <SolidColorBrush x:Key="SemiColorBorder" Color="#EBECF0" />
 
                     <SolidColorBrush x:Key="TextBlockDefaultForeground" Color="#000000" />
@@ -44,8 +44,8 @@
                     <SolidColorBrush x:Key="CheckBoxForeground" Color="#000000" />
                     <SolidColorBrush x:Key="MenuItemForeground" Color="#000000" />
                     <SolidColorBrush x:Key="MenuItemPointeroverForeground" Color="#000000" />
-                    <SolidColorBrush x:Key="MenuItemInputGestureTextForeground" Color="#818594" />
-                    <SolidColorBrush x:Key="TextBoxPlaceholderForeground" Color="#818594" />
+                    <SolidColorBrush x:Key="MenuItemInputGestureTextForeground" Color="#6C707E" />
+                    <SolidColorBrush x:Key="TextBoxPlaceholderForeground" Color="#6C707E" />
                     <SolidColorBrush x:Key="TextBlockDisabledForeground" Color="#A8ADBD" />
                     <SolidColorBrush x:Key="ButtonDefaultDisabledForeground" Color="#A8ADBD" />
                     <SolidColorBrush x:Key="TextBoxDisabledForeground" Color="#A8ADBD" />

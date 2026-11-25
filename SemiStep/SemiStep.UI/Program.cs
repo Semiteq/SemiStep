@@ -4,7 +4,6 @@ using FluentResults;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using SemiStep.Core.Configuration;
 using SemiStep.Core.Configuration.Facade;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.S7;
@@ -107,7 +106,7 @@ public static class Program
 	}
 
 	/// <summary>A malformed PLC endpoint option fails before the configuration loads, so it is never silently dropped.</summary>
-	internal static async Task<Result<AppConfiguration>> LoadConfigurationAsync(StartupOptions options)
+	internal static async Task<Result<StartupConfiguration>> LoadConfigurationAsync(StartupOptions options)
 	{
 		if (options.PlcEndpointOverride is { IsFailed: true } invalidEndpoint)
 		{
@@ -115,9 +114,22 @@ public static class Program
 		}
 
 		var loaded = await ConfigFacade.LoadAndValidateAsync(options.ConfigDir);
-		return loaded.IsSuccess && options.PlcEndpointOverride is { IsSuccess: true } endpoint
-			? Result.Ok(endpoint.Value.ApplyTo(loaded.Value))
-			: loaded;
+		if (loaded.IsFailed)
+		{
+			return loaded.ToResult<StartupConfiguration>();
+		}
+
+		var preset = loaded.Value.PlcConfiguration.Connection;
+		if (options.PlcEndpointOverride is not { IsSuccess: true } endpoint)
+		{
+			return new StartupConfiguration(loaded.Value, new PlcLinkAddress(preset.IpAddress, preset.Port, IsOverride: false));
+		}
+
+		var isOverride = endpoint.Value.Host != preset.IpAddress || endpoint.Value.Port != preset.Port;
+
+		return new StartupConfiguration(
+			endpoint.Value.ApplyTo(loaded.Value),
+			new PlcLinkAddress(endpoint.Value.Host, endpoint.Value.Port, isOverride));
 	}
 
 	private static async Task<StartupOutcome> StartupAsync(StartupOptions options)
@@ -148,19 +160,20 @@ public static class Program
 
 		// Set the UI culture from the loaded locale. Only UICulture changes; CurrentCulture
 		// stays invariant so number/date formatting and logs remain English.
-		var uiCulture = CultureInfo.GetCultureInfo(result.Value.Ui.Locale);
+		var uiCulture = CultureInfo.GetCultureInfo(result.Value.Configuration.Ui.Locale);
 		CultureInfo.DefaultThreadCurrentUICulture = uiCulture;
 		Resources.Culture = uiCulture;
 
 		return StartupOutcome.Succeeded(BuildServices(options, result.Value));
 	}
 
-	internal static ServiceProvider BuildServices(StartupOptions options, AppConfiguration configuration)
+	internal static ServiceProvider BuildServices(StartupOptions options, StartupConfiguration startup)
 	{
 		var services =
 			new ServiceCollection()
 				.AddSingleton(options)
-				.AddSingleton(configuration)
+				.AddSingleton(startup.Configuration)
+				.AddSingleton(startup.LinkAddress)
 				.AddRecipe()
 				.AddS7()
 				.AddCsv()

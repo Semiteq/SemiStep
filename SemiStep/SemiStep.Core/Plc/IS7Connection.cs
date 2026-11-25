@@ -6,6 +6,7 @@ namespace SemiStep.Core.Plc;
 public interface IS7Connection : IAsyncDisposable
 {
 	bool IsConnected { get; }
+	DateTimeOffset? LastExchangeTime { get; }
 	event Action<PlcConnectionState>? StateChanged;
 	Task ConnectAsync(PlcConnectionSettings settings);
 	Task DisconnectAsync();

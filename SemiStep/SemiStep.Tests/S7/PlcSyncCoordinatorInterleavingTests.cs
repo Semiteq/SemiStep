@@ -148,8 +148,6 @@ public sealed class PlcSyncCoordinatorInterleavingTests
 
 		coordinator.Status.Should().Be(PlcSyncStatus.Idle,
 			"an outcome that arrives after a reset must not change the status");
-		coordinator.LastSyncTime.Should().BeNull(
-			"an outcome that arrives after a reset must not stamp the last sync time");
 		faults.Should().BeEmpty();
 	}
 

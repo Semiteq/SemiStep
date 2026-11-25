@@ -31,18 +31,6 @@ public sealed class ChromeColorsDraft(ChromeColors source) : ReactiveObject
 		set => this.RaiseAndSetIfChanged(ref field, value);
 	} = source.Disconnected.ToMediaColor();
 
-	public Color LocalMode
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.LocalMode.ToMediaColor();
-
-	public Color Connecting
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Connecting.ToMediaColor();
-
 	public Color PanelBackground
 	{
 		get;
@@ -103,8 +91,6 @@ public sealed class ChromeColorsDraft(ChromeColors source) : ReactiveObject
 			Info: Info.ToStyleColor(),
 			Connected: Connected.ToStyleColor(),
 			Disconnected: Disconnected.ToStyleColor(),
-			LocalMode: LocalMode.ToStyleColor(),
-			Connecting: Connecting.ToStyleColor(),
 			PanelBackground: PanelBackground.ToStyleColor(),
 			PanelHeaderBackground: PanelHeaderBackground.ToStyleColor(),
 			SubtleBorder: SubtleBorder.ToStyleColor(),

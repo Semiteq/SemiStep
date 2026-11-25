@@ -123,4 +123,22 @@ public sealed class StartupOptionsPlcEndpointTests
 
 		provider.GetRequiredService<PlcConfiguration>().Should().Be(loaded.PlcConfiguration);
 	}
+
+	[Fact]
+	[Trait("Area", "StatusBar")]
+	public async Task LoadConfiguration_FlagsTheOverride_OnlyWhenItDiffersFromThePreset()
+	{
+		var preset = (await ShippedConfigLocator.LoadAsync("RIE")).PlcConfiguration.Connection;
+		var configDir = ShippedConfigLocator.GetConfigDirectory("RIE");
+
+		var differing = await Program.LoadConfigurationAsync(
+			StartupOptions.Parse(["--config-dir", configDir, "--plc-endpoint", "10.1.2.3:1102"]));
+		var same = await Program.LoadConfigurationAsync(
+			StartupOptions.Parse(["--config-dir", configDir, "--plc-endpoint", $"{preset.IpAddress}:{preset.Port}"]));
+		var none = await Program.LoadConfigurationAsync(StartupOptions.Parse(["--config-dir", configDir]));
+
+		differing.Value.LinkAddress.Should().Be(new PlcLinkAddress("10.1.2.3", 1102, IsOverride: true));
+		same.Value.LinkAddress.IsOverride.Should().BeFalse();
+		none.Value.LinkAddress.Should().Be(new PlcLinkAddress(preset.IpAddress, preset.Port, IsOverride: false));
+	}
 }

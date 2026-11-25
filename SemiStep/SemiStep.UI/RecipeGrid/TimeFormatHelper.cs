@@ -1,8 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
 
-using SemiStep.Core.Recipes;
-
 namespace SemiStep.UI.RecipeGrid;
 
 internal static partial class TimeFormatHelper
@@ -55,19 +53,6 @@ internal static partial class TimeFormatHelper
 		return totalSeconds.ToString(CultureInfo.InvariantCulture);
 	}
 
-	internal static string? ResolveStartTimeUnits(RecipeMetadataRegistry recipeMetadataRegistry)
-	{
-		var column = recipeMetadataRegistry.GetColumn(StepValueParser.StepDurationColumnKey);
-		if (column.IsFailed)
-		{
-			return null;
-		}
-
-		var property = recipeMetadataRegistry.GetProperty(column.Value.PropertyTypeId);
-
-		return property.IsSuccess ? property.Value.Units : null;
-	}
-
 	internal static string FormatValue(string rawString, string? formatKind, string? units)
 	{
 		if (string.Equals(formatKind, TimeHmsFormat, StringComparison.OrdinalIgnoreCase)
@@ -77,16 +62,10 @@ internal static partial class TimeFormatHelper
 			var hours = totalSec / SecondsPerHour;
 			var minutes = totalSec % SecondsPerHour / SecondsPerMinute;
 			var seconds = totalSec % SecondsPerMinute;
-			var formatted = $"{hours:D2}:{minutes:D2}:{seconds:D2}";
 
-			return AppendUnits(formatted, units);
+			return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
 		}
 
-		return AppendUnits(rawString, units);
-	}
-
-	private static string AppendUnits(string formatted, string? units)
-	{
-		return string.IsNullOrEmpty(units) ? formatted : $"{formatted} {units}";
+		return string.IsNullOrEmpty(units) ? rawString : $"{rawString} {units}";
 	}
 }

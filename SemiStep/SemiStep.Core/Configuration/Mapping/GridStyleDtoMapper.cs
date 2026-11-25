@@ -83,16 +83,9 @@ internal static class GridStyleDtoMapper
 				Background = options.StatusBar.Background.ToString(),
 				Foreground = options.StatusBar.Foreground.ToString(),
 				Padding = options.StatusBar.Padding,
-				ItemSpacing = options.StatusBar.ItemSpacing,
 				FontSize = options.StatusBar.FontSize,
 				Weight = options.StatusBar.Weight,
-				Italic = options.StatusBar.Italic,
-				TimerLabelFontSize = options.StatusBar.TimerLabelFontSize,
-				TimerLabelWeight = options.StatusBar.TimerLabelWeight,
-				TimerLabelItalic = options.StatusBar.TimerLabelItalic,
-				TimerValueFontSize = options.StatusBar.TimerValueFontSize,
-				TimerValueWeight = options.StatusBar.TimerValueWeight,
-				TimerValueItalic = options.StatusBar.TimerValueItalic
+				Italic = options.StatusBar.Italic
 			},
 			ValidationPanel = new ValidationPanelStyleDto
 			{
@@ -107,8 +100,6 @@ internal static class GridStyleDtoMapper
 				Info = options.Chrome.Info.ToString(),
 				Connected = options.Chrome.Connected.ToString(),
 				Disconnected = options.Chrome.Disconnected.ToString(),
-				LocalMode = options.Chrome.LocalMode.ToString(),
-				Connecting = options.Chrome.Connecting.ToString(),
 				PanelBackground = options.Chrome.PanelBackground.ToString(),
 				PanelHeaderBackground = options.Chrome.PanelHeaderBackground.ToString(),
 				SubtleBorder = options.Chrome.SubtleBorder.ToString(),

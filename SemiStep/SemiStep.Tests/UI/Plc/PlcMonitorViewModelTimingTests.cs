@@ -74,7 +74,7 @@ public sealed class PlcMonitorViewModelTimingTests : IAsyncLifetime
 
 		using var monitor = CreateMonitor();
 
-		monitor.TimeLeftInStepText.Should().Be("00:00:00");
+		monitor.TimeLeftInStepText.Should().Be("\u2014");
 		monitor.TimeLeftInRecipeText.Should().Be("00:01:30");
 	}
 
@@ -146,7 +146,7 @@ public sealed class PlcMonitorViewModelTimingTests : IAsyncLifetime
 		_fixture.StubS7.PushExecutionState(State(true, 0, 10f));
 		_fixture.StubS7.PushExecutionState(State(false, 0, 0f));
 
-		monitor.TimeLeftInStepText.Should().Be("00:00:00");
+		monitor.TimeLeftInStepText.Should().Be("\u2014");
 		monitor.TimeLeftInRecipeText.Should().Be("00:02:00");
 	}
 
@@ -161,7 +161,7 @@ public sealed class PlcMonitorViewModelTimingTests : IAsyncLifetime
 		_fixture.StubS7.PushExecutionState(State(true, 0, 20f));
 		_fixture.StubS7.PushExecutionState(State(false, 0, 0f));
 
-		monitor.TimeLeftInStepText.Should().Be("00:00:00");
+		monitor.TimeLeftInStepText.Should().Be("\u2014");
 		monitor.TimeLeftInRecipeText.Should().Be("00:01:00");
 	}
 
@@ -204,7 +204,7 @@ public sealed class PlcMonitorViewModelTimingTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void ExecutionState_PropagatesActualLineAndForLoopCounts()
+	public void ExecutionState_PropagatesActiveStateAndActualLine()
 	{
 		Driver().AddWait(60f);
 
@@ -214,9 +214,6 @@ public sealed class PlcMonitorViewModelTimingTests : IAsyncLifetime
 
 		monitor.IsRecipeActive.Should().BeTrue();
 		monitor.ActualLine.Should().Be(0);
-		monitor.ForLoopCount1.Should().Be(2);
-		monitor.ForLoopCount2.Should().Be(3);
-		monitor.ForLoopCount3.Should().Be(4);
 	}
 
 	[AvaloniaFact]

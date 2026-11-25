@@ -555,11 +555,8 @@ public abstract class RecipeGridSurfaceContractTests : IAsyncLifetime
 			return string.Empty;
 		}
 
-		var registry = Fixture.RecipeMetadataRegistry;
-		var durationColumn = registry.GetColumn(RecipeTestDriver.StepDurationColumn).Value;
-		var durationUnits = registry.GetProperty(durationColumn.PropertyTypeId).Value.Units;
 		var rawSeconds = stepStartTimes[index].TotalSeconds.ToString(CultureInfo.InvariantCulture);
-		return TimeFormatHelper.FormatValue(rawSeconds, TimeFormatHelper.TimeHmsFormat, durationUnits);
+		return TimeFormatHelper.FormatValue(rawSeconds, TimeFormatHelper.TimeHmsFormat, units: null);
 	}
 
 	private int ExpectedDepth(int index)

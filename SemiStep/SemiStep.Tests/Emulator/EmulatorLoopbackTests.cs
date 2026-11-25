@@ -202,10 +202,6 @@ public sealed class EmulatorLoopbackTests
 		return new ExecutionStateCodec(execution).Decode(bytes).Value;
 	}
 
-	/// <summary>
-	/// The app's S7 stack pointed at the emulator. The container would dispose S7Service once per
-	/// registered interface and fail on the second call, so the session only disconnects.
-	/// </summary>
 	private sealed class ConnectedClient : IAsyncDisposable
 	{
 		private ConnectedClient(ServiceProvider provider)
@@ -240,7 +236,7 @@ public sealed class EmulatorLoopbackTests
 
 		public async ValueTask DisposeAsync()
 		{
-			await Provider.GetRequiredService<IS7Connection>().DisconnectAsync();
+			await Provider.DisposeAsync();
 		}
 	}
 }

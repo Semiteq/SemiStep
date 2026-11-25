@@ -174,7 +174,6 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 
 	public void Dispose()
 	{
-		PlcMonitor.Dispose();
 		_disposables.Dispose();
 		GC.SuppressFinalize(this);
 	}

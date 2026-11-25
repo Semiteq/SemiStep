@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 
 using AwesomeAssertions;
 
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 using SemiStep.Core.Configuration;
@@ -25,7 +26,7 @@ namespace SemiStep.Tests.S7;
 [Trait("Category", "Unit")]
 public sealed class S7ServiceTests
 {
-	private static PlcConfiguration BuildConfiguration(
+	internal static PlcConfiguration BuildConfiguration(
 		int keepAliveIntervalMs = 50,
 		int pollingIntervalMs = 100000)
 	{
@@ -55,7 +56,9 @@ public sealed class S7ServiceTests
 		return new RecipeMetadataRegistry(config);
 	}
 
-	private static (S7Service Service, FakeS7Driver Driver) BuildService(PlcConfiguration configuration)
+	internal static (S7Service Service, FakeS7Driver Driver) BuildService(
+		PlcConfiguration configuration,
+		ILogger<S7Service>? logger = null)
 	{
 		var driver = new FakeS7Driver();
 		var converter = new RecipeConverter(BuildMinimalRecipeMetadataRegistry());
@@ -71,7 +74,7 @@ public sealed class S7ServiceTests
 			NullLogger<PlcExecutionMonitor>.Instance);
 
 		service = new S7Service(
-			driver, monitor, executor, configuration, NullLogger<S7Service>.Instance);
+			driver, monitor, executor, configuration, logger ?? NullLogger<S7Service>.Instance);
 
 		return (service, driver);
 	}

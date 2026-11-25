@@ -1,9 +1,8 @@
 ﻿using AwesomeAssertions;
 
+using SemiStep.Tests.Helpers;
 using SemiStep.UI.Logging;
 
-using Serilog;
-using Serilog.Core;
 using Serilog.Events;
 
 using Xunit;
@@ -89,21 +88,9 @@ public sealed class AvaloniaSerilogSinkTests
 		AvaloniaLevel minimumLevel = AvaloniaLevel.Warning)
 	{
 		var capturingSink = new CapturingSink();
-		var logger = new LoggerConfiguration()
-			.MinimumLevel.Verbose()
-			.WriteTo.Sink(capturingSink)
-			.CreateLogger();
-
-		var previous = Log.Logger;
-		Log.Logger = logger;
-		try
+		using (StaticLoggerSwap.To(capturingSink))
 		{
 			feed(new AvaloniaSerilogSink(minimumLevel));
-		}
-		finally
-		{
-			Log.Logger = previous;
-			logger.Dispose();
 		}
 
 		return capturingSink.Events;
@@ -122,17 +109,5 @@ public sealed class AvaloniaSerilogSinkTests
 	private static string? Rendered(LogEvent logEvent, string property)
 	{
 		return ScalarValueOf(logEvent, property) as string;
-	}
-
-	private sealed class CapturingSink : ILogEventSink
-	{
-		private readonly List<LogEvent> _events = [];
-
-		public IReadOnlyList<LogEvent> Events => _events;
-
-		public void Emit(LogEvent logEvent)
-		{
-			_events.Add(logEvent);
-		}
 	}
 }

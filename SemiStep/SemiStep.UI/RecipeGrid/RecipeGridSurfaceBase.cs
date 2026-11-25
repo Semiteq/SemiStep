@@ -28,6 +28,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	private readonly ObservableAsPropertyHelper<bool> _isReadOnly;
 	private readonly ObservableAsPropertyHelper<int> _selectedStepIndex;
 	private readonly ChangeMarkClearBroadcaster _changeMarkClearBroadcaster;
+	private readonly ChangeMarkHistory _changeMarkHistory;
 	private readonly RecipeCoordinator _coordinator;
 	private readonly CompositeDisposable _disposables = [];
 	private readonly ExecutionHighlightTracker _executionHighlightTracker;
@@ -35,6 +36,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	private readonly ILogger _logger;
 	private readonly MessagePanelViewModel _messagePanel;
 	private readonly Subject<int?> _selectionRequests = new();
+	private Recipe _shownRecipe = Recipe.Empty;
 
 	protected RecipeGridSurfaceBase(
 		RecipeCoordinator coordinator,
@@ -47,6 +49,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		RecipeMetadataRegistry = recipeMetadataRegistry;
 		_messagePanel = messagePanel;
 		_changeMarkClearBroadcaster = changeMarkClearBroadcaster;
+		_changeMarkHistory = new ChangeMarkHistory(logger);
 		_logger = logger;
 
 		Items = [];
@@ -137,7 +140,8 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 
 	public void Initialize()
 	{
-		FullRebuild(_coordinator.CurrentRecipe);
+		_shownRecipe = _coordinator.CurrentRecipe;
+		FullRebuild(_shownRecipe);
 
 		// Run the start-time tail from 0 to seed the baseline; a later mutation refreshes only from its own index.
 		RefreshStepStartTimes(0);
@@ -155,6 +159,10 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 			"Mutation signal received: {Kind} StepCount={StepCount}",
 			signal.GetType().Name,
 			recipe.StepCount);
+
+		// The rows still show the outgoing state here; Core already holds the incoming recipe.
+		_changeMarkHistory.Capture(_shownRecipe, ShownRows());
+		_shownRecipe = recipe;
 
 		// Catch here so the throw doesn't break the multicast Mutated to the sibling surface.
 		try
@@ -187,6 +195,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 
 				case MutationSignal.RecipeReplaced:
 					FullRebuild(recipe);
+					_changeMarkHistory.Restore(recipe, ShownRows());
 					break;
 
 				case MutationSignal.StateRefreshed:
@@ -222,6 +231,11 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 
 		RefreshStepStartTimes(RefreshStartIndexFor(signal));
 		RefreshLoopDepths();
+	}
+
+	private RecipeRowViewModel[] ShownRows()
+	{
+		return [.. Items.Select(RowOf)];
 	}
 
 	// Pure projection of the selection through the same index transaction the switch applied to Items.

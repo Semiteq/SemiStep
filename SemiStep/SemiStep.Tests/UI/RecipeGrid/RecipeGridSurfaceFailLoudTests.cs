@@ -130,6 +130,34 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 		errorEntry.Message.Should().Match($"*Step 2*unknown action key*{RecipeTestDriver.WaitActionId}*");
 	}
 
+	[AvaloniaFact]
+	public void UndoToAStateLeftWithAShortProjection_RestoresNoMarks()
+	{
+		_fixture.Coordinator.NewRecipe();
+		var registry = BuildRegistryWithoutWaitAction();
+		using var surface = new CanonicalRecipeGridSurface(
+			_fixture.Coordinator,
+			registry,
+			new ComboBoxItemsProvider(registry),
+			_fixture.ColumnBuilder,
+			_fixture.MessagePanel,
+			_fixture.ChangeMarkClearBroadcaster,
+			NullLogger<CanonicalRecipeGridSurface>.Instance);
+		surface.Initialize();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.ForLoopActionId);
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
+		_fixture.Coordinator.ChangeStepAction(1, RecipeTestDriver.ForLoopActionId).IsSuccess.Should().BeTrue();
+		_fixture.Coordinator.ChangeStepAction(0, RecipeTestDriver.WithGroupActionId).IsSuccess.Should().BeTrue();
+		surface.RecipeRows.Should().ContainSingle("precondition: the failed append left the projection short")
+			.Which.ChangedColumns.Should().NotBeEmpty("precondition: the action change marks the row");
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.ForLoopActionId);
+
+		_fixture.Coordinator.Undo().IsSuccess.Should().BeTrue();
+
+		surface.RecipeRows.Should().HaveCount(2);
+		surface.RecipeRows.Should().OnlyContain(row => row.ChangedColumns.Count == 0);
+	}
+
 	private RecipeMetadataRegistry BuildRegistryWithoutWaitAction()
 	{
 		var actions = _fixture.AppConfiguration.Actions

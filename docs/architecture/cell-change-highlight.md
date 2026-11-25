@@ -57,7 +57,8 @@ orientation surfaces derive from (see `recipe-grid-surface.md`):
 - **Action change** — `RebuildItem` reads the step of the row it replaces, builds the new row, and
   marks `ChangedValueKeys(previousStep, newStep)`. Each surface compares against its own old
   row, and both rows hold the same step, so both orientations mark the same cells. Only the
-  action-change path marks this way; append / insert / full-rebuild do not.
+  action-change path marks this way; append / insert / full-rebuild do not. An undo or redo
+  rebuild restores stored marks without the rule, see "Undo and redo" below.
 - **Selector change** (#71 nested actions) — the coordinator raises `PropertyUpdated`, and
   `RecipeRowUpdateSynchronizer` updates the row on each surface, the originating one included:
   every key `ChangedValueKeys` reports is marked, held before or not, and a dropped key is
@@ -91,10 +92,36 @@ orientation surfaces derive from (see `recipe-grid-surface.md`):
   surfaces. It does not dirty the recipe and adds no undo entry. Its `canExecute` is
   `IRecipeGridSurface.HasChangedMarks`: each surface keeps the set of rows that carry a mark. A
   row's `ChangedColumns` notification and an `Items` add, remove or replace adjust the set for
-  those rows only; an `Items` reset rebuilds it. The active surface ORs the two surfaces.
+  those rows only; an `Items` reset rebuilds it. The active surface ORs the two surfaces. After a
+  clear, Ctrl+Z shows the earlier state with the marks it had: the clear changes only the state
+  it ran on. Click-away and the execution-start clear follow the same rule.
 - **Execution start** — `SemiStep.UI/RecipeGrid/ExecutionHighlightTracker.cs` clears every row's
   set (`ClearAllChanged`) on the inactive→active edge only; an already-active line change does
   not re-clear.
+
+## Undo and redo
+
+Undo and redo show each recipe state with the marks it had when the operator left it. Core never
+sees most mark changes (click-away, the edit clear, clear all and execution start fire no
+mutation), so the marks stay in the UI:
+
+- Each surface owns a `ChangeMarkHistory` (`SemiStep.UI/RecipeGrid/ChangeMarkHistory.cs`) and is
+  its only writer. It maps a `Recipe` instance to one mark set per row in a
+  `ConditionalWeakTable`. The table matches keys by reference, so two equal recipes, for example
+  an edit to X and back to X, keep separate marks, and a recipe that drops out of history takes
+  its marks along.
+- The instance is the identity of a history point. `RecipeHistory` stores references, an undo
+  analyzes the stored instance, and every `Recipe` mutation returns a new instance. After Ctrl+Z
+  `RecipeCoordinator.CurrentRecipe` is the instance the operator left.
+- Capture: `RecipeGridSurfaceBase.OnMutation` stores the rows' marks under the recipe the rows
+  showed, on every signal and before the rows change. At that point Core already holds the new
+  recipe and the rows still show the old state. When no row is marked, the entry is removed.
+- Restore: after every `RecipeReplaced` rebuild the surface looks up the new current recipe and
+  sets each row's stored set with `MarkChanged`, bypassing the marking rule. A stored row count
+  that differs from the shown row count restores nothing and logs a warning.
+- Loads find no entry: CSV load, PLC load, reconnect apply and conflict resolve each yield a fresh
+  `Recipe` instance, and New recipe yields `Recipe.Empty`, which has no rows. A fresh recipe
+  therefore starts unmarked and `RecipeReplaced` carries no reason.
 
 ## Cascade placement
 

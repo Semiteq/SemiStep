@@ -4,7 +4,9 @@ using Microsoft.Extensions.Logging;
 
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.S7.Protocol;
+using SemiStep.Core.Plc.S7.Serialization;
 using SemiStep.Core.Plc.State;
+using SemiStep.Core.Plc.Sync;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 
@@ -17,6 +19,7 @@ public sealed class PlcLifecycleManager(
 	IS7ExecutionStream executionStream,
 	IPlcSyncService syncService,
 	IPlcSyncOwnership syncOwnership,
+	RecipeMetadataRegistry recipeMetadataRegistry,
 	ILogger<PlcLifecycleManager> logger) : IDisposable
 {
 	internal const string SyncEnableCancelledMessage = "PLC sync enable cancelled";
@@ -44,6 +47,7 @@ public sealed class PlcLifecycleManager(
 	private readonly ILogger<PlcLifecycleManager> _logger = logger;
 	private readonly Lock _pendingLock = new();
 	private readonly IS7Reader _reader = reader;
+	private readonly RecipeConverter _recipeConverter = new(recipeMetadataRegistry);
 	private readonly RecipeSession _session = session;
 	private readonly IPlcSyncOwnership _syncOwnership = syncOwnership;
 	private readonly IPlcSyncService _syncService = syncService;
@@ -416,7 +420,7 @@ public sealed class PlcLifecycleManager(
 				committed);
 		}
 
-		if (plcStepCount > 0 && !localRecipe.Equals(plcRecipe))
+		if (plcStepCount > 0 && !PlcRecipeDataComparer.EncodesToSamePlcData(_recipeConverter, localRecipe, plcRecipe, _logger))
 		{
 			lock (_pendingLock)
 			{

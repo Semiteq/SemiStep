@@ -54,36 +54,46 @@ public static class ExecutionTimeEstimator
 
 	private static TimeSpan ComputeLoopOffset(RecipeSnapshot snapshot, PlcExecutionInfo info)
 	{
-		if (!snapshot.EnclosingLoops.TryGetValue(info.ActualLine, out var enclosing))
+		var counts = new[] { info.ForLoopCount1, info.ForLoopCount2, info.ForLoopCount3 };
+
+		var offset = TimeSpan.Zero;
+		if (snapshot.EnclosingLoops.TryGetValue(info.ActualLine, out var enclosing))
+		{
+			foreach (var loop in enclosing)
+			{
+				offset += PassesBeforeCurrent(snapshot, loop, counts);
+			}
+		}
+
+		// The start time of a loop end line holds only the first pass of the loop it closes.
+		if (snapshot.LoopByEnd.TryGetValue(info.ActualLine, out var closedLoop))
+		{
+			offset += PassesBeforeCurrent(snapshot, closedLoop, counts);
+		}
+
+		return offset;
+	}
+
+	private static TimeSpan PassesBeforeCurrent(RecipeSnapshot snapshot, LoopInfo loop, int[] counts)
+	{
+		var depthIndex = loop.Depth - 1;
+		if (depthIndex < 0 || depthIndex >= counts.Length)
 		{
 			return TimeSpan.Zero;
 		}
 
-		var counts = new[] { info.ForLoopCount1, info.ForLoopCount2, info.ForLoopCount3 };
-
-		var offset = TimeSpan.Zero;
-		foreach (var loop in enclosing)
+		if (!snapshot.SingleIterationDurations.TryGetValue(loop.StartIndex, out var singlePass))
 		{
-			var depthIndex = loop.Depth - 1;
-			if (depthIndex < 0 || depthIndex >= counts.Length)
-			{
-				continue;
-			}
-
-			if (!snapshot.SingleIterationDurations.TryGetValue(loop.StartIndex, out var singleIteration))
-			{
-				continue;
-			}
-
-			var completed = counts[depthIndex];
-			if (completed <= 0)
-			{
-				continue;
-			}
-
-			offset += TimeSpan.FromTicks(singleIteration.Ticks * completed);
+			return TimeSpan.Zero;
 		}
 
-		return offset;
+		var currentPass = counts[depthIndex];
+		if (currentPass <= 0)
+		{
+			return TimeSpan.Zero;
+		}
+
+		var passesBefore = Math.Min(currentPass, loop.Iterations) - 1;
+		return singlePass * passesBefore;
 	}
 }

@@ -49,3 +49,23 @@ paths run as `async void` event handlers, so they carry their own try/catch guar
 installs no Avalonia dispatcher hook and cannot catch an `async void` throw. Those guards remain in
 place and are not superseded by the interaction convention above. See `error-reporting.md` for the
 guard rationale and `exit-flow.md` for the exit path.
+
+## Window shortcuts
+
+`MainWindow/WindowGestures.cs` is the one gesture table. Each menu item in `RecipeMenuBar.axaml`
+shows its gesture from the table, each toolbar tooltip prints the same text (`TipOf`), and
+`MainWindow.OnKeyDown` runs the item whose gesture matches the key (`RecipeMenuBar.ItemFor`). The pattern follows SemiPlot
+(`MainWindow.OnKeyDown` plus `AppMenuBar.GoItemFor`).
+
+- No `Window.KeyBindings` and no `HotKey`: both take the key from a focused `TextBox` (probed
+  2026-11-25, Avalonia 12.0.5). A `MenuItem.InputGesture` alone only prints the gesture.
+- The handler skips a handled event and an event whose source is a `TextBox`. A `TextBox` lets
+  Ctrl+N, Ctrl+S and F2 through unhandled, so testing `Handled` alone is not enough.
+- Delete, Ctrl+C, Ctrl+X and Ctrl+V also skip while a cell is being edited: `RecipeGridHost.IsEditing`
+  or a key source inside a `ComboBox` whose list is open. A canonical combo cell lives in
+  `CellTemplate`, so its open list is not a `DataGrid` edit.
+- Ctrl+Shift+T runs from an open cell editor too: it commits the value and only changes the view.
+- Ctrl+Shift+Z is a second redo gesture; the menu prints Ctrl+Y. Alt+F4 is display-only on
+  "Выход" and the handler never runs it.
+- The handler searches the items of every top-level menu and asks `ICommand.CanExecute` itself.
+- F2 stays a grid key (`DataGrid` and `TransposedLazyCellPresenter`).

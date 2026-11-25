@@ -72,7 +72,7 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 			comboBoxItemsProvider,
 			new ColumnBuilder(GridStyleOptions.Default, _registry, comboBoxItemsProvider),
 			_messagePanel,
-			new ChangedCellClickAwayBroadcaster(),
+			new ChangeMarkClearBroadcaster(),
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 		_surface.Initialize();
 	}
@@ -212,7 +212,7 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 
 		// "2" parses as an int (so TryBuildSelectorEdit builds a SelectorEdit and routes through the
 		// selector path), but it is not a defined match_mode group value, so the coordinator rejects
-		// it. OnSelectorValueChanged takes the result.IsFailed early-return before ApplyChangedDelta:
+		// it. A rejected edit raises no PropertyUpdated, so RecipeRowUpdateSynchronizer never runs:
 		// a rejected selector edit must not mutate the changed set.
 		row.SetPropertyValue(SelectorColumn, "2");
 

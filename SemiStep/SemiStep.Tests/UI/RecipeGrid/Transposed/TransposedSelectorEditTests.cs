@@ -24,8 +24,8 @@ namespace SemiStep.Tests.UI.RecipeGrid.Transposed;
 /// <summary>
 /// Exercises the transposed surface's selector-edit path end to end on the nested-action config
 /// (action 300 "Branching" with a <c>branch_sel</c> selector whose value 1 pulls in the
-/// <c>sub_value</c> column): one mutation applies the edit, recomputes applicability, and applies
-/// the changed-cell delta — parity with canonical's <c>OnSelectorValueChanged</c>.
+/// <c>sub_value</c> column): one mutation applies the edit, recomputes applicability, and marks
+/// the changed cells through <c>RecipeRowUpdateSynchronizer</c>, the same path as canonical.
 /// </summary>
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
@@ -39,7 +39,7 @@ public sealed class TransposedSelectorEditTests : IAsyncLifetime
 	private const string ManualValue = "1";
 	private const float SubDefaultFloat = 50f;
 
-	private readonly ChangedCellClickAwayBroadcaster _clickAwayBroadcaster = new();
+	private readonly ChangeMarkClearBroadcaster _changeMarkClearBroadcaster = new();
 
 	private IServiceProvider _services = null!;
 	private MessagePanelViewModel _messagePanel = null!;
@@ -73,7 +73,7 @@ public sealed class TransposedSelectorEditTests : IAsyncLifetime
 			_comboBoxItemsProvider,
 			_services.GetRequiredService<SemiStep.Core.Configuration.AppConfiguration>().GridStyle,
 			_messagePanel,
-			_clickAwayBroadcaster,
+			_changeMarkClearBroadcaster,
 			NullLogger<TransposedRecipeGridSurface>.Instance);
 		_surface.Initialize();
 	}
@@ -147,7 +147,7 @@ public sealed class TransposedSelectorEditTests : IAsyncLifetime
 			_comboBoxItemsProvider,
 			new ColumnBuilder(gridStyle, _registry, _comboBoxItemsProvider),
 			_messagePanel,
-			_clickAwayBroadcaster,
+			_changeMarkClearBroadcaster,
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 		canonicalSurface.Initialize();
 		AppendBranchingStep();

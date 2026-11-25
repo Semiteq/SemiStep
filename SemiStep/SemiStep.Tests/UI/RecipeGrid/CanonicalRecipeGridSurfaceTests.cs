@@ -429,17 +429,14 @@ public sealed class CanonicalRecipeGridSurfaceTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void ChangeStepAction_MarksChangedColumns_ToNewStepPropertyKeys()
+	public void ChangeStepAction_MarksOnlyCellsWhoseValueChanged()
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
 		_fixture.Coordinator.ChangeStepAction(0, RecipeTestDriver.ForLoopActionId);
 
-		var expected = _fixture.Coordinator.CurrentRecipe.Steps[0].Properties.Keys
-			.Select(id => id.Value)
-			.ToList();
-		_surface.RecipeRows[0].ChangedColumns.Should().BeEquivalentTo(expected);
+		_surface.RecipeRows[0].ChangedColumns.Should().BeEquivalentTo([RecipeTestDriver.TaskColumn]);
 	}
 
 	[AvaloniaFact]

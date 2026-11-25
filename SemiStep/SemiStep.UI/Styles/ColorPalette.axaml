@@ -7,6 +7,15 @@
          inherit this, so it is not a single source for every glyph in the app. -->
     <FontFamily x:Key="ChromeFontFamily">Segoe UI Variable Text, Segoe UI</FontFamily>
 
+    <SolidColorBrush x:Key="ToolbarCaptionBrush" Color="#000000" />
+    <SolidColorBrush x:Key="ToolbarDisabledBrush" Color="#A8ADBD" />
+    <SolidColorBrush x:Key="ToolbarIconBrush" Color="#6C707E" />
+    <SolidColorBrush x:Key="ToolbarIconPointeroverBrush" Color="#000000" />
+    <SolidColorBrush x:Key="ToolbarSwitchTrackBrush" Color="#6C707E" />
+    <SolidColorBrush x:Key="ToolbarSwitchOffTrackBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="ToolbarSwitchBorderBrush" Color="#A8ADBD" />
+    <SolidColorBrush x:Key="ToolbarSwitchKnobBrush" Color="#FFFFFF" />
+
     <!-- Config-driven brushes (cell state, selection, grid lines) are installed at startup by
          CellPaletteInstaller from GridStyleOptions. See CellPaletteInstaller for the full key
          list and the config source paths. -->

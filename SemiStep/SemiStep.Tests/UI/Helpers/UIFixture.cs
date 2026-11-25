@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.State;
+using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Helpers;
@@ -43,11 +44,12 @@ public sealed class UIFixture : IAsyncLifetime
 	public CsvService CsvService { get; private set; } = null!;
 	public RecipeCoordinator Coordinator { get; private set; } = null!;
 	public StubS7Service StubS7 { get; private set; } = null!;
+	public StubPlcSyncOwnership SyncOwnership { get; private set; } = null!;
 	public ColumnBuilder ColumnBuilder { get; private set; } = null!;
 
 	// Shared across every surface the fixture creates, mirroring the DI singleton: the
 	// click-away clear must reach sibling surfaces built from the same fixture.
-	public ChangedCellClickAwayBroadcaster ClickAwayBroadcaster { get; } = new();
+	public ChangeMarkClearBroadcaster ChangeMarkClearBroadcaster { get; } = new();
 
 	public HistoricalScheduler Scheduler { get; } = new(new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero));
 
@@ -68,6 +70,7 @@ public sealed class UIFixture : IAsyncLifetime
 		AppConfiguration = services.GetRequiredService<AppConfiguration>();
 		MessagePanel = new MessagePanelViewModel();
 		StubS7 = services.GetRequiredService<StubS7Service>();
+		SyncOwnership = (StubPlcSyncOwnership)services.GetRequiredService<IPlcSyncOwnership>();
 		CsvService = services.GetRequiredService<CsvService>();
 		Coordinator = new RecipeCoordinator(
 			Session,
@@ -104,7 +107,7 @@ public sealed class UIFixture : IAsyncLifetime
 			ComboBoxItemsProvider,
 			ColumnBuilder,
 			MessagePanel,
-			ClickAwayBroadcaster,
+			ChangeMarkClearBroadcaster,
 			logger ?? NullLogger<CanonicalRecipeGridSurface>.Instance);
 		_ownedDisposables.Add(surface);
 
@@ -120,7 +123,7 @@ public sealed class UIFixture : IAsyncLifetime
 			ComboBoxItemsProvider,
 			AppConfiguration.GridStyle,
 			MessagePanel,
-			ClickAwayBroadcaster,
+			ChangeMarkClearBroadcaster,
 			logger ?? NullLogger<TransposedRecipeGridSurface>.Instance);
 		_ownedDisposables.Add(surface);
 

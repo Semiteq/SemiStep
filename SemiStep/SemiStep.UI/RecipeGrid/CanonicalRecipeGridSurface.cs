@@ -15,10 +15,10 @@ public class CanonicalRecipeGridSurface(
 	ComboBoxItemsProvider comboBoxItemsProvider,
 	ColumnBuilder columnBuilder,
 	MessagePanelViewModel messagePanel,
-	ChangedCellClickAwayBroadcaster changedCellClickAwayBroadcaster,
+	ChangeMarkClearBroadcaster changeMarkClearBroadcaster,
 	ILogger<CanonicalRecipeGridSurface> logger)
 	: RecipeGridSurfaceBase<RecipeRowViewModel>(
-		coordinator, recipeMetadataRegistry, messagePanel, changedCellClickAwayBroadcaster, logger)
+		coordinator, recipeMetadataRegistry, messagePanel, changeMarkClearBroadcaster, logger)
 {
 	public ColumnBuilder ColumnBuilder { get; } = columnBuilder;
 

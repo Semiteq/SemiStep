@@ -15,17 +15,9 @@
         Width="1600"
         Height="800">
 
-    <Window.KeyBindings>
-        <KeyBinding Gesture="Ctrl+O" Command="{Binding RecipeFile.LoadRecipeCommand}" />
-        <KeyBinding Gesture="Ctrl+S" Command="{Binding RecipeFile.SaveRecipeCommand}" />
-        <KeyBinding Gesture="Ctrl+Z" Command="{Binding RecipeCommands.UndoCommand}" />
-        <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RecipeCommands.RedoCommand}" />
-        <KeyBinding Gesture="Ctrl+N" Command="{Binding RecipeCommands.AddStepCommand}" />
-    </Window.KeyBindings>
-
     <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
 
-        <local:RecipeMenuBar Grid.Row="0" />
+        <local:RecipeMenuBar Grid.Row="0" x:Name="MenuBar" />
 
         <local:RecipeToolBar Grid.Row="1"
                              IsVisible="{Binding IsToolBarVisible}" />
@@ -44,6 +36,9 @@
                               Command="{Binding Clipboard.CutStepCommand}" />
                     <MenuItem Header="{x:Static l:Resources.ContextPasteStep}"
                               Command="{Binding Clipboard.PasteStepCommand}" />
+                    <Separator />
+                    <MenuItem Header="{x:Static l:Resources.MenuEditClearChangeMarks}"
+                              Command="{Binding RecipeCommands.ClearChangeMarksCommand}" />
                 </ContextMenu>
             </Panel.ContextMenu>
             <recipeGrid:RecipeGridHost x:Name="RecipeGridHost"

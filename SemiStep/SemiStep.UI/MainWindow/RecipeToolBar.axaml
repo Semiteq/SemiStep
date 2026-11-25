@@ -8,20 +8,103 @@
              x:Class="SemiStep.UI.MainWindow.RecipeToolBar"
              x:DataType="local:MainWindowViewModel">
 
+    <UserControl.Resources>
+        <!-- The sync switch states a wish, not a link, so its checked track is neutral grey, never accent or green. -->
+        <StaticResource x:Key="ToggleSwitchContainerCheckedDefaultBackground" ResourceKey="ToolbarSwitchTrackBrush" />
+        <StaticResource x:Key="ToggleSwitchContainerCheckedPointeroverBackground" ResourceKey="ToolbarSwitchTrackBrush" />
+        <StaticResource x:Key="ToggleSwitchContainerCheckedPressedBackground" ResourceKey="ToolbarSwitchTrackBrush" />
+        <StaticResource x:Key="ToggleSwitchContainerCheckedDisabledBackground" ResourceKey="ToolbarDisabledBrush" />
+        <StaticResource x:Key="ToggleSwitchContainerUnCheckedDefaultBackground" ResourceKey="ToolbarSwitchOffTrackBrush" />
+        <StaticResource x:Key="ToggleSwitchContainerUnCheckedPointeroverBackground" ResourceKey="ToolbarSwitchOffTrackBrush" />
+        <StaticResource x:Key="ToggleSwitchContainerUnCheckedPressedBackground" ResourceKey="ToolbarSwitchOffTrackBrush" />
+        <StaticResource x:Key="ToggleSwitchDefaultBorderBrush" ResourceKey="ToolbarSwitchBorderBrush" />
+
+        <!-- Semi's template stacks the caption above the track, which makes the toolbar taller than its buttons.
+             This one puts the caption left of the track on the button line, and the whole control takes the click. -->
+        <ControlTheme x:Key="ToolbarSyncSwitch" TargetType="ToggleSwitch" BasedOn="{StaticResource {x:Type ToggleSwitch}}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ButtonCornerRadius}" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="Foreground" Value="{DynamicResource ToolbarCaptionBrush}" />
+            <Setter Property="FontSize" Value="{DynamicResource ButtonDefaultFontSize}" />
+            <Setter Property="FontWeight" Value="{DynamicResource ButtonDefaultFontWeight}" />
+            <Setter Property="Template">
+                <ControlTemplate TargetType="ToggleSwitch">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ContentPresenter Name="PART_ContentPresenter"
+                                              VerticalAlignment="Center"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}" />
+                            <Border Name="SwitchBackgroundBorder"
+                                    VerticalAlignment="Center"
+                                    TemplatedControl.IsTemplateFocusTarget="True"
+                                    Width="{DynamicResource ToggleSwitchDefaultWidth}"
+                                    Height="{DynamicResource ToggleSwitchDefaultHeight}"
+                                    BackgroundSizing="OuterBorderEdge"
+                                    BorderBrush="{DynamicResource ToggleSwitchDefaultBorderBrush}"
+                                    BorderThickness="{DynamicResource ToggleSwitchDefaultBorderThickness}"
+                                    CornerRadius="{DynamicResource ToggleSwitchDefaultCornerRadius}">
+                                <Border.Transitions>
+                                    <Transitions>
+                                        <BrushTransition Property="Background" Duration="0:0:0.2" />
+                                    </Transitions>
+                                </Border.Transitions>
+                                <Canvas Name="PART_SwitchKnob"
+                                        Width="{DynamicResource ToggleSwitchIndicatorDefaultWidth}"
+                                        Height="{DynamicResource ToggleSwitchIndicatorDefaultWidth}"
+                                        HorizontalAlignment="Left">
+                                    <Panel Name="PART_MovingKnobs"
+                                           Width="{DynamicResource ToggleSwitchIndicatorDefaultWidth}"
+                                           Height="{DynamicResource ToggleSwitchIndicatorDefaultWidth}"
+                                           Margin="{DynamicResource ToggleSwitchIndicatorDefaultMargin}">
+                                        <Border Name="SwitchKnobIndicator"
+                                                Background="{DynamicResource ToolbarSwitchKnobBrush}"
+                                                BoxShadow="{DynamicResource ToggleSwitchIndicatorBoxShadow}"
+                                                CornerRadius="{DynamicResource ToggleSwitchIndicatorCornerRadius}" />
+                                    </Panel>
+                                </Canvas>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Style Selector="^:checked /template/ Canvas#PART_SwitchKnob">
+                <Setter Property="HorizontalAlignment" Value="Right" />
+            </Style>
+            <Style Selector="^:pointerover">
+                <Setter Property="Background" Value="{DynamicResource ButtonDefaultPointeroverBackground}" />
+            </Style>
+            <Style Selector="^:disabled">
+                <Setter Property="Foreground" Value="{DynamicResource ToolbarDisabledBrush}" />
+            </Style>
+        </ControlTheme>
+    </UserControl.Resources>
+
     <UserControl.Styles>
         <Style Selector="Button.toolbar">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="8,4" />
             <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{DynamicResource ToolbarCaptionBrush}" />
         </Style>
-        <Style Selector="Button.toolbar Image">
+        <Style Selector="Button.toolbar PathIcon">
             <Setter Property="Width" Value="16" />
             <Setter Property="Height" Value="16" />
+            <Setter Property="Foreground" Value="{DynamicResource ToolbarIconBrush}" />
+        </Style>
+        <Style Selector="Button.toolbar:pointerover PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource ToolbarIconPointeroverBrush}" />
+        </Style>
+        <Style Selector="Button.toolbar:disabled PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource ToolbarDisabledBrush}" />
         </Style>
         <Style Selector="Border.group-separator">
             <Setter Property="Width" Value="1" />
-            <Setter Property="Margin" Value="4,6" />
+            <Setter Property="Margin" Value="4,8" />
             <Setter Property="Background" Value="{DynamicResource GridBorderBrush}" />
         </Style>
     </UserControl.Styles>
@@ -29,84 +112,116 @@
     <Border Background="{DynamicResource GridBackgroundBrush}"
             BorderBrush="{DynamicResource GridBorderBrush}"
             BorderThickness="0,0,0,1"
-            Padding="4,2">
-        <StackPanel Orientation="Horizontal" Spacing="2">
+            Padding="4">
+        <DockPanel>
 
-            <Button x:Name="AddButton"
-                    Classes="toolbar"
-                    Command="{Binding RecipeCommands.AddStepCommand}"
-                    ToolTip.Tip="{x:Static l:Resources.ContextAddStep}">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://SemiStep/Assets/Icons/add.png" />
-                    <TextBlock Text="{x:Static l:Resources.ToolbarAddStep}" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+            <ToggleSwitch x:Name="SyncToggle"
+                          Theme="{StaticResource ToolbarSyncSwitch}"
+                          DockPanel.Dock="Right"
+                          VerticalAlignment="Stretch"
+                          Content="{x:Static l:Resources.SyncWithPlc}"
+                          IsChecked="{Binding IsSyncEnabled, Mode=OneWay}"
+                          Command="{Binding ToggleSyncCommand}" />
 
-            <Button x:Name="DeleteButton"
-                    Classes="toolbar"
-                    Command="{Binding RecipeCommands.DeleteStepCommand}"
-                    ToolTip.Tip="{x:Static l:Resources.ContextDeleteStep}">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://SemiStep/Assets/Icons/delete.png" />
-                    <TextBlock Text="{x:Static l:Resources.ToolbarDeleteStep}" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+            <StackPanel x:Name="Buttons" Orientation="Horizontal" Spacing="4">
 
-            <Border Classes="group-separator" />
+                <Button x:Name="OpenButton"
+                        Classes="toolbar"
+                        Command="{Binding RecipeFile.LoadRecipeCommand}"
+                        ToolTip.Tip="{x:Static local:WindowGestures.OpenRecipeTip}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <PathIcon Data="{StaticResource OpenGeometry}" />
+                        <TextBlock Text="{x:Static l:Resources.ToolbarOpen}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
-            <Button x:Name="CopyButton"
-                    Classes="toolbar"
-                    Command="{Binding Clipboard.CopyStepCommand}"
-                    ToolTip.Tip="{x:Static l:Resources.ContextCopyStep}">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://SemiStep/Assets/Icons/copy.png" />
-                    <TextBlock Text="{x:Static l:Resources.ToolbarCopyStep}" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+                <Button x:Name="SaveButton"
+                        Classes="toolbar"
+                        Command="{Binding RecipeFile.SaveRecipeCommand}"
+                        ToolTip.Tip="{x:Static local:WindowGestures.SaveRecipeTip}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <PathIcon Data="{StaticResource SaveGeometry}" />
+                        <TextBlock Text="{x:Static l:Resources.ToolbarSave}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
-            <Button x:Name="CutButton"
-                    Classes="toolbar"
-                    Command="{Binding Clipboard.CutStepCommand}"
-                    ToolTip.Tip="{x:Static l:Resources.ContextCutStep}">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://SemiStep/Assets/Icons/cut.png" />
-                    <TextBlock Text="{x:Static l:Resources.ToolbarCutStep}" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+                <Border Classes="group-separator" />
 
-            <Button x:Name="PasteButton"
-                    Classes="toolbar"
-                    Command="{Binding Clipboard.PasteStepCommand}"
-                    ToolTip.Tip="{x:Static l:Resources.ContextPasteStep}">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://SemiStep/Assets/Icons/paste.png" />
-                    <TextBlock Text="{x:Static l:Resources.ToolbarPasteStep}" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+                <Button x:Name="AddButton"
+                        Classes="toolbar"
+                        Command="{Binding RecipeCommands.AddStepCommand}"
+                        ToolTip.Tip="{x:Static local:WindowGestures.AddStepTip}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <PathIcon Data="{StaticResource AddGeometry}" />
+                        <TextBlock Text="{x:Static l:Resources.ToolbarAddStep}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
-            <Border Classes="group-separator" />
+                <Button x:Name="DeleteButton"
+                        Classes="toolbar"
+                        Command="{Binding RecipeCommands.DeleteStepCommand}"
+                        ToolTip.Tip="{x:Static local:WindowGestures.DeleteStepTip}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <PathIcon Data="{StaticResource DeleteGeometry}" />
+                        <TextBlock Text="{x:Static l:Resources.ToolbarDeleteStep}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
-            <Button x:Name="UndoButton"
-                    Classes="toolbar"
-                    Command="{Binding RecipeCommands.UndoCommand}"
-                    ToolTip.Tip="{x:Static l:Resources.ToolbarUndo}">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://SemiStep/Assets/Icons/undo.png" />
-                    <TextBlock Text="{x:Static l:Resources.ToolbarUndo}" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+                <Button x:Name="CopyButton"
+                        Classes="toolbar"
+                        Command="{Binding Clipboard.CopyStepCommand}"
+                        ToolTip.Tip="{x:Static local:WindowGestures.CopyStepsTip}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <PathIcon Data="{StaticResource CopyGeometry}" />
+                        <TextBlock Text="{x:Static l:Resources.ToolbarCopyStep}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
-            <Button x:Name="RedoButton"
-                    Classes="toolbar"
-                    Command="{Binding RecipeCommands.RedoCommand}"
-                    ToolTip.Tip="{x:Static l:Resources.ToolbarRedo}">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <Image Source="avares://SemiStep/Assets/Icons/redo.png" />
-                    <TextBlock Text="{x:Static l:Resources.ToolbarRedo}" VerticalAlignment="Center" />
-                </StackPanel>
-            </Button>
+                <Button x:Name="CutButton"
+                        Classes="toolbar"
+                        Command="{Binding Clipboard.CutStepCommand}"
+                        ToolTip.Tip="{x:Static local:WindowGestures.CutStepsTip}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <PathIcon Data="{StaticResource CutGeometry}" />
+                        <TextBlock Text="{x:Static l:Resources.ToolbarCutStep}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
-        </StackPanel>
+                <Button x:Name="PasteButton"
+                        Classes="toolbar"
+                        Command="{Binding Clipboard.PasteStepCommand}"
+                        ToolTip.Tip="{x:Static local:WindowGestures.PasteStepsTip}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <PathIcon Data="{StaticResource PasteGeometry}" />
+                        <TextBlock Text="{x:Static l:Resources.ToolbarPasteStep}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <Border Classes="group-separator" />
+
+                <Button x:Name="UndoButton"
+                        Classes="toolbar"
+                        Command="{Binding RecipeCommands.UndoCommand}"
+                        ToolTip.Tip="{x:Static local:WindowGestures.UndoTip}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <PathIcon Data="{StaticResource UndoGeometry}" />
+                        <TextBlock Text="{x:Static l:Resources.ToolbarUndo}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <Button x:Name="RedoButton"
+                        Classes="toolbar"
+                        Command="{Binding RecipeCommands.RedoCommand}"
+                        ToolTip.Tip="{x:Static local:WindowGestures.RedoTip}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <PathIcon Data="{StaticResource RedoGeometry}" />
+                        <TextBlock Text="{x:Static l:Resources.ToolbarRedo}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+            </StackPanel>
+
+        </DockPanel>
     </Border>
 
 </UserControl>

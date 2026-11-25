@@ -48,11 +48,13 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 		DeleteStepCommand = ReactiveCommand.Create(DeleteStep, canEdit.CombineLatest(canDelete, (left, right) => left && right));
 		UndoCommand = ReactiveCommand.Create(Undo, canEdit.CombineLatest(_canUndo, (left, right) => left && right));
 		RedoCommand = ReactiveCommand.Create(Redo, canEdit.CombineLatest(_canRedo, (left, right) => left && right));
+		ClearChangeMarksCommand = ReactiveCommand.Create(_recipeGrid.ClearAllChangedMarks, _recipeGrid.HasChangedMarks);
 
 		AddStepCommand.DisposeWith(_disposables);
 		DeleteStepCommand.DisposeWith(_disposables);
 		UndoCommand.DisposeWith(_disposables);
 		RedoCommand.DisposeWith(_disposables);
+		ClearChangeMarksCommand.DisposeWith(_disposables);
 
 		AddStepCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.AddStepFailed)))
 			.DisposeWith(_disposables);
@@ -64,6 +66,12 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 			.DisposeWith(_disposables);
 
 		RedoCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.RedoFailed)))
+			.DisposeWith(_disposables);
+
+		ClearChangeMarksCommand.ReportThrownExceptions(
+				_messagePanel,
+				_logger,
+				new LocalizedText(nameof(Resources.ClearChangeMarksFailed)))
 			.DisposeWith(_disposables);
 	}
 
@@ -81,6 +89,8 @@ public class RecipeCommandsViewModel : ReactiveObject, IDisposable
 	public ReactiveCommand<Unit, Unit> UndoCommand { get; }
 
 	public ReactiveCommand<Unit, Unit> RedoCommand { get; }
+
+	public ReactiveCommand<Unit, Unit> ClearChangeMarksCommand { get; }
 
 	public void Dispose()
 	{

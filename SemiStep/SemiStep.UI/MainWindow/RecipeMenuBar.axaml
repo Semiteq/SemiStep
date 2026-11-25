@@ -8,49 +8,58 @@
              x:Class="SemiStep.UI.MainWindow.RecipeMenuBar"
              x:DataType="local:MainWindowViewModel">
 
-    <Menu>
+    <Menu x:Name="AppMenu">
         <MenuItem Header="{x:Static l:Resources.MenuFile}">
             <MenuItem Header="{x:Static l:Resources.MenuFileNewRecipe}"
-                      Command="{Binding RecipeFile.NewRecipeCommand}" />
+                      Command="{Binding RecipeFile.NewRecipeCommand}"
+                      InputGesture="{x:Static local:WindowGestures.NewRecipe}" />
             <MenuItem Header="{x:Static l:Resources.MenuFileOpenRecipe}"
                       Command="{Binding RecipeFile.LoadRecipeCommand}"
-                      InputGesture="Ctrl+O" />
+                      InputGesture="{x:Static local:WindowGestures.OpenRecipe}" />
             <MenuItem Header="{x:Static l:Resources.MenuFileSaveRecipe}"
                       Command="{Binding RecipeFile.SaveRecipeCommand}"
-                      InputGesture="Ctrl+S" />
+                      InputGesture="{x:Static local:WindowGestures.SaveRecipe}" />
             <MenuItem Header="{x:Static l:Resources.MenuFileSaveRecipeAs}"
                       Command="{Binding RecipeFile.SaveAsRecipeCommand}"
-                      InputGesture="Ctrl+Shift+S" />
+                      InputGesture="{x:Static local:WindowGestures.SaveRecipeAs}" />
+            <MenuItem x:Name="SyncMenuItem"
+                      Header="{x:Static l:Resources.SyncWithPlc}"
+                      Command="{Binding ToggleSyncCommand}"
+                      ToggleType="CheckBox"
+                      IsChecked="{Binding IsSyncEnabled, Mode=OneWay}" />
             <Separator />
             <MenuItem Header="{x:Static l:Resources.MenuFileExit}"
                       Command="{Binding ExitCommand}"
-                      InputGesture="Alt+F4" />
+                      InputGesture="{x:Static local:WindowGestures.Exit}" />
         </MenuItem>
 
         <MenuItem Header="{x:Static l:Resources.MenuEdit}">
             <MenuItem Header="{x:Static l:Resources.MenuEditAddStep}"
                       Command="{Binding RecipeCommands.AddStepCommand}"
-                      InputGesture="Ctrl+N" />
+                      InputGesture="{x:Static local:WindowGestures.AddStep}" />
             <MenuItem Header="{x:Static l:Resources.MenuEditDeleteStep}"
                       Command="{Binding RecipeCommands.DeleteStepCommand}"
-                      InputGesture="Delete" />
+                      InputGesture="{x:Static local:WindowGestures.DeleteStep}" />
             <Separator />
             <MenuItem Header="{x:Static l:Resources.MenuEditCopySteps}"
                       Command="{Binding Clipboard.CopyStepCommand}"
-                      InputGesture="Ctrl+C" />
+                      InputGesture="{x:Static local:WindowGestures.CopySteps}" />
             <MenuItem Header="{x:Static l:Resources.MenuEditCutSteps}"
                       Command="{Binding Clipboard.CutStepCommand}"
-                      InputGesture="Ctrl+X" />
+                      InputGesture="{x:Static local:WindowGestures.CutSteps}" />
             <MenuItem Header="{x:Static l:Resources.MenuEditPasteSteps}"
                       Command="{Binding Clipboard.PasteStepCommand}"
-                      InputGesture="Ctrl+V" />
+                      InputGesture="{x:Static local:WindowGestures.PasteSteps}" />
             <Separator />
             <MenuItem Header="{x:Static l:Resources.MenuEditUndo}"
                       Command="{Binding RecipeCommands.UndoCommand}"
-                      InputGesture="Ctrl+Z" />
+                      InputGesture="{x:Static local:WindowGestures.Undo}" />
             <MenuItem Header="{x:Static l:Resources.MenuEditRedo}"
                       Command="{Binding RecipeCommands.RedoCommand}"
-                      InputGesture="Ctrl+Shift+Z" />
+                      InputGesture="{x:Static local:WindowGestures.Redo}" />
+            <Separator />
+            <MenuItem Header="{x:Static l:Resources.MenuEditClearChangeMarks}"
+                      Command="{Binding RecipeCommands.ClearChangeMarksCommand}" />
         </MenuItem>
         <MenuItem Header="{x:Static l:Resources.MenuView}">
             <MenuItem Header="{x:Static l:Resources.MenuViewToolbar}"
@@ -65,7 +74,7 @@
                       Command="{Binding ToggleOrientationCommand}"
                       ToggleType="CheckBox"
                       IsChecked="{Binding IsTransposedOrientation, Mode=OneWay}"
-                      InputGesture="Ctrl+Shift+T" />
+                      InputGesture="{x:Static local:WindowGestures.ToggleOrientation}" />
             <Separator />
             <MenuItem Header="{x:Static l:Resources.MenuViewGridStyleSettings}"
                       Command="{Binding OpenStyleEditorCommand}" />

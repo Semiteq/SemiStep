@@ -52,7 +52,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			new ComboBoxItemsProvider(registry),
 			_fixture.ColumnBuilder,
 			_fixture.MessagePanel,
-			_fixture.ClickAwayBroadcaster,
+			_fixture.ChangeMarkClearBroadcaster,
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 
 		var act = surface.Initialize;
@@ -71,7 +71,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			new ComboBoxItemsProvider(registry),
 			_fixture.AppConfiguration.GridStyle,
 			_fixture.MessagePanel,
-			_fixture.ClickAwayBroadcaster,
+			_fixture.ChangeMarkClearBroadcaster,
 			NullLogger<TransposedRecipeGridSurface>.Instance);
 
 		var act = surface.Initialize;
@@ -90,7 +90,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			new ComboBoxItemsProvider(registry),
 			_fixture.ColumnBuilder,
 			_fixture.MessagePanel,
-			_fixture.ClickAwayBroadcaster,
+			_fixture.ChangeMarkClearBroadcaster,
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 		var probeSignals = new List<MutationSignal>();
 		_fixture.Coordinator.Mutated += probeSignals.Add;
@@ -115,7 +115,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			new ComboBoxItemsProvider(registry),
 			_fixture.AppConfiguration.GridStyle,
 			_fixture.MessagePanel,
-			_fixture.ClickAwayBroadcaster,
+			_fixture.ChangeMarkClearBroadcaster,
 			NullLogger<TransposedRecipeGridSurface>.Instance);
 		var probeSignals = new List<MutationSignal>();
 		_fixture.Coordinator.Mutated += probeSignals.Add;

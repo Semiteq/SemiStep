@@ -139,16 +139,16 @@ The typed record is projected into `Application.Resources` at startup so XAML ca
 - `ExecutionPaletteInstaller.Install` pushes the per-depth execution row brushes plus the
   current-step-marker brush.
 
-The merged status-bar sync toggle draws its fill from four of those chrome brushes, one per sync
-state: `LocalModeBrush` (grey `local_mode`, sync off / local mode), `ConnectingBrush`
-(amber `connecting`, sync on and a PLC connect attempt in flight — the button shows "Connecting" with a
-subtle three-dot animation), `DisconnectedBrush` (red `disconnected`, sync on and no link — settled),
-and `ConnectedBrush` (green `connected`, sync on and link up). The connecting state distinguishes
-"actively trying" from a settled "no link"; the four states are mutually exclusive. Like every other
-chrome color, all four come from the `chrome:` section of `grid_style.yaml` under their snake_case
-aliases (`connected`, `disconnected`, `local_mode`, `connecting`); `local_mode` defaults to `#6C707E`
-and is installed as `LocalModeBrush`, `connecting` defaults to `#FFAF0F` (JetBrains warning amber) and
-is installed as `ConnectingBrush`.
+The four sync chrome brushes (`ConnectedBrush`, `DisconnectedBrush`, `LocalModeBrush`,
+`ConnectingBrush`, from the `chrome:` aliases `connected`, `disconnected`, `local_mode`,
+`connecting`) are still installed but have no reader: the status-bar sync button they painted is
+gone. The sync switch is a `ToggleSwitch` at the right end of the recipe toolbar, with a neutral
+grey checked track from `ToolbarSwitchTrackBrush` (`Styles/ColorPalette.axaml`), scoped to the
+toolbar through Semi's `ToggleSwitchContainer*Background` component keys. While `ToggleSyncCommand`
+runs, the disabled checked track is `ToolbarDisabledBrush` grey, never green. The keyed
+`ToolbarSyncSwitch` theme in `RecipeToolBar.axaml` puts the caption left of the track on the button
+line, so the toolbar keeps the height of its buttons and a click on the caption also toggles. It
+shows only sync on or off; the link state has no indicator until the status bar is rebuilt.
 
 Alongside the brushes, the cell installer pushes a few **numeric / layout** resources that XAML
 consumes directly: `StatusBarPadding` (a `Thickness`), `StatusBarItemSpacing` (a `double`), and

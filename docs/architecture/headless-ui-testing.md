@@ -49,6 +49,13 @@ underneath. Production installs the palette resources at startup; a test window 
 same (e.g. `CellPaletteInstaller.Install(window.Resources, gridStyle)`) before clicking cells,
 or presses over disabled editors miss their cell border.
 
+## Clicking a combo list item
+
+An open `ComboBox` list lives in a popup with its own `TopLevel`, so a press sent to the window
+never reaches an item. Find the item with `comboBox.ContainerFromIndex(i)`, take its top level
+with `TopLevel.GetTopLevel(item)`, translate the item's centre into that top level and send
+`MouseDown` and `MouseUp` to it (`ComboBoxTestHelper.ClickListItem` in `SemiStep.Tests/UI/Helpers`).
+
 ## `WhenActivated` fires after the first layout pass
 
 ReactiveUI activation is driven by `Loaded`, which fires **after** the first layout pass has

@@ -135,7 +135,11 @@ internal sealed class ComboBoxCellFactory(ComboBoxItemsProvider comboBoxItemsPro
 			return;
 		}
 
-		comboBox.Bind(InputElement.IsHitTestVisibleProperty, CellApplicabilityBinding.CreateApplicableBinding(columnKey));
-		comboBox.Bind(InputElement.FocusableProperty, CellApplicabilityBinding.CreateApplicableBinding(columnKey));
+		comboBox.Bind(
+			InputElement.IsHitTestVisibleProperty,
+			CellApplicabilityBinding.CreateApplicableAndUnlockedBinding(columnKey));
+		comboBox.Bind(
+			InputElement.FocusableProperty,
+			CellApplicabilityBinding.CreateApplicableAndUnlockedBinding(columnKey));
 	}
 }

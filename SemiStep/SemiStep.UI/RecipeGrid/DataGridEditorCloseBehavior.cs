@@ -2,14 +2,15 @@
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace SemiStep.UI.RecipeGrid;
 
 /// <summary>
-/// Attached behavior: when the bound <see cref="IObservable{Unit}"/> emits a value,
-/// commits any in-flight cell edit on the associated <see cref="DataGrid"/>, exiting
-/// editing mode. Used to close an open editor when the grid transitions to read-only.
+/// Attached behavior: when the bound <see cref="IObservable{Unit}"/> emits, commits the in-flight cell edit,
+/// closes an open combo list and takes focus back from a combo box. Fires when the grid becomes read-only.
 /// </summary>
 public static class DataGridEditorCloseBehavior
 {
@@ -23,9 +24,9 @@ public static class DataGridEditorCloseBehavior
 			"Subscription",
 			typeof(DataGridEditorCloseBehavior));
 
-	private static readonly AttachedProperty<bool> _detachHandlerAttachedProperty =
+	private static readonly AttachedProperty<bool> _lifecycleHandlersAttachedProperty =
 		AvaloniaProperty.RegisterAttached<DataGrid, bool>(
-			"DetachHandlerAttached",
+			"LifecycleHandlersAttached",
 			typeof(DataGridEditorCloseBehavior));
 
 	static DataGridEditorCloseBehavior()
@@ -45,54 +46,104 @@ public static class DataGridEditorCloseBehavior
 
 	private static void OnTriggerChanged(DataGrid dataGrid, AvaloniaPropertyChangedEventArgs args)
 	{
-		var previousSubscription = dataGrid.GetValue(_subscriptionProperty);
-		previousSubscription?.Dispose();
-		dataGrid.SetValue(_subscriptionProperty, null);
+		Subscribe(dataGrid);
+		EnsureLifecycleHandlersAttached(dataGrid);
+	}
 
-		if (args.NewValue is not IObservable<Unit> trigger)
+	private static void Subscribe(DataGrid dataGrid)
+	{
+		Unsubscribe(dataGrid);
+
+		if (GetTrigger(dataGrid) is not { } trigger)
 		{
 			return;
 		}
 
 		var subscription = trigger.Subscribe(_ => CloseEditor(dataGrid));
 		dataGrid.SetValue(_subscriptionProperty, subscription);
-		EnsureDetachHandlerAttached(dataGrid);
 	}
 
-	private static void EnsureDetachHandlerAttached(DataGrid dataGrid)
+	private static void Unsubscribe(DataGrid dataGrid)
 	{
-		if (dataGrid.GetValue(_detachHandlerAttachedProperty))
+		dataGrid.GetValue(_subscriptionProperty)?.Dispose();
+		dataGrid.SetValue(_subscriptionProperty, null);
+	}
+
+	// The host detaches a grid on every orientation flip and attaches it again with the same trigger value, so the
+	// subscription follows the visual-tree attachment and not only trigger changes.
+	private static void EnsureLifecycleHandlersAttached(DataGrid dataGrid)
+	{
+		if (dataGrid.GetValue(_lifecycleHandlersAttachedProperty))
 		{
 			return;
 		}
 
+		dataGrid.AttachedToVisualTree += OnAttachedToVisualTree;
 		dataGrid.DetachedFromVisualTree += OnDetachedFromVisualTree;
-		dataGrid.SetValue(_detachHandlerAttachedProperty, true);
+		dataGrid.SetValue(_lifecycleHandlersAttachedProperty, true);
+	}
+
+	private static void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs args)
+	{
+		if (sender is DataGrid dataGrid && dataGrid.GetValue(_subscriptionProperty) is null)
+		{
+			Subscribe(dataGrid);
+		}
 	}
 
 	private static void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs args)
 	{
-		if (sender is not DataGrid dataGrid)
+		if (sender is DataGrid dataGrid)
 		{
-			return;
+			Unsubscribe(dataGrid);
 		}
-
-		var subscription = dataGrid.GetValue(_subscriptionProperty);
-		subscription?.Dispose();
-		dataGrid.SetValue(_subscriptionProperty, null);
-		dataGrid.DetachedFromVisualTree -= OnDetachedFromVisualTree;
-		dataGrid.SetValue(_detachHandlerAttachedProperty, false);
 	}
 
 	private static void CloseEditor(DataGrid dataGrid)
 	{
 		if (Dispatcher.UIThread.CheckAccess())
 		{
-			dataGrid.CommitEdit(DataGridEditingUnit.Cell, exitEditingMode: true);
+			CloseEditorOnUiThread(dataGrid);
 			return;
 		}
 
-		Dispatcher.UIThread.Post(() =>
-			dataGrid.CommitEdit(DataGridEditingUnit.Cell, exitEditingMode: true));
+		Dispatcher.UIThread.Post(() => CloseEditorOnUiThread(dataGrid));
+	}
+
+	private static void CloseEditorOnUiThread(DataGrid dataGrid)
+	{
+		dataGrid.CommitEdit(DataGridEditingUnit.Cell, exitEditingMode: true);
+		CloseComboBoxes(dataGrid);
+	}
+
+	// Closing a list hands focus back to its combo box, so focus is moved only after every list is closed.
+	private static void CloseComboBoxes(DataGrid dataGrid)
+	{
+		var focusInsideComboBox = OwningComboBox(TopLevel.GetTopLevel(dataGrid)?.FocusManager?.GetFocusedElement())
+			is { } focusedComboBox && dataGrid.IsVisualAncestorOf(focusedComboBox);
+
+		foreach (var comboBox in dataGrid.GetVisualDescendants().OfType<ComboBox>())
+		{
+			if (comboBox.IsDropDownOpen)
+			{
+				comboBox.SetCurrentValue(ComboBox.IsDropDownOpenProperty, false);
+			}
+		}
+
+		if (focusInsideComboBox)
+		{
+			dataGrid.Focus();
+		}
+	}
+
+	// An open list holds focus on one of its items, which live in the popup, outside the grid's visual tree.
+	private static ComboBox? OwningComboBox(IInputElement? focused)
+	{
+		return focused switch
+		{
+			ComboBox comboBox => comboBox,
+			ComboBoxItem item => ItemsControl.ItemsControlFromItemContainer(item) as ComboBox,
+			_ => null,
+		};
 	}
 }

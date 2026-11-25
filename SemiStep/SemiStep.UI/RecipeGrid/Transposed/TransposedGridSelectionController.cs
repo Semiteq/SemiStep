@@ -5,7 +5,8 @@ namespace SemiStep.UI.RecipeGrid.Transposed;
 
 internal sealed class TransposedGridSelectionController(ListBox stepListBox)
 {
-	// Returns true when NOT consumed (second press on the already-selected column) so the caller routes to edit.
+	// Returns true when the caller routes the press to edit: a second press on the already-selected column, or a
+	// plain press on a combo cell.
 	public bool HandleCellSelectionPress(
 		TransposedRecipeGridSurface? surface,
 		ParameterCellViewModel pressedCell,
@@ -22,6 +23,7 @@ internal sealed class TransposedGridSelectionController(ListBox stepListBox)
 			return false;
 		}
 
+		var routesToEdit = false;
 		if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
 		{
 			ToggleColumnSelection(surface, index);
@@ -37,6 +39,7 @@ internal sealed class TransposedGridSelectionController(ListBox stepListBox)
 		else
 		{
 			stepListBox.SelectedIndex = index;
+			routesToEdit = pressedCell is ComboBoxCellViewModel;
 		}
 
 		// Taking over the press must still commit a pending edit elsewhere: move focus to the
@@ -44,7 +47,7 @@ internal sealed class TransposedGridSelectionController(ListBox stepListBox)
 		stepListBox.ContainerFromIndex(index)?.Focus();
 		e.Handled = true;
 
-		return false;
+		return routesToEdit;
 	}
 
 	private bool IsSingleSelectedColumn(int index)

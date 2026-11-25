@@ -24,6 +24,7 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 			RecipeGrid.CellEditEnded += OnCellEditEnded;
 			RecipeGrid.SelectionChanged += OnSelectionChanged;
 			RecipeGrid.CellPointerPressed += OnCellPointerPressed;
+			new ComboBoxPressOpener(RecipeGrid).Attach().DisposeWith(disposables);
 
 			var selectionRequestsSubscription = new SerialDisposable()
 				.DisposeWith(disposables);

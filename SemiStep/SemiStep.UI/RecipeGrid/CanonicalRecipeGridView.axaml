@@ -15,7 +15,6 @@
               CanUserReorderColumns="False"
               CanUserResizeColumns="True"
               IsReadOnly="{Binding IsReadOnly}"
-              Classes.read-only="{Binding IsReadOnly}"
               recipeGrid:DataGridEditorCloseBehavior.Trigger="{Binding EditorMustClose}"
               GridLinesVisibility="All"
               HeadersVisibility="Column"

@@ -20,9 +20,6 @@ using Xunit;
 
 namespace SemiStep.Tests.UI.RecipeGrid.Transposed;
 
-// Task 4: lazy display/editor swap for ComboBox cells. A combo cell renders a display TextBlock showing
-// the selected item's text by default and builds the heavy ComboBox only on edit entry through the shared
-// edit coordinator, releasing it back to the display on exit.
 [Trait("Component", "UI")]
 [Trait("Area", "RecipeGrid")]
 [Trait("Category", "Integration")]
@@ -64,19 +61,105 @@ public sealed class TransposedComboEditingTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void SecondClickOnSelectedComboColumn_EntersEdit_BuildsComboBox_ShowsSelection()
+	[Trait("Area", "ComboOpen")]
+	public void FirstPressOnUnselectedComboColumn_OpensListBeforeRelease_SelectsColumn_ShowsSelection()
 	{
 		var (view, stepListBox) = ShowInteractiveView();
+		var point = CellPoint(stepListBox, 0, ActionColumnKey);
 
-		ClickCell(stepListBox, 0, ActionColumnKey);
-		view.IsEditing.Should().BeFalse("a plain first click selects the column without editing");
+		_window!.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
+		view.IsEditing.Should().BeTrue("the first plain press on a combo cell enters combo edit");
+		FindComboBox(stepListBox, 0, ActionColumnKey).IsDropDownOpen.Should().BeTrue("the press alone opens the list");
 
-		ClickCell(stepListBox, 0, ActionColumnKey);
+		_window!.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
 
-		view.IsEditing.Should().BeTrue("the second click on the selected column enters combo edit");
 		var comboBox = FindComboBox(stepListBox, 0, ActionColumnKey);
+		comboBox.IsDropDownOpen.Should().BeTrue("the column selection and container focus keep the list open");
+		_surface.SelectedStepIndices.Should().Equal([0], "the opening press selects the column");
 		((ComboBoxItemViewModel)comboBox.SelectedItem!).Id.Should().Be(
 			RecipeTestDriver.WaitActionId, "the built combo shows the cell's current selection");
+	}
+
+	[AvaloniaFact]
+	[Trait("Area", "ComboOpen")]
+	public void PressOpen_DownThenEnter_PicksNextItem_KeepsColumnSelected()
+	{
+		var stepListBox = ShowInteractiveView().StepListBox;
+		ClickCell(stepListBox, 1, ActionColumnKey);
+		var comboBox = FindComboBox(stepListBox, 1, ActionColumnKey);
+		var nextActionId = ((ComboBoxItemViewModel)comboBox.Items[comboBox.SelectedIndex + 1]!).Id;
+
+		_window!.KeyPress(Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown, null);
+		_window!.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+		Dispatcher.UIThread.RunJobs();
+
+		_fixture.Coordinator.CurrentRecipe.Steps[1].ActionKey.Should().Be(nextActionId, "the list keys pick the next item");
+		_surface.SelectedStepIndices.Should().Equal([1], "the list keys do not move the column selection");
+	}
+
+	[AvaloniaFact]
+	[Trait("Area", "ComboOpen")]
+	public void PressOpen_Escape_ClosesList_ReturnsFocusToColumnContainer()
+	{
+		var (view, stepListBox) = ShowInteractiveView();
+		ClickCell(stepListBox, 1, ActionColumnKey);
+		var actionId = _fixture.Coordinator.CurrentRecipe.Steps[1].ActionKey;
+
+		_window!.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+		Dispatcher.UIThread.RunJobs();
+
+		view.IsEditing.Should().BeFalse("Esc closes the list, so Delete and Ctrl+C act on the step again");
+		_window!.FocusManager!.GetFocusedElement().Should().BeSameAs(
+			stepListBox.ContainerFromIndex(1), "focus returns to the column container");
+		_fixture.Coordinator.CurrentRecipe.Steps[1].ActionKey.Should().Be(actionId);
+	}
+
+	[AvaloniaFact]
+	[Trait("Area", "ComboOpen")]
+	public void PressOpen_PressOnListItem_PicksItAndClosesList()
+	{
+		var stepListBox = ShowInteractiveView().StepListBox;
+		ClickCell(stepListBox, 1, ActionColumnKey);
+		var comboBox = FindComboBox(stepListBox, 1, ActionColumnKey);
+		var targetIndex = comboBox.SelectedIndex + 1;
+		var targetActionId = ((ComboBoxItemViewModel)comboBox.Items[targetIndex]!).Id;
+
+		ComboBoxTestHelper.ClickListItem(comboBox, targetIndex);
+
+		_fixture.Coordinator.CurrentRecipe.Steps[1].ActionKey.Should().Be(targetActionId, "a press on an item picks it");
+		comboBox.IsDropDownOpen.Should().BeFalse("picking an item closes the list");
+	}
+
+	[AvaloniaFact]
+	[Trait("Area", "ComboOpen")]
+	public void DoublePressOnComboCell_OpensThenClosesList()
+	{
+		var stepListBox = ShowInteractiveView().StepListBox;
+
+		ClickCell(stepListBox, 1, ActionColumnKey);
+		var comboBox = FindComboBox(stepListBox, 1, ActionColumnKey);
+		comboBox.IsDropDownOpen.Should().BeTrue("precondition: the first press opens the list");
+		ClickCell(stepListBox, 1, ActionColumnKey);
+
+		comboBox.IsDropDownOpen.Should().BeFalse("a second press on the open combo closes it and does not reopen it");
+	}
+
+	[AvaloniaFact]
+	[Trait("Area", "ComboOpen")]
+	public void PlainPressInMultiSelectedColumn_CollapsesSelection_OpensList()
+	{
+		var (view, stepListBox) = ShowInteractiveView();
+		ClickCell(stepListBox, 1, ActionColumnKey, RawInputModifiers.Control);
+		ClickCell(stepListBox, 2, ActionColumnKey, RawInputModifiers.Control);
+		view.IsEditing.Should().BeFalse("precondition: a Ctrl press only changes the selection");
+		_surface.SelectedStepIndices.Should().Equal([1, 2]);
+
+		ClickCell(stepListBox, 2, ActionColumnKey);
+
+		_surface.SelectedStepIndices.Should().Equal([2], "a plain press collapses the selection to its column");
+		FindComboBox(stepListBox, 2, ActionColumnKey).IsDropDownOpen.Should().BeTrue("the same press opens the list");
 	}
 
 	[AvaloniaFact]
@@ -175,6 +258,7 @@ public sealed class TransposedComboEditingTests : IAsyncLifetime
 
 	// A read-only surface (PLC sync) disables the combo display and blocks edit entry.
 	[AvaloniaFact]
+	[Trait("Area", "ComboOpen")]
 	public void SurfaceReadOnly_Combo_DoesNotEnterEdit()
 	{
 		var stepListBox = ShowView();
@@ -190,6 +274,48 @@ public sealed class TransposedComboEditingTests : IAsyncLifetime
 
 		FindComboPresenter(stepListBox, 0, ActionColumnKey).IsEditing.Should().BeFalse(
 			"a read-only surface must block combo edit entry");
+	}
+
+	[AvaloniaFact]
+	[Trait("Area", "ComboOpen")]
+	public void SurfaceReadOnly_ComboPresses_OpenNoList_SelectColumn_ListKeysChangeNothing()
+	{
+		var (view, stepListBox) = ShowInteractiveView();
+		var actionIdBefore = _fixture.Coordinator.CurrentRecipe.Steps[1].ActionKey;
+		_fixture.SetRecipeActive(true);
+		Dispatcher.UIThread.RunJobs();
+
+		ClickCell(stepListBox, 1, ActionColumnKey);
+		ClickCell(stepListBox, 1, ActionColumnKey);
+
+		view.IsEditing.Should().BeFalse("no press opens a locked combo cell");
+		ContainerComboBoxCount(stepListBox, 1).Should().Be(0, "a locked press builds no ComboBox");
+		_surface.SelectedStepIndices.Should().Equal([1], "a locked press still selects the column");
+
+		_window!.KeyPress(Key.Down, RawInputModifiers.None, PhysicalKey.ArrowDown, null);
+		_window!.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+		Dispatcher.UIThread.RunJobs();
+
+		_fixture.Coordinator.CurrentRecipe.Steps[1].ActionKey.Should().Be(
+			actionIdBefore, "the list keys pick nothing in a locked combo cell");
+		ComboDisplayText(stepListBox, 1, ActionColumnKey).Should().Be(ActionDisplayText(actionIdBefore));
+	}
+
+	[AvaloniaFact]
+	[Trait("Area", "ComboOpen")]
+	public void Unlock_AfterLock_OnePressOpensList()
+	{
+		var (view, stepListBox) = ShowInteractiveView();
+		_fixture.SetRecipeActive(true);
+		Dispatcher.UIThread.RunJobs();
+		_fixture.SetRecipeActive(false);
+		Dispatcher.UIThread.RunJobs();
+
+		ClickCell(stepListBox, 1, ActionColumnKey);
+
+		view.IsEditing.Should().BeTrue("after the run stops one press enters combo edit");
+		FindComboBox(stepListBox, 1, ActionColumnKey).IsDropDownOpen.Should().BeTrue(
+			"after the run stops one press opens the list again");
 	}
 
 	// An external value change (an action swap applied through the coordinator) updates the display text
@@ -261,15 +387,26 @@ public sealed class TransposedComboEditingTests : IAsyncLifetime
 			.DisplayText;
 	}
 
-	private void ClickCell(ListBox stepListBox, int columnIndex, string parameterKey)
+	private void ClickCell(
+		ListBox stepListBox,
+		int columnIndex,
+		string parameterKey,
+		RawInputModifiers modifiers = RawInputModifiers.None)
+	{
+		var clickPoint = CellPoint(stepListBox, columnIndex, parameterKey);
+
+		_window!.MouseDown(clickPoint, MouseButton.Left, modifiers);
+		_window!.MouseUp(clickPoint, MouseButton.Left, modifiers);
+		Dispatcher.UIThread.RunJobs();
+	}
+
+	private Point CellPoint(ListBox stepListBox, int columnIndex, string parameterKey)
 	{
 		var border = FindCellBorder(stepListBox, columnIndex, parameterKey);
-		var clickPoint = border.TranslatePoint(new Point(3, 3), _window!);
-		clickPoint.Should().NotBeNull();
+		var point = border.TranslatePoint(new Point(3, 3), _window!);
+		point.Should().NotBeNull();
 
-		_window!.MouseDown(clickPoint!.Value, MouseButton.Left, RawInputModifiers.None);
-		_window!.MouseUp(clickPoint.Value, MouseButton.Left, RawInputModifiers.None);
-		Dispatcher.UIThread.RunJobs();
+		return point!.Value;
 	}
 
 	private static Border FindCellBorder(ListBox stepListBox, int columnIndex, string parameterKey)

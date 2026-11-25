@@ -191,6 +191,42 @@ is a pure function of `(previous indices, signal)`; the snapshot is taken at the
 `OnMutation` and assigned after the item mutation, guarded by sequence-equality so a mid-mutation
 control push (the transposed `ListBox` on remove-selected) is not double-applied.
 
+## Combo cells: lock and press-to-open
+
+**Lock.** While the PLC runs the recipe, `IsReadOnly` is true and no combo list may open. A canonical
+combo box lives in a `CellTemplate`, so `DataGrid.IsReadOnly` does not reach it. A grid-wide style
+cannot lock it either: `ComboBoxCellFactory` binds `IsHitTestVisible` and `Focusable` locally for
+applicability, and a local value outranks a style setter. The lock is therefore a leg of that same
+binding, `CellApplicabilityBinding.CreateApplicableAndUnlockedBinding`, which reads `DataGrid.IsReadOnly`
+from the ancestor grid and fails closed while the cell is outside a grid. It reads the grid, not the
+surface: `ComboBoxCellFactory` is built through `ColumnBuilder`, and a surface dependency would make a DI
+cycle. On the lock transition `DataGridEditorCloseBehavior` closes an open list and moves focus from a
+combo box, or from a list item in its popup, back to the grid. The transposed grid locks through the
+presenter's `IsEnabled` binding (`TransposedCellTemplateFactory.CreateEditableBinding`).
+
+**Press-to-open.** Avalonia's `ComboBox` opens on the release of a press on its body, for any button and
+modifier. Both grids open the list on a plain left press instead:
+
+- Canonical: `ComboBoxPressOpener` attaches to the `DataGrid`. A tunnel handler decides before the
+  ComboBox's own press logic, which closes an open list; it does not run for a press that arrives
+  handled, so the press that light-dismisses another open list opens nothing. A bubble handler with
+  `handledEventsToo` opens the list after the DataGrid has taken focus for the row selection; opened
+  earlier, the DataGrid takes focus back and the list keys move the row. The native toggle runs on the
+  release only while the ComboBox holds the `:pressed` pseudo-class that its own press set, so the same
+  bubble handler removes `:pressed` (through `IPseudoClasses`) after every press on a combo body. The
+  release then reaches `ComboBox.OnPointerReleased` unhandled, toggles nothing and leaves no stale
+  `:pressed` on a recycled row. A release on a list item lives in the popup, outside the grid's visual
+  tree, so it still picks.
+- Transposed: `TransposedGridSelectionController` routes a plain press on a combo cell to edit on the
+  first press, after selecting the column. `TransposedComboCellPresenter` opens the list from a
+  `Background` dispatcher job: on the fresh, not yet laid out editor the popup cannot focus the selected
+  item, and the ComboBox ignores Down and Enter while open. When the list closes (Esc, Enter, an item
+  press) the presenter ends the edit and focuses the column container, so Delete and Ctrl+C act on the
+  step again.
+
+Keyboard opening is unchanged: F4 or Alt+Down on a canonical combo box that holds focus, F2 on a
+transposed combo cell.
+
 ## Orientation switching
 
 `ActiveRecipeGridSurface` is the single owner of orientation. Everything else observes or

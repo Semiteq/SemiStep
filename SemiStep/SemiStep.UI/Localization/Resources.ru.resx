@@ -157,15 +157,6 @@
   <data name="ToolbarRedo" xml:space="preserve">
     <value>Повторить</value>
   </data>
-  <data name="StatusSyncOn" xml:space="preserve">
-    <value>Синхр. ВКЛ</value>
-  </data>
-  <data name="StatusSyncOff" xml:space="preserve">
-    <value>Синхр. ВЫКЛ</value>
-  </data>
-  <data name="StatusConnecting" xml:space="preserve">
-    <value>Подключение</value>
-  </data>
   <data name="StatusStepLabel" xml:space="preserve">
     <value>Шаг:</value>
   </data>
@@ -729,5 +720,29 @@
   </data>
   <data name="CsvFilesFilter" xml:space="preserve">
     <value>Файлы CSV</value>
+  </data>
+  <data name="ToolbarOpen" xml:space="preserve">
+    <value>Открыть</value>
+  </data>
+  <data name="ToolbarSave" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="TipOpenRecipe" xml:space="preserve">
+    <value>Открыть рецепт</value>
+  </data>
+  <data name="TipSaveRecipe" xml:space="preserve">
+    <value>Сохранить рецепт</value>
+  </data>
+  <data name="TooltipWithGestureFormat" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="SyncWithPlc" xml:space="preserve">
+    <value>Синхронизация с ПЛК</value>
+  </data>
+  <data name="MenuEditClearChangeMarks" xml:space="preserve">
+    <value>Снять отметки изменений</value>
+  </data>
+  <data name="ClearChangeMarksFailed" xml:space="preserve">
+    <value>Не удалось снять отметки изменений</value>
   </data>
 </root>

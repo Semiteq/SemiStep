@@ -1,4 +1,6 @@
 ﻿using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Globalization;
 using System.Reactive;
 using System.Reactive.Disposables;
@@ -25,10 +27,11 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 {
 	private readonly ObservableAsPropertyHelper<bool> _isReadOnly;
 	private readonly ObservableAsPropertyHelper<int> _selectedStepIndex;
-	private readonly ChangedCellClickAwayBroadcaster _changedCellClickAwayBroadcaster;
+	private readonly ChangeMarkClearBroadcaster _changeMarkClearBroadcaster;
 	private readonly RecipeCoordinator _coordinator;
 	private readonly CompositeDisposable _disposables = [];
 	private readonly ExecutionHighlightTracker _executionHighlightTracker;
+	private readonly HashSet<RecipeRowViewModel> _markedRows = [];
 	private readonly ILogger _logger;
 	private readonly MessagePanelViewModel _messagePanel;
 	private readonly Subject<int?> _selectionRequests = new();
@@ -37,16 +40,18 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		RecipeCoordinator coordinator,
 		RecipeMetadataRegistry recipeMetadataRegistry,
 		MessagePanelViewModel messagePanel,
-		ChangedCellClickAwayBroadcaster changedCellClickAwayBroadcaster,
+		ChangeMarkClearBroadcaster changeMarkClearBroadcaster,
 		ILogger logger)
 	{
 		_coordinator = coordinator;
 		RecipeMetadataRegistry = recipeMetadataRegistry;
 		_messagePanel = messagePanel;
-		_changedCellClickAwayBroadcaster = changedCellClickAwayBroadcaster;
+		_changeMarkClearBroadcaster = changeMarkClearBroadcaster;
 		_logger = logger;
 
 		Items = [];
+		Items.CollectionChanged += OnItemsChanged;
+		HasChangedMarks = this.WhenAnyValue(x => x.AnyCellChanged);
 		_executionHighlightTracker = new ExecutionHighlightTracker(() => Items.Count, i => RowOf(Items[i]));
 
 		CanDeleteStep = this
@@ -79,8 +84,8 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		Disposable.Create(() => coordinator.Mutated -= OnMutation)
 			.DisposeWith(_disposables);
 
-		changedCellClickAwayBroadcaster.Cleared += OnChangedCellClickAwayCleared;
-		Disposable.Create(() => changedCellClickAwayBroadcaster.Cleared -= OnChangedCellClickAwayCleared)
+		changeMarkClearBroadcaster.Cleared += OnChangeMarkCleared;
+		Disposable.Create(() => changeMarkClearBroadcaster.Cleared -= OnChangeMarkCleared)
 			.DisposeWith(_disposables);
 	}
 
@@ -91,6 +96,14 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	protected RecipeMetadataRegistry RecipeMetadataRegistry { get; }
 
 	public IObservable<bool> CanDeleteStep { get; }
+
+	public IObservable<bool> HasChangedMarks { get; }
+
+	private bool AnyCellChanged
+	{
+		get;
+		set => this.RaiseAndSetIfChanged(ref field, value);
+	}
 
 	public bool IsReadOnly => _isReadOnly.Value;
 
@@ -265,6 +278,14 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		_selectionRequests.OnNext(stepIndex);
 	}
 
+	public void ClearAllChangedMarks()
+	{
+		foreach (var item in Items)
+		{
+			RowOf(item).ClearAllChanged();
+		}
+	}
+
 	// Clear round-trips through the shared broadcaster so both orientation surfaces clear.
 	public void ClearChangedByClickAway(RecipeRowViewModel row, string columnKey)
 	{
@@ -272,13 +293,13 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		{
 			if (ReferenceEquals(RowOf(Items[i]), row))
 			{
-				_changedCellClickAwayBroadcaster.Publish(i, columnKey);
+				_changeMarkClearBroadcaster.Publish(i, columnKey);
 				return;
 			}
 		}
 	}
 
-	private void OnChangedCellClickAwayCleared(int stepIndex, string columnKey)
+	private void OnChangeMarkCleared(int stepIndex, string columnKey)
 	{
 		if (stepIndex >= 0 && stepIndex < Items.Count)
 		{
@@ -314,7 +335,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 			return;
 		}
 
-		RowOf(item).ClearChanged(columnKey);
+		_changeMarkClearBroadcaster.Publish(stepIndex, columnKey);
 	}
 
 	private void OnSelectorValueChanged(TItem item, SelectorEdit selectorEdit)
@@ -345,9 +366,8 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 			return;
 		}
 
-		var row = RowOf(item);
-		row.RecomputeInapplicableColumns();
-		row.ApplyChangedDelta(add: selectorEdit.ColumnsToSeed, remove: selectorEdit.ColumnsToDrop);
+		RowOf(item).RecomputeInapplicableColumns();
+		_changeMarkClearBroadcaster.Publish(stepIndex, selectorEdit.SelectorKey);
 	}
 
 	private void OnActionChanged(TItem item, int newActionId)
@@ -454,7 +474,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 			return;
 		}
 
-		Items[removedIndex].Dispose();
+		DisposeItem(Items[removedIndex]);
 		Items.RemoveAt(removedIndex);
 		RenumberItems(removedIndex);
 	}
@@ -480,7 +500,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 
 		foreach (var index in removedIndices.OrderByDescending(i => i))
 		{
-			Items[index].Dispose();
+			DisposeItem(Items[index]);
 			Items.RemoveAt(index);
 		}
 
@@ -500,12 +520,13 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 			return;
 		}
 
+		var previousStep = RowOf(Items[stepIndex]).CurrentStep;
 		var step = recipe.Steps[stepIndex];
 		var item = CreateItemChecked(step, stepIndex + 1);
-		Items[stepIndex].Dispose();
+		DisposeItem(Items[stepIndex]);
 		Items[stepIndex] = item;
 
-		RowOf(item).MarkChanged(step.Properties.Keys.Select(id => id.Value));
+		RowOf(item).MarkChanged(RecipeRowViewModel.ChangedValueKeys(previousStep, step));
 	}
 
 	private void RenumberItems(int fromIndex)
@@ -586,15 +607,69 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		row.PropertyValueChanged += (columnKey, value) => OnCellValueChanged(item, columnKey, value);
 		row.ActionChanged += actionId => OnActionChanged(item, actionId);
 		row.SelectorValueChanged += selectorEdit => OnSelectorValueChanged(item, selectorEdit);
+		row.PropertyChanged += OnRowPropertyChanged;
 
 		return item;
+	}
+
+	private void OnRowPropertyChanged(object? sender, PropertyChangedEventArgs e)
+	{
+		if (e.PropertyName == nameof(RecipeRowViewModel.ChangedColumns) && sender is RecipeRowViewModel row)
+		{
+			TrackMarks(row);
+			AnyCellChanged = _markedRows.Count > 0;
+		}
+	}
+
+	private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+	{
+		if (e.Action == NotifyCollectionChangedAction.Reset)
+		{
+			_markedRows.Clear();
+			foreach (var item in Items)
+			{
+				TrackMarks(RowOf(item));
+			}
+		}
+		else
+		{
+			foreach (var item in e.OldItems?.OfType<TItem>() ?? [])
+			{
+				_markedRows.Remove(RowOf(item));
+			}
+
+			foreach (var item in e.NewItems?.OfType<TItem>() ?? [])
+			{
+				TrackMarks(RowOf(item));
+			}
+		}
+
+		AnyCellChanged = _markedRows.Count > 0;
+	}
+
+	private void TrackMarks(RecipeRowViewModel row)
+	{
+		if (row.ChangedColumns.Count > 0)
+		{
+			_markedRows.Add(row);
+		}
+		else
+		{
+			_markedRows.Remove(row);
+		}
+	}
+
+	private void DisposeItem(TItem item)
+	{
+		RowOf(item).PropertyChanged -= OnRowPropertyChanged;
+		item.Dispose();
 	}
 
 	private void DisposeAllItems()
 	{
 		foreach (var item in Items)
 		{
-			item.Dispose();
+			DisposeItem(item);
 		}
 	}
 }

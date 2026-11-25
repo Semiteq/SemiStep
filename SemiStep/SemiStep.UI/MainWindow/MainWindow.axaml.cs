@@ -4,13 +4,13 @@ using System.Reactive.Linq;
 
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.LogicalTree;
 using Avalonia.Platform.Storage;
 
 using ReactiveUI;
 using ReactiveUI.Avalonia;
 
 using SemiStep.UI.Plc;
-using SemiStep.UI.Reactive;
 using SemiStep.UI.ShutdownService;
 using SemiStep.UI.StyleEditor;
 
@@ -60,57 +60,36 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 		});
 	}
 
+	/// <summary>Runs the menu item a key no control took names; from a text box only Ctrl+Shift+T runs.</summary>
 	protected override void OnKeyDown(KeyEventArgs e)
 	{
-		if (ViewModel is null)
-		{
-			base.OnKeyDown(e);
-
-			return;
-		}
-
-		// The orientation toggle does not interact with editor semantics, and in the transposed
-		// view a plain click can leave an always-live editor focused — so the hotkey stays
-		// outside the IsEditing gate.
-		if (e.Key == Key.T && e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
-		{
-			ViewModel.ToggleOrientationCommand.ExecuteIfPossible();
-			e.Handled = true;
-
-			return;
-		}
-
-		if (!RecipeGridHost.IsEditing)
-		{
-			switch (e.Key)
-			{
-				case Key.Delete:
-					ViewModel.RecipeCommands.DeleteStepCommand.ExecuteIfPossible();
-					e.Handled = true;
-
-					return;
-
-				case Key.C when e.KeyModifiers == KeyModifiers.Control:
-					ViewModel.Clipboard.CopyStepCommand.ExecuteIfPossible();
-					e.Handled = true;
-
-					return;
-
-				case Key.X when e.KeyModifiers == KeyModifiers.Control:
-					ViewModel.Clipboard.CutStepCommand.ExecuteIfPossible();
-					e.Handled = true;
-
-					return;
-
-				case Key.V when e.KeyModifiers == KeyModifiers.Control:
-					ViewModel.Clipboard.PasteStepCommand.ExecuteIfPossible();
-					e.Handled = true;
-
-					return;
-			}
-		}
-
 		base.OnKeyDown(e);
+
+		if (MenuBar.ItemFor(e) is not { InputGesture: { } gesture } item)
+		{
+			return;
+		}
+
+		// The orientation flip commits an open cell editor and changes only the view, so it stays
+		// live while a text box has focus.
+		var fromTextBox = e.Source is TextBox && !gesture.Equals(WindowGestures.ToggleOrientation);
+		if (fromTextBox || (WindowGestures.BelongsToCellEditor(gesture) && IsEditingAt(e.Source)))
+		{
+			return;
+		}
+
+		if (item.Command is { } command && command.CanExecute(item.CommandParameter))
+		{
+			command.Execute(item.CommandParameter);
+			e.Handled = true;
+		}
+	}
+
+	// A canonical combo cell lives in CellTemplate, so its open list is not a DataGrid edit session.
+	private bool IsEditingAt(object? source)
+	{
+		return RecipeGridHost.IsEditing
+			|| (source as ILogical)?.GetSelfAndLogicalAncestors().OfType<ComboBox>().Any(combo => combo.IsDropDownOpen) == true;
 	}
 
 	private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)

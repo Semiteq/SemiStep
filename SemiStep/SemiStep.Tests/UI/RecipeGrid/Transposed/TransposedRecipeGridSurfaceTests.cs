@@ -118,17 +118,14 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void ChangeStepAction_MarksNewActionCellsChanged()
+	public void ChangeStepAction_MarksOnlyCellsWhoseValueChanged()
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 
 		_fixture.Coordinator.ChangeStepAction(0, RecipeTestDriver.ForLoopActionId);
 
-		var expected = _fixture.Coordinator.CurrentRecipe.Steps[0].Properties.Keys
-			.Select(id => id.Value)
-			.ToList();
-		_surface.StepColumns[0].Row.ChangedColumns.Should().BeEquivalentTo(expected);
+		_surface.StepColumns[0].Row.ChangedColumns.Should().BeEquivalentTo([RecipeTestDriver.TaskColumn]);
 		GetCell(0, RecipeTestDriver.TaskColumn).IsChanged.Should().BeTrue();
 	}
 
@@ -538,6 +535,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
 		_fixture.Coordinator.ChangeStepAction(0, RecipeTestDriver.ForLoopActionId);
 		var detachedRow = _surface.StepColumns[0].Row;
+		_fixture.Coordinator.UpdateStepProperty(0, RecipeTestDriver.TaskColumn, "5");
 		_fixture.Coordinator.ChangeStepAction(0, RecipeTestDriver.ForLoopActionId);
 		_surface.StepColumns[0].Row.Should().NotBeSameAs(detachedRow);
 

@@ -118,6 +118,8 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 
 		public IObservable<Unit> EditorMustClose => Observable.Never<Unit>();
 
+		public IObservable<bool> HasChangedMarks => Observable.Return(false);
+
 		public void Initialize()
 		{
 		}
@@ -137,6 +139,10 @@ public sealed class RecipeCommandsViewModelReportingTests : IAsyncLifetime
 		public IReadOnlyList<Step> CollectSelectedSteps()
 		{
 			return [];
+		}
+
+		public void ClearAllChangedMarks()
+		{
 		}
 
 		public void Dispose()

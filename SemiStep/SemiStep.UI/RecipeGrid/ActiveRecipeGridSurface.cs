@@ -43,6 +43,10 @@ public class ActiveRecipeGridSurface : ReactiveObject, IRecipeGridSurface
 			.WhenAnyValue(x => x.Orientation)
 			.Select(orientation => SurfaceFor(orientation).EditorMustClose)
 			.Switch();
+
+		HasChangedMarks = canonicalSurface.HasChangedMarks
+			.CombineLatest(transposedSurface.HasChangedMarks, (canonical, transposed) => canonical || transposed)
+			.DistinctUntilChanged();
 	}
 
 	public CanonicalRecipeGridSurface CanonicalSurface { get; }
@@ -60,6 +64,8 @@ public class ActiveRecipeGridSurface : ReactiveObject, IRecipeGridSurface
 	public IObservable<bool> CanDeleteStep { get; }
 
 	public IObservable<Unit> EditorMustClose { get; }
+
+	public IObservable<bool> HasChangedMarks { get; }
 
 	public int StepCount => ActiveSurface.StepCount;
 
@@ -104,6 +110,12 @@ public class ActiveRecipeGridSurface : ReactiveObject, IRecipeGridSurface
 	public IReadOnlyList<Step> CollectSelectedSteps()
 	{
 		return ActiveSurface.CollectSelectedSteps();
+	}
+
+	public void ClearAllChangedMarks()
+	{
+		CanonicalSurface.ClearAllChangedMarks();
+		TransposedSurface.ClearAllChangedMarks();
 	}
 
 	// The concrete surfaces are container-owned singletons; the container disposes them.

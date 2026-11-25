@@ -7,6 +7,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://SemiStep/Styles/ColorPalette.axaml" />
+                <ResourceInclude Source="avares://SemiStep/Styles/Icons.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Uniform 4px rounding on interactive controls. Semi's component radius keys alias

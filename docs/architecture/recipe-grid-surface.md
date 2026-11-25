@@ -78,7 +78,7 @@ everything except item construction:
 - the three write paths raised by `RecipeRowViewModel` (`OnCellValueChanged`,
   `OnSelectorValueChanged`, `OnActionChanged`) and their event wiring around item creation;
 - the changed-highlight paths: `ClearChangedByClickAway` as a single linear scan over
-  `RowOf(Items[i])`, plus the `ChangedCellClickAwayBroadcaster` subscription;
+  `RowOf(Items[i])`, plus the `ChangeMarkClearBroadcaster` subscription;
 - the `RecipeCoordinator.Mutated` subscription and `Dispose` (items dispose themselves —
   hence the `IDisposable` constraint);
 - the `RecipeMetadataRegistry` reference, exposed to the derived item factories as a
@@ -285,11 +285,12 @@ controls still hold the pre-flip selection, while the surface received the carri
 without the resync the visible highlight would diverge from what Delete/Ctrl+C act on.
 
 **Two live surfaces share one recipe.** Both surfaces stay permanently subscribed to
-`Mutated`, but only the originating surface's edit handlers adjust applicability and the
-changed-cell set. `RecipeRowUpdateSynchronizer` closes that gap: every `PropertyUpdated`
-applies the old-vs-new step delta to the row (recompute applicability; clear the changed flag
-of an edited cell; mark selector-seeded keys; unmark selector-dropped keys), so the inactive
-surface's rows are already correct when it becomes active.
+`Mutated`. `RecipeRowUpdateSynchronizer` runs on every `PropertyUpdated` on each surface and
+applies the old-vs-new step delta to that surface's row (recompute applicability; mark every key
+whose value changed; unmark a dropped key; the edited cell is cleared afterwards through
+`ChangeMarkClearBroadcaster`), so
+the inactive surface's rows are already correct when it becomes active. See
+`cell-change-highlight.md` for the marking rule.
 
 **Entry points.** The View menu carries a `ToggleType="CheckBox"` item
 (`MenuViewTransposedGrid` resource) bound to `MainWindowViewModel.IsTransposedOrientation`

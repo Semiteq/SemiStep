@@ -16,10 +16,10 @@ public class TransposedRecipeGridSurface(
 	ComboBoxItemsProvider comboBoxItemsProvider,
 	GridStyleOptions gridStyle,
 	MessagePanelViewModel messagePanel,
-	ChangedCellClickAwayBroadcaster changedCellClickAwayBroadcaster,
+	ChangeMarkClearBroadcaster changeMarkClearBroadcaster,
 	ILogger<TransposedRecipeGridSurface> logger)
 	: RecipeGridSurfaceBase<StepColumnViewModel>(
-		coordinator, recipeMetadataRegistry, messagePanel, changedCellClickAwayBroadcaster, logger)
+		coordinator, recipeMetadataRegistry, messagePanel, changeMarkClearBroadcaster, logger)
 {
 	// Field initializers run before the base constructor subscribes to coordinator events,
 	// so a callback can never observe a half-constructed surface.

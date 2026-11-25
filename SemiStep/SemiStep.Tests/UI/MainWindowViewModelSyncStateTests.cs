@@ -33,31 +33,20 @@ public sealed class MainWindowViewModelSyncStateTests : IAsyncLifetime
 	}
 
 	[AvaloniaTheory]
-	[InlineData(false, false, true, false, false)]
-	[InlineData(false, true, true, false, false)]
-	[InlineData(true, false, false, true, false)]
-	[InlineData(true, true, false, false, true)]
-	public void SyncStateBooleans_ReflectEnabledAndConnected(
-		bool isSyncEnabled,
-		bool isConnected,
-		bool expectedLocalMode,
-		bool expectedNoLink,
-		bool expectedLinked)
+	[InlineData(false, false)]
+	[InlineData(false, true)]
+	[InlineData(true, false)]
+	[InlineData(true, true)]
+	public void IsSyncEnabled_FollowsTheSyncService_WhateverTheLink(bool isSyncEnabled, bool isConnected)
 	{
 		_fixture.PlcSyncService.SetSyncEnabled(isSyncEnabled);
 		_fixture.S7Service.IsConnected = isConnected;
 
-		_viewModel.IsSyncLocalMode.Should().Be(expectedLocalMode);
-		_viewModel.IsSyncConnecting.Should().BeFalse();
-		_viewModel.IsSyncNoLink.Should().Be(expectedNoLink);
-		_viewModel.IsSyncLinked.Should().Be(expectedLinked);
-
-		CountTrueStates().Should().Be(1, "the four sync states are mutually exclusive");
-		_viewModel.IsSyncOnIdle.Should().Be(isSyncEnabled, "no attempt is in flight, so ON idles whenever sync is enabled");
+		_viewModel.IsSyncEnabled.Should().Be(isSyncEnabled);
 	}
 
 	[AvaloniaFact]
-	public async Task SyncStateBooleans_DuringConnecting_OnlyConnectingIsTrueAndTextGatesHide()
+	public async Task IsSyncEnabled_StaysOn_WhileConnecting()
 	{
 		_fixture.PlcSyncService.SetSyncEnabled(true);
 		_fixture.S7Service.IsConnected = false;
@@ -68,32 +57,11 @@ public sealed class MainWindowViewModelSyncStateTests : IAsyncLifetime
 			() => _fixture.Coordinator.IsConnecting,
 			cancellationToken: TestContext.Current.CancellationToken);
 
-		_viewModel.IsSyncConnecting.Should().BeTrue();
-		CountTrueStates().Should().Be(1, "the four sync states are mutually exclusive");
-
-		_viewModel.IsSyncOnIdle.Should().BeFalse("the \"Sync ON\" label hides while connecting");
-		_viewModel.IsSyncLocalMode.Should().BeFalse("the \"Sync OFF\" label hides while connecting");
+		_viewModel.IsSyncEnabled.Should().BeTrue("connecting is still sync on");
 	}
 
 	[AvaloniaFact]
-	public async Task SyncStateBooleans_WhenConnectingCoincidesWithConnected_OnlyConnectingIsTrue()
-	{
-		_fixture.PlcSyncService.SetSyncEnabled(true);
-		_fixture.S7Service.IsConnected = true;
-		_fixture.PlcSyncService.PushPlcState(
-			new PlcSessionSnapshot(PlcConnectionState.Connecting, PlcSyncStatus.Idle, IsSyncEnabled: true));
-
-		await TestHelpers.WaitUntilAsync(
-			() => _fixture.Coordinator.IsConnecting,
-			cancellationToken: TestContext.Current.CancellationToken);
-
-		_viewModel.IsSyncConnecting.Should().BeTrue("connecting wins over connected");
-		_viewModel.IsSyncLinked.Should().BeFalse("linked is excluded structurally while connecting");
-		CountTrueStates().Should().Be(1, "the four sync states stay mutually exclusive even if connecting coincides with connected");
-	}
-
-	[AvaloniaFact]
-	public async Task RaiseConnectionStateProperties_OnConnectingSnapshot_RaisesConnectingAndOnIdle()
+	public async Task RaiseConnectionStateProperties_OnConnectingSnapshot_RaisesIsSyncEnabled()
 	{
 		var raised = new List<string>();
 		_viewModel.PropertyChanged += (_, args) => raised.Add(args.PropertyName ?? string.Empty);
@@ -106,8 +74,7 @@ public sealed class MainWindowViewModelSyncStateTests : IAsyncLifetime
 			() => _fixture.Coordinator.IsConnecting,
 			cancellationToken: TestContext.Current.CancellationToken);
 
-		raised.Should().Contain(nameof(MainWindowViewModel.IsSyncConnecting));
-		raised.Should().Contain(nameof(MainWindowViewModel.IsSyncOnIdle));
+		raised.Should().Contain(nameof(MainWindowViewModel.IsSyncEnabled));
 	}
 
 	[AvaloniaFact]
@@ -128,18 +95,5 @@ public sealed class MainWindowViewModelSyncStateTests : IAsyncLifetime
 		_fixture.PlcSyncService.Status = status;
 
 		_viewModel.PlcSyncStatusText.Should().Be(Resources.ResourceManager.GetString(resourceKey, Resources.Culture));
-	}
-
-	private int CountTrueStates()
-	{
-		var states = new[]
-		{
-			_viewModel.IsSyncLocalMode,
-			_viewModel.IsSyncConnecting,
-			_viewModel.IsSyncLinked,
-			_viewModel.IsSyncNoLink
-		};
-
-		return states.Count(state => state);
 	}
 }

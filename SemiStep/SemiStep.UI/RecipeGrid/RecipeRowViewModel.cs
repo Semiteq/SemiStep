@@ -22,6 +22,8 @@ public sealed class RecipeRowViewModel(
 	// Cached per action (stable ActionDefinition instance makes the reference key safe); weak table drops entries when an action is collected.
 	private static readonly ConditionalWeakTable<ActionDefinition, ActionColumnMetadata> _actionMetadataCache = [];
 
+	private static readonly PropertyValue _emptyValue = PropertyValue.FromString(string.Empty);
+
 	private readonly ActionColumnMetadata _actionMetadata =
 		GetActionMetadata(action, recipeMetadataRegistry, comboBoxItemsProvider);
 
@@ -245,6 +247,25 @@ public sealed class RecipeRowViewModel(
 	public bool IsChanged(string columnKey)
 	{
 		return ChangedColumns.Contains(columnKey);
+	}
+
+	/// <summary>
+	/// Keys of <paramref name="newStep"/> whose value differs from <paramref name="previousStep"/>'s;
+	/// a key the previous step lacks counts as empty. The single marking comparison.
+	/// </summary>
+	public static IReadOnlyList<string> ChangedValueKeys(Step previousStep, Step newStep)
+	{
+		var changedKeys = new List<string>();
+		foreach (var (key, value) in newStep.Properties)
+		{
+			var previousValue = previousStep.Properties.GetValueOrDefault(key, _emptyValue);
+			if (!previousValue.Equals(value))
+			{
+				changedKeys.Add(key.Value);
+			}
+		}
+
+		return changedKeys;
 	}
 
 	/// <summary>

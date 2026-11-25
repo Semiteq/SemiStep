@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections.Immutable;
+using System.Globalization;
 
 using Avalonia.Controls;
 using Avalonia.Data;
@@ -416,6 +417,26 @@ public sealed class RecipeRowViewModelTests : IAsyncLifetime
 		row.ClearAllChanged();
 
 		row.ChangedColumns.Should().BeSameAs(before);
+	}
+
+	[Fact]
+	public void ChangedValueKeys_ReportsOnlyNewKeysWhoseValueDiffers_AbsentCountsAsEmpty()
+	{
+		var previous = new Step(1, ImmutableDictionary<PropertyId, PropertyValue>.Empty
+			.Add(new PropertyId("same"), PropertyValue.FromFloat(10f))
+			.Add(new PropertyId("number"), PropertyValue.FromFloat(25f))
+			.Add(new PropertyId("note"), PropertyValue.FromString("abc"))
+			.Add(new PropertyId("dropped"), PropertyValue.FromString("gone")));
+		var next = new Step(2, ImmutableDictionary<PropertyId, PropertyValue>.Empty
+			.Add(new PropertyId("same"), PropertyValue.FromFloat(10f))
+			.Add(new PropertyId("number"), PropertyValue.FromFloat(10f))
+			.Add(new PropertyId("note"), PropertyValue.FromString(string.Empty))
+			.Add(new PropertyId("blank"), PropertyValue.FromString(string.Empty))
+			.Add(new PropertyId("added"), PropertyValue.FromInt(0)));
+
+		var changed = RecipeRowViewModel.ChangedValueKeys(previous, next);
+
+		changed.Should().BeEquivalentTo("number", "note", "added");
 	}
 
 	[AvaloniaFact]

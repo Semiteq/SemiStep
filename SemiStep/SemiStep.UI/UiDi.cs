@@ -25,7 +25,7 @@ public static class UiDi
 		services.AddSingleton(_ => RxSchedulers.MainThreadScheduler);
 		services.AddSingleton<MessagePanelViewModel>();
 		services.AddSingleton<RecipeCoordinator>();
-		services.AddSingleton<ChangedCellClickAwayBroadcaster>();
+		services.AddSingleton<ChangeMarkClearBroadcaster>();
 		services.AddSingleton<ComboBoxItemsProvider>();
 		services.AddSingleton<CanonicalRecipeGridSurface>();
 		services.AddSingleton<TransposedRecipeGridSurface>();

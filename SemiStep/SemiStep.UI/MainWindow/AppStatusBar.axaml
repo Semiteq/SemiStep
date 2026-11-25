@@ -8,100 +8,6 @@
              x:Class="SemiStep.UI.MainWindow.AppStatusBar"
              x:DataType="local:MainWindowViewModel">
 
-    <UserControl.Styles>
-        <Style Selector="Button.sync-toggle">
-            <Setter Property="Theme" Value="{StaticResource {x:Type Button}}" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#33000000" />
-            <Setter Property="Padding" Value="10,3" />
-            <Setter Property="MinHeight" Value="24" />
-            <Setter Property="Width" Value="128" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="#FFFFFF" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-
-        <Style Selector="Button.sync-toggle.sync-local">
-            <Setter Property="Background" Value="{DynamicResource LocalModeBrush}" />
-        </Style>
-        <Style Selector="Button.sync-toggle.sync-nolink">
-            <Setter Property="Background" Value="{DynamicResource DisconnectedBrush}" />
-        </Style>
-        <Style Selector="Button.sync-toggle.sync-linked">
-            <Setter Property="Background" Value="{DynamicResource ConnectedBrush}" />
-        </Style>
-        <Style Selector="Button.sync-toggle.sync-connecting">
-            <Setter Property="Background" Value="{DynamicResource ConnectingBrush}" />
-        </Style>
-
-        <!-- Hold the state color on hover; the generic :pressed scrim below darkens the press -->
-        <Style Selector="Button.sync-toggle.sync-local:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource LocalModeBrush}" />
-        </Style>
-        <Style Selector="Button.sync-toggle.sync-nolink:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource DisconnectedBrush}" />
-        </Style>
-        <Style Selector="Button.sync-toggle.sync-linked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ConnectedBrush}" />
-        </Style>
-        <Style Selector="Button.sync-toggle.sync-connecting:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ConnectingBrush}" />
-        </Style>
-        <Style Selector="Button.sync-toggle:pressed /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#22000000" />
-        </Style>
-
-        <Style Selector="Button.sync-toggle.sync-connecting TextBlock.sync-dot.d1">
-            <Style.Animations>
-                <Animation Duration="0:0:1.2" IterationCount="Infinite">
-                    <KeyFrame Cue="0%">
-                        <Setter Property="Opacity" Value="0.25" />
-                    </KeyFrame>
-                    <KeyFrame Cue="50%">
-                        <Setter Property="Opacity" Value="1.0" />
-                    </KeyFrame>
-                    <KeyFrame Cue="100%">
-                        <Setter Property="Opacity" Value="0.25" />
-                    </KeyFrame>
-                </Animation>
-            </Style.Animations>
-        </Style>
-        <Style Selector="Button.sync-toggle.sync-connecting TextBlock.sync-dot.d2">
-            <Style.Animations>
-                <Animation Duration="0:0:1.2" Delay="0:0:0.4" IterationCount="Infinite">
-                    <KeyFrame Cue="0%">
-                        <Setter Property="Opacity" Value="0.25" />
-                    </KeyFrame>
-                    <KeyFrame Cue="50%">
-                        <Setter Property="Opacity" Value="1.0" />
-                    </KeyFrame>
-                    <KeyFrame Cue="100%">
-                        <Setter Property="Opacity" Value="0.25" />
-                    </KeyFrame>
-                </Animation>
-            </Style.Animations>
-        </Style>
-        <Style Selector="Button.sync-toggle.sync-connecting TextBlock.sync-dot.d3">
-            <Style.Animations>
-                <Animation Duration="0:0:1.2" Delay="0:0:0.8" IterationCount="Infinite">
-                    <KeyFrame Cue="0%">
-                        <Setter Property="Opacity" Value="0.25" />
-                    </KeyFrame>
-                    <KeyFrame Cue="50%">
-                        <Setter Property="Opacity" Value="1.0" />
-                    </KeyFrame>
-                    <KeyFrame Cue="100%">
-                        <Setter Property="Opacity" Value="0.25" />
-                    </KeyFrame>
-                </Animation>
-            </Style.Animations>
-        </Style>
-    </UserControl.Styles>
-
     <Border Name="StatusBarBorder"
             Background="{DynamicResource StatusBarBackgroundBrush}"
             BorderBrush="{DynamicResource SubtleBorderBrush}"
@@ -166,33 +72,10 @@
                     Margin="12,2"
                     IsVisible="{Binding MessagePanel.HasStatusErrors}" />
 
-            <!-- Sync controls -->
             <StackPanel Grid.Column="2"
                         Orientation="Horizontal"
                         Spacing="6"
                         VerticalAlignment="Center">
-
-                <!-- Merged sync/connection toggle: fill color encodes IsSyncEnabled + IsConnectedToPlc -->
-                <Button Command="{Binding ToggleSyncCommand}"
-                        Classes="sync-toggle"
-                        Classes.sync-local="{Binding IsSyncLocalMode}"
-                        Classes.sync-nolink="{Binding IsSyncNoLink}"
-                        Classes.sync-linked="{Binding IsSyncLinked}"
-                        Classes.sync-connecting="{Binding IsSyncConnecting}">
-                    <Panel>
-                        <TextBlock Text="{x:Static l:Resources.StatusSyncOn}"
-                                   IsVisible="{Binding IsSyncOnIdle}" />
-                        <TextBlock Text="{x:Static l:Resources.StatusSyncOff}"
-                                   IsVisible="{Binding IsSyncLocalMode}" />
-                        <StackPanel Orientation="Horizontal"
-                                    IsVisible="{Binding IsSyncConnecting}">
-                            <TextBlock Text="{x:Static l:Resources.StatusConnecting}" />
-                            <TextBlock Classes="sync-dot d1" Text="." />
-                            <TextBlock Classes="sync-dot d2" Text="." />
-                            <TextBlock Classes="sync-dot d3" Text="." />
-                        </StackPanel>
-                    </Panel>
-                </Button>
 
                 <!-- Sync status label -->
                 <TextBlock Text="{Binding PlcSyncStatusText}"

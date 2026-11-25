@@ -39,4 +39,9 @@ public interface IRecipeGridSurface : IDisposable
 
 	/// <summary>Selected steps in ascending step-index order.</summary>
 	IReadOnlyList<Step> CollectSelectedSteps();
+
+	/// <summary>True while any cell carries a change mark; emits the current value on subscription.</summary>
+	IObservable<bool> HasChangedMarks { get; }
+
+	void ClearAllChangedMarks();
 }

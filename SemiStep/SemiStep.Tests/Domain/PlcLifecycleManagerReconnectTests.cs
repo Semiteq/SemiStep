@@ -3,16 +3,19 @@
 using FluentResults;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 using SemiStep.Core.Configuration.Facade;
 using SemiStep.Core.Plc;
 using SemiStep.Core.Plc.Configuration;
 using SemiStep.Core.Plc.S7.Protocol;
+using SemiStep.Core.Plc.S7.Serialization;
 using SemiStep.Core.Plc.State;
 using SemiStep.Core.Plc.Sync.Ownership;
 using SemiStep.Core.Recipes;
 using SemiStep.Core.Recipes.Clipboard;
 using SemiStep.Core.Recipes.Import;
+using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
 
 using Xunit;
@@ -25,21 +28,27 @@ namespace SemiStep.Tests.Domain;
 public sealed class PlcLifecycleManagerReconnectTests
 {
 	private const int WaitActionId = 10;
+	private const int RieEtchActionId = 300;
+	private const string CommentKey = "comment";
 
 	private static async Task<(
 		PlcLifecycleManager Plc,
 		RecipeSession Session,
 		StubS7Service S7Service,
-		StubPlcSyncService SyncService)> BuildAsync()
+		StubPlcSyncService SyncService,
+		RecipeConverter Converter,
+		RecordingLogger<PlcLifecycleManager> Logger)> BuildAsync(string? configDirectory = null)
 	{
-		var configDir = TestConfigLocator.GetConfigDirectory("Standard");
+		var configDir = configDirectory ?? TestConfigLocator.GetConfigDirectory();
 		var configLoadResult = await ConfigFacade.LoadAndValidateAsync(configDir);
 
 		var s7Service = new StubS7Service();
 		var syncService = new StubPlcSyncService();
+		var logger = new RecordingLogger<PlcLifecycleManager>();
 
 		var services = new ServiceCollection()
 			.AddLogging()
+			.AddSingleton<ILogger<PlcLifecycleManager>>(logger)
 			.AddSingleton(configLoadResult.Value)
 			.AddRecipe()
 			.AddCsv()
@@ -56,7 +65,9 @@ public sealed class PlcLifecycleManagerReconnectTests
 		plc.Initialize();
 		session.Reset();
 
-		return (plc, session, s7Service, syncService);
+		var converter = new RecipeConverter(services.GetRequiredService<RecipeMetadataRegistry>());
+
+		return (plc, session, s7Service, syncService, converter, logger);
 	}
 
 	private static Recipe BuildSingleStepRecipe()
@@ -64,10 +75,62 @@ public sealed class PlcLifecycleManagerReconnectTests
 		return RecipeStubs.WithSteps(WaitActionId, 1);
 	}
 
+	private static Recipe BuildWaitRecipeWithoutCommentKey()
+	{
+		return Recipe.Empty.AppendStep(
+			new Step(WaitActionId, []).WithProperty(RecipeTestDriver.StepDurationColumn, PropertyValue.FromFloat(10f)));
+	}
+
+	private static Recipe RoundTripThroughPlcData(RecipeConverter converter, Recipe recipe)
+	{
+		return converter.ToRecipe(converter.FromRecipe(recipe).Value).Value;
+	}
+
+	private static async Task<bool> ReconcileAndReportConflictAsync(
+		PlcLifecycleManager plc,
+		StubS7Service s7Service,
+		StubPlcSyncService syncService,
+		Recipe plcRecipe)
+	{
+		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: plcRecipe.StepCount);
+		s7Service.RecipeToReturn = plcRecipe;
+
+		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
+		enableResult.IsSuccess.Should().BeTrue();
+
+		var conflictFired = false;
+		plc.PlcRecipeConflictDetected += (_, _) => conflictFired = true;
+		var countBeforeStateChange = syncService.NotifyRecipeChangedCallCount;
+
+		s7Service.RaiseStateChanged(PlcConnectionState.Connected);
+
+		await TestHelpers.WaitUntilAsync(
+			() => conflictFired || syncService.NotifyRecipeChangedCallCount > countBeforeStateChange,
+			cancellationToken: TestContext.Current.CancellationToken);
+
+		return conflictFired;
+	}
+
+	private static async Task AssertIdenticalOutcomeLoggedAsync(RecordingLogger<PlcLifecycleManager> logger)
+	{
+		var prefix = PlcLifecycleManager.ReconciliationOutcomePrefix;
+		var outcomeField = nameof(PlcReconciliationResult.Outcome);
+
+		await TestHelpers.WaitUntilAsync(
+			() => logger.Snapshot().Any(entry => entry.Message.StartsWith(prefix, StringComparison.Ordinal)),
+			cancellationToken: TestContext.Current.CancellationToken);
+
+		var outcomeLines = logger.Snapshot()
+			.Where(entry => entry.Message.StartsWith(prefix, StringComparison.Ordinal))
+			.ToList();
+		outcomeLines.Should().ContainSingle()
+			.Which.Properties[outcomeField].Should().Be(PlcReconciliationOutcome.Identical);
+	}
+
 	[Fact]
 	public async Task StateChanged_Connected_WhenRecipesDiffer_FiresConflictDetected()
 	{
-		var (plc, session, s7Service, _) = await BuildAsync();
+		var (plc, session, s7Service, _, _, _) = await BuildAsync();
 
 		var appendResult = session.AppendStep(WaitActionId);
 		appendResult.IsSuccess.Should().BeTrue();
@@ -101,7 +164,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task StateChanged_Connected_WhenRecipesIdentical_DoesNotFireConflict_AndPushesLocal()
 	{
-		var (plc, session, s7Service, syncService) = await BuildAsync();
+		var (plc, session, s7Service, syncService, _, _) = await BuildAsync();
 
 		var appendResult = session.AppendStep(WaitActionId);
 		appendResult.IsSuccess.Should().BeTrue();
@@ -132,7 +195,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task StateChanged_Connected_WhenNotCommitted_PushesLocalRecipe()
 	{
-		var (plc, _, s7Service, syncService) = await BuildAsync();
+		var (plc, _, s7Service, syncService, _, _) = await BuildAsync();
 
 		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: false, RecipeLines: 0);
 
@@ -154,7 +217,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task StateChanged_Disconnected_WhenSyncEnabled_CallsHandleConnectionLost()
 	{
-		var (plc, _, s7Service, syncService) = await BuildAsync();
+		var (plc, _, s7Service, syncService, _, _) = await BuildAsync();
 
 		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
@@ -170,7 +233,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task DisableSync_CallsResetForDisableOnSyncService()
 	{
-		var (plc, _, _, syncService) = await BuildAsync();
+		var (plc, _, _, syncService, _, _) = await BuildAsync();
 
 		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
 		enableResult.IsSuccess.Should().BeTrue();
@@ -186,7 +249,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task StateChanged_Connected_WhenLocalEmptyAndPlcNonEmpty_InvokesReconnectApplyCallback()
 	{
-		var (plc, _, s7Service, _) = await BuildAsync();
+		var (plc, _, s7Service, _, _, _) = await BuildAsync();
 
 		var plcRecipe = BuildSingleStepRecipe();
 		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
@@ -216,7 +279,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task StateChanged_Connected_WhenLocalEmptyAndPlcNonEmpty_DoesNotMutateSessionDirectly()
 	{
-		var (plc, session, s7Service, _) = await BuildAsync();
+		var (plc, session, s7Service, _, _, _) = await BuildAsync();
 
 		var plcRecipe = BuildSingleStepRecipe();
 		s7Service.ManagingAreaToReturn = new PlcManagingAreaState(Committed: true, RecipeLines: 1);
@@ -248,7 +311,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task EnableSync_WhenProtocolVersionMatches_Succeeds()
 	{
-		var (plc, _, s7Service, syncService) = await BuildAsync();
+		var (plc, _, s7Service, syncService, _, _) = await BuildAsync();
 		s7Service.ProtocolVersionToReturn = Result.Ok(1);
 
 		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
@@ -263,7 +326,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task EnableSync_WhenProtocolVersionMismatches_FailsAndDisconnectsAndLeavesSyncDisabled()
 	{
-		var (plc, _, s7Service, syncService) = await BuildAsync();
+		var (plc, _, s7Service, syncService, _, _) = await BuildAsync();
 		s7Service.ProtocolVersionToReturn = Result.Ok(2);
 
 		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
@@ -282,7 +345,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task EnableSync_WhenVersionReadFails_FailsAndDisconnects()
 	{
-		var (plc, _, s7Service, syncService) = await BuildAsync();
+		var (plc, _, s7Service, syncService, _, _) = await BuildAsync();
 		s7Service.ProtocolVersionToReturn = Result.Fail<int>("version read failed");
 
 		var enableResult = await plc.EnableSync(PlcConfiguration.Default);
@@ -299,7 +362,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task EnableSync_WhenConnectedFiresDuringConnect_AndVersionMismatches_DoesNotReadOrApply()
 	{
-		var (plc, _, s7Service, _) = await BuildAsync();
+		var (plc, _, s7Service, _, _, _) = await BuildAsync();
 
 		// Mirror the real S7Service: Connected is published synchronously inside ConnectAsync,
 		// triggering reconnect reconciliation before the EnableSync version handshake finishes.
@@ -329,7 +392,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task StateChanged_Connected_WhenLifetimeCancelledMidRead_AbortsAtReadWithoutReadingRecipe()
 	{
-		var (plc, _, s7Service, _) = await BuildAsync();
+		var (plc, _, s7Service, _, _, _) = await BuildAsync();
 
 		// The broken (token-ignored) path would proceed past a committed managing area to the recipe read
 		// and the apply callback. Wire both so the divergence is observable: committed area + non-empty
@@ -382,7 +445,7 @@ public sealed class PlcLifecycleManagerReconnectTests
 	[Fact]
 	public async Task RegisterReconnectApplyCallback_CalledTwice_Throws()
 	{
-		var (plc, _, _, _) = await BuildAsync();
+		var (plc, _, _, _, _, _) = await BuildAsync();
 
 		plc.RegisterReconnectApplyCallback(_ => Task.FromResult(Result.Ok()));
 
@@ -390,5 +453,89 @@ public sealed class PlcLifecycleManagerReconnectTests
 
 		act.Should().Throw<InvalidOperationException>(
 			"a single coordinator owns the reconnect-apply pipeline; double registration indicates a wiring bug");
+	}
+
+	[Fact]
+	public async Task StateChanged_Connected_WhenCsvShapedStepMatchesPlcData_DoesNotFireConflict()
+	{
+		var (plc, session, s7Service, syncService, converter, logger) = await BuildAsync();
+		var localRecipe = BuildWaitRecipeWithoutCommentKey();
+		session.LoadAsCurrent(localRecipe).IsSuccess.Should().BeTrue();
+
+		var plcRecipe = RoundTripThroughPlcData(converter, localRecipe);
+
+		var conflictFired = await ReconcileAndReportConflictAsync(plc, s7Service, syncService, plcRecipe);
+
+		conflictFired.Should().BeFalse(
+			"a blank comment cell and the empty string the PLC holds are the same PLC data");
+		await AssertIdenticalOutcomeLoggedAsync(logger);
+	}
+
+	[Fact]
+	public async Task StateChanged_Connected_WhenOneValueDiffersInPlcData_FiresConflict()
+	{
+		var (plc, session, s7Service, syncService, converter, _) = await BuildAsync();
+		var localRecipe = BuildWaitRecipeWithoutCommentKey();
+		session.LoadAsCurrent(localRecipe).IsSuccess.Should().BeTrue();
+
+		var roundTrip = RoundTripThroughPlcData(converter, localRecipe);
+		var plcRecipe = Recipe.Empty.AppendStep(
+			roundTrip.Steps[0].WithProperty(RecipeTestDriver.StepDurationColumn, PropertyValue.FromFloat(11f)));
+
+		var conflictFired = await ReconcileAndReportConflictAsync(plc, s7Service, syncService, plcRecipe);
+
+		conflictFired.Should().BeTrue("a step duration that differs in the PLC is a different recipe");
+	}
+
+	[Fact]
+	public async Task StateChanged_Connected_WhenRieEtchStepOmitsInactiveColumns_DoesNotFireConflict()
+	{
+		var rieConfigDirectory = ShippedConfigLocator.GetConfigDirectory("RIE");
+		var (plc, session, s7Service, syncService, converter, logger) = await BuildAsync(rieConfigDirectory);
+		session.AppendStep(RieEtchActionId).IsSuccess.Should().BeTrue();
+
+		var plcRecipe = RoundTripThroughPlcData(converter, session.Current);
+
+		var conflictFired = await ReconcileAndReportConflictAsync(plc, s7Service, syncService, plcRecipe);
+
+		conflictFired.Should().BeFalse(
+			"inactive capacitor columns are written as zero, which is what the PLC holds");
+		await AssertIdenticalOutcomeLoggedAsync(logger);
+	}
+
+	[Fact]
+	public async Task StateChanged_Connected_WhenLocalValueHasWrongType_FiresConflict()
+	{
+		var (plc, session, s7Service, syncService, converter, logger) = await BuildAsync();
+		var localRecipe = Recipe.Empty.AppendStep(
+			new Step(WaitActionId, [])
+				.WithProperty(RecipeTestDriver.StepDurationColumn, PropertyValue.FromFloat(10f))
+				.WithProperty(CommentKey, PropertyValue.FromInt(5)));
+		session.LoadAsCurrent(localRecipe).IsSuccess.Should().BeTrue();
+		var plcRecipe = RoundTripThroughPlcData(converter, BuildWaitRecipeWithoutCommentKey());
+
+		var conflictFired = await ReconcileAndReportConflictAsync(plc, s7Service, syncService, plcRecipe);
+
+		conflictFired.Should().BeTrue("a local recipe the PC cannot encode is not proven equal to the PLC");
+		logger.Snapshot()
+			.Where(entry => entry.Level == LogLevel.Warning && entry.Properties.ContainsKey("StepNumber"))
+			.Should().ContainSingle()
+			.Which.Properties["StepNumber"].Should().Be(1);
+	}
+
+	[Fact]
+	public async Task StateChanged_Connected_WhenPlcHoldsValueInKeyLocalOmits_FiresConflict()
+	{
+		var (plc, session, s7Service, syncService, converter, _) = await BuildAsync();
+		var localRecipe = BuildWaitRecipeWithoutCommentKey();
+		session.LoadAsCurrent(localRecipe).IsSuccess.Should().BeTrue();
+
+		var roundTrip = RoundTripThroughPlcData(converter, localRecipe);
+		var plcRecipe = Recipe.Empty.AppendStep(
+			roundTrip.Steps[0].WithProperty(CommentKey, PropertyValue.FromString("x")));
+
+		var conflictFired = await ReconcileAndReportConflictAsync(plc, s7Service, syncService, plcRecipe);
+
+		conflictFired.Should().BeTrue("a missing local key matches only the type default, not a value the PLC holds");
 	}
 }

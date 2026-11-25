@@ -191,7 +191,7 @@ is a pure function of `(previous indices, signal)`; the snapshot is taken at the
 `OnMutation` and assigned after the item mutation, guarded by sequence-equality so a mid-mutation
 control push (the transposed `ListBox` on remove-selected) is not double-applied.
 
-## Combo cells: lock and press-to-open
+## Combo cells: lock, press-to-open and closed list
 
 **Lock.** While the PLC runs the recipe, `IsReadOnly` is true and no combo list may open. A canonical
 combo box lives in a `CellTemplate`, so `DataGrid.IsReadOnly` does not reach it. A grid-wide style
@@ -224,8 +224,31 @@ modifier. Both grids open the list on a plain left press instead:
   press) the presenter ends the edit and focuses the column container, so Delete and Ctrl+C act on the
   step again.
 
-Keyboard opening is unchanged: F4 or Alt+Down on a canonical combo box that holds focus, F2 on a
-transposed combo cell.
+Keyboard opening: Enter, Space, F4, Alt+Down or Alt+Up on a canonical combo box that holds focus, F2
+on a transposed combo cell. A combo box gets keyboard focus only through Tab: a press, and the Esc,
+Enter or item pick that closes the list, leave focus on the `DataGrid`.
+
+**Closed list.** A canonical combo box with a closed list never changes its value from the arrow keys,
+the mouse wheel or typing; only an open list picks. Avalonia's `ComboBox` steps its selection on Up or
+Down while closed, on a wheel notch while closed and focused, and on typed text through its text search
+(`SelectingItemsControl.OnTextInput`, on by default for `ComboBox`) with no check of the list state. The
+two-way binding commits that at once, and an action change resets the step to the new action's
+defaults. Three guards stop it:
+
+- Arrow keys: `ComboBoxCellFactory` sets `XYFocus.NavigationModes` to `Enabled` on every canonical
+  combo box. With keyboard XY navigation allowed, `ComboBox.OnKeyDown` leaves Up and Down unhandled
+  while closed, so the key bubbles to the `DataGrid`, which moves the row and takes focus. PageUp,
+  PageDown, Home, End, Left and Right never reach a closed `ComboBox`'s selection logic; the grid
+  handles them. The open list is unaffected: its items control handles Up and Down before any XY
+  navigation.
+- Wheel: `ClosedComboInputGuard` attaches a tunnel `PointerWheelChanged` handler to the `DataGrid`.
+  When the notch lands on a focused combo box with a closed list, it moves focus to the grid first, so
+  the combo box ignores the notch and the grid scrolls. Marking the notch handled would stop the grid
+  scroll too, and the `DataGrid` has no public call to scroll by a delta.
+- Typing: the same class attaches a tunnel `TextInput` handler that marks text input handled while the
+  source combo box has a closed list. Type-ahead inside an open list still picks.
+
+The transposed grid needs none of these guards: it builds a live `ComboBox` only on edit entry.
 
 ## Orientation switching
 

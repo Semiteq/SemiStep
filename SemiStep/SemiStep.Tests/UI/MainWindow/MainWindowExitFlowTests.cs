@@ -12,6 +12,7 @@ using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.MainWindow;
 using SemiStep.UI.MessageService;
+using SemiStep.UI.RecipeFile;
 using SemiStep.UI.ShutdownService;
 
 using Xunit;
@@ -63,7 +64,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		// handler must win over the window's own file-picker handler.
 		_viewModel.RecipeFile.SaveFileInteraction.RegisterHandler(context => context.SetOutput(null));
 
-		await _window.HandleExitChoiceAsync(ExitConfirmationResult.Save);
+		await _window.HandleExitChoiceAsync(UnsavedChangesChoice.Save);
 
 		_window.IsVisible.Should().BeTrue("a cancelled picker means nothing was saved, so the window must stay open");
 	}
@@ -73,7 +74,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 	{
 		_viewModel.RecipeFile.SaveFileInteraction.RegisterHandler(context => context.SetOutput(_tempFilePath));
 
-		await _window.HandleExitChoiceAsync(ExitConfirmationResult.Save);
+		await _window.HandleExitChoiceAsync(UnsavedChangesChoice.Save);
 
 		_window.IsVisible.Should().BeFalse("a confirmed save must let the window close");
 		File.Exists(_tempFilePath).Should().BeTrue();
@@ -87,7 +88,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		_fixture.Session.IsValid.Should().BeFalse("the recipe has an unclosed For loop");
 		_viewModel.RecipeFile.SaveFileInteraction.RegisterHandler(context => context.SetOutput(_tempFilePath));
 
-		await _window.HandleExitChoiceAsync(ExitConfirmationResult.Save);
+		await _window.HandleExitChoiceAsync(UnsavedChangesChoice.Save);
 
 		_window.IsVisible.Should().BeTrue("a failed save must not discard the recipe by closing the window");
 		File.Exists(_tempFilePath).Should().BeFalse();
@@ -99,7 +100,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		_viewModel.RecipeFile.SaveFileInteraction.RegisterHandler(
 			_ => throw new InvalidOperationException("disk detached"));
 
-		await _window.HandleExitChoiceAsync(ExitConfirmationResult.Save);
+		await _window.HandleExitChoiceAsync(UnsavedChangesChoice.Save);
 		// The ThrownExceptions report is posted to the dispatcher via ObserveOn.
 		Dispatcher.UIThread.RunJobs();
 
@@ -131,7 +132,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 	[AvaloniaFact]
 	public async Task HandleExitChoice_DontSave_ClosesWindow()
 	{
-		await _window.HandleExitChoiceAsync(ExitConfirmationResult.DontSave);
+		await _window.HandleExitChoiceAsync(UnsavedChangesChoice.DontSave);
 
 		_window.IsVisible.Should().BeFalse("Don't Save must close the window without saving");
 	}
@@ -139,7 +140,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 	[AvaloniaFact]
 	public async Task HandleExitChoice_Cancel_KeepsWindowOpen()
 	{
-		await _window.HandleExitChoiceAsync(ExitConfirmationResult.Cancel);
+		await _window.HandleExitChoiceAsync(UnsavedChangesChoice.Cancel);
 
 		_window.IsVisible.Should().BeTrue("Cancel must leave the window open");
 	}
@@ -147,8 +148,8 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 	[AvaloniaFact]
 	public async Task HandleExitChoice_DefaultResult_MeansCancelAndKeepsWindowOpen()
 	{
-		default(ExitConfirmationResult).Should().Be(
-			ExitConfirmationResult.Cancel,
+		default(UnsavedChangesChoice).Should().Be(
+			UnsavedChangesChoice.Cancel,
 			"dismissing the dialog (title-bar X, Alt+F4) yields default and must not trigger a save");
 
 		await _window.HandleExitChoiceAsync(default);
@@ -175,7 +176,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		var dialog = _window.OwnedWindows.OfType<ExitConfirmationDialog>()
 			.Should().ContainSingle("the dirty close must show the confirmation dialog").Subject;
 
-		dialog.Close(ExitConfirmationResult.Cancel);
+		dialog.Close(UnsavedChangesChoice.Cancel);
 		// Lets the fire-and-forget OnWindowClosing continuation finish.
 		Dispatcher.UIThread.RunJobs();
 
@@ -190,7 +191,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		var dialog = _window.OwnedWindows.OfType<ExitConfirmationDialog>()
 			.Should().ContainSingle("the dirty close must show the confirmation dialog").Subject;
 
-		dialog.Close(ExitConfirmationResult.DontSave);
+		dialog.Close(UnsavedChangesChoice.DontSave);
 		// Lets the fire-and-forget OnWindowClosing continuation finish.
 		Dispatcher.UIThread.RunJobs();
 
@@ -211,7 +212,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		_window.OwnedWindows.OfType<ExitConfirmationDialog>()
 			.Should().ContainSingle("a re-entrant close must not stack a second confirmation dialog");
 
-		dialog.Close(ExitConfirmationResult.Cancel);
+		dialog.Close(UnsavedChangesChoice.Cancel);
 		// Lets the fire-and-forget OnWindowClosing continuation finish.
 		Dispatcher.UIThread.RunJobs();
 	}
@@ -223,7 +224,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		_viewModel.RecipeFile.SaveFileInteraction.RegisterHandler(async context =>
 			context.SetOutput(await pickerResult.Task));
 
-		var exitTask = _window.HandleExitChoiceAsync(ExitConfirmationResult.Save);
+		var exitTask = _window.HandleExitChoiceAsync(UnsavedChangesChoice.Save);
 		_window.Close();
 
 		_window.IsVisible.Should().BeTrue("a close during an in-flight exit save must be rejected");
@@ -249,7 +250,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		var inFlightSave = _viewModel.RecipeFile.SaveRecipeCommand.Execute().ToTask();
 		Dispatcher.UIThread.RunJobs();
 
-		await _window.HandleExitChoiceAsync(ExitConfirmationResult.Save);
+		await _window.HandleExitChoiceAsync(UnsavedChangesChoice.Save);
 
 		_window.IsVisible.Should().BeTrue("an exit save while a save is already running must keep the window open");
 		pickerInvocations.Should().Be(1, "the exit flow must not launch a second save while one is in flight");
@@ -272,7 +273,7 @@ public sealed class MainWindowExitFlowTests : IAsyncLifetime
 		var dialog = _window.OwnedWindows.OfType<ExitConfirmationDialog>()
 			.Should().ContainSingle("the dirty Exit must show the confirmation dialog").Subject;
 
-		dialog.Close(ExitConfirmationResult.Cancel);
+		dialog.Close(UnsavedChangesChoice.Cancel);
 		// Lets the fire-and-forget OnWindowClosing continuation finish and dismisses the dialog
 		// so it does not dangle into teardown.
 		Dispatcher.UIThread.RunJobs();

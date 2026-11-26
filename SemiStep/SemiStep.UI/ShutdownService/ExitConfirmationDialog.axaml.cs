@@ -1,6 +1,8 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 
+using SemiStep.UI.RecipeFile;
+
 namespace SemiStep.UI.ShutdownService;
 
 public partial class ExitConfirmationDialog : Window
@@ -12,16 +14,16 @@ public partial class ExitConfirmationDialog : Window
 
 	private void OnSaveClick(object? sender, RoutedEventArgs e)
 	{
-		Close(ExitConfirmationResult.Save);
+		Close(UnsavedChangesChoice.Save);
 	}
 
 	private void OnDontSaveClick(object? sender, RoutedEventArgs e)
 	{
-		Close(ExitConfirmationResult.DontSave);
+		Close(UnsavedChangesChoice.DontSave);
 	}
 
 	private void OnCancelClick(object? sender, RoutedEventArgs e)
 	{
-		Close(ExitConfirmationResult.Cancel);
+		Close(UnsavedChangesChoice.Cancel);
 	}
 }

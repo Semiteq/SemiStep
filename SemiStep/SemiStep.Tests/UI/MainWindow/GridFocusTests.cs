@@ -34,6 +34,8 @@ public sealed class GridFocusTests : IAsyncLifetime
 	{
 		await _fixture.InitializeAsync();
 		_fixture.SeedRecipe(3);
+		// A clean seed lets New and Open run without the unsaved-changes prompt.
+		_fixture.Session.MarkSaved();
 		_viewModel = _fixture.CreateMainWindowViewModel();
 		_viewModel.RecipeGrid.Initialize();
 	}

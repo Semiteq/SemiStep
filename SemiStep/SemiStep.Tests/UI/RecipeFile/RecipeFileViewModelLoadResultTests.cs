@@ -34,6 +34,8 @@ public sealed class RecipeFileViewModelLoadResultTests : IAsyncLifetime
 			_fixture.MessagePanel,
 			NullLogger<RecipeFileViewModel>.Instance);
 		_recipeFile.OpenFileInteraction.RegisterHandler(context => context.SetOutput(_tempFilePath));
+		// The tests build the recipe they load in the same session, so Open finds it dirty.
+		_recipeFile.UnsavedChangesInteraction.RegisterHandler(context => context.SetOutput(UnsavedChangesChoice.DontSave));
 	}
 
 	public async ValueTask DisposeAsync()

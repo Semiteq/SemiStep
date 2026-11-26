@@ -35,13 +35,14 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 		OpenFileInteraction = new Interaction<Unit, string?>();
 		SaveFileInteraction = new Interaction<string?, string?>();
+		UnsavedChangesInteraction = new Interaction<Unit, UnsavedChangesChoice>();
 
 		var canEdit = _coordinator.CanEditRecipe;
 
 		SaveRecipeCommand = ReactiveCommand.CreateFromTask(SaveRecipeAsync);
 		SaveAsRecipeCommand = ReactiveCommand.CreateFromTask(SaveAsRecipeAsync);
 		LoadRecipeCommand = ReactiveCommand.CreateFromTask(LoadRecipeAsync, canEdit);
-		NewRecipeCommand = ReactiveCommand.Create(NewRecipe, canEdit);
+		NewRecipeCommand = ReactiveCommand.CreateFromTask(NewRecipeAsync, canEdit);
 
 		SaveRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.SaveFailed)))
 			.DisposeWith(_disposables);
@@ -51,11 +52,16 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 		LoadRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.LoadFailed)))
 			.DisposeWith(_disposables);
+
+		NewRecipeCommand.ReportThrownExceptions(_messagePanel, _logger, new LocalizedText(nameof(Resources.NewRecipeFailed)))
+			.DisposeWith(_disposables);
 	}
 
 	public Interaction<Unit, string?> OpenFileInteraction { get; }
 
 	public Interaction<string?, string?> SaveFileInteraction { get; }
+
+	public Interaction<Unit, UnsavedChangesChoice> UnsavedChangesInteraction { get; }
 
 	public ReactiveCommand<Unit, bool> SaveRecipeCommand { get; }
 
@@ -71,6 +77,48 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 	{
 		_disposables.Dispose();
 		GC.SuppressFinalize(this);
+	}
+
+	/// <summary>Applies the answer to the unsaved-changes dialog; true when the caller may drop the recipe.</summary>
+	public async Task<bool> ResolveUnsavedChangesAsync(UnsavedChangesChoice choice)
+	{
+		return choice switch
+		{
+			UnsavedChangesChoice.Save => await SaveBeforeDiscardAsync(),
+			UnsavedChangesChoice.DontSave => true,
+			_ => false
+		};
+	}
+
+	private async Task<bool> ConfirmDiscardAsync()
+	{
+		if (!_coordinator.IsDirty)
+		{
+			return true;
+		}
+
+		var choice = await UnsavedChangesInteraction.Handle(Unit.Default);
+
+		return await ResolveUnsavedChangesAsync(choice);
+	}
+
+	private async Task<bool> SaveBeforeDiscardAsync()
+	{
+		var saveAlreadyInFlight = await SaveRecipeCommand.IsExecuting.FirstAsync();
+		if (saveAlreadyInFlight)
+		{
+			return false;
+		}
+
+		try
+		{
+			return await SaveRecipeCommand.Execute();
+		}
+		catch (Exception)
+		{
+			// The command's ThrownExceptions pipeline already reports the failure.
+			return false;
+		}
 	}
 
 	private async Task<bool> SaveRecipeAsync()
@@ -108,8 +156,13 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 	private async Task LoadRecipeAsync()
 	{
+		if (!await ConfirmDiscardAsync())
+		{
+			return;
+		}
+
 		var filePath = await OpenFileInteraction.Handle(Unit.Default);
-		if (filePath is null)
+		if (filePath is null || _coordinator.IsRecipeActive)
 		{
 			return;
 		}
@@ -135,8 +188,13 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 		}
 	}
 
-	private void NewRecipe()
+	private async Task NewRecipeAsync()
 	{
+		if (!await ConfirmDiscardAsync() || _coordinator.IsRecipeActive)
+		{
+			return;
+		}
+
 		var result = _coordinator.NewRecipe();
 
 		if (result.IsFailed)

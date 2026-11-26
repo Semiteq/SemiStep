@@ -8,7 +8,8 @@ new app-exit trigger.
 Every ordinary app exit must route through `MainWindow.Close()`. Closing the window raises
 `Closing`, which `MainWindow.OnWindowClosing` handles: on a dirty session it sets `e.Cancel = true`
 and shows the `ExitConfirmationDialog` (Save / Don't Save / Cancel); on a clean session it lets the
-close proceed.
+close proceed. New and Open ask through the same dialog and the same answer handling; see "Unsaved
+changes" in `dialogs-and-interactions.md`.
 
 The app runs under the default `ShutdownMode.OnLastWindowClose` (never set explicitly), so closing
 the single main window cascades to process exit. This is why routing exit through `Close()` both

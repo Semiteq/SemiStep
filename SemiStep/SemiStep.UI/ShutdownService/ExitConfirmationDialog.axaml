@@ -5,7 +5,7 @@
         xmlns:l="clr-namespace:SemiStep.UI.Localization"
         mc:Ignorable="d"
         x:Class="SemiStep.UI.ShutdownService.ExitConfirmationDialog"
-        Title="{x:Static l:Resources.DialogExitTitle}"
+        Title="{x:Static l:Resources.DialogUnsavedChangesTitle}"
         Width="400"
         Height="150"
         WindowStartupLocation="CenterOwner"
@@ -19,7 +19,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0"
-                   Text="{x:Static l:Resources.DialogExitMessage}"
+                   Text="{x:Static l:Resources.DialogUnsavedChangesMessage}"
                    TextWrapping="Wrap"
                    VerticalAlignment="Center" />
 

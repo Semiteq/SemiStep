@@ -356,6 +356,8 @@ public sealed class MainWindowGestureTests : IAsyncLifetime
 	private MainWindowView ShowWithGridFocus(int stepCount)
 	{
 		_fixture.SeedRecipe(stepCount);
+		// A clean seed lets New and Open run without the unsaved-changes prompt.
+		_fixture.Session.MarkSaved();
 		_viewModel.RecipeGrid.Initialize();
 
 		_window = new MainWindowView { ViewModel = _viewModel };

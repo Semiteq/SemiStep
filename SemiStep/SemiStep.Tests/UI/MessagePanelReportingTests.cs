@@ -112,7 +112,7 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 		var valueBefore = _surface.RecipeRows[0].GetPropertyValue(RecipeTestDriver.StepDurationColumn);
 
 		var committed = PropertyTimeEditingConverter.ParseForCommit(
-			"25:00:00", TimeFormatHelper.TimeHmsFormat, allowsEmpty: false);
+			"25:00:00", TimeFormatHelper.TimeHmsFormat, isTextColumn: false);
 		committed.Should().BeOfType<string>("the editor parses hours of 24 and more instead of dropping the edit");
 		_surface.RecipeRows[0].SetPropertyValue(RecipeTestDriver.StepDurationColumn, (string)committed!);
 
@@ -128,7 +128,7 @@ public sealed class MessagePanelReportingTests : IAsyncLifetime
 		var valueBefore = _surface.RecipeRows[0].GetPropertyValue(RecipeTestDriver.StepDurationColumn);
 
 		var committed = PropertyTimeEditingConverter.ParseForCommit(
-			"1:30", TimeFormatHelper.DefaultFormatKind, allowsEmpty: false);
+			"1:30", TimeFormatHelper.DefaultFormatKind, isTextColumn: false);
 		committed.Should().Be("1:30", "a numeric column no longer converts clock-like text to seconds");
 		_surface.RecipeRows[0].SetPropertyValue(RecipeTestDriver.StepDurationColumn, (string)committed!);
 

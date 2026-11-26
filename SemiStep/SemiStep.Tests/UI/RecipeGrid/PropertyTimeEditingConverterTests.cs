@@ -23,7 +23,7 @@ public sealed class PropertyTimeEditingConverterTests
 	[Fact]
 	public void ConvertBack_EmptyText_StringColumn_CommitsEmptyString()
 	{
-		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.DefaultFormatKind, allowsEmpty: true);
+		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.DefaultFormatKind, isTextColumn: true);
 
 		var result = ConvertBack(converter, string.Empty);
 
@@ -33,7 +33,7 @@ public sealed class PropertyTimeEditingConverterTests
 	[Fact]
 	public void ConvertBack_WhitespaceText_StringColumn_CommitsEmptyString()
 	{
-		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.DefaultFormatKind, allowsEmpty: true);
+		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.DefaultFormatKind, isTextColumn: true);
 
 		var result = ConvertBack(converter, "   ");
 
@@ -43,7 +43,7 @@ public sealed class PropertyTimeEditingConverterTests
 	[Fact]
 	public void ConvertBack_EmptyText_NumericColumn_LeavesSourceUntouched()
 	{
-		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.DefaultFormatKind, allowsEmpty: false);
+		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.DefaultFormatKind, isTextColumn: false);
 
 		var result = ConvertBack(converter, string.Empty);
 
@@ -58,7 +58,7 @@ public sealed class PropertyTimeEditingConverterTests
 	[InlineData("86400")]
 	public void ConvertBack_FormattedTimeValue_RoundTripsToSameSeconds(string seconds)
 	{
-		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.TimeHmsFormat, allowsEmpty: false);
+		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.TimeHmsFormat, isTextColumn: false);
 
 		var displayed = converter.Convert(seconds, typeof(string), parameter: null, CultureInfo.InvariantCulture);
 		var result = ConvertBack(converter, displayed as string);
@@ -69,7 +69,7 @@ public sealed class PropertyTimeEditingConverterTests
 	[Fact]
 	public void ConvertBack_MinutesOverSixty_IsRejected()
 	{
-		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.TimeHmsFormat, allowsEmpty: false);
+		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.TimeHmsFormat, isTextColumn: false);
 
 		var result = ConvertBack(converter, "00:61:00");
 
@@ -81,7 +81,7 @@ public sealed class PropertyTimeEditingConverterTests
 	[InlineData("1:30")]
 	public void ConvertBack_ClockLikeText_NonTimeColumn_IsKeptAsTyped(string text)
 	{
-		var nonTimeColumn = new PropertyTimeEditingConverter(TimeFormatHelper.DefaultFormatKind, allowsEmpty: true);
+		var nonTimeColumn = new PropertyTimeEditingConverter(TimeFormatHelper.DefaultFormatKind, isTextColumn: true);
 
 		ConvertBack(nonTimeColumn, text).Should().Be(text);
 	}
@@ -89,7 +89,7 @@ public sealed class PropertyTimeEditingConverterTests
 	[Fact]
 	public void ConvertBack_ClockLikeText_TimeColumn_ParsesToSeconds()
 	{
-		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.TimeHmsFormat, allowsEmpty: false);
+		var converter = new PropertyTimeEditingConverter(TimeFormatHelper.TimeHmsFormat, isTextColumn: false);
 
 		ConvertBack(converter, "12:30").Should().Be("45000");
 	}

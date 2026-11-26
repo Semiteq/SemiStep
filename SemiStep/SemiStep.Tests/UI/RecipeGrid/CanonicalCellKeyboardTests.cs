@@ -195,9 +195,9 @@ public sealed class CanonicalCellKeyboardTests : IAsyncLifetime
 		DurationOf(_fixture.PlcSyncService.NotifyRecipeChangedCalls[^1].Recipe).Should().Be(75.5f);
 	}
 
-	// The model parses numbers in the invariant culture, so a comma is an input error, never a thousands separator.
+	// A comma is a decimal separator, never a thousands separator.
 	[AvaloniaFact]
-	public async Task TypedCommaValue_UnderRuRu_KeepsTheStoredValue()
+	public async Task TypedCommaValue_UnderRuRu_StoresTheFraction()
 	{
 		using var culture = new CultureScope("ru-RU");
 		await LoadFractionalDurationAsync();
@@ -207,7 +207,21 @@ public sealed class CanonicalCellKeyboardTests : IAsyncLifetime
 		_grid.TypeText("75,5");
 		_grid.PressKey(Key.Enter, PhysicalKey.Enter);
 
-		StoredDuration().Should().Be(90.5f, "a rejected entry leaves the value, it never stores 755");
+		StoredDuration().Should().Be(75.5f, "a decimal comma stores the fraction, it never stores 755");
+	}
+
+	[AvaloniaFact]
+	public async Task TypedValueWithBothSeparators_UnderRuRu_KeepsTheStoredValue()
+	{
+		using var culture = new CultureScope("ru-RU");
+		await LoadFractionalDurationAsync();
+
+		_grid.PressKey(Key.F2, PhysicalKey.F2);
+		EditingTextBox()!.SelectAll();
+		_grid.TypeText("1.234,5");
+		_grid.PressKey(Key.Enter, PhysicalKey.Enter);
+
+		StoredDuration().Should().Be(90.5f, "a value with both separators is an input error");
 	}
 
 	[AvaloniaFact]

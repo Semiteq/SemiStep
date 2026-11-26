@@ -2,6 +2,10 @@
 using System.Reactive.Disposables.Fluent;
 
 using Avalonia.Controls;
+using Avalonia.Data;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 
 using ReactiveUI;
 using ReactiveUI.Avalonia;
@@ -10,6 +14,9 @@ namespace SemiStep.UI.RecipeGrid;
 
 public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalRecipeGridSurface>
 {
+	private const string CurrentCellPseudoClass = ":current";
+
+	private readonly CellEditCoordinator _comboEditCoordinator = new();
 	private bool _columnsBuilt;
 	private bool _syncingSelectionFromSurface;
 	private (RecipeRowViewModel Row, string ColumnKey)? _pendingChangedCell;
@@ -24,8 +31,8 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 			RecipeGrid.CellEditEnded += OnCellEditEnded;
 			RecipeGrid.SelectionChanged += OnSelectionChanged;
 			RecipeGrid.CellPointerPressed += OnCellPointerPressed;
-			new ComboBoxPressOpener(RecipeGrid).Attach().DisposeWith(disposables);
-			new ClosedComboInputGuard(RecipeGrid).Attach().DisposeWith(disposables);
+			RecipeGrid.AddHandler(KeyDownEvent, OnTunnelKeyDown, RoutingStrategies.Tunnel);
+			new ComboBoxPressOpener(RecipeGrid, _comboEditCoordinator).Attach().DisposeWith(disposables);
 
 			var selectionRequestsSubscription = new SerialDisposable()
 				.DisposeWith(disposables);
@@ -52,13 +59,84 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 				RecipeGrid.CellEditEnded -= OnCellEditEnded;
 				RecipeGrid.SelectionChanged -= OnSelectionChanged;
 				RecipeGrid.CellPointerPressed -= OnCellPointerPressed;
+				RecipeGrid.RemoveHandler(KeyDownEvent, OnTunnelKeyDown);
 				_pendingChangedCell = null;
-				IsEditing = false;
+				IsTextEditing = false;
 			}).DisposeWith(disposables);
 		});
 	}
 
-	public bool IsEditing { get; private set; }
+	public bool IsEditing => IsTextEditing || _comboEditCoordinator.ActiveEditor is not null;
+
+	private bool IsTextEditing { get; set; }
+
+	// Display cells take no focus, so the grid routes the open keys to its current cell.
+	private void OnTunnelKeyDown(object? sender, KeyEventArgs e)
+	{
+		if (IsTextEditing && e.Key == Key.Escape)
+		{
+			DetachTextEditor(e.Source);
+			return;
+		}
+
+		if (IsEditing)
+		{
+			return;
+		}
+
+		// Keys and column first: the current-cell lookup walks the realized cells, and arrow auto-repeat or typing
+		// into a read-only column must not pay for it.
+		if (CellEditKeys.IsEditKey(e) || CellEditKeys.IsListKey(e))
+		{
+			if (CurrentCell() is { Content: LazyComboCellPresenter { CanEnterEdit: true } presenter })
+			{
+				_comboEditCoordinator.BeginEdit(presenter, initialText: null);
+				e.Handled = true;
+			}
+
+			return;
+		}
+
+		if (CellEditKeys.IsPrintable(e.KeySymbol, e.KeyModifiers)
+			&& CanTypeIntoCurrentColumn()
+			&& CurrentCell() is { } cell)
+		{
+			BeginTypedEdit(cell);
+		}
+	}
+
+	private bool CanTypeIntoCurrentColumn()
+	{
+		return !RecipeGrid.IsReadOnly && RecipeGrid.CurrentColumn is { IsReadOnly: false };
+	}
+
+	// The KeyDown stays unhandled: Avalonia.Win32 drops the WM_CHAR of a handled KeyDown, and the character it
+	// carries, in the keyboard layout and case the user typed, lands on the editor focused here.
+	private void BeginTypedEdit(DataGridCell cell)
+	{
+		if (RecipeGrid.BeginEdit() && cell.Content is TextBox textBox)
+		{
+			textBox.Text = string.Empty;
+			textBox.Focus();
+		}
+	}
+
+	// The editor writes on LostFocus, and the DataGrid moves focus to itself before it cancels an edit. Detaching
+	// the editor's binding first leaves nothing to write, so Esc keeps the stored value as it was.
+	private static void DetachTextEditor(object? source)
+	{
+		if (source is TextBox textBox)
+		{
+			BindingOperations.GetBindingExpressionBase(textBox, TextBox.TextProperty)?.Dispose();
+		}
+	}
+
+	private DataGridCell? CurrentCell()
+	{
+		return RecipeGrid.GetVisualDescendants()
+			.OfType<DataGridCell>()
+			.FirstOrDefault(cell => cell.Classes.Contains(CurrentCellPseudoClass));
+	}
 
 	private void OnBeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
 	{
@@ -71,12 +149,12 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 			return;
 		}
 
-		IsEditing = true;
+		IsTextEditing = true;
 	}
 
 	private void OnCellEditEnded(object? sender, DataGridCellEditEndedEventArgs e)
 	{
-		IsEditing = false;
+		IsTextEditing = false;
 	}
 
 	// Click-away rule: a changed (orange) cell clears the moment any OTHER cell is pressed. This is
@@ -103,6 +181,11 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 	private void OnDataGridLoadingRow(object? sender, DataGridRowEventArgs e)
 	{
 		RecipeRowExecutionClassBinder.BindAll(e.Row);
+	}
+
+	internal void FocusGrid()
+	{
+		RecipeGrid.Focus();
 	}
 
 	// Re-applies the surface's selection to the DataGrid. The host calls this when the view
@@ -186,7 +269,7 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 			return;
 		}
 
-		ViewModel.ColumnBuilder.BuildColumns(RecipeGrid);
+		ViewModel.ColumnBuilder.BuildColumns(RecipeGrid, _comboEditCoordinator);
 		_columnsBuilt = true;
 	}
 }

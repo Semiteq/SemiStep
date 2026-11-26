@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Threading;
 
 using ReactiveUI;
 
@@ -29,6 +30,25 @@ public partial class RecipeGridHost : UserControl
 		TransposedRecipeGridView view => view.IsEditing,
 		_ => false
 	};
+
+	/// <summary>Moves keyboard focus into the shown grid once its layout has run, so arrows work without a click.</summary>
+	public void FocusActiveGrid()
+	{
+		Dispatcher.UIThread.Post(
+			() =>
+			{
+				switch (Content)
+				{
+					case CanonicalRecipeGridView view:
+						view.FocusGrid();
+						break;
+					case TransposedRecipeGridView view:
+						view.FocusGrid();
+						break;
+				}
+			},
+			DispatcherPriority.Background);
+	}
 
 	protected override void OnDataContextChanged(EventArgs e)
 	{
@@ -95,5 +115,7 @@ public partial class RecipeGridHost : UserControl
 			Content = _canonicalView;
 			_canonicalView.SyncSelectionFromSurface();
 		}
+
+		FocusActiveGrid();
 	}
 }

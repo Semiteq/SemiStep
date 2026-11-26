@@ -2,15 +2,14 @@
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 namespace SemiStep.UI.RecipeGrid;
 
 /// <summary>
-/// Attached behavior: when the bound <see cref="IObservable{Unit}"/> emits, commits the in-flight cell edit,
-/// closes an open combo list and takes focus back from a combo box. Fires when the grid becomes read-only.
+/// Attached behavior: when the bound <see cref="IObservable{Unit}"/> emits, commits the in-flight cell edit and
+/// closes an open combo list, whose cell hands focus back to the grid. Fires when the grid becomes read-only.
 /// </summary>
 public static class DataGridEditorCloseBehavior
 {
@@ -116,34 +115,15 @@ public static class DataGridEditorCloseBehavior
 		CloseComboBoxes(dataGrid);
 	}
 
-	// Closing a list hands focus back to its combo box, so focus is moved only after every list is closed.
 	private static void CloseComboBoxes(DataGrid dataGrid)
 	{
-		var focusInsideComboBox = OwningComboBox(TopLevel.GetTopLevel(dataGrid)?.FocusManager?.GetFocusedElement())
-			is { } focusedComboBox && dataGrid.IsVisualAncestorOf(focusedComboBox);
-
-		foreach (var comboBox in dataGrid.GetVisualDescendants().OfType<ComboBox>())
+		// Materialized: a closing list ends its cell's edit, which swaps the editor out of the tree.
+		foreach (var comboBox in dataGrid.GetVisualDescendants().OfType<ComboBox>().ToList())
 		{
 			if (comboBox.IsDropDownOpen)
 			{
 				comboBox.SetCurrentValue(ComboBox.IsDropDownOpenProperty, false);
 			}
 		}
-
-		if (focusInsideComboBox)
-		{
-			dataGrid.Focus();
-		}
-	}
-
-	// An open list holds focus on one of its items, which live in the popup, outside the grid's visual tree.
-	private static ComboBox? OwningComboBox(IInputElement? focused)
-	{
-		return focused switch
-		{
-			ComboBox comboBox => comboBox,
-			ComboBoxItem item => ItemsControl.ItemsControlFromItemContainer(item) as ComboBox,
-			_ => null,
-		};
 	}
 }

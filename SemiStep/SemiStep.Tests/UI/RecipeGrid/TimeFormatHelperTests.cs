@@ -28,6 +28,16 @@ public sealed class TimeFormatHelperTests
 		TimeFormatHelper.FormatValue("12.5", TimeFormatHelper.DefaultFormatKind, "В").Should().Be("12.5 В");
 	}
 
+	[Theory]
+	[InlineData("90.5", TimeFormatHelper.TimeHmsFormat, "00:01:30.5")]
+	[InlineData("90", TimeFormatHelper.TimeHmsFormat, "00:01:30")]
+	[InlineData("12.5", TimeFormatHelper.DefaultFormatKind, "12.5")]
+	public void EditorText_ParsesBackToTheStoredValue(string stored, string formatKind, string editorText)
+	{
+		TimeFormatHelper.FormatForEdit(stored, formatKind).Should().Be(editorText);
+		PropertyTimeEditingConverter.ParseForCommit(editorText, formatKind, allowsEmpty: false).Should().Be(stored);
+	}
+
 	[AvaloniaFact]
 	public void StepStartTimeColumn_MeasuresWithoutTheDurationUnit()
 	{

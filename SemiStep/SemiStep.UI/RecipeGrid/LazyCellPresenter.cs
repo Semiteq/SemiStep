@@ -1,31 +1,24 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 
-namespace SemiStep.UI.RecipeGrid.Transposed;
+namespace SemiStep.UI.RecipeGrid;
 
-internal abstract class TransposedLazyCellPresenter : Border
+/// <summary>A grid cell that shows a display control and builds its editor only on edit entry.</summary>
+internal abstract class LazyCellPresenter : Border
 {
-	private readonly TransposedTextEditCoordinator _coordinator;
+	private readonly CellEditCoordinator _coordinator;
 	private readonly Control _display;
 	private readonly Func<Control> _editorBuilder;
 
-	protected TransposedLazyCellPresenter(
-		TransposedTextEditCoordinator coordinator,
-		Control display,
-		Func<Control> editorBuilder)
+	protected LazyCellPresenter(CellEditCoordinator coordinator, Control display, Func<Control> editorBuilder)
 	{
 		_coordinator = coordinator;
 		_display = display;
 		_editorBuilder = editorBuilder;
 		Background = Brushes.Transparent;
-		Focusable = true;
 		Child = _display;
-
-		AddHandler(KeyDownEvent, OnDisplayKeyDown, RoutingStrategies.Bubble);
-		AddHandler(TextInputEvent, OnDisplayTextInput, RoutingStrategies.Bubble);
 	}
 
 	public bool IsEditing { get; private set; }
@@ -37,7 +30,7 @@ internal abstract class TransposedLazyCellPresenter : Border
 	// Synchronous so the paired TextInput of a printable keystroke lands on the now-focused editor.
 	public void EnterEdit(string? initialText)
 	{
-		if (!IsEffectivelyEnabled)
+		if (!CanEnterEdit)
 		{
 			return;
 		}
@@ -56,36 +49,46 @@ internal abstract class TransposedLazyCellPresenter : Border
 
 	public void CommitEdit()
 	{
-		if (!IsEditing || Editor is null)
-		{
-			return;
-		}
-
-		CommitEditorContent(Editor);
-		ShowDisplay();
-		_coordinator.NotifyEditEnded(this);
+		FinishEdit(returnFocus: false);
 	}
 
 	protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
 	{
 		// A recycle detaches while editing; commit before reuse so a rebind can't overwrite pending state.
-		CommitEdit();
+		FinishEdit(returnFocus: true);
 
 		base.OnDetachedFromVisualTree(e);
+	}
+
+	// A recycled DataGrid row keeps its cells attached and only swaps the row: end the edit before the editor
+	// shows another row.
+	protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+	{
+		if (change.Property == DataContextProperty && IsEditing)
+		{
+			FinishEdit(returnFocus: true);
+		}
+
+		base.OnPropertyChanged(change);
 	}
 
 	protected abstract void OnEnteredEdit(Control editor, string? initialText);
 
 	protected abstract void CommitEditorContent(Control editor);
 
-	// Base no-op: the combo ignores typing (F2/pointer are its gestures).
-	protected virtual void OnPrintableKeyDown(KeyEventArgs e)
+	// Called when an edit ends while its editor held the keyboard, so the grid does not lose focus.
+	protected virtual void ReturnFocus()
 	{
 	}
 
-	// The pure TextInput/IME route: a TextInput with no preceding printable KeyDown.
-	protected virtual void OnDisplayTextInputCore(TextInputEventArgs e)
+	protected virtual bool EditorHoldsKeyboard(Control editor)
 	{
+		return editor.IsKeyboardFocusWithin;
+	}
+
+	protected void EndEditReturningFocus()
+	{
+		FinishEdit(returnFocus: true);
 	}
 
 	// A combo with an open dropdown keeps editing (focus moved into the popup's own visual root, not away).
@@ -99,9 +102,21 @@ internal abstract class TransposedLazyCellPresenter : Border
 		_coordinator.BeginEdit(this, initialText);
 	}
 
-	protected static bool IsPrintable(string? text, KeyModifiers modifiers)
+	private void FinishEdit(bool returnFocus)
 	{
-		return !string.IsNullOrEmpty(text) && (modifiers & (KeyModifiers.Control | KeyModifiers.Alt | KeyModifiers.Meta)) == 0 && !char.IsControl(text[0]);
+		if (!IsEditing || Editor is null)
+		{
+			return;
+		}
+
+		var editorHeldKeyboard = EditorHoldsKeyboard(Editor);
+		CommitEditorContent(Editor);
+		ShowDisplay();
+		_coordinator.NotifyEditEnded(this);
+		if (returnFocus && editorHeldKeyboard)
+		{
+			ReturnFocus();
+		}
 	}
 
 	private void EnsureEditorBuilt()
@@ -133,32 +148,5 @@ internal abstract class TransposedLazyCellPresenter : Border
 		{
 			Child = _display;
 		}
-	}
-
-	private void OnDisplayKeyDown(object? sender, KeyEventArgs e)
-	{
-		if (IsEditing || !IsEffectivelyEnabled)
-		{
-			return;
-		}
-
-		if (e.Key == Key.F2 && e.KeyModifiers == KeyModifiers.None)
-		{
-			BeginEdit(initialText: null);
-			e.Handled = true;
-			return;
-		}
-
-		OnPrintableKeyDown(e);
-	}
-
-	private void OnDisplayTextInput(object? sender, TextInputEventArgs e)
-	{
-		if (IsEditing || !IsEffectivelyEnabled)
-		{
-			return;
-		}
-
-		OnDisplayTextInputCore(e);
 	}
 }

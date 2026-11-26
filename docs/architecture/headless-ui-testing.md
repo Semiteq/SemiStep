@@ -18,7 +18,9 @@ stand-in. See `SemiStep.Tests/UI/MainWindow/MainWindowExitFlowTests.cs` for a wo
 
 - fire-and-forget `async void` continuations (e.g. a `Closing` event handler that awaits a dialog);
 - `ObserveOn(RxApp.MainThreadScheduler)` deliveries, such as the `RecipeCoordinator.PlcStateChanged`
-  snapshots that the status-bar link slot (`PlcLinkViewModel`) reads.
+  snapshots that the status-bar link slot (`PlcLinkViewModel`) reads;
+- the deferred list open in `LazyComboCellPresenter`: an edit entry posts the job that sets
+  `IsDropDownOpen` at `Background` priority, and nothing awaits it.
 
 Call `Dispatcher.UIThread.RunJobs()` after triggering such work and before asserting on its effect.
 
@@ -48,6 +50,15 @@ Headless pointer tests hit-test the real visual tree. A `Border` (or panel) with
 underneath. Production installs the palette resources at startup; a test window must do the
 same (e.g. `CellPaletteInstaller.Install(window.Resources, gridStyle)`) before clicking cells,
 or presses over disabled editors miss their cell border.
+
+## Typing a printable key
+
+On Windows a key press is a `WM_KEYDOWN` followed by a `WM_CHAR`. Avalonia.Win32 drops the `WM_CHAR`
+when the `KeyDown` came back handled, so a handler that marks a printable `KeyDown` handled loses its
+character in the real app. Headless input has no such link: `KeyPressQwerty` and `KeyTextInput` are
+independent calls. Type a printable key with `HeadlessTyping.TypeKey` (`SemiStep.Tests/UI/Helpers`): it
+sends the `TextInput` only when the `KeyDown` was not handled, as Win32 does. Call `KeyTextInput` alone
+only for input that has no `KeyDown`, such as IME text.
 
 ## Clicking a combo list item
 

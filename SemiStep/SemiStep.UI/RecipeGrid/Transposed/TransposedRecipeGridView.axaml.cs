@@ -11,8 +11,6 @@ using Avalonia.VisualTree;
 using ReactiveUI;
 using ReactiveUI.Avalonia;
 
-using SemiStep.Core.Configuration;
-
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
 public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRecipeGridSurface>
@@ -22,20 +20,19 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 	internal const string MarkerSlotHeightResourceKey = "TransposedMarkerSlotHeight";
 
 	private const double CurrentStepMarkerHeight = 4;
-	private const double MinimumStepColumnWidth = 96;
-	private const double FontSizeToColumnWidthFactor = 8;
 
 	private readonly TransposedStepColumnClassBinder _stepColumnClassBinder = new();
-	private readonly TransposedTextEditCoordinator _editCoordinator = new();
+	private readonly CellEditCoordinator _editCoordinator = new();
 	private readonly TransposedGridNavigator _gridNavigator;
 	private readonly TransposedGridSelectionController _gridSelectionController;
 	private (RecipeRowViewModel Row, string ColumnKey)? _pendingChangedCell;
 	private bool _syncingSelectionFromSurface;
+	private bool _focusAwaitsColumn;
 
 	public TransposedRecipeGridView()
 	{
 		InitializeComponent();
-		_gridNavigator = new TransposedGridNavigator(StepListBox);
+		_gridNavigator = new TransposedGridNavigator(StepListBox, _editCoordinator);
 		_gridSelectionController = new TransposedGridSelectionController(StepListBox);
 
 		// Pool and style resources must exist before the first layout pass; WhenActivated fires only on Loaded, so this lives in the constructor.
@@ -44,7 +41,7 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 			{
 				if (surface is not null)
 				{
-					ApplyGridStyle(surface.GridStyle);
+					ApplyGridStyle(surface);
 				}
 
 				BuildColumnCellsPool(surface);
@@ -156,6 +153,15 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 			.Focus();
 	}
 
+	internal void FocusGrid()
+	{
+		var target = StepListBox.SelectedIndex >= 0
+			? StepListBox.ContainerFromIndex(StepListBox.SelectedIndex)
+			: StepListBox.GetRealizedContainers().FirstOrDefault(container => container.IsVisible);
+		_focusAwaitsColumn = target is null;
+		target?.Focus();
+	}
+
 	// Re-applies selection after an orientation flip: the surface got the selection while the view was flipped away.
 	internal void SyncSelectionFromSurface()
 	{
@@ -221,6 +227,23 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 
 		StepListBox.SelectedIndex = index;
 		StepListBox.ScrollIntoView(index);
+		CompleteAwaitedFocus();
+	}
+
+	// A new recipe has no column, so FocusGrid finds no target and focus belongs to no element. The first step's
+	// column then takes it, as after Open, or the next arrow key moves focus to the menu.
+	private void CompleteAwaitedFocus()
+	{
+		if (!_focusAwaitsColumn)
+		{
+			return;
+		}
+
+		_focusAwaitsColumn = false;
+		if (TopLevel.GetTopLevel(this)?.FocusManager is { } focusManager && focusManager.GetFocusedElement() is null)
+		{
+			Dispatcher.UIThread.Post(FocusGrid, DispatcherPriority.Background);
+		}
 	}
 
 	private void OnGridPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -258,7 +281,7 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 		ParameterCellViewModel pressedCell,
 		PointerPressedEventArgs e)
 	{
-		if (source.FindAncestorOfType<TransposedLazyCellPresenter>(includeSelf: true) is not { } presenter
+		if (source.FindAncestorOfType<LazyCellPresenter>(includeSelf: true) is not { } presenter
 			|| !ReferenceEquals(presenter.DataContext, pressedCell))
 		{
 			return;
@@ -330,14 +353,16 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 				surface.GridStyle.Layout.RowHeight);
 	}
 
-	private void ApplyGridStyle(GridStyleOptions gridStyle)
+	// The step column width is computed once per surface, so every step column keeps one width.
+	private void ApplyGridStyle(TransposedRecipeGridSurface surface)
 	{
+		var gridStyle = surface.GridStyle;
 		Resources[CellHeightResourceKey] = gridStyle.Layout.RowHeight;
 		Resources[MarkerSlotHeightResourceKey] = CurrentStepMarkerHeight;
-		Resources[StepColumnWidthResourceKey] =
-			Math.Max(MinimumStepColumnWidth, gridStyle.Fonts.CellFontSize * FontSizeToColumnWidthFactor);
+		Resources[StepColumnWidthResourceKey] = surface.WidthCalculator.TransposedStepColumnWidth();
 
 		GridFontApplier.ApplyCellFont(StepListBox, gridStyle);
+		GridFontApplier.ApplyHeaderFont(StepNumberCorner, gridStyle);
 		GridFontApplier.ApplyHeaderFont(ParameterNameColumn, gridStyle);
 	}
 }

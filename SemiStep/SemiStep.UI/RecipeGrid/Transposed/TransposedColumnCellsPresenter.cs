@@ -8,6 +8,9 @@ namespace SemiStep.UI.RecipeGrid.Transposed;
 
 internal sealed class TransposedColumnCellsPresenter : StackPanel
 {
+	/// <summary>The right and bottom grid line of every cell; the step column width reserves it.</summary>
+	internal const double GridLineWidth = 1;
+
 	// Cell background reads this directly (Source=this) instead of a RelativeSource ancestor lookup
 	// that fails while the presenter is pooled/detached.
 	public static readonly DirectProperty<TransposedColumnCellsPresenter, bool> IsColumnSelectedProperty =
@@ -48,7 +51,7 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 	// during surface-swap teardown, where a focus-driven commit would not fire.
 	public void CommitActiveEditor()
 	{
-		foreach (var slot in this.GetVisualDescendants().OfType<TransposedLazyCellPresenter>())
+		foreach (var slot in this.GetVisualDescendants().OfType<LazyCellPresenter>())
 		{
 			slot.CommitEdit();
 		}
@@ -105,6 +108,7 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 		var border = new Border
 		{
 			Height = _cellHeight,
+			BorderThickness = new Thickness(0, 0, GridLineWidth, GridLineWidth),
 			Child = editor,
 		};
 

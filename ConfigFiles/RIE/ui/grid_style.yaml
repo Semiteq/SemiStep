@@ -1,8 +1,8 @@
 fonts:
   # Font family plus per-role weight and italic are configurable in-app (View > Grid Style Settings).
   family: ""
-  header_size: 14
-  header_weight: 700
+  header_size: 12
+  header_weight: 600
   header_italic: false
   cell_size: 12
   cell_weight: 400
@@ -84,6 +84,6 @@ chrome:
   secondary_foreground: "#6C707E"
   grid_border: "#808080"
   grid_background: "#FFFFFF"
-  header_foreground: "#000000"
+  header_foreground: "#6C707E"
 
 orientation: columns_as_steps

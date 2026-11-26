@@ -220,9 +220,10 @@ public sealed class RecipeGridHostTests : IAsyncLifetime
 	{
 		var host = ShowHost();
 		FlipOrientation(flipCount);
-		var comboBox = CanonicalActionCombo(FindDataGrid(host), 1);
+		var presenter = CanonicalActionCell(FindDataGrid(host), 1);
 		var actionIdBefore = _fixture.Coordinator.CurrentRecipe.Steps[1].ActionKey;
-		Click(comboBox);
+		Click(presenter);
+		var comboBox = (ComboBox)presenter.Editor!;
 		comboBox.IsDropDownOpen.Should().BeTrue("precondition: the press opens the list");
 		_window!.FocusManager.GetFocusedElement().Should().BeOfType<ComboBoxItem>(
 			"precondition: the open list holds keyboard focus");
@@ -236,7 +237,7 @@ public sealed class RecipeGridHostTests : IAsyncLifetime
 		window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
 		Dispatcher.UIThread.RunJobs();
 		_fixture.Coordinator.CurrentRecipe.Steps[1].ActionKey.Should().Be(actionIdBefore);
-		((ComboBoxItemViewModel)comboBox.SelectedItem!).Id.Should().Be(actionIdBefore, "the cell shows the recipe value");
+		presenter.IsEditing.Should().BeFalse("the lock ends the edit, so the cell shows the recipe value as text");
 	}
 
 	[AvaloniaTheory]
@@ -315,11 +316,11 @@ public sealed class RecipeGridHostTests : IAsyncLifetime
 		}
 	}
 
-	private ComboBox CanonicalActionCombo(DataGrid dataGrid, int rowIndex)
+	private LazyComboCellPresenter CanonicalActionCell(DataGrid dataGrid, int rowIndex)
 	{
 		var column = dataGrid.Columns.Single(c => Equals(c.Tag, ActionColumnKey));
 
-		return (ComboBox)column.GetCellContent(_router.CanonicalSurface.RecipeRows[rowIndex]);
+		return (LazyComboCellPresenter)column.GetCellContent(_router.CanonicalSurface.RecipeRows[rowIndex]);
 	}
 
 	private static Border TransposedActionCell(ListBox stepListBox, int columnIndex)

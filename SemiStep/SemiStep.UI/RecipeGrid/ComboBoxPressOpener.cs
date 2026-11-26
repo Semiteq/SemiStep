@@ -8,12 +8,10 @@ using Avalonia.VisualTree;
 
 namespace SemiStep.UI.RecipeGrid;
 
-/// <summary>Opens a canonical combo cell's list on a plain left press instead of on the release.</summary>
-internal sealed class ComboBoxPressOpener(DataGrid dataGrid)
+/// <summary>Starts a canonical combo cell's edit, and so opens its list, on a plain left press.</summary>
+internal sealed class ComboBoxPressOpener(DataGrid dataGrid, CellEditCoordinator editCoordinator)
 {
-	private const string PressedPseudoClass = ":pressed";
-
-	private ComboBox? _comboBoxToOpen;
+	private LazyComboCellPresenter? _presenterToOpen;
 
 	public IDisposable Attach()
 	{
@@ -31,36 +29,34 @@ internal sealed class ComboBoxPressOpener(DataGrid dataGrid)
 		});
 	}
 
-	// Decided before the ComboBox's own press logic runs, because that logic closes an open list.
+	// Decided before the press closes a live list: a press that ends one edit never starts another.
 	private void OnTunnelPointerPressed(object? sender, PointerPressedEventArgs e)
 	{
 		var isPlainLeftPress = e.KeyModifiers == KeyModifiers.None
 			&& e.GetCurrentPoint(dataGrid).Properties.PointerUpdateKind == PointerUpdateKind.LeftButtonPressed;
-		_comboBoxToOpen = isPlainLeftPress && ComboBoxBodyOf(e.Source) is { IsDropDownOpen: false } comboBox
-			? comboBox
-			: null;
+		_presenterToOpen = isPlainLeftPress
+			&& editCoordinator.ActiveEditor is null
+			&& PresenterOf(e.Source) is { IsEditing: false, CanEnterEdit: true } presenter
+				? presenter
+				: null;
 	}
 
-	// Opened after the DataGrid has taken focus for the row selection, so the opening list keeps the keyboard.
-	// The ComboBox toggles its list on a release only while it holds the pressed state its own press set; clearing
-	// that state here lets the release end every press on a combo body without a toggle.
+	// Entered after the DataGrid has taken the press for the row selection, so the opening list keeps the keyboard.
 	private void OnBubblePointerPressed(object? sender, PointerPressedEventArgs e)
 	{
-		_comboBoxToOpen?.SetCurrentValue(ComboBox.IsDropDownOpenProperty, true);
-		_comboBoxToOpen = null;
-
-		if (ComboBoxBodyOf(e.Source) is { } pressedComboBox)
+		if (_presenterToOpen is { } presenter)
 		{
-			((IPseudoClasses)pressedComboBox.Classes).Remove(PressedPseudoClass);
+			_presenterToOpen = null;
+			editCoordinator.BeginEdit(presenter, initialText: null);
 		}
 	}
 
-	private ComboBox? ComboBoxBodyOf(object? source)
+	private LazyComboCellPresenter? PresenterOf(object? source)
 	{
 		return source is Visual visual
-			&& visual.FindAncestorOfType<ComboBox>(includeSelf: true) is { } comboBox
-			&& dataGrid.IsVisualAncestorOf(comboBox)
-				? comboBox
+			&& visual.FindAncestorOfType<LazyComboCellPresenter>(includeSelf: true) is { } presenter
+			&& dataGrid.IsVisualAncestorOf(presenter)
+				? presenter
 				: null;
 	}
 }

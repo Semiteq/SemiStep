@@ -55,6 +55,13 @@ public sealed class RecipeRowViewModel(
 		set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
+	/// <summary>"(pass/count)" while the loop this row starts is running; null otherwise.</summary>
+	public string? LoopPassText
+	{
+		get;
+		set => this.RaiseAndSetIfChanged(ref field, value);
+	}
+
 	public int ForDepth
 	{
 		get;

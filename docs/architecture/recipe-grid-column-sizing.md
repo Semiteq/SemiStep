@@ -1,12 +1,13 @@
 # Recipe Grid Column Sizing (issue #66)
 
-> Scope: the canonical (rows-as-steps) `DataGrid` only. The transposed view uses one fixed
-> uniform step-column width and `layout.row_height` cell heights — see `recipe-grid-surface.md`.
+> Scope: the canonical (rows-as-steps) `DataGrid`, plus the transposed step column width at the end.
+> The transposed view uses one uniform step-column width and `layout.row_height` cell heights.
 
 ## Overview
 
 The recipe `DataGrid` must fit a FullHD (1920px) screen without horizontal scroll, keep headers
-readable (bold, black, wrapping to two lines when long), and size each column to its real content.
+readable (12 px SemiBold `#6C707E`, one line that ends in an ellipsis, the full text in a tooltip),
+and size each column to its real content.
 Avalonia's built-in `Auto` sizing measures only the live cells on screen, so it jitters as rows
 scroll in and out. Instead `ColumnWidthCalculator` computes a stable pixel width per column once,
 from the configured metadata, and `ColumnBuilder` renders the matching header.
@@ -22,8 +23,9 @@ is added (a larger combo allowance for combo columns).
 2. **Longest-header-word floor** (`LongestHeaderWordFloor`) — the CSS `min-content` principle: a
    wrapping text box is only as narrow as its longest single word, because a word never breaks
    mid-glyph. So the floor is the width of the longest word in the header, measured in the header
-   font (bold, `HeaderFontSize`). A column narrower than this would force an ugly mid-word break;
-   wider lets the header wrap cleanly on spaces to at most two lines.
+   font (`HeaderFontWeight`, `HeaderFontSize`). The header is one line, so a header longer than its
+   column trims with an ellipsis; the floor keeps at least its longest word whole, and the tooltip
+   always holds the full text, so no trim detection is needed.
 3. **Absolute minimum** — `MinColumnWidth` = `ceil(CellFontSize × MinColumnWidthEms)`,
    `MinColumnWidthEms = 6.0` (72 at the default 12px cell font). Exposed as a public instance
    property; `ColumnBuilder` reads it as the numbering column's `MinWidth` and as the Star comment
@@ -36,9 +38,9 @@ width and are never floored by header words.
 ## Render == measure coupling
 
 The header floor is only correct if the header is **drawn** exactly as it was **measured**.
-`ColumnBuilder.BuildWrappingHeaderTemplate` renders the header `TextBlock` bold at
+`ColumnBuilder.BuildHeaderTemplate` renders the header `TextBlock` at `HeaderFontWeight` and
 `HeaderFontSize` — the same font and weight `LongestHeaderWordFloor` measures with. Change one
-side and the other must follow, or headers wrap differently than the width budgeted for.
+side and the other must follow, or headers trim differently than the width budgeted for.
 
 The same coupling applies to cell content. `CalculateWidth` measures every representative at
 `CellFontSize`, so every cell control must **render** at `CellFontSize` too. Avalonia does not
@@ -49,15 +51,15 @@ header: `ComboBoxCellFactory` on the ComboBox, `TextCellFactory` on the display/
 and `TextBox`, and `ColumnBuilder` on the numbering `DataGridTextColumn`. This is also where the
 `CellFontSize` config value becomes the real rendered cell font, not just a measurement input.
 
-Two Avalonia-specific traps make the header wrap work:
+Two Avalonia-specific traps make the header template work:
 
-- The wrapping template is assigned as the column's `HeaderTemplate`, **not** as a
+- The template is assigned as the column's `HeaderTemplate`, **not** as a
   `ContentTemplate` setter on the `DataGridColumnHeader` style. The Fluent header binds its
-  `ContentTemplate` from `DataGridColumn.HeaderTemplate`, so a style setter is silently overridden
-  and the header would not wrap.
+  `ContentTemplate` from `DataGridColumn.HeaderTemplate`, so a style setter is silently overridden.
 - `DataGridColumnHeader` must keep `HorizontalContentAlignment="Stretch"`
   (`DataGridStyles.axaml`). The Fluent template sizes the header content panel by this alignment;
-  anything other than `Stretch` starves the wrapping `TextBlock` of width, so it never wraps.
+  anything other than `Stretch` starves the header `TextBlock` of width, so it never trims at the
+  column edge.
 - The Fluent theme reserves `DataGridSortIconMinWidth` (default 32px) for a sort glyph on every
   header, even when sorting is disabled. Sorting is off on every column here, so `ColorPalette.axaml`
   overrides that resource to `0`; otherwise the reserved glyph column just crowds the header text.
@@ -81,11 +83,19 @@ For each type, `PropertyRepresentatives` yields:
 
 - string types → a capped `'0'` sample (`MaxStringSampleLength` = 12). Production string max_length
   is 64/255; sampling uncapped would let one text column dominate the FullHD budget.
-- numeric/time types → **both** `Max` and `Min`, numeric ones formatted with the type's units. Both
-  extents matter because for a symmetric range the negative `Min` is wider than `Max` by the minus
-  sign: `pressure_pa` (−200000…200000) renders "−200000 Па", wider than "200000 Па". A `time_hms`
-  type formats as hh:mm:ss with no unit, so `time` (max 86400) renders "24:00:00"; the YAML `units`
-  text stays but is not shown or measured.
+- numeric/time types → **both** `Max` and `Min`, formatted without the unit. Both extents matter
+  because for a symmetric range the negative `Min` is wider than `Max` by the minus sign:
+  `pressure_pa` (−200000…200000) renders "−200000", wider than "200000". A `time_hms` type formats as
+  hh:mm:ss, so `time` (max 86400) renders "24:00:00".
+
+### Unit slot
+
+A number column (a property of `system_type` `int` or `float`) shows the unit in its own slot to the
+right of the right-aligned value (`TextCellLayout`). `UnitSlotWidth` is the widest unit any action
+binds to the column, unioned with the column's own type, plus `TextCellLayout.UnitGap` (4); a
+`time_hms` unit does not count, so a time column has no slot. The column width adds that slot to the
+content chrome: value width + slot + chrome. The transposed grid shares one slot width,
+`WidestUnitSlotWidth`, because all its step columns share one width.
 
 ## Chrome allowance (font-proportional)
 
@@ -156,3 +166,13 @@ floor) the action ComboBox's selected text gets clipped behind its chevron. To p
 (`width.IsAbsolute ? width.Value : MinColumnWidth`). A column can then never shrink below the width
 its content needs, so a too-narrow window scrolls horizontally and the content stays whole. Only
 Star columns keep the small floor, because they are meant to absorb or yield remainder.
+
+## Transposed step column width
+
+`ColumnWidthCalculator.TransposedStepColumnWidth` gives every transposed step column one width, computed
+once per surface: the wider of the longest action name plus the name chrome and the widest value plus
+`WidestUnitSlotWidth` plus the content chrome, floored at `MinColumnWidth` and capped at 240 px. The name
+chrome is what the transposed name display takes: `CellPaddingLeft` + `CellPaddingRight` + the 32 px
+chevron slot + `TransposedColumnCellsPresenter.GridLineWidth`, 45 px at the default paddings. A
+longer action name trims with an ellipsis and carries its full text as a tooltip. The loop pass pill is
+not reserved in the width; on a narrow name cell the name trims before the pill.

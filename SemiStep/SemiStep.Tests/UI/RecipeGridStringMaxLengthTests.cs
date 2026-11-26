@@ -41,7 +41,7 @@ public sealed class RecipeGridStringMaxLengthTests : IAsyncLifetime
 		var columnBuilder = new ColumnBuilder(
 			GridStyleOptions.Default, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider);
 		var grid = new DataGrid();
-		columnBuilder.BuildColumns(grid);
+		columnBuilder.BuildColumns(grid, new CellEditCoordinator());
 
 		var templateColumn = grid.Columns
 			.OfType<DataGridTemplateColumn>()
@@ -67,7 +67,10 @@ public sealed class RecipeGridStringMaxLengthTests : IAsyncLifetime
 		// at the framework default (0 = unlimited). The integration test above covers the
 		// ColumnBuilder end-to-end path for the live string column; this complements it by pinning
 		// the null-branch contract that no live column currently exercises.
-		var template = new TextCellFactory(GridStyleOptions.Default).CreateEditingTemplate("any_key", maxLength: null);
+		var template = new TextCellFactory(GridStyleOptions.Default).CreateEditingTemplate(
+			"any_key",
+			maxLength: null,
+			new CellAlignment(IsNumeric: false, UnitSlotWidth: 0));
 		var row = CreateRow();
 
 		var built = template.Build(row);

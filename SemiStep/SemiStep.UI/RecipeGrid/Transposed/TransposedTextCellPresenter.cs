@@ -1,13 +1,18 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-internal sealed class TransposedTextCellPresenter(
-	TransposedTextEditCoordinator coordinator,
-	Control display,
-	Func<Control> editorBuilder) : TransposedLazyCellPresenter(coordinator, display, editorBuilder)
+internal sealed class TransposedTextCellPresenter : LazyCellPresenter
 {
+	public TransposedTextCellPresenter(CellEditCoordinator coordinator, Control display, Func<Control> editorBuilder)
+		: base(coordinator, display, editorBuilder)
+	{
+		Focusable = true;
+		AddHandler(KeyDownEvent, OnDisplayKeyDown, RoutingStrategies.Bubble);
+		AddHandler(TextInputEvent, OnDisplayTextInput, RoutingStrategies.Bubble);
+	}
 
 	// Applies the initial text (see the coordinator's BeginEdit for the null / "" / seed contract): null
 	// selects the whole value (F2 / pointer entry) so typing replaces it; "" clears it so the paired
@@ -33,25 +38,27 @@ internal sealed class TransposedTextCellPresenter(
 	{
 		if (editor is TextBox textBox)
 		{
-			TransposedCellTemplateFactory.CommitEditor(textBox);
+			TransposedTextEditorFactory.CommitEditor(textBox);
 		}
 	}
 
-	// Seed '' so the paired TextInput types fresh (replace semantics); char neither dropped nor doubled.
-	protected override void OnPrintableKeyDown(KeyEventArgs e)
+	// Seed '' so the paired TextInput types fresh (replace semantics). The KeyDown stays unhandled: Avalonia.Win32
+	// drops the WM_CHAR of a handled KeyDown, and that TextInput carries the character to the focused editor.
+	private void OnDisplayKeyDown(object? sender, KeyEventArgs e)
 	{
-		if (IsPrintable(e.KeySymbol, e.KeyModifiers))
+		if (IsEditing || !IsEffectivelyEnabled || !CellEditKeys.IsPrintable(e.KeySymbol, e.KeyModifiers))
 		{
-			BeginEdit(initialText: string.Empty);
-			e.Handled = true;
+			return;
 		}
+
+		BeginEdit(initialText: string.Empty);
 	}
 
 	// A TextInput that reaches the display without a preceding printable KeyDown carries the only copy of
 	// the character, so seed the editor with it directly.
-	protected override void OnDisplayTextInputCore(TextInputEventArgs e)
+	private void OnDisplayTextInput(object? sender, TextInputEventArgs e)
 	{
-		if (!IsPrintable(e.Text, KeyModifiers.None))
+		if (IsEditing || !IsEffectivelyEnabled || !CellEditKeys.IsPrintable(e.Text, KeyModifiers.None))
 		{
 			return;
 		}

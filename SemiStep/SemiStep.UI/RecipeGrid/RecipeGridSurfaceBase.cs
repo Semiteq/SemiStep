@@ -14,7 +14,9 @@ using Microsoft.Extensions.Logging;
 
 using ReactiveUI;
 
+using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
+using SemiStep.Core.Recipes.Analysis;
 
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.Localization;
@@ -37,6 +39,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	private readonly MessagePanelViewModel _messagePanel;
 	private readonly Subject<int?> _selectionRequests = new();
 	private Recipe _shownRecipe = Recipe.Empty;
+	private PlcExecutionInfo _loopExecutionInfo = PlcExecutionInfo.Empty;
 
 	protected RecipeGridSurfaceBase(
 		RecipeCoordinator coordinator,
@@ -81,6 +84,19 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 
 		coordinator.ExecutionState
 			.Subscribe(_executionHighlightTracker.OnExecutionStateChanged)
+			.DisposeWith(_disposables);
+
+		// Only the fields a pill reads; a poll that advances the step time alone recomputes nothing.
+		coordinator.ExecutionState
+			.DistinctUntilChanged(info =>
+				(info.RecipeActive, info.ActualLine, info.ForLoopCount1, info.ForLoopCount2, info.ForLoopCount3))
+			.Subscribe(
+				info =>
+				{
+					_loopExecutionInfo = info;
+					RefreshLoopPasses();
+				},
+				exception => _logger.LogError(exception, "Loop pass refresh failed"))
 			.DisposeWith(_disposables);
 
 		coordinator.Mutated += OnMutation;
@@ -146,6 +162,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		// Run the start-time tail from 0 to seed the baseline; a later mutation refreshes only from its own index.
 		RefreshStepStartTimes(0);
 		RefreshLoopDepths();
+		RefreshLoopPasses();
 	}
 
 	public void OnMutation(MutationSignal signal)
@@ -231,6 +248,7 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 
 		RefreshStepStartTimes(RefreshStartIndexFor(signal));
 		RefreshLoopDepths();
+		RefreshLoopPasses();
 	}
 
 	private RecipeRowViewModel[] ShownRows()
@@ -593,6 +611,22 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		for (var i = 0; i < Items.Count; i++)
 		{
 			RowOf(Items[i]).ForDepth = Math.Min(rowLoopDepths[i], 3);
+		}
+	}
+
+	private void RefreshLoopPasses()
+	{
+		var passTextByStartRow = new Dictionary<int, string>();
+		foreach (var active in ActiveLoops.Resolve(_coordinator.Snapshot, _loopExecutionInfo))
+		{
+			passTextByStartRow[active.Loop.StartIndex] = string.Create(
+				CultureInfo.InvariantCulture,
+				$"({active.Pass}/{active.Loop.Iterations})");
+		}
+
+		for (var i = 0; i < Items.Count; i++)
+		{
+			RowOf(Items[i]).LoopPassText = passTextByStartRow.GetValueOrDefault(i);
 		}
 	}
 

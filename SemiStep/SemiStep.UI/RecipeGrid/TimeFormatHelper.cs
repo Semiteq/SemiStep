@@ -53,6 +53,19 @@ internal static partial class TimeFormatHelper
 		return totalSeconds.ToString(CultureInfo.InvariantCulture);
 	}
 
+	// The display shows whole seconds; the editor keeps the fraction, so an unchanged edit parses back to the
+	// stored value instead of rounding it down.
+	internal static string FormatForEdit(string rawString, string? formatKind)
+	{
+		var text = FormatValue(rawString, formatKind, units: null);
+		var fractionStart = rawString.IndexOf('.');
+		var dropsFraction = string.Equals(formatKind, TimeHmsFormat, StringComparison.OrdinalIgnoreCase)
+			&& fractionStart >= 0
+			&& text != rawString;
+
+		return dropsFraction ? text + rawString[fractionStart..] : text;
+	}
+
 	internal static string FormatValue(string rawString, string? formatKind, string? units)
 	{
 		if (string.Equals(formatKind, TimeHmsFormat, StringComparison.OrdinalIgnoreCase)

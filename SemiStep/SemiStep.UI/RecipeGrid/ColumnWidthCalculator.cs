@@ -1,10 +1,11 @@
 ﻿using System.Globalization;
 
 using Avalonia.Controls;
-using Avalonia.Media;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
+
+using SemiStep.UI.RecipeGrid.Transposed;
 
 namespace SemiStep.UI.RecipeGrid;
 
@@ -25,16 +26,99 @@ public sealed class ColumnWidthCalculator(
 	// em multiple calibrated to reproduce 72 at the default font. See docs/architecture/recipe-grid-column-sizing.md
 	private const double MinColumnWidthEms = 6.0;
 
-	// 32 chevron column + 6 left padding; fixed theme DIP. See docs/architecture/recipe-grid-column-sizing.md
-	private const int ComboBoxChromeWidth = 38;
+	private const double ComboBoxChromeWidth =
+		ComboBoxCellFactory.DisplayPaddingLeft + ComboBoxCellFactory.ChevronSlotWidth;
+
+	// Designer cap for the transposed step column; a longer action name trims with a tooltip.
+	private const double TransposedStepColumnCap = 240;
+
+	private readonly GridTextMeasurer _textMeasurer = new(gridStyle);
+	private double? _widestUnitSlotWidth;
 
 	// See docs/architecture/recipe-grid-column-sizing.md
 	private int ContentChrome => (int)Math.Ceiling(gridStyle.Fonts.CellFontSize * ChromeFontMultiple);
+
+	// The transposed name display pads on both sides, and its cell border takes one more grid line.
+	private double TransposedComboChromeWidth =>
+		gridStyle.Layout.CellPaddingLeft
+		+ gridStyle.Layout.CellPaddingRight
+		+ ComboBoxCellFactory.ChevronSlotWidth
+		+ TransposedColumnCellsPresenter.GridLineWidth;
 
 	private int HeaderFloorChrome => (int)Math.Ceiling(gridStyle.Fonts.HeaderFontSize * ChromeFontMultiple);
 
 	// The numbering column (ColumnBuilder) uses it as its MinWidth, so do not lower it.
 	public int MinColumnWidth => (int)Math.Ceiling(gridStyle.Fonts.CellFontSize * MinColumnWidthEms);
+
+	/// <summary>A property column whose type is int or float, or the step start time column.</summary>
+	public bool IsNumericColumn(GridColumnDefinition columnDef)
+	{
+		if (ColumnTypes.IsStepStartTimeColumn(columnDef.ColumnType))
+		{
+			return true;
+		}
+
+		return string.Equals(columnDef.ColumnType, ColumnTypes.PropertyField, StringComparison.OrdinalIgnoreCase)
+			&& recipeMetadataRegistry.GetProperty(columnDef.PropertyTypeId) is { IsSuccess: true } property
+			&& (SystemTypes.Comparer.Equals(property.Value.SystemType, SystemTypes.Int)
+				|| SystemTypes.Comparer.Equals(property.Value.SystemType, SystemTypes.Float));
+	}
+
+	public IReadOnlySet<string> NumericColumnKeys()
+	{
+		return recipeMetadataRegistry.GetAllColumns()
+			.Where(IsNumericColumn)
+			.Select(column => column.Key)
+			.ToHashSet(StringComparer.OrdinalIgnoreCase);
+	}
+
+	/// <summary>The widest unit any action shows in the column plus the gap; time_hms units do not count.</summary>
+	public double UnitSlotWidth(string columnKey)
+	{
+		var columnPropertyTypeId = recipeMetadataRegistry.GetColumn(columnKey) is { IsSuccess: true } column
+			? column.Value.PropertyTypeId
+			: null;
+		var widest = ColumnPropertyTypes(columnKey, columnPropertyTypeId)
+			.Where(property => !IsTimeFormat(property) && !string.IsNullOrEmpty(property.Units))
+			.Select(property => _textMeasurer.MeasureContent(property.Units!))
+			.DefaultIfEmpty(0)
+			.Max();
+
+		return widest > 0 ? Math.Ceiling(widest + TextCellLayout.UnitGap) : 0;
+	}
+
+	/// <summary>The transposed grid shares one step column width, so it shares one unit slot too.</summary>
+	public double WidestUnitSlotWidth()
+	{
+		return _widestUnitSlotWidth ??= NumericColumnKeys().Select(UnitSlotWidth).DefaultIfEmpty(0).Max();
+	}
+
+	/// <summary>
+	/// One width for every transposed step column: the wider of the longest action name with the combo chrome and
+	/// the widest value with the unit slot, capped at <see cref="TransposedStepColumnCap"/>.
+	/// </summary>
+	public double TransposedStepColumnWidth()
+	{
+		var widestName = recipeMetadataRegistry.GetAllActions()
+			.Select(action => _textMeasurer.MeasureContent(action.UiName))
+			.DefaultIfEmpty(0)
+			.Max();
+		var widestValue = recipeMetadataRegistry.GetAllColumns()
+			.Where(column => string.Equals(
+				column.ColumnType,
+				ColumnTypes.PropertyField,
+				StringComparison.OrdinalIgnoreCase))
+			.SelectMany(column => ColumnPropertyTypes(column.Key, column.PropertyTypeId))
+			.SelectMany(PropertyRepresentatives)
+			.Select(_textMeasurer.MeasureContent)
+			.DefaultIfEmpty(0)
+			.Max();
+		var width = Math.Max(
+			widestName + TransposedComboChromeWidth,
+			widestValue + WidestUnitSlotWidth() + ContentChrome);
+
+		return Math.Min(TransposedStepColumnCap, Math.Ceiling(Math.Max(width, MinColumnWidth)));
+	}
 
 	public DataGridLength CalculateColumnWidth(GridColumnDefinition columnDef)
 	{
@@ -74,19 +158,39 @@ public sealed class ColumnWidthCalculator(
 		return CalculateWidth([representative], columnDef.UiName);
 	}
 
+	// A number column measures the value and its unit slot apart, as the cell lays them out.
 	private DataGridLength CalculatePropertyFieldWidth(GridColumnDefinition columnDef)
 	{
-		var representatives = recipeMetadataRegistry.GetAllActions()
+		var representatives = ColumnPropertyTypes(columnDef.Key, columnDef.PropertyTypeId)
+			.SelectMany(PropertyRepresentatives);
+		var unitSlot = IsNumericColumn(columnDef) ? UnitSlotWidth(columnDef.Key) : 0;
+
+		return CalculateWidth(representatives, columnDef.UiName, ContentChrome + unitSlot);
+	}
+
+	private IEnumerable<PropertyTypeDefinition> ColumnPropertyTypes(
+		string columnKey,
+		string? columnPropertyTypeId = null)
+	{
+		var propertyTypeIds = recipeMetadataRegistry.GetAllActions()
 			.SelectMany(action => action.Properties)
-			.Where(property => property.Key == columnDef.Key)
-			.Select(property => property.PropertyTypeId)
-			.Append(columnDef.PropertyTypeId)
+			.Where(property => property.Key == columnKey)
+			.Select(property => property.PropertyTypeId);
+		if (columnPropertyTypeId is not null)
+		{
+			propertyTypeIds = propertyTypeIds.Append(columnPropertyTypeId);
+		}
+
+		return propertyTypeIds
 			.Distinct()
 			.Select(recipeMetadataRegistry.GetProperty)
 			.Where(result => result.IsSuccess)
-			.SelectMany(result => PropertyRepresentatives(result.Value));
+			.Select(result => result.Value);
+	}
 
-		return CalculateWidth(representatives, columnDef.UiName);
+	private static bool IsTimeFormat(PropertyTypeDefinition property)
+	{
+		return string.Equals(property.FormatKind, TimeFormatHelper.TimeHmsFormat, StringComparison.OrdinalIgnoreCase);
 	}
 
 	private static IEnumerable<string> PropertyRepresentatives(PropertyTypeDefinition propertyDef)
@@ -114,10 +218,13 @@ public sealed class ColumnWidthCalculator(
 	{
 		var rawValue = extent.ToString(CultureInfo.InvariantCulture);
 
-		return TimeFormatHelper.FormatValue(rawValue, propertyDef.FormatKind, propertyDef.Units);
+		return TimeFormatHelper.FormatValue(rawValue, propertyDef.FormatKind, units: null);
 	}
 
-	private DataGridLength CalculateWidth(IEnumerable<string> contentStrings, string headerText, double? chromeOverride = null)
+	private DataGridLength CalculateWidth(
+		IEnumerable<string> contentStrings,
+		string headerText,
+		double? chromeOverride = null)
 	{
 		var maxContentWidth = 0.0;
 		foreach (var text in contentStrings)
@@ -127,7 +234,7 @@ public sealed class ColumnWidthCalculator(
 				continue;
 			}
 
-			var contentWidth = MeasureContent(text);
+			var contentWidth = _textMeasurer.MeasureContent(text);
 			if (contentWidth > maxContentWidth)
 			{
 				maxContentWidth = contentWidth;
@@ -153,7 +260,7 @@ public sealed class ColumnWidthCalculator(
 		var maxWordWidth = 0.0;
 		foreach (var word in words)
 		{
-			var wordWidth = MeasureHeaderWord(word);
+			var wordWidth = _textMeasurer.MeasureHeaderWord(word);
 			if (wordWidth > maxWordWidth)
 			{
 				maxWordWidth = wordWidth;
@@ -184,54 +291,10 @@ public sealed class ColumnWidthCalculator(
 				continue;
 			}
 
-			var group = groupResult.Value;
-			foreach (var item in group.Items.Values)
+			foreach (var item in groupResult.Value.Items.Values)
 			{
 				yield return item;
 			}
 		}
-	}
-
-	// Empty family means "grid default": measure with the chrome font so the width matches the
-	// rendered cell, which also falls back to the chrome font.
-	private FontFamily MeasureFontFamily =>
-		string.IsNullOrWhiteSpace(gridStyle.Fonts.FontFamily) ? GridFonts.DefaultFamily : new FontFamily(gridStyle.Fonts.FontFamily);
-
-	private Typeface CellTypeface =>
-		new(MeasureFontFamily, gridStyle.Fonts.CellItalic ? FontStyle.Italic : FontStyle.Normal, (FontWeight)gridStyle.Fonts.CellFontWeight);
-
-	private Typeface HeaderTypeface =>
-		new(MeasureFontFamily, gridStyle.Fonts.HeaderItalic ? FontStyle.Italic : FontStyle.Normal, (FontWeight)gridStyle.Fonts.HeaderFontWeight);
-
-	private double MeasureContent(string text)
-	{
-		return MeasureText(text, CellTypeface, gridStyle.Fonts.CellFontSize);
-	}
-
-	private double MeasureHeaderWord(string word)
-	{
-		return MeasureText(word, HeaderTypeface, gridStyle.Fonts.HeaderFontSize);
-	}
-
-	private static double MeasureText(string text, Typeface typeface, double fontSize)
-	{
-		if (string.IsNullOrEmpty(text))
-		{
-			return 0;
-		}
-
-		var formattedText = new FormattedText(
-			text,
-			CultureInfo.CurrentCulture,
-			FlowDirection.LeftToRight,
-			typeface,
-			fontSize,
-			Brushes.Black);
-
-		// Cells render with tabular figures (GridFontApplier/ColumnBuilder set tnum); measure with the
-		// same feature so digit-column auto-width matches the rendered advances.
-		formattedText.SetFontFeatures(GridFonts.TabularFigures);
-
-		return formattedText.WidthIncludingTrailingWhitespace;
 	}
 }

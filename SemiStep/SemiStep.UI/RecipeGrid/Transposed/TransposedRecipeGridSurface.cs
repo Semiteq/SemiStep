@@ -33,6 +33,8 @@ public class TransposedRecipeGridSurface(
 
 	public ObservableCollection<StepColumnViewModel> StepColumns => Items;
 
+	internal ColumnWidthCalculator WidthCalculator { get; } = new(recipeMetadataRegistry, gridStyle);
+
 	protected override RecipeRowViewModel RowOf(StepColumnViewModel item)
 	{
 		return item.Row;

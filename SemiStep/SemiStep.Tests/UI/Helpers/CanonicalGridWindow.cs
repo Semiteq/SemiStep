@@ -32,11 +32,22 @@ public sealed class CanonicalGridWindow : IDisposable
 
 	public DataGrid DataGrid { get; }
 
-	public ComboBox ComboAt(int rowIndex, string columnKey)
+	internal LazyComboCellPresenter PresenterAt(int rowIndex, string columnKey)
 	{
 		var column = DataGrid.Columns.Single(c => Equals(c.Tag, columnKey));
 
-		return (ComboBox)column.GetCellContent(Surface.RecipeRows[rowIndex]);
+		return (LazyComboCellPresenter)column.GetCellContent(Surface.RecipeRows[rowIndex]);
+	}
+
+	/// <summary>The cell's ComboBox editor, built on the first edit entry and kept for re-entries.</summary>
+	public ComboBox EditorAt(int rowIndex, string columnKey)
+	{
+		return (ComboBox)PresenterAt(rowIndex, columnKey).Editor!;
+	}
+
+	public int LiveComboBoxCount()
+	{
+		return DataGrid.GetVisualDescendants().OfType<ComboBox>().Count();
 	}
 
 	public Point CenterOf(Control control)

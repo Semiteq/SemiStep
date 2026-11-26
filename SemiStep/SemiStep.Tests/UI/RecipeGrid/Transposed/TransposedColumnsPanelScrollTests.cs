@@ -10,6 +10,7 @@ using AwesomeAssertions;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
+using SemiStep.UI.RecipeGrid;
 using SemiStep.UI.RecipeGrid.Transposed;
 using SemiStep.UI.Styles;
 
@@ -177,13 +178,13 @@ public sealed class TransposedColumnsPanelScrollTests : IAsyncLifetime
 		return stepListBox.GetVisualDescendants().OfType<ScrollViewer>().First();
 	}
 
-	private static TransposedComboCellPresenter FindComboPresenter(
+	private static LazyComboCellPresenter FindComboPresenter(
 		ListBox stepListBox, int columnIndex, string parameterKey)
 	{
 		var container = (ListBoxItem)stepListBox.ContainerFromIndex(columnIndex)!;
 
 		return container.GetVisualDescendants()
-			.OfType<TransposedComboCellPresenter>()
+			.OfType<LazyComboCellPresenter>()
 			.Single(presenter => presenter.DataContext is ParameterCellViewModel cell
 				&& cell.Descriptor.ParameterKey == parameterKey);
 	}

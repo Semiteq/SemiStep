@@ -274,29 +274,91 @@ public sealed class SyncToggleTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void Toggle_TrackKeepsItsSize_AndTheKnobMovesBetweenOffAndOn()
+	public void Toggle_TrackKeepsItsSize_AndTheKnobMirrorsBetweenOffAndOn()
 	{
 		var window = ShowMainWindow();
 		var toggle = ToggleOf(window);
 		var track = TrackOf(toggle);
+		StopKnobTransition(toggle);
 		var offSize = track.Bounds.Size;
-		var offKnobLeft = KnobLeftIn(toggle, track);
+		var offKnob = KnobBoundsIn(toggle, track);
 
-		_fixture.PlcSyncService.SetSyncEnabled(true);
-		_fixture.PlcSyncService.PushPlcState(new PlcSessionSnapshot(PlcConnectionState.Connected, PlcSyncStatus.Idle, true));
-		Dispatcher.UIThread.RunJobs();
+		TurnSyncOn();
 
 		toggle.IsChecked.Should().BeTrue("precondition: sync is on");
 		offSize.Should().Be(new Size(40, 24), "Semi's default track: an 18 px knob with a 3 px margin");
 		track.Bounds.Size.Should().Be(offSize);
-		KnobLeftIn(toggle, track).Should().BeGreaterThan(offKnobLeft, "the knob moves right when the switch is on");
+		var onKnob = KnobBoundsIn(toggle, track);
+		onKnob.Left.Should().BeGreaterThan(offKnob.Left, "the knob moves right when the switch is on");
+		(track.Bounds.Width - onKnob.Right).Should().BeApproximately(
+			offKnob.Left, 0.5, "the on knob sits as far from the right end as the off knob from the left end");
 	}
 
-	private static double KnobLeftIn(ToggleSwitch toggle, Border track)
+	[AvaloniaTheory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public void Toggle_Knob_IsWhiteAndInsideTheTrack(bool isSyncEnabled)
 	{
-		var knob = toggle.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "SwitchKnobIndicator");
+		var window = ShowMainWindow();
+		var toggle = ToggleOf(window);
+		var track = TrackOf(toggle);
+		StopKnobTransition(toggle);
 
-		return knob.TranslatePoint(new Point(0, 0), track)!.Value.X;
+		if (isSyncEnabled)
+		{
+			TurnSyncOn();
+		}
+
+		toggle.IsChecked.Should().Be(isSyncEnabled, "precondition");
+		var knob = KnobBoundsIn(toggle, track);
+		new Rect(track.Bounds.Size).Contains(knob).Should().BeTrue(
+			$"the knob {knob} lies inside the {track.Bounds.Size} track");
+		KnobOf(toggle).Background.Should().BeAssignableTo<ISolidColorBrush>().Which.Color
+			.Should().Be(Colors.White, "the knob is white in both states");
+	}
+
+	[AvaloniaFact]
+	public void Toggle_RightGap_MatchesTheFirstButtonInset()
+	{
+		var window = ShowMainWindow();
+		var toggle = ToggleOf(window);
+		var track = TrackOf(toggle);
+		StopKnobTransition(toggle);
+		var toolBar = window.GetVisualDescendants().OfType<RecipeToolBar>().Single();
+		var openIcon = toolBar.FindControl<Button>("OpenButton")!.GetVisualDescendants().OfType<PathIcon>().First();
+
+		TurnSyncOn();
+
+		toggle.IsChecked.Should().BeTrue("precondition: sync is on");
+		var toolBarBounds = BoundsIn(toolBar, window);
+		var drawnRight = Math.Max(BoundsIn(track, window).Right, BoundsIn(KnobOf(toggle), window).Right);
+		var leftInset = BoundsIn(openIcon, window).Left - toolBarBounds.Left;
+		(toolBarBounds.Right - drawnRight).Should().BeGreaterThanOrEqualTo(
+			leftInset, "the switch keeps the inset of the first toolbar button from the window edge");
+	}
+
+	private void TurnSyncOn()
+	{
+		_fixture.PlcSyncService.SetSyncEnabled(true);
+		_fixture.PlcSyncService.PushPlcState(new PlcSessionSnapshot(PlcConnectionState.Connected, PlcSyncStatus.Idle, true));
+		Dispatcher.UIThread.RunJobs();
+	}
+
+	private static void StopKnobTransition(ToggleSwitch toggle)
+	{
+		toggle.KnobTransitions = [];
+	}
+
+	private static Border KnobOf(ToggleSwitch toggle)
+	{
+		return toggle.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "SwitchKnobIndicator");
+	}
+
+	private static Rect KnobBoundsIn(ToggleSwitch toggle, Border track)
+	{
+		var knob = KnobOf(toggle);
+
+		return new Rect(knob.TranslatePoint(new Point(0, 0), track)!.Value, knob.Bounds.Size);
 	}
 
 	private static async Task WaitForSwitchAsync(ToggleSwitch toggle, Func<bool> commandRan)

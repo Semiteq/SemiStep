@@ -71,9 +71,6 @@
                     </Border>
                 </ControlTemplate>
             </Setter>
-            <Style Selector="^:checked /template/ Canvas#PART_SwitchKnob">
-                <Setter Property="HorizontalAlignment" Value="Right" />
-            </Style>
             <Style Selector="^:pointerover">
                 <Setter Property="Background" Value="{DynamicResource ButtonDefaultPointeroverBackground}" />
             </Style>

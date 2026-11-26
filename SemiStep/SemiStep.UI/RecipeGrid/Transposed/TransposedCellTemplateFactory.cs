@@ -10,8 +10,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 
-using SemiStep.Core.Recipes;
-
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
 internal sealed class TransposedCellTemplateFactory(
@@ -91,15 +89,6 @@ internal sealed class TransposedCellTemplateFactory(
 			CreateValueDisplay(descriptor, PropertyTextEditingMultiConverter.Instance),
 			() => _textEditorFactory.Create(isNumeric));
 		presenter.Bind(InputElement.IsEnabledProperty, _textEditorFactory.CreateEditableBinding());
-		if (descriptor.ParameterKey == StepValueParser.StepDurationColumnKey)
-		{
-			presenter.Bind(ToolTip.TipProperty, new Binding(
-				$"{nameof(ParameterCellViewModel.Row)}.{nameof(RecipeRowViewModel.ActionId)}")
-			{
-				Mode = BindingMode.OneWay,
-				Converter = RampActions.ToolTipConverter,
-			});
-		}
 
 		return presenter;
 	}

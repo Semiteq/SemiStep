@@ -160,7 +160,6 @@ resx-free also keeps this fail-safe path free of any resx/culture-init dependenc
 
 Column headers, action names, and group items come from YAML `ui_name`; the one exception is the
 step number header (`StepNumberHeader`: "№" in Russian, "No" in English), which the canonical
-numbering column and the transposed corner read from resx. Grid chrome texts in resx also include
-`RampTimeToolTip`, the tooltip of a ramp step's time cell. Logs, diagnostics, and
+numbering column and the transposed corner read from resx. Logs, diagnostics, and
 number/date formatting stay English/invariant. Font-weight names in the grid-style editor's weight
 picker (`Light`, `Normal`, `SemiBold`, …) are kept in English as conventional typographic tokens.

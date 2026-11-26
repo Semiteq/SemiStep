@@ -17,7 +17,6 @@ using SemiStep.Core.Recipes;
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
 using SemiStep.Tests.UI.RecipeGrid.Transposed;
-using SemiStep.UI.Localization;
 using SemiStep.UI.RecipeGrid;
 using SemiStep.UI.RecipeGrid.Transposed;
 using SemiStep.UI.Styles;
@@ -41,7 +40,6 @@ public sealed class CellAlignmentTests : IAsyncLifetime
 	private const int LoopStart = 20;
 	private const int Pause = 40;
 	private const int RampTemperature = 110;
-	private const int RampPower = 140;
 	private const int TimedOpen = 70;
 	private const int TemperatureAndWait = 100;
 
@@ -197,29 +195,6 @@ public sealed class CellAlignmentTests : IAsyncLifetime
 			"the digits stay in place when the edit starts");
 	}
 
-	[AvaloniaFact]
-	[Trait("Area", "RampTooltip")]
-	public void RampStepDuration_HasRampTooltip_InBothGrids()
-	{
-		ShowCanonicalGrid();
-
-		TipOf(CanonicalCell(5, DurationColumn)).Should().Be(Resources.RampTimeToolTip);
-
-		var stepListBox = ShowTransposedGrid();
-		TipOf(TransposedCell(stepListBox, 5, DurationColumn)).Should().Be(Resources.RampTimeToolTip);
-	}
-
-	[AvaloniaFact]
-	[Trait("Area", "RampTooltip")]
-	public void NonRampStepDuration_HasNoTooltip()
-	{
-		ShowCanonicalGrid();
-
-		TipOf(CanonicalCell(6, DurationColumn)).Should().BeNull("a timed open is not a ramp");
-		TipOf(CanonicalCell(7, DurationColumn)).Should().BeNull("a long-lasting step has no ramp time");
-		RampActions.IsRamp(RampPower).Should().BeTrue();
-	}
-
 	private void ShowCanonicalGrid()
 	{
 		_grid = new CanonicalGridWindow(_fixture);
@@ -258,11 +233,6 @@ public sealed class CellAlignmentTests : IAsyncLifetime
 			.Single(border => border.Classes.Contains("transposed-cell")
 				&& border.DataContext is ParameterCellViewModel cell
 				&& cell.Descriptor.ParameterKey == parameterKey);
-	}
-
-	private static object? TipOf(Control cell)
-	{
-		return cell.GetSelfAndVisualDescendants().OfType<Control>().Select(ToolTip.GetTip).FirstOrDefault(tip => tip is not null);
 	}
 
 	private static TextBlock Value(Control cell)

@@ -754,9 +754,6 @@
   <data name="StepNumberHeader" xml:space="preserve">
     <value>No</value>
   </data>
-  <data name="RampTimeToolTip" xml:space="preserve">
-    <value>ramp time, not part of the step duration</value>
-  </data>
   <data name="EditorSelectionAccent" xml:space="preserve">
     <value>Selection colour</value>
   </data>

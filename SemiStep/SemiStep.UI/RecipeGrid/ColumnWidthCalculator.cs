@@ -30,13 +30,17 @@ public sealed class ColumnWidthCalculator(
 	// em multiple calibrated to reproduce 72 at the default font. See docs/architecture/recipe-grid-column-sizing.md
 	private const double MinColumnWidthEms = 6.0;
 
+	// GridLinesVisibility="All" draws the vertical grid line inside the right edge of every canonical cell.
+	private const double CanonicalGridLineWidth = 1;
+
 	private const double ComboBoxChromeWidth =
-		ComboBoxCellFactory.DisplayPaddingLeft + ComboBoxCellFactory.ChevronSlotWidth;
+		ComboBoxCellFactory.DisplayPaddingLeft + ComboBoxCellFactory.ChevronSlotWidth + CanonicalGridLineWidth;
 
 	// Designer cap for the transposed step column; a longer action name trims with a tooltip.
 	private const double TransposedStepColumnCap = 240;
 
 	private readonly GridTextMeasurer _textMeasurer = new(gridStyle);
+	private double? _loopPillWidth;
 	private double? _widestUnitSlotWidth;
 
 	// See docs/architecture/recipe-grid-column-sizing.md
@@ -112,15 +116,12 @@ public sealed class ColumnWidthCalculator(
 	}
 
 	/// <summary>
-	/// One width for every transposed step column: the wider of the longest action name with the combo chrome and
-	/// the widest value with the unit slot, capped at <see cref="TransposedStepColumnCap"/>.
+	/// One width for every transposed step column: the wider of the widest action name display with the combo chrome
+	/// and the widest value with the unit slot, capped at <see cref="TransposedStepColumnCap"/>.
 	/// </summary>
 	public double TransposedStepColumnWidth()
 	{
-		var widestName = recipeMetadataRegistry.GetAllActions()
-			.Select(action => _textMeasurer.MeasureContent(action.UiName))
-			.DefaultIfEmpty(0)
-			.Max();
+		var widestName = WidestActionNameDisplay();
 		var widestValue = recipeMetadataRegistry.GetAllColumns()
 			.Where(column => string.Equals(
 				column.ColumnType,
@@ -154,9 +155,18 @@ public sealed class ColumnWidthCalculator(
 
 	private DataGridLength CalculateActionColumnWidth(GridColumnDefinition columnDef)
 	{
-		var actionNames = recipeMetadataRegistry.GetAllActions().Select(a => a.UiName);
+		return WidthFromContent(WidestActionNameDisplay(), columnDef.UiName, ComboBoxChromeWidth);
+	}
 
-		return CalculateWidth(actionNames, columnDef.UiName, ComboBoxChromeWidth);
+	// A loop start name shares its cell with the loop pass pill, so it needs room for the widest pill too.
+	private double WidestActionNameDisplay()
+	{
+		var loopPillWidth = _loopPillWidth ??= LoopBadge.WidestWidth();
+
+		return recipeMetadataRegistry.GetAllActions()
+			.Select(action => _textMeasurer.MeasureContent(action.UiName) + (action.StartsLoop ? loopPillWidth : 0))
+			.DefaultIfEmpty(0)
+			.Max();
 	}
 
 	private DataGridLength CalculateGroupColumnWidth(GridColumnDefinition columnDef)
@@ -259,6 +269,11 @@ public sealed class ColumnWidthCalculator(
 			}
 		}
 
+		return WidthFromContent(maxContentWidth, headerText, chromeOverride);
+	}
+
+	private DataGridLength WidthFromContent(double maxContentWidth, string headerText, double? chromeOverride)
+	{
 		var contentBudget = maxContentWidth + (chromeOverride ?? ContentChrome);
 		var pixelWidth = (int)Math.Ceiling(
 			Math.Max(Math.Max(contentBudget, LongestHeaderWordFloor(headerText)), MinColumnWidth));

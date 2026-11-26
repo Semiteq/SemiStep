@@ -119,16 +119,34 @@ not, so they set the floor for the multiple. The header budget must also clear t
 
 ### Combo columns add a fixed chevron budget
 
-Combo columns (action + group) add `ComboBoxChromeWidth = 38` as the chrome term instead of the
+Combo columns (action + group) add `ComboBoxChromeWidth = 39` as the chrome term instead of the
 content chrome (`maxContentWidth` is still added). This is
 a fixed theme constant, **not** font-scaled, because it tracks the Avalonia Fluent ComboBox template
 (`Avalonia.Themes.Fluent/Controls/ComboBox.xaml`): a `ColumnDefinitions="*,32"` grid reserves a 32
-DIP chevron column, plus the in-grid ComboBox left padding trimmed to 6 (32 + 6 = 38). The 32 is a
-template literal, not a themeable resource, so it does not co-scale with the font; budgeting
-`text + 38` keeps the text column ≥ `text + 6` at any font, which clears the chevron without
+DIP chevron column, plus the in-grid ComboBox left padding trimmed to 6, plus the 1 px vertical grid
+line that `GridLinesVisibility="All"` draws inside the right edge of every cell (32 + 6 + 1 = 39).
+The 32 is a template literal, not a themeable resource, so it does not co-scale with the font;
+budgeting `text + 39` keeps the text column ≥ `text + 6` at any font, which clears the chevron without
 re-templating. The `DataGrid ComboBox` style in `DataGridStyles.axaml` trims the in-grid ComboBox
 left padding to 6 so the rendered inset matches this budget and combo text aligns with text-cell
 content.
+
+### Loop start names reserve the loop pass pill
+
+While a loop runs, the action cell of its start row shows the loop pass pill between the name and the
+chevron slot (see "Loop pass pill" in `recipe-grid-surface.md`). The action column and the transposed
+step column measure each action name, and add the widest pill to the name of an action that can show
+it: `ActionDefinition.StartsLoop`, the loop start action (`ServiceActionId.ForLoop`, id 20) that
+`LoopParser` opens a loop on. The widest of these name displays then gets the usual combo chrome.
+Other actions keep their plain name width, so the pill widens a column only when a loop start name
+with the pill is wider than every other name.
+
+The widest pill is `LoopBadge.WidestWidth()`: the text "(99/99)" measured in the pill font
+(`GridFonts.DefaultFamily`, 12 px SemiBold), plus 8 px padding and 1 px border on each side. The pill
+has no gap element: it sits directly before the 32 px chevron slot, which the combo chrome already
+reserves. `LoopBadge.Create` sets the same constants on the rendered pill, so measure and render share
+one source; `DataGridStyles.axaml` sets only the pill colours. A loop of 100 passes or more shows a
+wider pill, and the name trims before it.
 
 ### Scaling robustness
 
@@ -175,5 +193,6 @@ once per surface: the wider of the longest action name plus the name chrome and 
 `WidestUnitSlotWidth` plus the content chrome, floored at `MinColumnWidth` and capped at 240 px. The name
 chrome is what the transposed name display takes: `CellPaddingLeft` + `CellPaddingRight` + the 32 px
 chevron slot + `TransposedColumnCellsPresenter.GridLineWidth`, 45 px at the default paddings. A
-longer action name trims with an ellipsis and carries its full text as a tooltip. The loop pass pill is
-not reserved in the width; on a narrow name cell the name trims before the pill.
+longer action name trims with an ellipsis and carries its full text as a tooltip. A loop start name
+adds the widest loop pass pill, as in the canonical action column (see "Loop start names reserve the
+loop pass pill"); the cap still applies to the sum, so past 240 px the name trims before the pill.

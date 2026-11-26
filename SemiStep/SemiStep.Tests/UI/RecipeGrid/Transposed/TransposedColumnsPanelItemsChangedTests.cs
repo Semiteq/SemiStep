@@ -323,15 +323,16 @@ public sealed class TransposedColumnsPanelItemsChangedTests : IAsyncLifetime
 		var stepListBox = ShowView();
 		var panel = ColumnsPanel(stepListBox);
 
-		const int FromIndex = 2;
-		const int ToIndex = 5;
+		const int FromIndex = 1;
+		var toIndex = panel.Children.Where(child => child.IsVisible).Max(stepListBox.IndexFromContainer);
+		toIndex.Should().BeGreaterThan(FromIndex, "precondition: the destination lies in the realized range too");
 		var movedColumn = _surface.StepColumns[FromIndex];
 
-		_surface.StepColumns.Move(FromIndex, ToIndex);
+		_surface.StepColumns.Move(FromIndex, toIndex);
 		Dispatcher.UIThread.RunJobs();
 
-		_surface.StepColumns[ToIndex].Should().BeSameAs(movedColumn, "the moved column now lives at the destination index");
-		stepListBox.ContainerFromIndex(ToIndex)!.DataContext.Should().BeSameAs(
+		_surface.StepColumns[toIndex].Should().BeSameAs(movedColumn, "the moved column now lives at the destination index");
+		stepListBox.ContainerFromIndex(toIndex)!.DataContext.Should().BeSameAs(
 			movedColumn, "the container now at the destination index binds to the moved column");
 
 		foreach (var child in panel.Children.Where(child => child.IsVisible))

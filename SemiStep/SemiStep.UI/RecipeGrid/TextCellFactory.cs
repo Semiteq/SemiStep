@@ -105,14 +105,6 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 				});
 
 			display.Bind(Visual.IsVisibleProperty, CellApplicabilityBinding.CreateApplicableBinding(columnKey));
-			if (columnKey == StepValueParser.StepDurationColumnKey)
-			{
-				display.Bind(ToolTip.TipProperty, new Binding(nameof(RecipeRowViewModel.ActionId))
-				{
-					Mode = BindingMode.OneWay,
-					Converter = RampActions.ToolTipConverter,
-				});
-			}
 
 			return display;
 		}, supportsRecycling: true);

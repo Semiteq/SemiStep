@@ -265,16 +265,14 @@ on a focused combo display; `TransposedTextCellPresenter` starts the edit on a p
 that `KeyDown` unhandled for the same reason. Esc in a transposed text editor clears its edit target, so
 the blur writes nothing, and focuses the column container, as the combo Esc does.
 
-## Value cells: alignment, unit slot, ramp tooltip
+## Value cells: alignment and unit slot
 
 A number cell (a property of `system_type` `int` or `float`, and the step start time) shows its value
 right-aligned before a unit slot; `TextCellLayout` builds it for both grids. The slot is as wide as the
 widest unit of the column (in the transposed grid, of the whole grid, because all step columns share one
 width), so the numbers of one column share one right edge. `time_hms` values leave the slot empty, and
 their unit does not count toward its width. Text cells and the comment are left-aligned, and editors
-align as their display does. An inapplicable cell keeps its grey fill and shows no text. The step time
-cell of a ramp action (`RampActions`: MBE 110 "t°C плавно" and 140 "P% плавно") carries the tooltip
-`RampTimeToolTip`: `TimingCalculator` counts zero time for an immediate action.
+align as their display does. An inapplicable cell keeps its grey fill and shows no text.
 
 ## Loop pass pill
 

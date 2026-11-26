@@ -321,11 +321,22 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		return Math.Max(fromIndex, 0);
 	}
 
+	// The cache is written here, not only through the view's echo: after a remove the DataGrid already shows the
+	// requested row and raises no SelectionChanged for it.
 	public void RequestSelection(int? stepIndex)
 	{
 		if (_disposables.IsDisposed)
 		{
 			return;
+		}
+
+		if (stepIndex is null)
+		{
+			SelectedStepIndices = [];
+		}
+		else if (stepIndex >= 0 && stepIndex < Items.Count)
+		{
+			SelectedStepIndices = [stepIndex.Value];
 		}
 
 		_selectionRequests.OnNext(stepIndex);

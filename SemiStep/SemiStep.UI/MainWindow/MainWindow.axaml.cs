@@ -60,6 +60,8 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 
 			ViewModel.RecipeFile.NewRecipeCommand
 				.Merge(ViewModel.RecipeFile.LoadRecipeCommand)
+				.Merge(ViewModel.RecipeCommands.DeleteStepCommand)
+				.Merge(ViewModel.Clipboard.CutStepCommand)
 				.Subscribe(_ => RecipeGridHost.FocusActiveGrid())
 				.DisposeWith(disposables);
 		});

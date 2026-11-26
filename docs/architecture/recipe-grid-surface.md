@@ -271,7 +271,11 @@ key's paired `TextInput`, in the layout and case Windows produced. Esc is handle
 `DataGrid`: `DataGrid.ProcessEscapeKey` moves focus to the grid before it cancels, and the editor's
 `LostFocus` binding would write the editor text, so the view first detaches that binding. The editor
 text is invariant, as the model parser is, and a time editor keeps the fraction the display drops
-(`00:01:30.5`), so an unchanged commit stores the value it showed. In the transposed grid `TransposedGridNavigator` handles F2 on any focused display and F4 and Alt+Down
+(`00:01:30.5`), so an unchanged commit stores the value it showed. On commit a number or time editor
+turns a decimal comma into a point when the text holds no point (`75,5` stores 75.5); text with both
+separators goes to the model unchanged and fails there. `PropertyTimeEditingConverter.ParseForCommit`
+owns this rule, not `PropertyParser`, because CSV import and paste share the model parser and keep
+their "."-decimal format. In the transposed grid `TransposedGridNavigator` handles F2 on any focused display and F4 and Alt+Down
 on a focused combo display; `TransposedTextCellPresenter` starts the edit on a printable key and leaves
 that `KeyDown` unhandled for the same reason. Esc in a transposed text editor clears its edit target, so
 the blur writes nothing, and focuses the column container, as the combo Esc does.

@@ -35,7 +35,7 @@ public sealed class TimeFormatHelperTests
 	public void EditorText_ParsesBackToTheStoredValue(string stored, string formatKind, string editorText)
 	{
 		TimeFormatHelper.FormatForEdit(stored, formatKind).Should().Be(editorText);
-		PropertyTimeEditingConverter.ParseForCommit(editorText, formatKind, allowsEmpty: false).Should().Be(stored);
+		PropertyTimeEditingConverter.ParseForCommit(editorText, formatKind, isTextColumn: false).Should().Be(stored);
 	}
 
 	[AvaloniaFact]

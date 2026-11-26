@@ -18,7 +18,7 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 
 	public DateTimeOffset? LastExchangeTime { get; set; }
 
-	public bool IsRecipeActive => false;
+	public bool IsRecipeActive { get; private set; }
 
 	/// <summary>
 	/// When true, <see cref="ConnectAsync"/> throws so that callers such as
@@ -39,6 +39,7 @@ public sealed class StubS7Service : IS7Connection, IS7Reader, IS7ExecutionStream
 
 	public void PushExecutionState(PlcExecutionInfo info)
 	{
+		IsRecipeActive = info.RecipeActive;
 		_executionState.OnNext(info);
 	}
 

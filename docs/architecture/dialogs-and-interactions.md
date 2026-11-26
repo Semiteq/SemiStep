@@ -28,6 +28,9 @@ VM-driven dialog follows an established pattern rather than inventing one.
 - `RequestCloseInteraction` (`Interaction<Unit, Unit>`) — `File > Exit`. The handler calls `Close()`,
   which runs `OnWindowClosing`'s dirty-close guard (see `exit-flow.md`).
 
+`RecipeFileViewModel.UnsavedChangesInteraction` (`Interaction<Unit, ExitConfirmationResult>`) asks
+before "Создать рецепт" or "Открыть рецепт" drops a dirty recipe; see "Unsaved changes" below.
+
 Because the dialog now goes through an interaction, the flow is unit-testable headless: a test
 registers a fake handler and asserts the VM behavior with no `Window` in play. A missing handler
 raises `UnhandledInteractionException` instead of silently dropping the dialog, so the conflict flow's
@@ -40,7 +43,8 @@ because they are window-lifecycle concerns the view model cannot own:
 
 - **Exit confirmation** — `ExitConfirmationDialog`, shown from `MainWindow.OnWindowClosing` via
   `ShowExitChoiceAsync`. It hangs off `WindowClosingEventArgs` / `e.Cancel` / `Close()`, state that
-  belongs to the window's own `Closing` event.
+  belongs to the window's own `Closing` event. The dialog and the meaning of each answer are shared
+  with New and Open; see "Unsaved changes" below.
 - **Style-editor restart prompt** — `RestartPromptDialog`, shown from
   `GridStyleEditorWindow.OnSaveCompleted`. It belongs to the style-editor window's own save flow.
 
@@ -49,6 +53,28 @@ paths run as `async void` event handlers, so they carry their own try/catch guar
 installs no Avalonia dispatcher hook and cannot catch an `async void` throw. Those guards remain in
 place and are not superseded by the interaction convention above. See `error-reporting.md` for the
 guard rationale and `exit-flow.md` for the exit path.
+
+## Unsaved changes
+
+Three actions drop the current recipe: closing the window, "Создать рецепт" (menu item and
+Ctrl+Shift+N) and "Открыть рецепт" (menu item, toolbar button "Открыть" and Ctrl+O). On a dirty recipe each one shows
+`ExitConfirmationDialog` with Save / Don't save / Cancel. The dialog text does not name the action.
+On a clean recipe nothing is asked.
+
+- `RecipeFileViewModel.ResolveUnsavedChangesAsync` is the one home of the answers. Save runs
+  `SaveRecipeCommand`, which goes through save-as when the recipe has no file, and returns `true` only
+  after a successful save. A cancelled save-as, a failed save, an exception and a save already in
+  flight return `false`. Don't save returns `true`. Cancel and a dismissed dialog return `false`.
+- New and Open call it through `UnsavedChangesInteraction` before they act, so Open asks before the
+  file picker. `false` leaves the recipe untouched.
+- The close path calls it from `MainWindow.HandleExitChoiceAsync` and closes on `true`. It keeps its
+  own dirty check, because `OnWindowClosing` must set `e.Cancel` before the first `await`.
+- `MainWindow.ShowUnsavedChangesDialogAsync` is the one place that news the dialog. Both the close
+  path and the interaction handler call it.
+
+Covered by `RecipeFileUnsavedChangesTests` (stub handler, each answer for New and Open, save-as, a
+cancelled save-as, a failed save, no prompt when clean), `MainWindowUnsavedChangesTests` (the real
+dialog from Ctrl+Shift+N and Ctrl+O) and `MainWindowExitFlowTests` (the close path).
 
 ## Window shortcuts
 

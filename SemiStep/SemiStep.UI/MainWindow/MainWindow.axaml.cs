@@ -11,6 +11,7 @@ using ReactiveUI;
 using ReactiveUI.Avalonia;
 
 using SemiStep.UI.Plc;
+using SemiStep.UI.RecipeFile;
 using SemiStep.UI.ShutdownService;
 using SemiStep.UI.StyleEditor;
 
@@ -44,6 +45,10 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 
 			ViewModel.RecipeFile.SaveFileInteraction
 				.RegisterHandler(HandleSaveFileDialogAsync)
+				.DisposeWith(disposables);
+
+			ViewModel.RecipeFile.UnsavedChangesInteraction
+				.RegisterHandler(HandleUnsavedChangesDialogAsync)
 				.DisposeWith(disposables);
 
 			ViewModel.ShowStyleEditorInteraction
@@ -135,8 +140,7 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 		_exitChoiceInProgress = true;
 		try
 		{
-			var dialog = new ExitConfirmationDialog();
-			var result = await dialog.ShowDialog<ExitConfirmationResult>(this);
+			var result = await ShowUnsavedChangesDialogAsync();
 
 			await HandleExitChoiceAsync(result);
 		}
@@ -153,26 +157,15 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 		}
 	}
 
-	internal async Task HandleExitChoiceAsync(ExitConfirmationResult result)
+	internal async Task HandleExitChoiceAsync(UnsavedChangesChoice result)
 	{
 		_exitChoiceInProgress = true;
 		try
 		{
-			switch (result)
+			if (ViewModel is not null && await ViewModel.RecipeFile.ResolveUnsavedChangesAsync(result))
 			{
-				case ExitConfirmationResult.Save:
-					await SaveAndCloseOnSuccessAsync();
-
-					break;
-
-				case ExitConfirmationResult.DontSave:
-					_forceClose = true;
-					Close();
-
-					break;
-
-				case ExitConfirmationResult.Cancel:
-					break;
+				_forceClose = true;
+				Close();
 			}
 		}
 		finally
@@ -181,38 +174,14 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 		}
 	}
 
-	private async Task SaveAndCloseOnSuccessAsync()
+	private Task<UnsavedChangesChoice> ShowUnsavedChangesDialogAsync()
 	{
-		if (ViewModel is null)
-		{
-			return;
-		}
+		return new ExitConfirmationDialog().ShowDialog<UnsavedChangesChoice>(this);
+	}
 
-		var saveCommand = ViewModel.RecipeFile.SaveRecipeCommand;
-
-		var saveAlreadyInFlight = await saveCommand.IsExecuting.FirstAsync();
-		if (saveAlreadyInFlight)
-		{
-			return;
-		}
-
-		bool saved;
-		try
-		{
-			saved = await saveCommand.Execute();
-		}
-		catch (Exception)
-		{
-			// The command's ThrownExceptions pipeline already reports the failure
-			// to the message panel; the window must simply stay open.
-			return;
-		}
-
-		if (saved)
-		{
-			_forceClose = true;
-			Close();
-		}
+	private async Task HandleUnsavedChangesDialogAsync(IInteractionContext<Unit, UnsavedChangesChoice> context)
+	{
+		context.SetOutput(await ShowUnsavedChangesDialogAsync());
 	}
 
 	private async Task HandleOpenFileDialogAsync(IInteractionContext<Unit, string?> context)

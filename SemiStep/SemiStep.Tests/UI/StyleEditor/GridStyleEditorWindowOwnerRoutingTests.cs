@@ -16,6 +16,7 @@ using SemiStep.Tests.UI.Helpers;
 
 using SemiStep.UI.Localization;
 using SemiStep.UI.MainWindow;
+using SemiStep.UI.RecipeFile;
 using SemiStep.UI.ShutdownService;
 using SemiStep.UI.StyleEditor;
 
@@ -78,7 +79,7 @@ public sealed class GridStyleEditorWindowOwnerRoutingTests : IAsyncLifetime
 		var dialog = _mainWindow.OwnedWindows.OfType<ExitConfirmationDialog>()
 			.Should().ContainSingle("the routed close must run the owner's dirty guard").Subject;
 
-		dialog.Close(ExitConfirmationResult.Cancel);
+		dialog.Close(UnsavedChangesChoice.Cancel);
 		// Lets the fire-and-forget OnWindowClosing continuation finish.
 		Dispatcher.UIThread.RunJobs();
 

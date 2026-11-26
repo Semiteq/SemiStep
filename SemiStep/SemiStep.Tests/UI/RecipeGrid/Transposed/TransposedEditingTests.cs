@@ -12,6 +12,7 @@ using AwesomeAssertions;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
+using SemiStep.UI.RecipeGrid;
 using SemiStep.UI.RecipeGrid.Transposed;
 using SemiStep.UI.Styles;
 
@@ -318,6 +319,48 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 		_surface.StepColumns[0].Row[RecipeTestDriver.StepDurationColumn].Should().Be(100f);
 	}
 
+	[AvaloniaFact]
+	public async Task EscapeKey_OnLoadedFractionalDuration_KeepsValueAndHistory()
+	{
+		_fixture.Coordinator.UpdateStepProperty(0, RecipeTestDriver.StepDurationColumn, "90.5")
+			.IsSuccess.Should().BeTrue();
+		await _fixture.ReloadFromCsvAsync();
+		Dispatcher.UIThread.RunJobs();
+		var stepBefore = _fixture.Coordinator.CurrentRecipe.Steps[0];
+		_surface.StepColumns[0].Row[RecipeTestDriver.StepDurationColumn].Should().Be(
+			90.5f, "precondition: the file holds a fractional duration");
+		_fixture.Coordinator.CanUndo.Should().BeFalse("precondition: an opened recipe starts with no history");
+		var (view, stepListBox) = ShowView();
+		EnterTextEdit(stepListBox, 0, RecipeTestDriver.StepDurationColumn);
+
+		_window!.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
+
+		view.IsEditing.Should().BeFalse("Escape cancels the cell edit");
+		_fixture.Coordinator.CurrentRecipe.Steps[0].Should().Be(stepBefore, "Esc writes nothing back");
+		_surface.StepColumns[0].Row[RecipeTestDriver.StepDurationColumn].Should().Be(90.5f);
+		_fixture.Coordinator.CanUndo.Should().BeFalse("Esc adds no undo entry");
+	}
+
+	// Esc hands focus to the column, as the combo Esc does, so the next arrow key moves within the grid.
+	[AvaloniaFact]
+	public void EscapeKey_ReturnsFocusToTheColumn()
+	{
+		var (_, stepListBox) = ShowView();
+		EnterTextEdit(stepListBox, 0, RecipeTestDriver.CommentColumn);
+
+		var window = _window!;
+		window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
+
+		window.FocusManager!.GetFocusedElement().Should().BeSameAs(
+			stepListBox.ContainerFromIndex(0), "Esc returns focus to the edited column");
+		window.KeyPressQwerty(PhysicalKey.ArrowUp, RawInputModifiers.None);
+		Dispatcher.UIThread.RunJobs();
+		window.FocusManager.GetFocusedElement().Should().BeSameAs(
+			FindTextPresenter(stepListBox, 0, RecipeTestDriver.CommentColumn), "the arrow key moves within the column");
+	}
+
 	// Stale-guard: a recyclable TextBox pins its edit target on focus and must write ONLY to that
 	// captured cell, even after recycling rebinds it onto a different cell mid-edit. Rebinding the
 	// editor's DataContext to another column's cell simulates that recycle; the pending text must
@@ -432,13 +475,13 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 	// edit and clears the cell; the paired TextInput (a separate raw event) lands on the now-focused editor.
 	// Exactly one character survives — neither dropped by the swap nor doubled by both handlers firing.
 	[AvaloniaFact]
+	[Trait("Area", "CellKeyboard")]
 	public void PrintableKeyThenTextInput_EntersEdit_KeepsExactlyOneCharacter()
 	{
 		var (view, stepListBox) = ShowView();
 		FindTextPresenter(stepListBox, 0, RecipeTestDriver.CommentColumn).Focus();
 
-		_window!.KeyPressQwerty(PhysicalKey.Digit5, RawInputModifiers.None);
-		_window!.KeyTextInput("5");
+		_window!.TypeKey(PhysicalKey.Digit5, "5");
 		Dispatcher.UIThread.RunJobs();
 
 		view.IsEditing.Should().BeTrue("a printable keystroke on a focused display enters edit");
@@ -469,10 +512,8 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 		var (_, stepListBox) = ShowView();
 		FindTextPresenter(stepListBox, 0, RecipeTestDriver.CommentColumn).Focus();
 
-		_window!.KeyPressQwerty(PhysicalKey.Digit5, RawInputModifiers.None);
-		_window!.KeyTextInput("5");
-		_window!.KeyPressQwerty(PhysicalKey.Digit7, RawInputModifiers.None);
-		_window!.KeyTextInput("7");
+		_window!.TypeKey(PhysicalKey.Digit5, "5");
+		_window!.TypeKey(PhysicalKey.Digit7, "7");
 		Dispatcher.UIThread.RunJobs();
 
 		FindTextBox(stepListBox, 0, RecipeTestDriver.CommentColumn).Text
@@ -580,8 +621,7 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 			"00:01:40", "precondition: the target cell holds a non-empty value");
 
 		FindTextPresenter(stepListBox, 0, RecipeTestDriver.StepDurationColumn).Focus();
-		_window!.KeyPressQwerty(PhysicalKey.Digit5, RawInputModifiers.None);
-		_window!.KeyTextInput("5");
+		_window!.TypeKey(PhysicalKey.Digit5, "5");
 		Dispatcher.UIThread.RunJobs();
 
 		view.IsEditing.Should().BeTrue("a printable keystroke on a focused display enters edit");
@@ -703,13 +743,13 @@ public sealed class TransposedEditingTests : IAsyncLifetime
 				&& cell.Descriptor.ParameterKey == parameterKey);
 	}
 
-	private static TransposedComboCellPresenter FindComboPresenter(
+	private static LazyComboCellPresenter FindComboPresenter(
 		ListBox stepListBox, int columnIndex, string parameterKey)
 	{
 		var container = (ListBoxItem)stepListBox.ContainerFromIndex(columnIndex)!;
 
 		return container.GetVisualDescendants()
-			.OfType<TransposedComboCellPresenter>()
+			.OfType<LazyComboCellPresenter>()
 			.Single(presenter => presenter.DataContext is ParameterCellViewModel cell
 				&& cell.Descriptor.ParameterKey == parameterKey);
 	}

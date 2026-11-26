@@ -138,6 +138,9 @@ The typed record is projected into `Application.Resources` at startup so XAML ca
 - `ExecutionPaletteInstaller.Install` pushes the per-depth execution row brushes plus the
   current-step-marker brush.
 
+The header text reads `HeaderForegroundBrush` (`chrome.header_foreground`, `#6C707E` in the three
+presets and in `GridStyleOptions.Default`).
+
 The status-bar link dot reads two chrome brushes: `ConnectedBrush` (`chrome.connected`, green
 `#208A3C`) for a live link and `DisconnectedBrush` (`chrome.disconnected`, red `#DB3B4B`) for no link
 or a sync error. The hollow dot of a connect or disconnect in flight strokes with
@@ -194,7 +197,7 @@ Fonts span every text role the palette drives. The model is one **global font fa
 
 | Role | Where it renders | Default size | Default weight | Default italic |
 | --- | --- | --- | --- | --- |
-| Grid header | column header text | 14 | 700 (Bold) | false |
+| Grid header | column header text | 12 | 600 (SemiBold) | false |
 | Grid cell | cell / numbering / combo text | 12 | 400 (Normal) | false |
 | Status-bar text | every status-bar text, timers included | 12 | 400 | false |
 

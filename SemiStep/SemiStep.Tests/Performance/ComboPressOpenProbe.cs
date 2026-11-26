@@ -13,6 +13,7 @@ using AwesomeAssertions;
 
 using SemiStep.Tests.UI.Helpers;
 using SemiStep.Tests.UI.RecipeGrid.Transposed;
+using SemiStep.UI.RecipeGrid;
 using SemiStep.UI.RecipeGrid.Transposed;
 using SemiStep.UI.Styles;
 
@@ -42,12 +43,13 @@ public sealed class ComboPressOpenProbe(ITestOutputHelper output)
 
 		for (var rowIndex = 1; rowIndex <= WarmUpPresses + SampledPresses; rowIndex++)
 		{
-			var comboBox = grid.ComboAt(rowIndex, "action");
-			var point = grid.CenterOf(comboBox);
+			var presenter = grid.PresenterAt(rowIndex, "action");
+			var point = grid.CenterOf(presenter);
 
 			var milliseconds = TimePress(grid.Window, point);
 
-			comboBox.IsDropDownOpen.Should().BeTrue($"the press alone opens the list on row {rowIndex}");
+			(presenter.Editor is ComboBox { IsDropDownOpen: true }).Should().BeTrue(
+				$"the press alone opens the list on row {rowIndex}");
 			Record("canonical", rowIndex, milliseconds);
 			grid.Window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
 			grid.PressKey(Key.Escape, PhysicalKey.Escape);
@@ -76,7 +78,7 @@ public sealed class ComboPressOpenProbe(ITestOutputHelper output)
 		for (var column = 1; column <= WarmUpPresses + SampledPresses; column++)
 		{
 			var container = (ListBoxItem)stepListBox.ContainerFromIndex(column)!;
-			var presenter = container.GetVisualDescendants().OfType<TransposedComboCellPresenter>()
+			var presenter = container.GetVisualDescendants().OfType<LazyComboCellPresenter>()
 				.First(p => p.IsEffectivelyEnabled);
 			var point = presenter.TranslatePoint(new Point(4, 4), window)!.Value;
 

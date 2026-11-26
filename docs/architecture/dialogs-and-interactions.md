@@ -68,4 +68,4 @@ shows its gesture from the table, each toolbar tooltip prints the same text (`Ti
 - Ctrl+Shift+Z is a second redo gesture; the menu prints Ctrl+Y. Alt+F4 is display-only on
   "Выход" and the handler never runs it.
 - The handler searches the items of every top-level menu and asks `ICommand.CanExecute` itself.
-- F2 stays a grid key (`DataGrid` and `TransposedLazyCellPresenter`).
+- F2 stays a grid key (`DataGrid` and `TransposedGridNavigator`).

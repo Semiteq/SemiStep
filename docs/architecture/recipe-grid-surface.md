@@ -193,64 +193,101 @@ is a pure function of `(previous indices, signal)`; the snapshot is taken at the
 `OnMutation` and assigned after the item mutation, guarded by sequence-equality so a mid-mutation
 control push (the transposed `ListBox` on remove-selected) is not double-applied.
 
-## Combo cells: lock, press-to-open and closed list
+## Combo cells: display cell, lock and press-to-open
 
-**Lock.** While the PLC runs the recipe, `IsReadOnly` is true and no combo list may open. A canonical
-combo box lives in a `CellTemplate`, so `DataGrid.IsReadOnly` does not reach it. A grid-wide style
-cannot lock it either: `ComboBoxCellFactory` binds `IsHitTestVisible` and `Focusable` locally for
-applicability, and a local value outranks a style setter. The lock is therefore a leg of that same
-binding, `CellApplicabilityBinding.CreateApplicableAndUnlockedBinding`, which reads `DataGrid.IsReadOnly`
-from the ancestor grid and fails closed while the cell is outside a grid. It reads the grid, not the
-surface: `ComboBoxCellFactory` is built through `ColumnBuilder`, and a surface dependency would make a DI
-cycle. On the lock transition `DataGridEditorCloseBehavior` closes an open list and moves focus from a
-combo box, or from a list item in its popup, back to the grid. The transposed grid locks through the
-presenter's `IsEnabled` binding (`TransposedCellTemplateFactory.CreateEditableBinding`).
+**Display cell.** In both grids a combo cell (the action, a group selector) is a
+`LazyComboCellPresenter`: plain text, a 32 px chevron slot and, in the action cell, the loop pass pill
+(see "Loop pass pill" below). The `ComboBox` exists only while the cell is edited; a realized row or
+column holds no live `ComboBox` otherwise. `LazyCellPresenter` owns the swap between display and editor,
+the blur exit, the commit when the presenter is detached and the end of an edit when its `DataContext`
+changes. That last rule covers the canonical `DataGrid`, which recycles a row by swapping its
+`DataContext` and keeps the cells attached. `CellEditCoordinator` tracks the one live editor, one
+instance per grid. A canonical `ComboBox` writes back through `SelectionChanged` with a OneWay
+`SelectedItem` binding, so a detached or re-entered editor never writes. Because no closed live combo
+exists, a wheel notch, an arrow key or a typed letter on a combo cell can never change its value.
 
-**Press-to-open.** Avalonia's `ComboBox` opens on the release of a press on its body, for any button and
-modifier. Both grids open the list on a plain left press instead:
+**Chevron.** The chevron shows only where a list can open: on the hovered cell and, in the canonical
+grid, on the current cell (`DataGridCell:current`); in the transposed grid on the focused cell. A
+disabled presenter (locked, inapplicable or read-only) shows none. The rules are styles on
+`Path.cell-chevron` in `DataGridStyles.axaml` and `TransposedGridStyles.axaml`.
 
-- Canonical: `ComboBoxPressOpener` attaches to the `DataGrid`. A tunnel handler decides before the
-  ComboBox's own press logic, which closes an open list; it does not run for a press that arrives
-  handled, so the press that light-dismisses another open list opens nothing. A bubble handler with
-  `handledEventsToo` opens the list after the DataGrid has taken focus for the row selection; opened
-  earlier, the DataGrid takes focus back and the list keys move the row. The native toggle runs on the
-  release only while the ComboBox holds the `:pressed` pseudo-class that its own press set, so the same
-  bubble handler removes `:pressed` (through `IPseudoClasses`) after every press on a combo body. The
-  release then reaches `ComboBox.OnPointerReleased` unhandled, toggles nothing and leaves no stale
-  `:pressed` on a recycled row. A release on a list item lives in the popup, outside the grid's visual
-  tree, so it still picks.
-- Transposed: `TransposedGridSelectionController` routes a plain press on a combo cell to edit on the
-  first press, after selecting the column. `TransposedComboCellPresenter` opens the list from a
-  `Background` dispatcher job: on the fresh, not yet laid out editor the popup cannot focus the selected
-  item, and the ComboBox ignores Down and Enter while open. When the list closes (Esc, Enter, an item
-  press) the presenter ends the edit and focuses the column container, so Delete and Ctrl+C act on the
-  step again.
+**Lock.** While the PLC runs the recipe no combo list may open. Each presenter binds `IsEnabled`: the
+canonical one to `CellApplicabilityBinding.CreateApplicableAndUnlockedBinding`, which reads
+`DataGrid.IsReadOnly` from the ancestor grid and fails closed outside a grid; the transposed one to
+`TransposedCellTemplateFactory.CreateEditableBinding`. It reads the grid, not the surface:
+`ComboBoxCellFactory` is built through `ColumnBuilder`, and a surface dependency would make a DI cycle.
+A disabled presenter is not hit-testable, so a press on it still selects the row. On the lock transition
+`DataGridEditorCloseBehavior` closes an open list, which ends the edit and returns focus to the grid.
+The list opens from a deferred job (below), and that job re-reads the rule: a lock that arrives between
+the press and the open ends the edit instead.
 
-Keyboard opening: Enter, Space, F4, Alt+Down or Alt+Up on a canonical combo box that holds focus, F2
-on a transposed combo cell. A combo box gets keyboard focus only through Tab: a press, and the Esc,
-Enter or item pick that closes the list, leave focus on the `DataGrid`.
+**Press-to-open.** Both grids open the list on a plain left press:
 
-**Closed list.** A canonical combo box with a closed list never changes its value from the arrow keys,
-the mouse wheel or typing; only an open list picks. Avalonia's `ComboBox` steps its selection on Up or
-Down while closed, on a wheel notch while closed and focused, and on typed text through its text search
-(`SelectingItemsControl.OnTextInput`, on by default for `ComboBox`) with no check of the list state. The
-two-way binding commits that at once, and an action change resets the step to the new action's
-defaults. Three guards stop it:
+- Canonical: `ComboBoxPressOpener` attaches to the `DataGrid`. A tunnel handler records the presenter
+  only for a plain left press while no editor is live, and it does not run for a press that arrives
+  handled. So a second press on an open list, or a press that light-dismisses another list, closes that
+  list and opens nothing. A bubble handler with `handledEventsToo` starts the edit after the `DataGrid`
+  has taken the press for the row selection.
+- Transposed: `TransposedGridSelectionController` selects the column, and the view starts the edit on
+  the same press.
 
-- Arrow keys: `ComboBoxCellFactory` sets `XYFocus.NavigationModes` to `Enabled` on every canonical
-  combo box. With keyboard XY navigation allowed, `ComboBox.OnKeyDown` leaves Up and Down unhandled
-  while closed, so the key bubbles to the `DataGrid`, which moves the row and takes focus. PageUp,
-  PageDown, Home, End, Left and Right never reach a closed `ComboBox`'s selection logic; the grid
-  handles them. The open list is unaffected: its items control handles Up and Down before any XY
-  navigation.
-- Wheel: `ClosedComboInputGuard` attaches a tunnel `PointerWheelChanged` handler to the `DataGrid`.
-  When the notch lands on a focused combo box with a closed list, it moves focus to the grid first, so
-  the combo box ignores the notch and the grid scrolls. Marking the notch handled would stop the grid
-  scroll too, and the `DataGrid` has no public call to scroll by a delta.
-- Typing: the same class attaches a tunnel `TextInput` handler that marks text input handled while the
-  source combo box has a closed list. Type-ahead inside an open list still picks.
+`LazyComboCellPresenter` opens the list from a `Background` dispatcher job after the editor is built: on
+the fresh, not yet laid out editor the popup cannot focus the selected item, and the `ComboBox` ignores
+Down and Enter while open. When the list closes (Esc, Enter, an item press) the presenter ends the edit
+and focuses the target its grid passed in, resolved on edit entry: the `DataGrid`, or the transposed
+column container. Delete and Ctrl+C then act on the step again.
 
-The transposed grid needs none of these guards: it builds a live `ComboBox` only on edit entry.
+## Cell keyboard contract
+
+| Key | Combo cell | Text cell |
+|---|---|---|
+| Plain left press | Opens the list | Canonical: `DataGrid` default; transposed: a second press on the selected column starts the edit |
+| F2 | Opens the list | Starts the edit, keeps the value |
+| F4, Alt+Down | Opens the list | Nothing |
+| Printable key | Nothing | Starts the edit with that character as the value |
+| Enter | Picks in an open list | Commits (canonical: and moves to the next row) |
+| Esc | Closes the list, keeps the value | Cancels the edit |
+
+A canonical display cell takes no focus; the `DataGrid` keeps it. `CanonicalRecipeGridView` routes F2,
+F4 and Alt+Down to the cell that carries `:current` (`DataGrid.CurrentItem` is internal in DataGrid
+12.0.1), so an arrow move followed by F4 opens the new current cell. A printable key on a current text
+cell calls `DataGrid.BeginEdit`, empties and focuses the editor, and leaves the `KeyDown` unhandled.
+Avalonia.Win32 drops the `WM_CHAR` of a handled `KeyDown`, so the character reaches the editor only as the
+key's paired `TextInput`, in the layout and case Windows produced. Esc is handled in the tunnel before the
+`DataGrid`: `DataGrid.ProcessEscapeKey` moves focus to the grid before it cancels, and the editor's
+`LostFocus` binding would write the editor text, so the view first detaches that binding. The editor
+text is invariant, as the model parser is, and a time editor keeps the fraction the display drops
+(`00:01:30.5`), so an unchanged commit stores the value it showed. In the transposed grid `TransposedGridNavigator` handles F2 on any focused display and F4 and Alt+Down
+on a focused combo display; `TransposedTextCellPresenter` starts the edit on a printable key and leaves
+that `KeyDown` unhandled for the same reason. Esc in a transposed text editor clears its edit target, so
+the blur writes nothing, and focuses the column container, as the combo Esc does.
+
+## Value cells: alignment, unit slot, ramp tooltip
+
+A number cell (a property of `system_type` `int` or `float`, and the step start time) shows its value
+right-aligned before a unit slot; `TextCellLayout` builds it for both grids. The slot is as wide as the
+widest unit of the column (in the transposed grid, of the whole grid, because all step columns share one
+width), so the numbers of one column share one right edge. `time_hms` values leave the slot empty, and
+their unit does not count toward its width. Text cells and the comment are left-aligned, and editors
+align as their display does. An inapplicable cell keeps its grey fill and shows no text. The step time
+cell of a ramp action (`RampActions`: MBE 110 "t°C плавно" and 140 "P% плавно") carries the tooltip
+`RampTimeToolTip`: `TimingCalculator` counts zero time for an immediate action.
+
+## Loop pass pill
+
+While a loop runs, the action cell of its start row shows a pill "(pass/count)" before the chevron slot,
+in both grids. `RecipeGridSurfaceBase` sets `RecipeRowViewModel.LoopPassText` from
+`ActiveLoops.Resolve`, the same derivation the status bar reads, so the pill and the bar cannot
+disagree. It recomputes only when `RecipeActive`, `ActualLine` or a loop counter changes, and after
+every mutation, and writes only rows whose text changes. The pill is a `Border.loop-badge`
+(`LoopBadge`), styled in `DataGridStyles.axaml` from the `LoopBadge*Brush` palette keys; the action name
+trims before it.
+
+## Default grid focus
+
+`RecipeGridHost.FocusActiveGrid` focuses the shown grid after layout: the `DataGrid`, or the selected
+(else the first visible) transposed column. The host calls it on every orientation apply, which covers
+the window opening and each flip; `MainWindow` calls it after "Новый рецепт" and "Открыть".
 
 ## Orientation switching
 
@@ -326,9 +363,10 @@ dispatch.
 
 Editing state is a view concern and is not on the interface. The chain:
 
-1. `CanonicalRecipeGridView.IsEditing` — set true in `BeginningEdit` (unless cancelled for an
-   inapplicable column), false in `CellEditEnded`, reset to false on view deactivation.
-   `TransposedRecipeGridView.IsEditing` — true while the `TransposedTextEditCoordinator` holds an
+1. `CanonicalRecipeGridView.IsEditing` — true during a `DataGrid` text edit (set in `BeginningEdit`
+   unless cancelled for an inapplicable column, cleared in `CellEditEnded` and on view deactivation)
+   and while its `CellEditCoordinator` holds a live combo editor.
+   `TransposedRecipeGridView.IsEditing` — true while its `CellEditCoordinator` holds an
    active edit (its lazily-built editor focused). The transposed view has no DataGrid edit lifecycle;
    the coordinator's single active edit is the editing signal.
 2. `RecipeGridHost.IsEditing` — forwards to whichever view is currently hosted as `Content`.
@@ -480,11 +518,11 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
 
 - **Lazy display/editor swap for both cell kinds.** With reuse in place, live editors also leave the
   jump hot path, and the remaining fresh-container weight is cut by rendering a display `TextBlock` by
-  default and building the `TextBox`/`ComboBox` editor only on edit entry. `TransposedLazyCellPresenter`
+  default and building the `TextBox`/`ComboBox` editor only on edit entry. `LazyCellPresenter`
   is the shared base; `TransposedTextCellPresenter` (display via `PropertyTextEditingMultiConverter`)
-  and `TransposedComboCellPresenter` (display via `ComboBoxDisplayTextConverter`, showing the selected
+  and `LazyComboCellPresenter` (display via `ComboBoxDisplayTextConverter`, showing the selected
   item's text) each build their editor lazily and swap back to the display on commit/blur. A single
-  view-level `TransposedTextEditCoordinator` owns the one active edit across both kinds — the
+  view-level `CellEditCoordinator` owns the one active edit across both kinds — the
   display→editor swap, focus, commit, and revert — so `IsEditing`/`GetActiveEditor`/`CloseActiveEditor`
   and exit gating have one definition and one reset point on recycle. Read-only and inapplicable cells
   stay display-only. The select-then-edit gesture is preserved: the first press selects the column

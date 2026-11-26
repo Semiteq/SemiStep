@@ -775,4 +775,10 @@
   <data name="RecipeTimerIdleCaption" xml:space="preserve">
     <value>Рецепт: всего</value>
   </data>
+  <data name="StepNumberHeader" xml:space="preserve">
+    <value>№</value>
+  </data>
+  <data name="RampTimeToolTip" xml:space="preserve">
+    <value>время рампы, не входит в длительность шага</value>
+  </data>
 </root>

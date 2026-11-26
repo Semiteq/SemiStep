@@ -57,6 +57,11 @@ internal partial class MainWindow : ReactiveWindow<MainWindowViewModel>
 			ViewModel.RequestCloseInteraction
 				.RegisterHandler(HandleRequestCloseAsync)
 				.DisposeWith(disposables);
+
+			ViewModel.RecipeFile.NewRecipeCommand
+				.Merge(ViewModel.RecipeFile.LoadRecipeCommand)
+				.Subscribe(_ => RecipeGridHost.FocusActiveGrid())
+				.DisposeWith(disposables);
 		});
 	}
 

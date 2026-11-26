@@ -12,6 +12,10 @@
     <SolidColorBrush x:Key="ToolbarIconBrush" Color="#6C707E" />
     <SolidColorBrush x:Key="ToolbarIconPointeroverBrush" Color="#000000" />
     <SolidColorBrush x:Key="ToolbarSwitchTrackBrush" Color="#6C707E" />
+    <SolidColorBrush x:Key="CellChevronBrush" Color="#6C707E" />
+    <SolidColorBrush x:Key="LoopBadgeBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="LoopBadgeBorderBrush" Color="#5E35A8" />
+    <SolidColorBrush x:Key="LoopBadgeForegroundBrush" Color="#5E35A8" />
     <SolidColorBrush x:Key="ToolbarSwitchOffTrackBrush" Color="Transparent" />
     <SolidColorBrush x:Key="ToolbarSwitchBorderBrush" Color="#A8ADBD" />
     <SolidColorBrush x:Key="ToolbarSwitchKnobBrush" Color="#FFFFFF" />

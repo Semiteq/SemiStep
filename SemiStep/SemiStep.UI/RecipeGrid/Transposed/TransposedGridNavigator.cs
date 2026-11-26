@@ -5,10 +5,15 @@ using Avalonia.VisualTree;
 
 namespace SemiStep.UI.RecipeGrid.Transposed;
 
-internal sealed class TransposedGridNavigator(ListBox stepListBox)
+internal sealed class TransposedGridNavigator(ListBox stepListBox, CellEditCoordinator editCoordinator)
 {
 	public void HandleTunnelKeyDown(TransposedRecipeGridSurface? surface, KeyEventArgs e)
 	{
+		if (surface is not null && TryBeginEditFromKey(e))
+		{
+			return;
+		}
+
 		if (surface is null
 			|| e.KeyModifiers != KeyModifiers.None
 			|| e.Key is not (Key.Left or Key.Right or Key.Up or Key.Down))
@@ -52,6 +57,25 @@ internal sealed class TransposedGridNavigator(ListBox stepListBox)
 		{
 			MoveWithinColumn(surface, position, e.Key == Key.Down ? 1 : -1);
 		}
+	}
+
+	// A focused display is not editing: F2 opens its editor, and F4 or Alt+Down also open a combo's list.
+	private bool TryBeginEditFromKey(KeyEventArgs e)
+	{
+		var isEditKey = CellEditKeys.IsEditKey(e);
+		var isListKey = CellEditKeys.IsListKey(e);
+		if (!(isEditKey || isListKey)
+			|| TopLevel.GetTopLevel(stepListBox)?.FocusManager?.GetFocusedElement() is not LazyCellPresenter presenter
+			|| presenter.IsEditing
+			|| (isListKey && presenter is not LazyComboCellPresenter))
+		{
+			return false;
+		}
+
+		editCoordinator.BeginEdit(presenter, initialText: null);
+		e.Handled = true;
+
+		return true;
 	}
 
 	// A column container holds focus after a horizontal move whose target row had no focusable
@@ -160,7 +184,7 @@ internal sealed class TransposedGridNavigator(ListBox stepListBox)
 		var cell = surface.StepColumns[columnIndex].Cells[parameterIndex];
 
 		return container.GetVisualDescendants()
-			.OfType<TransposedLazyCellPresenter>()
+			.OfType<LazyCellPresenter>()
 			.FirstOrDefault(presenter => ReferenceEquals(presenter.DataContext, cell)
 				&& presenter.Focusable
 				&& presenter.IsEffectivelyEnabled);

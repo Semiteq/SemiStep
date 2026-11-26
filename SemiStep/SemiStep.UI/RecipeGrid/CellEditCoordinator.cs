@@ -1,16 +1,17 @@
 ﻿using Avalonia.Controls;
 
-namespace SemiStep.UI.RecipeGrid.Transposed;
+namespace SemiStep.UI.RecipeGrid;
 
-internal sealed class TransposedTextEditCoordinator
+/// <summary>Tracks the one cell of a grid whose editor is live.</summary>
+internal sealed class CellEditCoordinator
 {
-	private TransposedLazyCellPresenter? _active;
+	private LazyCellPresenter? _active;
 
 	// A focused display is NOT editing; only a built-and-editing presenter counts.
 	public Control? ActiveEditor => _active is { IsEditing: true } presenter ? presenter.Editor : null;
 
 	// Focusing the new editor blurs any previous one, which self-exits.
-	public void BeginEdit(TransposedLazyCellPresenter presenter, string? initialText)
+	public void BeginEdit(LazyCellPresenter presenter, string? initialText)
 	{
 		if (!presenter.CanEnterEdit)
 		{
@@ -28,7 +29,7 @@ internal sealed class TransposedTextEditCoordinator
 	}
 
 	// Clear only when still the active slot, so a focus MOVE into a new edit doesn't wipe it.
-	public void NotifyEditEnded(TransposedLazyCellPresenter presenter)
+	public void NotifyEditEnded(LazyCellPresenter presenter)
 	{
 		if (ReferenceEquals(_active, presenter))
 		{

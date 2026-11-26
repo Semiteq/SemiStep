@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:transposed="clr-namespace:SemiStep.UI.RecipeGrid.Transposed"
+             xmlns:l="clr-namespace:SemiStep.UI.Localization"
              mc:Ignorable="d"
              d:DesignWidth="1600"
              d:DesignHeight="600"
@@ -24,8 +25,14 @@
                      The header/marker split mirrors the step-column template so the header underline
                      and the marker strip stay continuous across the frozen seam. -->
                 <StackPanel DockPanel.Dock="Left">
-                    <Border Classes="transposed-header-spacer"
-                            Height="{DynamicResource TransposedCellHeight}" />
+                    <Border x:Name="StepNumberCorner"
+                            Classes="transposed-header-spacer"
+                            Height="{DynamicResource TransposedCellHeight}">
+                        <TextBlock Text="{x:Static l:Resources.StepNumberHeader}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0" />
+                    </Border>
                     <Border Classes="transposed-marker-slot"
                             Height="{DynamicResource TransposedMarkerSlotHeight}" />
                     <ItemsControl x:Name="ParameterNameColumn"

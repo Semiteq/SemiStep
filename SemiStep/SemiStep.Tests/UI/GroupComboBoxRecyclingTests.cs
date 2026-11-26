@@ -3,6 +3,9 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
@@ -14,6 +17,7 @@ using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
+using SemiStep.UI.Coordinator;
 using SemiStep.UI.RecipeGrid;
 
 using Xunit;
@@ -31,6 +35,8 @@ namespace SemiStep.Tests.UI;
 [Trait("Category", "Unit")]
 public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 {
+	private const int RecycledStepCount = 60;
+
 	private readonly UIFixture _fixture = new();
 
 	public ValueTask InitializeAsync()
@@ -49,7 +55,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		var template = GetGroupColumnCellTemplate();
 		var rowWithGroup = CreateRow(RecipeTestDriver.WithGroupActionId);
 
-		var comboBox = MaterializeComboBox(template, rowWithGroup);
+		var (_, comboBox) = MaterializeComboBox(template, rowWithGroup);
 
 		var items = comboBox.ItemsSource
 			.Should().BeAssignableTo<IReadOnlyList<ComboBoxItemViewModel>>(
@@ -71,7 +77,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		var rowWithoutGroup = CreateRow(RecipeTestDriver.WaitActionId);
 		var rowWithGroup = CreateRow(RecipeTestDriver.WithGroupActionId);
 
-		var comboBox = MaterializeComboBox(template, rowWithoutGroup);
+		var (presenter, comboBox) = MaterializeComboBox(template, rowWithoutGroup);
 
 		comboBox.ItemsSource.Should().NotBeNull(
 			"target column is pre-populated with an empty list on every row so binding never sees UnsetValue");
@@ -80,8 +86,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		initialItems.Should().BeEmpty(
 			"Wait action does not declare a 'target' property, so the pre-populated list is empty");
 
-		// Simulate Avalonia recycling the same visual onto a different row.
-		comboBox.DataContext = rowWithGroup;
+		RecycleOnto(presenter, rowWithGroup);
 
 		var refreshedItems = comboBox.ItemsSource
 			.Should().BeAssignableTo<IReadOnlyList<ComboBoxItemViewModel>>(
@@ -103,11 +108,11 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		var rowWithGroup = CreateRow(RecipeTestDriver.WithGroupActionId);
 		var rowWithoutGroup = CreateRow(RecipeTestDriver.WaitActionId);
 
-		var comboBox = MaterializeComboBox(template, rowWithGroup);
+		var (presenter, comboBox) = MaterializeComboBox(template, rowWithGroup);
 
 		comboBox.ItemsSource.Should().NotBeNull();
 
-		comboBox.DataContext = rowWithoutGroup;
+		RecycleOnto(presenter, rowWithoutGroup);
 
 		comboBox.ItemsSource.Should().NotBeNull(
 			"target column stays pre-populated; the list shrinks to empty rather than the binding going null");
@@ -172,13 +177,13 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		// by ColumnBuilder for template construction does not need to know about these synthetic
 		// groups — but the registry consulted by RecipeRowViewModel does. Materialising directly
 		// against the existing template with the synthetic row VMs exercises that exact path.
-		var comboBox = MaterializeComboBox(template, firstRow);
+		var (presenter, comboBox) = MaterializeComboBox(template, firstRow);
 
 		var firstItems = comboBox.ItemsSource
 			.Should().BeAssignableTo<IReadOnlyList<ComboBoxItemViewModel>>().Subject;
 		firstItems.Select(item => item.DisplayText).Should().BeEquivalentTo("alpha", "beta");
 
-		comboBox.DataContext = secondRow;
+		RecycleOnto(presenter, secondRow);
 
 		var secondItems = comboBox.ItemsSource
 			.Should().BeAssignableTo<IReadOnlyList<ComboBoxItemViewModel>>().Subject;
@@ -234,7 +239,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		var template = GetGroupColumnCellTemplate();
 		var row = CreateRow(RecipeTestDriver.WithGroupActionId);
 
-		var comboBox = MaterializeComboBox(template, row);
+		var (_, comboBox) = MaterializeComboBox(template, row);
 
 		var items = comboBox.ItemsSource
 			.Should().BeAssignableTo<IReadOnlyList<ComboBoxItemViewModel>>().Subject;
@@ -266,7 +271,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		var rowWithGroup = CreateRow(RecipeTestDriver.WithGroupActionId);
 		var rowWithoutGroup = CreateRow(RecipeTestDriver.WaitActionId);
 
-		var comboBox = MaterializeComboBox(template, rowWithGroup);
+		var (presenter, comboBox) = MaterializeComboBox(template, rowWithGroup);
 
 		var items = comboBox.ItemsSource
 			.Should().BeAssignableTo<IReadOnlyList<ComboBoxItemViewModel>>().Subject;
@@ -281,7 +286,7 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		rowWithoutGroup.ActionChanged += _ => withoutGroupActions++;
 		rowWithoutGroup.PropertyValueChanged += (_, _) => withoutGroupPropertyChanges++;
 
-		comboBox.DataContext = rowWithoutGroup;
+		RecycleOnto(presenter, rowWithoutGroup);
 
 		withGroupActions.Should().Be(0, "previous row must not see writebacks during recycle");
 		withGroupPropertyChanges.Should().Be(0, "previous row must not see writebacks during recycle");
@@ -289,12 +294,84 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		withoutGroupPropertyChanges.Should().Be(0, "new row must not see phantom property mutations from the previous selection");
 	}
 
+	// Real recycling: the DataGrid hands the scrolled-out row's cell, with its pooled editor, to another row.
+	[AvaloniaFact]
+	public void ScrolledOutRow_RecycledCellPress_ShowsNewRowValue_WritesNoRow()
+	{
+		const string ActionColumn = "action";
+		_fixture.Coordinator.NewRecipe();
+		_fixture.Coordinator.AppendStep(RecipeTestDriver.WithGroupActionId).IsSuccess.Should().BeTrue();
+		for (var i = 1; i < RecycledStepCount; i++)
+		{
+			_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId).IsSuccess.Should().BeTrue();
+		}
+
+		using var grid = new CanonicalGridWindow(_fixture);
+		var firstRow = grid.Surface.RecipeRows[0];
+		var presenter = grid.PresenterAt(0, ActionColumn);
+		grid.Click(presenter);
+		grid.PressKey(Key.Escape, PhysicalKey.Escape);
+		var pooledEditor = presenter.Editor;
+
+		// The DataGrid keeps the row that last held keyboard focus realized, so focus leaves the grid first.
+		grid.Window.FocusManager.Focus(null);
+		Dispatcher.UIThread.RunJobs();
+		grid.DataGrid.ScrollIntoView(grid.Surface.RecipeRows[^1], null);
+		Dispatcher.UIThread.RunJobs();
+
+		pooledEditor.Should().NotBeNull("precondition: the first press built the editor");
+		var newRow = presenter.DataContext.Should().BeOfType<RecipeRowViewModel>(
+			"precondition: the cell is still realized").Subject;
+		newRow.Should().NotBeSameAs(firstRow, "precondition: the grid recycled the cell onto another row");
+		presenter.IsEffectivelyVisible.Should().BeTrue("precondition: the recycled cell is on screen");
+		var mutations = 0;
+		void OnMutated(MutationSignal signal)
+		{
+			mutations++;
+		}
+
+		var rowWrites = 0;
+		firstRow.PropertyValueChanged += (_, _) => rowWrites++;
+		firstRow.ActionChanged += _ => rowWrites++;
+		newRow.PropertyValueChanged += (_, _) => rowWrites++;
+		newRow.ActionChanged += _ => rowWrites++;
+		_fixture.Coordinator.Mutated += OnMutated;
+		try
+		{
+			grid.Click(presenter);
+
+			presenter.Editor.Should().BeSameAs(pooledEditor, "the press re-enters the pooled editor");
+			var comboBox = (ComboBox)pooledEditor!;
+			comboBox.IsDropDownOpen.Should().BeTrue("the press opens the list");
+			((ComboBoxItemViewModel)comboBox.SelectedItem!).Id.Should().Be(
+				RecipeTestDriver.WaitActionId,
+				"the list selects the new row's value");
+			grid.PressKey(Key.Escape, PhysicalKey.Escape);
+		}
+		finally
+		{
+			_fixture.Coordinator.Mutated -= OnMutated;
+		}
+
+		presenter.GetVisualDescendants().OfType<TextBlock>().First().Text.Should().Be(
+			ActionText(RecipeTestDriver.WaitActionId),
+			"the display shows the new row's value");
+		mutations.Should().Be(0, "neither the recycle nor the re-entry writes the recipe");
+		rowWrites.Should().Be(0, "neither row sees a write");
+		_fixture.Coordinator.CurrentRecipe.Steps[0].ActionKey.Should().Be(RecipeTestDriver.WithGroupActionId);
+	}
+
+	private string ActionText(int actionId)
+	{
+		return _fixture.ComboBoxItemsProvider.ActionItems.Single(item => item.Id == actionId).DisplayText;
+	}
+
 	private IDataTemplate GetGroupColumnCellTemplate()
 	{
 		var columnBuilder = new ColumnBuilder(
 			GridStyleOptions.Default, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider);
 		var grid = new DataGrid();
-		columnBuilder.BuildColumns(grid);
+		columnBuilder.BuildColumns(grid, new CellEditCoordinator());
 
 		var groupColumn = grid.Columns
 			.OfType<DataGridTemplateColumn>()
@@ -329,14 +406,31 @@ public sealed class GroupComboBoxRecyclingTests : IAsyncLifetime
 		return inapplicable;
 	}
 
-	private static ComboBox MaterializeComboBox(IDataTemplate template, RecipeRowViewModel row)
+	// The cell template builds a display cell; its editor exists only after an edit entry. Outside a DataGrid
+	// the lock leg fails closed, so the test enables the cell. The editor stays in the cell and takes its row
+	// from the cell, as in the grid.
+	private static (LazyComboCellPresenter Presenter, ComboBox ComboBox) MaterializeComboBox(
+		IDataTemplate template,
+		RecipeRowViewModel row)
 	{
-		var built = template.Build(row);
-		built.Should().NotBeNull();
+		var presenter = template.Build(row) as LazyComboCellPresenter;
+		presenter.Should().NotBeNull("the CellTemplate builds a lazy combo cell");
+		presenter.IsEnabled = true;
+		presenter.DataContext = row;
+		presenter.EnterEdit(initialText: null);
+		var comboBox = presenter.Editor as ComboBox;
+		comboBox.Should().NotBeNull("an edit entry builds the ComboBox editor");
 
-		var comboBox = built as ComboBox;
-		comboBox.Should().NotBeNull("CellTemplate must return a ComboBox directly");
-		comboBox.DataContext = row;
-		return comboBox;
+		return (presenter, comboBox);
+	}
+
+	// What a recycled row does to the cell: the row change ends the edit, and the next entry re-enters the
+	// pooled editor on the new row. ScrolledOutRow_RecycledCellPress_ShowsNewRowValue_WritesNoRow drives the
+	// same path through a scrolled DataGrid.
+	private static void RecycleOnto(LazyComboCellPresenter presenter, RecipeRowViewModel row)
+	{
+		presenter.DataContext = row;
+		presenter.IsEditing.Should().BeFalse("the row change ends the edit");
+		presenter.EnterEdit(initialText: null);
 	}
 }

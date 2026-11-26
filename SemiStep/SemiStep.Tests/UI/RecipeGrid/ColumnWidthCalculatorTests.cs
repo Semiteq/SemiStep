@@ -61,10 +61,15 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 			UiName = ""
 		};
 		var action = new ActionDefinition(1, LongWord, DeployDuration.Immediate, []);
-		var calculator = BuildCalculator(
+		var registry = TestRecipeMetadataRegistryFactory.Build(
 			[TestPropertyTypeDefinitionBuilder.CreateString("comment", TestRecipeMetadataRegistryFactory.DefaultStringMaxLength)],
 			new Dictionary<int, ActionDefinition> { [1] = action },
-			new Dictionary<string, GridColumnDefinition> { ["action"] = actionColumn });
+			columns: new Dictionary<string, GridColumnDefinition> { ["action"] = actionColumn });
+		var largeHeaderStyle = GridStyleOptions.Default with
+		{
+			Fonts = GridStyleOptions.Default.Fonts with { HeaderFontSize = 18, HeaderFontWeight = 700 },
+		};
+		var calculator = new ColumnWidthCalculator(registry, largeHeaderStyle);
 
 		var headerWidth = GetPixelWidth(calculator.CalculateColumnWidth(HeaderColumn(LongWord)));
 		var cellWidth = GetPixelWidth(calculator.CalculateColumnWidth(actionColumn));

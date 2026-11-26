@@ -17,8 +17,8 @@ public sealed record GridStyleOptions(
 	public static GridStyleOptions Default { get; } = new(
 		Fonts: new GridStyleFonts(
 			FontFamily: "",
-			HeaderFontSize: 14,
-			HeaderFontWeight: 700,
+			HeaderFontSize: 12,
+			HeaderFontWeight: 600,
 			HeaderItalic: false,
 			CellFontSize: 12,
 			CellFontWeight: 400,
@@ -91,7 +91,7 @@ public sealed record GridStyleOptions(
 			SecondaryForeground: StyleColor.Parse("#6C707E"),
 			GridBorder: StyleColor.Parse("#808080"),
 			GridBackground: StyleColor.Parse("#FFFFFF"),
-			HeaderForeground: StyleColor.Parse("#000000"),
+			HeaderForeground: StyleColor.Parse("#6C707E"),
 			GridLine: StyleColor.Parse("#E0E0E0")),
 		Orientation: GridOrientation.RowsAsSteps);
 }

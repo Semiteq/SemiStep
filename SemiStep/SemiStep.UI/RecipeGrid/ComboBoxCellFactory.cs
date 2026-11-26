@@ -1,118 +1,218 @@
 ﻿using System.Globalization;
 
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.VisualTree;
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
 
+using Path = Avalonia.Controls.Shapes.Path;
+
 namespace SemiStep.UI.RecipeGrid;
 
+/// <summary>Builds the canonical combo columns: a text display cell whose ComboBox exists only while edited.</summary>
 internal sealed class ComboBoxCellFactory(ComboBoxItemsProvider comboBoxItemsProvider, GridStyleOptions gridStyle)
 {
-	public DataGridColumn CreateActionColumn(GridColumnDefinition columnDef, DataGridLength width)
-	{
-		return new DataGridTemplateColumn
-		{
-			Header = columnDef.UiName,
-			Tag = columnDef.Key,
-			Width = width,
-			IsReadOnly = true,
-			CanUserSort = false,
-			CellTemplate = CreateActionCellTemplate(columnDef.ReadOnly),
-		};
-	}
+	internal const string ChevronClass = "cell-chevron";
 
-	public DataGridColumn CreateGroupComboBoxColumn(GridColumnDefinition columnDef, DataGridLength width)
-	{
-		return new DataGridTemplateColumn
-		{
-			Header = columnDef.UiName,
-			Tag = columnDef.Key,
-			Width = width,
-			IsReadOnly = true,
-			CanUserSort = false,
-			CellTemplate = CreateGroupCellTemplate(columnDef.Key, columnDef.ReadOnly),
-		};
-	}
+	// Matches the left padding of the ComboBox selection box, so the text does not move when the display swaps to
+	// the editor. The width calculator reserves it with the chevron slot.
+	internal const double DisplayPaddingLeft = 6;
+	internal const double ChevronSlotWidth = 32;
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateActionCellTemplate(bool isColumnReadOnly)
+	public DataGridColumn CreateActionColumn(
+		GridColumnDefinition columnDef,
+		DataGridLength width,
+		CellEditCoordinator editCoordinator)
 	{
 		var items = comboBoxItemsProvider.ActionItems;
 		var selectionConverter = new ComboBoxItemSelectionConverter(items);
 
-		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
-		{
-			var comboBox = CreateStyledComboBox();
-			comboBox.ItemsSource = items;
-
-			comboBox.Bind(
-				Avalonia.Controls.Primitives.SelectingItemsControl.SelectedItemProperty,
-				new Binding(ColumnTypes.IndexerPath(ColumnTypes.Action))
-				{
-					Mode = BindingMode.TwoWay,
-					Converter = selectionConverter,
-				});
-
-			ApplyInputBlocking(comboBox, ColumnTypes.Action, isColumnReadOnly);
-
-			return comboBox;
-		}, supportsRecycling: true);
+		return CreateColumn(columnDef, width, () => new FuncDataTemplate<RecipeRowViewModel>(
+			(_, _) => CreatePresenter(
+				columnDef,
+				editCoordinator,
+				CreateDisplayTextBinding(
+					new Binding(ColumnTypes.IndexerPath(ColumnTypes.Action)),
+					new Binding { Source = items }),
+				() => CreateActionComboBox(items, selectionConverter),
+				nameof(RecipeRowViewModel.LoopPassText)),
+			supportsRecycling: true));
 	}
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateGroupCellTemplate(string columnKey, bool isColumnReadOnly)
+	public DataGridColumn CreateGroupComboBoxColumn(
+		GridColumnDefinition columnDef,
+		DataGridLength width,
+		CellEditCoordinator editCoordinator)
 	{
-		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
+		return CreateColumn(columnDef, width, () => new FuncDataTemplate<RecipeRowViewModel>(
+			(_, _) => CreatePresenter(
+				columnDef,
+				editCoordinator,
+				CreateDisplayTextBinding(
+					new Binding(ColumnTypes.IndexerPath(columnDef.Key)),
+					new Binding(ColumnTypes.GroupItemsPath(columnDef.Key))),
+				() => CreateGroupComboBox(columnDef.Key),
+				loopPassTextPath: null),
+			supportsRecycling: true));
+	}
+
+	/// <summary>
+	/// The display of a combo cell in either grid: the trimming name, the loop pill if any, the chevron slot.
+	/// </summary>
+	internal static Grid CreateDisplayGrid(TextBlock name, string? loopPassTextPath)
+	{
+		var chevron = new Path
 		{
-			var comboBox = CreateStyledComboBox();
+			HorizontalAlignment = HorizontalAlignment.Center,
+			VerticalAlignment = VerticalAlignment.Center,
+			IsHitTestVisible = false,
+		};
+		chevron.Classes.Add(ChevronClass);
+		Grid.SetColumn(chevron, 2);
 
-			// ItemsSource follows the recycled cell's current row VM. SelectedItem resolves via
-			// a OneWay MultiBinding so the lookup waits for both legs before invoking Convert.
-			// Writeback is handled by SelectionChanged below.
-			comboBox.Bind(
-				ItemsControl.ItemsSourceProperty,
-				new Binding(ColumnTypes.GroupItemsPath(columnKey)));
-
-			comboBox.Bind(
-				Avalonia.Controls.Primitives.SelectingItemsControl.SelectedItemProperty,
-				new MultiBinding
-				{
-					Mode = BindingMode.OneWay,
-					Converter = ComboBoxItemMultiSelectionConverter.Instance,
-					Bindings =
-					{
-						new Binding(ColumnTypes.IndexerPath(columnKey)),
-						new Binding(ColumnTypes.GroupItemsPath(columnKey)),
-					},
-				});
-
-			comboBox.SelectionChanged += (_, _) =>
+		var grid = new Grid
+		{
+			ColumnDefinitions =
 			{
-				if (comboBox.DataContext is not RecipeRowViewModel row)
-				{
-					return;
-				}
+				new ColumnDefinition(GridLength.Star),
+				new ColumnDefinition(GridLength.Auto),
+				new ColumnDefinition(ChevronSlotWidth, GridUnitType.Pixel),
+			},
+			Background = Brushes.Transparent,
+			Children = { name, chevron },
+		};
 
-				if (comboBox.SelectedItem is not ComboBoxItemViewModel selected)
-				{
-					return;
-				}
+		if (loopPassTextPath is not null)
+		{
+			var pill = LoopBadge.Create(loopPassTextPath);
+			Grid.SetColumn(pill, 1);
+			grid.Children.Add(pill);
+		}
 
-				row.SetPropertyValue(columnKey, selected.Id.ToString(CultureInfo.InvariantCulture));
-			};
+		return grid;
+	}
 
-			ApplyInputBlocking(comboBox, columnKey, isColumnReadOnly);
+	private static DataGridTemplateColumn CreateColumn(
+		GridColumnDefinition columnDef,
+		DataGridLength width,
+		Func<IDataTemplate> cellTemplate)
+	{
+		return new DataGridTemplateColumn
+		{
+			Header = columnDef.UiName,
+			Tag = columnDef.Key,
+			Width = width,
+			IsReadOnly = true,
+			CanUserSort = false,
+			CellTemplate = cellTemplate(),
+		};
+	}
 
-			return comboBox;
-		}, supportsRecycling: true);
+	private LazyComboCellPresenter CreatePresenter(
+		GridColumnDefinition columnDef,
+		CellEditCoordinator editCoordinator,
+		MultiBinding displayTextBinding,
+		Func<ComboBox> editorBuilder,
+		string? loopPassTextPath)
+	{
+		var presenter = new LazyComboCellPresenter(
+			editCoordinator,
+			CreateDisplay(displayTextBinding, loopPassTextPath),
+			editorBuilder,
+			cell => cell.FindAncestorOfType<DataGrid>());
+
+		if (columnDef.ReadOnly)
+		{
+			presenter.IsEnabled = false;
+		}
+		else
+		{
+			presenter.Bind(
+				InputElement.IsEnabledProperty,
+				CellApplicabilityBinding.CreateApplicableAndUnlockedBinding(columnDef.Key));
+		}
+
+		return presenter;
+	}
+
+	private static MultiBinding CreateDisplayTextBinding(Binding idBinding, Binding itemsBinding)
+	{
+		return new MultiBinding
+		{
+			Mode = BindingMode.OneWay,
+			Converter = ComboBoxDisplayTextConverter.Instance,
+			Bindings = { idBinding, itemsBinding },
+		};
+	}
+
+	private Grid CreateDisplay(MultiBinding displayTextBinding, string? loopPassTextPath)
+	{
+		var text = new TextBlock
+		{
+			VerticalAlignment = VerticalAlignment.Center,
+			Padding = new Thickness(DisplayPaddingLeft, 0, 0, 0),
+			TextTrimming = TextTrimming.CharacterEllipsis,
+		};
+		GridFontApplier.ApplyCellFont(text, gridStyle);
+		text.Bind(TextBlock.TextProperty, displayTextBinding);
+
+		return CreateDisplayGrid(text, loopPassTextPath);
+	}
+
+	private ComboBox CreateActionComboBox(
+		IReadOnlyList<ComboBoxItemViewModel> items,
+		ComboBoxItemSelectionConverter selectionConverter)
+	{
+		var comboBox = CreateStyledComboBox(ColumnTypes.Action);
+		comboBox.ItemsSource = items;
+		comboBox.Bind(
+			SelectingItemsControl.SelectedItemProperty,
+			new Binding(ColumnTypes.IndexerPath(ColumnTypes.Action))
+			{
+				Mode = BindingMode.OneWay,
+				Converter = selectionConverter,
+			});
+
+		return comboBox;
+	}
+
+	// ItemsSource follows the row VM; SelectedItem resolves through a MultiBinding that waits for both legs.
+	private ComboBox CreateGroupComboBox(string columnKey)
+	{
+		var comboBox = CreateStyledComboBox(columnKey);
+		comboBox.Bind(ItemsControl.ItemsSourceProperty, new Binding(ColumnTypes.GroupItemsPath(columnKey)));
+		comboBox.Bind(SelectingItemsControl.SelectedItemProperty, CreateGroupSelectionBinding(columnKey));
+
+		return comboBox;
+	}
+
+	private static MultiBinding CreateGroupSelectionBinding(string columnKey)
+	{
+		return new MultiBinding
+		{
+			Mode = BindingMode.OneWay,
+			Converter = ComboBoxItemMultiSelectionConverter.Instance,
+			Bindings =
+			{
+				new Binding(ColumnTypes.IndexerPath(columnKey)),
+				new Binding(ColumnTypes.GroupItemsPath(columnKey)),
+			},
+		};
 	}
 
 	// FontSize explicit: the Semi ComboBox selection box does not inherit the grid font, so without it
 	// the text renders at the theme default and the chevron clips it. See docs/architecture/recipe-grid-column-sizing.md.
-	private ComboBox CreateStyledComboBox()
+	// The write-back is the pick only: the binding is OneWay, and a detached or re-entered editor selects the
+	// value its row already holds, which the row ignores.
+	private ComboBox CreateStyledComboBox(string columnKey)
 	{
 		var comboBox = new ComboBox
 		{
@@ -123,27 +223,15 @@ internal sealed class ComboBoxCellFactory(ComboBoxItemsProvider comboBoxItemsPro
 		};
 		GridFontApplier.ApplyCellFont(comboBox, gridStyle);
 
-		// With keyboard XY navigation allowed, a closed ComboBox leaves Up and Down unhandled, so the DataGrid moves
-		// the row instead of the key changing the cell value.
-		XYFocus.SetNavigationModes(comboBox, XYFocusNavigationModes.Enabled);
+		comboBox.SelectionChanged += (_, _) =>
+		{
+			if (comboBox.DataContext is RecipeRowViewModel row
+				&& comboBox.SelectedItem is ComboBoxItemViewModel selected)
+			{
+				row.SetPropertyValue(columnKey, selected.Id.ToString(CultureInfo.InvariantCulture));
+			}
+		};
 
 		return comboBox;
-	}
-
-	private static void ApplyInputBlocking(ComboBox comboBox, string columnKey, bool isColumnReadOnly)
-	{
-		if (isColumnReadOnly)
-		{
-			comboBox.IsHitTestVisible = false;
-			comboBox.Focusable = false;
-			return;
-		}
-
-		comboBox.Bind(
-			InputElement.IsHitTestVisibleProperty,
-			CellApplicabilityBinding.CreateApplicableAndUnlockedBinding(columnKey));
-		comboBox.Bind(
-			InputElement.FocusableProperty,
-			CellApplicabilityBinding.CreateApplicableAndUnlockedBinding(columnKey));
 	}
 }

@@ -1,5 +1,12 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rg="clr-namespace:SemiStep.UI.RecipeGrid;assembly=SemiStep">
+
+    <!-- The transposed grid moves keyboard focus between display cells, so the focused combo cell shows its
+         chevron (hover and the disabled rule live in DataGridStyles.axaml). -->
+    <Style Selector="rg|LazyComboCellPresenter:focus:not(:disabled) Path.cell-chevron">
+        <Setter Property="IsVisible" Value="True" />
+    </Style>
 
     <!-- ============================================== -->
     <!-- Transposed recipe grid (ListBox of step-       -->
@@ -43,7 +50,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource GridLineBrush}" />
         <Setter Property="BorderThickness" Value="0,0,1,1" />
     </Style>
-    <Style Selector="Border.transposed-name-cell, Border.transposed-step-header">
+    <Style Selector="Border.transposed-header-spacer, Border.transposed-name-cell, Border.transposed-step-header">
         <Setter Property="TextElement.Foreground" Value="{DynamicResource HeaderForegroundBrush}" />
     </Style>
 
@@ -57,10 +64,10 @@
     </Style>
 
     <!-- Base cell chrome. Background is the TransposedCellBackgroundConverter MultiBinding set in
-         the view; only the grid-line border lives here. -->
+         the view; the border thickness is set in code (TransposedColumnCellsPresenter.GridLineWidth),
+         so the step column width can reserve it; only the grid-line brush lives here. -->
     <Style Selector="Border.transposed-cell">
         <Setter Property="BorderBrush" Value="{DynamicResource GridLineBrush}" />
-        <Setter Property="BorderThickness" Value="0,0,1,1" />
     </Style>
 
     <!-- Read-only and inapplicable foreground: two disjoint signals, inapplicable last so it wins

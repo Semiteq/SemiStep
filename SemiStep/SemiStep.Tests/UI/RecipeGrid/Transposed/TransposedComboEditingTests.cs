@@ -18,6 +18,8 @@ using SemiStep.UI.Styles;
 
 using Xunit;
 
+using Path = Avalonia.Controls.Shapes.Path;
+
 namespace SemiStep.Tests.UI.RecipeGrid.Transposed;
 
 [Trait("Component", "UI")]
@@ -49,6 +51,7 @@ public sealed class TransposedComboEditingTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	[Trait("Area", "ComboOpen")]
 	public void ComboCell_RendersDisplayText_NoLiveComboBox_ByDefault()
 	{
 		var stepListBox = ShowView();
@@ -178,6 +181,40 @@ public sealed class TransposedComboEditingTests : IAsyncLifetime
 		FindComboBox(stepListBox, 0, ActionColumnKey).Should().NotBeNull();
 	}
 
+	[AvaloniaTheory]
+	[Trait("Area", "CellKeyboard")]
+	[InlineData(PhysicalKey.F4, RawInputModifiers.None)]
+	[InlineData(PhysicalKey.ArrowDown, RawInputModifiers.Alt)]
+	public void OpenKeyOnFocusedComboDisplay_OpensList(PhysicalKey key, RawInputModifiers modifiers)
+	{
+		var stepListBox = ShowInteractiveView().StepListBox;
+		var presenter = FindComboPresenter(stepListBox, 0, ActionColumnKey);
+		presenter.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		_window!.KeyPressQwerty(key, modifiers);
+		Dispatcher.UIThread.RunJobs();
+
+		presenter.IsEditing.Should().BeTrue($"{modifiers} {key} opens the focused combo cell");
+		FindComboBox(stepListBox, 0, ActionColumnKey).IsDropDownOpen.Should().BeTrue();
+	}
+
+	[AvaloniaFact]
+	[Trait("Area", "CellKeyboard")]
+	public void PrintableKeyOnFocusedComboDisplay_DoesNothing()
+	{
+		var stepListBox = ShowInteractiveView().StepListBox;
+		var presenter = FindComboPresenter(stepListBox, 0, ActionColumnKey);
+		presenter.Focus();
+		var actionBefore = _fixture.Coordinator.CurrentRecipe.Steps[0].ActionKey;
+
+		_window!.TypeKey(PhysicalKey.F, "f");
+		Dispatcher.UIThread.RunJobs();
+
+		presenter.IsEditing.Should().BeFalse("combo cells ignore typing");
+		_fixture.Coordinator.CurrentRecipe.Steps[0].ActionKey.Should().Be(actionBefore);
+	}
+
 	// Building the ComboBox on lazy open fires an initial SelectionChanged for the already-selected item;
 	// the same-value write no-ops at the model, so it must not mark the recipe dirty or the cell changed.
 	[AvaloniaFact]
@@ -302,6 +339,51 @@ public sealed class TransposedComboEditingTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
+	[Trait("Area", "ComboLock")]
+	public void LockBetweenEditEntryAndDeferredOpen_OpensNoList_ShowsDisplay()
+	{
+		var (view, stepListBox) = ShowInteractiveView();
+		var presenter = FindComboPresenter(stepListBox, 1, ActionColumnKey);
+		presenter.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		_window!.KeyPressQwerty(PhysicalKey.F2, RawInputModifiers.None);
+		_fixture.SetRecipeActive(true);
+		Dispatcher.UIThread.RunJobs();
+
+		presenter.IsEditing.Should().BeFalse("the deferred open re-reads the lock and ends the edit");
+		view.IsEditing.Should().BeFalse();
+		presenter.Editor.Should().BeOfType<ComboBox>("F2 built the editor before the lock")
+			.Which.IsDropDownOpen.Should().BeFalse("no list opens once the run has started");
+		ContainerComboBoxCount(stepListBox, 1).Should().Be(0, "the display shows again");
+	}
+
+	[AvaloniaFact]
+	[Trait("Area", "ComboLock")]
+	public void Chevron_OnFocusedComboCell_NoneWhileLocked()
+	{
+		var stepListBox = ShowInteractiveView().StepListBox;
+		var presenter = FindComboPresenter(stepListBox, 1, ActionColumnKey);
+		presenter.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		VisibleChevronOwners(stepListBox).Should().Equal([presenter], "only the focused combo cell shows a chevron");
+
+		_fixture.SetRecipeActive(true);
+		Dispatcher.UIThread.RunJobs();
+
+		VisibleChevronOwners(stepListBox).Should().BeEmpty("a locked cell shows no chevron");
+	}
+
+	private static LazyComboCellPresenter[] VisibleChevronOwners(ListBox stepListBox)
+	{
+		return [.. stepListBox.GetVisualDescendants()
+			.OfType<Path>()
+			.Where(path => path.Classes.Contains(ComboBoxCellFactory.ChevronClass) && path.IsEffectivelyVisible)
+			.Select(path => path.FindAncestorOfType<LazyComboCellPresenter>()!)];
+	}
+
+	[AvaloniaFact]
 	[Trait("Area", "ComboOpen")]
 	public void Unlock_AfterLock_OnePressOpensList()
 	{
@@ -420,13 +502,13 @@ public sealed class TransposedComboEditingTests : IAsyncLifetime
 				&& cell.Descriptor.ParameterKey == parameterKey);
 	}
 
-	private static TransposedComboCellPresenter FindComboPresenter(
+	private static LazyComboCellPresenter FindComboPresenter(
 		ListBox stepListBox, int columnIndex, string parameterKey)
 	{
 		var container = (ListBoxItem)stepListBox.ContainerFromIndex(columnIndex)!;
 
 		return container.GetVisualDescendants()
-			.OfType<TransposedComboCellPresenter>()
+			.OfType<LazyComboCellPresenter>()
 			.Single(presenter => presenter.DataContext is ParameterCellViewModel cell
 				&& cell.Descriptor.ParameterKey == parameterKey);
 	}
@@ -456,7 +538,7 @@ public sealed class TransposedComboEditingTests : IAsyncLifetime
 	private static string? ComboDisplayText(ListBoxItem container, string parameterKey)
 	{
 		var presenter = container.GetVisualDescendants()
-			.OfType<TransposedComboCellPresenter>()
+			.OfType<LazyComboCellPresenter>()
 			.Single(p => p.DataContext is ParameterCellViewModel cell
 				&& cell.Descriptor.ParameterKey == parameterKey);
 

@@ -17,17 +17,15 @@ internal sealed class PropertyTimeEditingConverter(string formatKind, bool allow
 		return ParseForCommit(value, formatKind, allowsEmpty);
 	}
 
-	// Units-less display formatting shared with the transposed recyclable text editor, which drives
-	// the same rendering through a stateless OneWay MultiBinding instead of a per-cell converter.
+	// Units-less editor text shared with the transposed recyclable text editor, which drives the same
+	// rendering through a stateless OneWay MultiBinding instead of a per-cell converter. Invariant, as the
+	// model parses it: the current culture would show 90.5 as "90,5", which the commit then rejects.
 	public static string FormatForDisplay(object? value, string? formatKind)
 	{
-		if (value is null)
-		{
-			return string.Empty;
-		}
-
-		var rawString = value.ToString();
-		return string.IsNullOrEmpty(rawString) ? string.Empty : TimeFormatHelper.FormatValue(rawString, formatKind, units: null);
+		var rawString = value is IFormattable number
+			? number.ToString(format: null, CultureInfo.InvariantCulture)
+			: value?.ToString();
+		return string.IsNullOrEmpty(rawString) ? string.Empty : TimeFormatHelper.FormatForEdit(rawString, formatKind);
 	}
 
 	// Commit-side parse shared with the transposed recyclable text editor, which owns the write in

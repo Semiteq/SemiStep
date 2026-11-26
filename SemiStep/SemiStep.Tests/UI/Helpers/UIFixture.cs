@@ -1,5 +1,7 @@
 ﻿using System.Reactive.Concurrency;
 
+using AwesomeAssertions;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -205,6 +207,21 @@ public sealed class UIFixture : IAsyncLifetime
 			gridStyleEditorViewModelFactory,
 			Scheduler,
 			logger ?? NullLogger<MainWindowViewModel>.Instance);
+	}
+
+	/// <summary>Saves the current recipe to a CSV file and opens it again, so its values come from a file and the history is empty.</summary>
+	public async Task ReloadFromCsvAsync()
+	{
+		var path = Path.Combine(Path.GetTempPath(), $"semistep-reload-{Guid.NewGuid():N}.csv");
+		try
+		{
+			(await Coordinator.SaveRecipeAsync(path)).IsSuccess.Should().BeTrue();
+			(await Coordinator.LoadRecipeAsync(path)).IsSuccess.Should().BeTrue();
+		}
+		finally
+		{
+			File.Delete(path);
+		}
 	}
 
 	public void SetSyncEnabled(bool isSyncEnabled)

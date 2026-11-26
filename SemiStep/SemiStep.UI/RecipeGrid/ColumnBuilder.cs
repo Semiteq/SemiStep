@@ -8,6 +8,8 @@ using Avalonia.Media;
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
 
+using SemiStep.UI.Localization;
+
 namespace SemiStep.UI.RecipeGrid;
 
 public sealed class ColumnBuilder(
@@ -19,9 +21,9 @@ public sealed class ColumnBuilder(
 	private const string StepNumberColumnClass = "step-number-column";
 
 	// Assigned as the column's HeaderTemplate, not as a DataGridColumnHeader ContentTemplate setter:
-	// the header binds ContentTemplate from HeaderTemplate, so a style setter is overridden and the
-	// header would not wrap. See docs/architecture/recipe-grid-column-sizing.md.
-	private readonly IDataTemplate _wrappingHeaderTemplate = BuildWrappingHeaderTemplate(gridStyle);
+	// the header binds ContentTemplate from HeaderTemplate, so a style setter is overridden.
+	// See docs/architecture/recipe-grid-column-sizing.md.
+	private readonly IDataTemplate _headerTemplate = BuildHeaderTemplate(gridStyle);
 
 	private readonly ComboBoxCellFactory _comboBoxCellFactory = new(comboBoxItemsProvider, gridStyle);
 
@@ -31,7 +33,7 @@ public sealed class ColumnBuilder(
 	private readonly IReadOnlyDictionary<string, int?> _maxLengthByColumn =
 		StringColumnMaxLengths.Build(recipeMetadataRegistry);
 
-	public void BuildColumns(DataGrid grid)
+	internal void BuildColumns(DataGrid grid, CellEditCoordinator comboEditCoordinator)
 	{
 		grid.RowHeight = gridStyle.Layout.RowHeight;
 		// The numbering column is a DataGridTextColumn with no FontFeatures property; tabular figures
@@ -42,7 +44,7 @@ public sealed class ColumnBuilder(
 
 		foreach (var columnDef in recipeMetadataRegistry.GetAllColumns())
 		{
-			var column = CreateColumn(columnDef);
+			var column = CreateColumn(columnDef, comboEditCoordinator);
 			grid.Columns.Add(column);
 		}
 	}
@@ -51,8 +53,8 @@ public sealed class ColumnBuilder(
 	{
 		var column = new DataGridTextColumn
 		{
-			Header = "No",
-			HeaderTemplate = _wrappingHeaderTemplate,
+			Header = Resources.StepNumberHeader,
+			HeaderTemplate = _headerTemplate,
 			Binding = new Binding("StepNumber"),
 			FontSize = gridStyle.Fonts.CellFontSize,
 			FontWeight = (FontWeight)gridStyle.Fonts.CellFontWeight,
@@ -70,15 +72,16 @@ public sealed class ColumnBuilder(
 		grid.Columns.Add(column);
 	}
 
-	private static IDataTemplate BuildWrappingHeaderTemplate(GridStyleOptions gridStyle)
+	// One line that trims at the column edge; the tooltip always holds the full text, trimmed or not.
+	private static IDataTemplate BuildHeaderTemplate(GridStyleOptions gridStyle)
 	{
 		return new FuncDataTemplate<object?>(
 			(_, _) =>
 			{
 				var textBlock = new TextBlock
 				{
-					TextWrapping = TextWrapping.Wrap,
-					MaxLines = 2,
+					TextWrapping = TextWrapping.NoWrap,
+					MaxLines = 1,
 					TextTrimming = TextTrimming.CharacterEllipsis,
 					TextAlignment = TextAlignment.Center,
 					HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -86,15 +89,16 @@ public sealed class ColumnBuilder(
 				};
 				GridFontApplier.ApplyHeaderFont(textBlock, gridStyle);
 				textBlock.Bind(TextBlock.TextProperty, new Binding());
+				textBlock.Bind(ToolTip.TipProperty, new Binding());
 				return textBlock;
 			},
 			supportsRecycling: true);
 	}
 
-	private DataGridColumn CreateColumn(GridColumnDefinition columnDef)
+	private DataGridColumn CreateColumn(GridColumnDefinition columnDef, CellEditCoordinator comboEditCoordinator)
 	{
 		var width = _widthCalculator.CalculateColumnWidth(columnDef);
-		var column = CreateColumnInner(columnDef, width);
+		var column = CreateColumnInner(columnDef, width, comboEditCoordinator);
 		if (columnDef.ReadOnly)
 		{
 			column.CellStyleClasses.Add(ReadOnlyColumnClass);
@@ -103,29 +107,34 @@ public sealed class ColumnBuilder(
 		// Pin absolute columns to their content width so a narrow window scrolls instead of clipping
 		// (the DataGrid otherwise shrinks columns to MinWidth). See docs/architecture/recipe-grid-column-sizing.md.
 		column.MinWidth = width.IsAbsolute ? width.Value : _widthCalculator.MinColumnWidth;
-		column.HeaderTemplate = _wrappingHeaderTemplate;
+		column.HeaderTemplate = _headerTemplate;
 
 		return column;
 	}
 
-	private DataGridColumn CreateColumnInner(GridColumnDefinition columnDef, DataGridLength width)
+	private DataGridColumn CreateColumnInner(
+		GridColumnDefinition columnDef,
+		DataGridLength width,
+		CellEditCoordinator comboEditCoordinator)
 	{
 		if (ColumnTypes.IsActionComboBoxColumn(columnDef.ColumnType))
 		{
-			return _comboBoxCellFactory.CreateActionColumn(columnDef, width);
+			return _comboBoxCellFactory.CreateActionColumn(columnDef, width, comboEditCoordinator);
 		}
 
 		if (ColumnTypes.IsGroupBoundColumn(columnDef.ColumnType))
 		{
-			return _comboBoxCellFactory.CreateGroupComboBoxColumn(columnDef, width);
+			return _comboBoxCellFactory.CreateGroupComboBoxColumn(columnDef, width, comboEditCoordinator);
 		}
 
+		var isNumeric = _widthCalculator.IsNumericColumn(columnDef);
+		var alignment = new CellAlignment(isNumeric, isNumeric ? _widthCalculator.UnitSlotWidth(columnDef.Key) : 0);
 		if (columnDef.ReadOnly)
 		{
-			return _textCellFactory.CreateReadOnlyColumn(columnDef, width);
+			return _textCellFactory.CreateReadOnlyColumn(columnDef, width, alignment);
 		}
 
 		var maxLength = _maxLengthByColumn.GetValueOrDefault(columnDef.Key);
-		return _textCellFactory.CreateEditableColumn(columnDef, width, maxLength);
+		return _textCellFactory.CreateEditableColumn(columnDef, width, maxLength, alignment);
 	}
 }

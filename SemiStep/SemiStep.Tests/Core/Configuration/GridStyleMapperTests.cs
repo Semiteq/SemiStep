@@ -176,8 +176,8 @@ public sealed class GridStyleMapperTests
 		var options = GridStyleMapper.Map(dto).Value;
 
 		options.Fonts.FontFamily.Should().Be(GridStyleOptions.Default.Fonts.FontFamily);
-		options.Fonts.HeaderFontSize.Should().Be(14);
-		options.Fonts.HeaderFontWeight.Should().Be(700);
+		options.Fonts.HeaderFontSize.Should().Be(12);
+		options.Fonts.HeaderFontWeight.Should().Be(600);
 		options.Fonts.HeaderItalic.Should().BeFalse();
 		options.Fonts.CellFontSize.Should().Be(12);
 		options.Fonts.CellFontWeight.Should().Be(400);

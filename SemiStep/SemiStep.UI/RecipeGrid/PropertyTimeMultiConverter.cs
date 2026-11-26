@@ -5,11 +5,12 @@ using Avalonia.Data.Converters;
 
 namespace SemiStep.UI.RecipeGrid;
 
+/// <summary>(value, format kind) to the cell text without a unit; the unit has its own slot.</summary>
 internal sealed class PropertyTimeMultiConverter : IMultiValueConverter
 {
 	public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
 	{
-		if (values.Count < 3)
+		if (values.Count < 2)
 		{
 			return string.Empty;
 		}
@@ -23,8 +24,7 @@ internal sealed class PropertyTimeMultiConverter : IMultiValueConverter
 		}
 
 		var cellValue = values[0];
-		var units = values[1] as string;
-		var formatKind = values[2] as string;
+		var formatKind = values[1] as string;
 
 		if (cellValue is null)
 		{
@@ -32,7 +32,7 @@ internal sealed class PropertyTimeMultiConverter : IMultiValueConverter
 		}
 
 		var rawString = cellValue as string ?? FormatNumeric(cellValue);
-		return string.IsNullOrEmpty(rawString) ? string.Empty : TimeFormatHelper.FormatValue(rawString, formatKind, units);
+		return string.IsNullOrEmpty(rawString) ? string.Empty : TimeFormatHelper.FormatValue(rawString, formatKind, units: null);
 	}
 
 	internal static string FormatNumeric(object cellValue)

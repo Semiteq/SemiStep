@@ -12,7 +12,10 @@ namespace SemiStep.UI.RecipeGrid;
 
 internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 {
-	public DataGridColumn CreateReadOnlyColumn(GridColumnDefinition columnDef, DataGridLength width)
+	public DataGridColumn CreateReadOnlyColumn(
+		GridColumnDefinition columnDef,
+		DataGridLength width,
+		CellAlignment alignment)
 	{
 		return new DataGridTemplateColumn
 		{
@@ -21,13 +24,15 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 			Width = width,
 			IsReadOnly = true,
 			CanUserSort = false,
-			CellTemplate = ColumnTypes.IsStepStartTimeColumn(columnDef.ColumnType)
-				? CreateStepStartTimeTemplate()
-				: CreateMultiBindingTemplate(columnDef.Key),
+			CellTemplate = CreateDisplayTemplate(columnDef, alignment),
 		};
 	}
 
-	public DataGridColumn CreateEditableColumn(GridColumnDefinition columnDef, DataGridLength width, int? maxLength)
+	public DataGridColumn CreateEditableColumn(
+		GridColumnDefinition columnDef,
+		DataGridLength width,
+		int? maxLength,
+		CellAlignment alignment)
 	{
 		return new DataGridTemplateColumn
 		{
@@ -36,39 +41,33 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 			Width = width,
 			IsReadOnly = false,
 			CanUserSort = false,
-			CellTemplate = ColumnTypes.IsStepStartTimeColumn(columnDef.ColumnType)
-				? CreateStepStartTimeTemplate()
-				: CreateMultiBindingTemplate(columnDef.Key),
-			CellEditingTemplate = CreateEditingTemplate(columnDef.Key, maxLength),
+			CellTemplate = CreateDisplayTemplate(columnDef, alignment),
+			CellEditingTemplate = CreateEditingTemplate(columnDef.Key, maxLength, alignment),
 		};
+	}
+
+	private FuncDataTemplate<RecipeRowViewModel> CreateDisplayTemplate(
+		GridColumnDefinition columnDef,
+		CellAlignment alignment)
+	{
+		return ColumnTypes.IsStepStartTimeColumn(columnDef.ColumnType)
+			? CreateStepStartTimeTemplate()
+			: CreateValueTemplate(columnDef.Key, alignment);
 	}
 
 	private FuncDataTemplate<RecipeRowViewModel> CreateStepStartTimeTemplate()
 	{
-		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
-		{
-			var textBlock = new TextBlock
-			{
-				VerticalAlignment = VerticalAlignment.Center,
-				Padding = new Thickness(
-					gridStyle.Layout.CellPaddingLeft,
-					gridStyle.Layout.CellPaddingTop,
-					gridStyle.Layout.CellPaddingRight,
-					gridStyle.Layout.CellPaddingBottom),
-				TextAlignment = TextAlignment.Center,
-			};
-			GridFontApplier.ApplyCellFont(textBlock, gridStyle);
-
-			textBlock.Bind(TextBlock.TextProperty, new Binding(nameof(RecipeRowViewModel.StepStartTime))
-			{
-				Mode = BindingMode.OneWay,
-			});
-
-			return textBlock;
-		}, supportsRecycling: true);
+		return new FuncDataTemplate<RecipeRowViewModel>(
+			(_, _) => TextCellLayout.Create(
+				gridStyle,
+				isNumeric: true,
+				unitSlotWidth: 0,
+				new Binding(nameof(RecipeRowViewModel.StepStartTime)) { Mode = BindingMode.OneWay },
+				unitText: null),
+			supportsRecycling: true);
 	}
 
-	private FuncDataTemplate<RecipeRowViewModel> CreateMultiBindingTemplate(string columnKey)
+	private FuncDataTemplate<RecipeRowViewModel> CreateValueTemplate(string columnKey, CellAlignment alignment)
 	{
 		var bindingPath = ResolveBindingPath(columnKey);
 		var unitsConverter = new DictionaryEntryConverter<string?>(columnKey, null);
@@ -77,42 +76,52 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 
 		return new FuncDataTemplate<RecipeRowViewModel>((_, _) =>
 		{
-			var textBlock = new TextBlock
+			var formatKind = new Binding(nameof(RecipeRowViewModel.ColumnFormatKinds))
 			{
-				VerticalAlignment = VerticalAlignment.Center,
-				Padding = new Thickness(
-					gridStyle.Layout.CellPaddingLeft,
-					gridStyle.Layout.CellPaddingTop,
-					gridStyle.Layout.CellPaddingRight,
-					gridStyle.Layout.CellPaddingBottom),
-				TextAlignment = TextAlignment.Center,
+				Mode = BindingMode.OneWay,
+				Converter = formatKindConverter,
 			};
-			GridFontApplier.ApplyCellFont(textBlock, gridStyle);
-
-			textBlock.Bind(TextBlock.TextProperty, new MultiBinding
-			{
-				Converter = multiConverter,
-				Bindings =
+			var display = TextCellLayout.Create(
+				gridStyle,
+				alignment.IsNumeric,
+				alignment.UnitSlotWidth,
+				new MultiBinding
 				{
-					new Binding(bindingPath) { Mode = BindingMode.OneWay },
-					new Binding(nameof(RecipeRowViewModel.ColumnUnits))
-					{
-						Mode = BindingMode.OneWay,
-						Converter = unitsConverter,
-					},
-					new Binding(nameof(RecipeRowViewModel.ColumnFormatKinds))
-					{
-						Mode = BindingMode.OneWay,
-						Converter = formatKindConverter,
-					},
+					Converter = multiConverter,
+					Bindings = { new Binding(bindingPath) { Mode = BindingMode.OneWay }, formatKind },
 				},
-			});
+				new MultiBinding
+				{
+					Converter = TextCellLayout.UnitTextConverter,
+					Bindings =
+					{
+						new Binding(nameof(RecipeRowViewModel.ColumnUnits))
+						{
+							Mode = BindingMode.OneWay,
+							Converter = unitsConverter,
+						},
+						formatKind,
+					},
+				});
 
-			return textBlock;
+			display.Bind(Visual.IsVisibleProperty, CellApplicabilityBinding.CreateApplicableBinding(columnKey));
+			if (columnKey == StepValueParser.StepDurationColumnKey)
+			{
+				display.Bind(ToolTip.TipProperty, new Binding(nameof(RecipeRowViewModel.ActionId))
+				{
+					Mode = BindingMode.OneWay,
+					Converter = RampActions.ToolTipConverter,
+				});
+			}
+
+			return display;
 		}, supportsRecycling: true);
 	}
 
-	public FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(string columnKey, int? maxLength)
+	public FuncDataTemplate<RecipeRowViewModel> CreateEditingTemplate(
+		string columnKey,
+		int? maxLength,
+		CellAlignment alignment)
 	{
 		var bindingPath = ResolveBindingPath(columnKey);
 
@@ -132,12 +141,8 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 				// inflates the editing cell and pushes the text above the display position. Size to the row.
 				MinHeight = 0,
 				BorderThickness = new Thickness(0),
-				Padding = new Thickness(
-					gridStyle.Layout.CellPaddingLeft,
-					gridStyle.Layout.CellPaddingTop,
-					gridStyle.Layout.CellPaddingRight,
-					gridStyle.Layout.CellPaddingBottom),
-				TextAlignment = TextAlignment.Center,
+				Padding = TextCellLayout.EditorPadding(gridStyle.Layout, alignment.IsNumeric, alignment.UnitSlotWidth),
+				TextAlignment = alignment.IsNumeric ? TextAlignment.Right : TextAlignment.Left,
 			};
 			GridFontApplier.ApplyCellFont(textBox, gridStyle);
 
@@ -164,3 +169,6 @@ internal sealed class TextCellFactory(GridStyleOptions gridStyle)
 			: ColumnTypes.IndexerPath(columnKey);
 	}
 }
+
+/// <summary>How a value column lays out its cells: a number with a unit slot, or left-aligned text.</summary>
+internal readonly record struct CellAlignment(bool IsNumeric, double UnitSlotWidth);

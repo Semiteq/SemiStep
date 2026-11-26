@@ -41,10 +41,10 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 			GridStyleOptions.Default, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider);
 		var grid = new DataGrid();
 
-		columnBuilder.BuildColumns(grid);
+		columnBuilder.BuildColumns(grid, new CellEditCoordinator());
 		var firstCount = grid.Columns.Count;
 
-		columnBuilder.BuildColumns(grid);
+		columnBuilder.BuildColumns(grid, new CellEditCoordinator());
 		var secondCount = grid.Columns.Count;
 
 		secondCount.Should().Be(firstCount);
@@ -101,7 +101,7 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 		var columnBuilder = new ColumnBuilder(GridStyleOptions.Default, registry, new ComboBoxItemsProvider(registry));
 		var grid = new DataGrid();
 
-		columnBuilder.BuildColumns(grid);
+		columnBuilder.BuildColumns(grid, new CellEditCoordinator());
 
 		var readOnlyColumn = grid.Columns
 			.First(c => string.Equals(c.Tag as string, "ro_column", StringComparison.Ordinal));
@@ -170,7 +170,7 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 
 		receivedActionId.Should().Be(
 			RecipeTestDriver.ForLoopActionId,
-			"selecting a different action item must propagate through the TwoWay binding to ActionChanged");
+			"selecting a different action item must propagate through SelectionChanged to ActionChanged");
 	}
 
 	private DataGrid BuildGrid()
@@ -178,7 +178,7 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 		var columnBuilder = new ColumnBuilder(
 			GridStyleOptions.Default, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider);
 		var grid = new DataGrid();
-		columnBuilder.BuildColumns(grid);
+		columnBuilder.BuildColumns(grid, new CellEditCoordinator());
 		return grid;
 	}
 
@@ -212,14 +212,17 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 		return inapplicable;
 	}
 
+	// Outside a DataGrid the lock leg fails closed, so the test enables the cell and enters its edit once.
 	private static ComboBox MaterializeComboBox(IDataTemplate template, RecipeRowViewModel row)
 	{
-		var built = template.Build(row);
-		built.Should().NotBeNull();
+		var presenter = template.Build(row) as LazyComboCellPresenter;
+		presenter.Should().NotBeNull("the CellTemplate builds a lazy combo cell");
+		presenter.IsEnabled = true;
+		presenter.DataContext = row;
+		presenter.EnterEdit(initialText: null);
+		var comboBox = presenter.Editor as ComboBox;
+		comboBox.Should().NotBeNull("an edit entry builds the ComboBox editor");
 
-		var comboBox = built as ComboBox;
-		comboBox.Should().NotBeNull("CellTemplate must return a ComboBox directly");
-		comboBox.DataContext = row;
 		return comboBox;
 	}
 }

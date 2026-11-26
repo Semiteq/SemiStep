@@ -80,7 +80,11 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 		var factory = new TextCellFactory(NonDefaultStyle());
 		var columnDef = _fixture.RecipeMetadataRegistry.GetColumn("task").Value;
 
-		var column = (DataGridTemplateColumn)factory.CreateEditableColumn(columnDef, new DataGridLength(100), maxLength: null);
+		var column = (DataGridTemplateColumn)factory.CreateEditableColumn(
+			columnDef,
+			new DataGridLength(100),
+			maxLength: null,
+			new CellAlignment(IsNumeric: true, UnitSlotWidth: 0));
 
 		var displayCell = (TextBlock)column.CellTemplate!.Build(null)!;
 		displayCell.FontSize.Should().Be(ConfiguredCellSize);
@@ -101,13 +105,17 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 		var factory = new ComboBoxCellFactory(_fixture.ComboBoxItemsProvider, NonDefaultStyle());
 		var columnDef = _fixture.RecipeMetadataRegistry.GetColumn("action").Value;
 
-		var column = (DataGridTemplateColumn)factory.CreateActionColumn(columnDef, new DataGridLength(100));
+		var column = (DataGridTemplateColumn)factory.CreateActionColumn(
+			columnDef,
+			new DataGridLength(100),
+			new CellEditCoordinator());
 
-		var comboBox = (ComboBox)column.CellTemplate!.Build(null)!;
-		comboBox.FontSize.Should().Be(ConfiguredCellSize);
-		comboBox.FontWeight.Should().Be((FontWeight)ConfiguredCellWeight);
-		comboBox.FontStyle.Should().Be(FontStyle.Italic);
-		comboBox.FontFamily.Name.Should().Be(ConfiguredFamily);
+		var presenter = (LazyComboCellPresenter)column.CellTemplate!.Build(null)!;
+		var displayText = ((Grid)presenter.Child!).Children.OfType<TextBlock>().Single();
+		displayText.FontSize.Should().Be(ConfiguredCellSize);
+		displayText.FontWeight.Should().Be((FontWeight)ConfiguredCellWeight);
+		displayText.FontStyle.Should().Be(FontStyle.Italic);
+		displayText.FontFamily.Name.Should().Be(ConfiguredFamily);
 	}
 
 	[AvaloniaFact]
@@ -117,7 +125,11 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 		var factory = new TextCellFactory(emptyFamily with { Fonts = emptyFamily.Fonts with { FontFamily = "" } });
 		var columnDef = _fixture.RecipeMetadataRegistry.GetColumn("task").Value;
 
-		var column = (DataGridTemplateColumn)factory.CreateEditableColumn(columnDef, new DataGridLength(100), maxLength: null);
+		var column = (DataGridTemplateColumn)factory.CreateEditableColumn(
+			columnDef,
+			new DataGridLength(100),
+			maxLength: null,
+			new CellAlignment(IsNumeric: true, UnitSlotWidth: 0));
 
 		var displayCell = (TextBlock)column.CellTemplate!.Build(null)!;
 
@@ -148,7 +160,7 @@ public sealed class GridFactoryFontTests : IAsyncLifetime
 		var columnBuilder = new ColumnBuilder(
 			gridStyle, _fixture.RecipeMetadataRegistry, _fixture.ComboBoxItemsProvider);
 		var grid = new DataGrid();
-		columnBuilder.BuildColumns(grid);
+		columnBuilder.BuildColumns(grid, new CellEditCoordinator());
 
 		return grid;
 	}

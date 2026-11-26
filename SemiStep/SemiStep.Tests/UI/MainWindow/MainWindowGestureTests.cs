@@ -243,9 +243,11 @@ public sealed class MainWindowGestureTests : IAsyncLifetime
 	public void Delete_WithOpenCanonicalComboList_RemovesNoStep()
 	{
 		var window = ShowWithGridFocus(stepCount: 2);
-		var combo = FocusCanonicalActionCombo(window);
-		combo.IsDropDownOpen = true;
+		var presenter = MakeCanonicalActionCellCurrent(window);
+		window.KeyPressQwerty(PhysicalKey.F4, RawInputModifiers.None);
 		Dispatcher.UIThread.RunJobs();
+		presenter.Editor.Should().BeOfType<ComboBox>("precondition: F4 built the editor")
+			.Which.IsDropDownOpen.Should().BeTrue("precondition: F4 opened the list");
 
 		window.KeyPressQwerty(PhysicalKey.Delete, RawInputModifiers.None);
 		Dispatcher.UIThread.RunJobs();
@@ -254,22 +256,22 @@ public sealed class MainWindowGestureTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void Delete_WithClosedCanonicalComboFocused_RemovesTheStep()
+	public void Delete_OnCurrentCanonicalComboCell_RemovesTheStep()
 	{
 		var window = ShowWithGridFocus(stepCount: 2);
-		FocusCanonicalActionCombo(window);
+		MakeCanonicalActionCellCurrent(window);
 
 		window.KeyPressQwerty(PhysicalKey.Delete, RawInputModifiers.None);
 		Dispatcher.UIThread.RunJobs();
 
-		StepCount.Should().Be(1, "a closed combo is not editing");
+		StepCount.Should().Be(1, "a combo cell that shows text is not editing");
 	}
 
 	[AvaloniaFact]
-	public void CtrlZ_AndCtrlN_FromAFocusedCanonicalCombo_Fire()
+	public void CtrlZ_AndCtrlN_FromACurrentCanonicalComboCell_Fire()
 	{
 		var window = ShowWithGridFocus(stepCount: 2);
-		FocusCanonicalActionCombo(window);
+		MakeCanonicalActionCellCurrent(window);
 
 		window.KeyPressQwerty(PhysicalKey.Z, Ctrl);
 		Dispatcher.UIThread.RunJobs();
@@ -289,7 +291,7 @@ public sealed class MainWindowGestureTests : IAsyncLifetime
 		_viewModel.RecipeGrid.UpdateSelection([0]);
 
 		var presenter = window.GetVisualDescendants()
-			.OfType<TransposedComboCellPresenter>()
+			.OfType<LazyComboCellPresenter>()
 			.First(candidate => candidate.DataContext is ParameterCellViewModel { Descriptor.ParameterKey: "action" });
 		presenter.Focus();
 		window.KeyPressQwerty(PhysicalKey.F2, RawInputModifiers.None);
@@ -393,15 +395,13 @@ public sealed class MainWindowGestureTests : IAsyncLifetime
 			.Should().NotBeNull("precondition: a cell text editor has focus");
 	}
 
-	private static ComboBox FocusCanonicalActionCombo(MainWindowView window)
+	private static LazyComboCellPresenter MakeCanonicalActionCellCurrent(MainWindowView window)
 	{
 		var dataGrid = window.GetVisualDescendants().OfType<DataGrid>().Single();
-		var combo = dataGrid.GetVisualDescendants().OfType<ComboBox>().First(candidate => candidate.IsEffectivelyEnabled);
-		combo.Focus();
-		Dispatcher.UIThread.RunJobs();
-		combo.IsFocused.Should().BeTrue("precondition: the combo cell has focus");
+		var actionColumn = dataGrid.Columns.Single(column => (column.Tag as string) == "action");
+		DataGridTestHelper.SetCurrentCell(dataGrid, rowIndex: 0, actionColumn);
 
-		return combo;
+		return (LazyComboCellPresenter)actionColumn.GetCellContent(dataGrid.SelectedItem);
 	}
 
 	private ExecutionCounter CountCommandExecutions()

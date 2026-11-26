@@ -152,8 +152,11 @@ grey checked track from `ToolbarSwitchTrackBrush` (`Styles/ColorPalette.axaml`),
 toolbar through Semi's `ToggleSwitchContainer*Background` component keys. While `ToggleSyncCommand`
 runs, the disabled checked track is `ToolbarDisabledBrush` grey, never green. The keyed
 `ToolbarSyncSwitch` theme in `RecipeToolBar.axaml` puts the caption left of the track on the button
-line, so the toolbar keeps the height of its buttons and a click on the caption also toggles. It
-shows only sync on or off; the link state is the status bar's link slot.
+line, so the toolbar keeps the height of its buttons and a click on the caption also toggles.
+`ToggleSwitch` moves the knob to the on position itself, by setting `Canvas.Left` of `PART_MovingKnobs`
+to the width of the 18 px `PART_SwitchKnob` canvas. The theme therefore keeps that canvas
+left-aligned in both states; a checked alignment adds a second shift and draws the knob outside the
+track. It shows only sync on or off; the link state is the status bar's link slot.
 
 Alongside the brushes, the cell installer pushes a few **numeric / layout** resources that XAML
 consumes directly: `StatusBarPadding` (a `Thickness`) and `ValidationPanelMaxHeight` (a `double`).

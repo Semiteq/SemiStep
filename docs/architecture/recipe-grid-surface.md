@@ -177,9 +177,20 @@ and every dead member would have to be implemented and contract-tested by each f
   biggest active cost, since it re-scanned the full step-column list per selected item on every
   membership change.
 - **Consumer to surface to view:** consumers push a post-mutation reposition through
-  `RequestSelection(int?)`; the surface forwards it into `SelectionRequests`; the view
-  subscribes and sets its native selection (`null` clears). `RequestSelection` is a safe no-op
-  after `Dispose()`.
+  `RequestSelection(int?)`; the surface writes the step into `SelectedStepIndices` itself
+  (`null` clears, an index outside the items is left to the view, which ignores it too), then
+  forwards it into `SelectionRequests`; the view subscribes and sets its native selection.
+  The surface cannot wait for the view's echo: when the canonical `DataGrid` removes the
+  selected row it selects the row that took its index, `ShiftSelection` then drops that index
+  from the cache, and the request sets `SelectedIndex` to the value it already holds, so no
+  `SelectionChanged` follows. `RequestSelection` is a safe no-op after `Dispose()`.
+
+**Selection after a delete.** Delete, Ctrl+X and the toolbar buttons that run them request the
+step Core suggests (`RecipeSession.RemoveStep` / `RemoveSteps`): the step that now holds the
+first removed position, the new last step when the delete removed the end of the recipe, and
+`null` for an empty recipe. A multi-step delete selects one step. Keyboard focus returns to the
+grid (see "Default grid focus"), so Delete pressed again removes the next step. Undo and redo
+arrive as `RecipeReplaced`, which clears the selection; focus stays on the grid.
 
 **Index-shift reconciliation.** An index-shifting mutation (an insert or remove at/before a
 selected step) moves the steps the cached `SelectedStepIndices` point at. The cache is
@@ -358,7 +369,10 @@ the host's `Content` stays the active view for the orientation swap and `IsEditi
 
 `RecipeGridHost.FocusActiveGrid` focuses the shown grid after layout: the `DataGrid`, or the selected
 (else the first visible) transposed column. The host calls it on every orientation apply, which covers
-the window opening and each flip; `MainWindow` calls it after "Новый рецепт" and "Открыть".
+the window opening and each flip; `MainWindow` calls it after "Новый рецепт", "Открыть", "Удалить" and
+"Вырезать", whatever ran them: the key, the menu, the context menu or the toolbar button, which took
+focus on its click. After a transposed delete the focus stays on a container that no longer shows the
+selected step, so the call is needed in both grids.
 
 ## Orientation switching
 

@@ -64,6 +64,8 @@ shows its gesture from the table, each toolbar tooltip prints the same text (`Ti
 - Delete, Ctrl+C, Ctrl+X and Ctrl+V also skip while a cell is being edited: `RecipeGridHost.IsEditing`
   or a key source inside a `ComboBox` whose list is open. A canonical combo cell lives in
   `CellTemplate`, so its open list is not a `DataGrid` edit.
+- After Delete and Ctrl+X the next step stays selected and focus returns to the grid, so the key
+  repeats; see "Selection after a delete" in `recipe-grid-surface.md`.
 - Ctrl+Shift+T runs from an open cell editor too: it commits the value and only changes the view.
 - Ctrl+Shift+Z is a second redo gesture; the menu prints Ctrl+Y. Alt+F4 is display-only on
   "Выход" and the handler never runs it.

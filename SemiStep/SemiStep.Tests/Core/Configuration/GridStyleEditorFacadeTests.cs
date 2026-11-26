@@ -27,7 +27,7 @@ public sealed class GridStyleEditorFacadeTests
 		var result = await new GridStyleEditorFacade().Load(tempDir.Path);
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.Selection.Background.ToString().Should().StartWith("#");
+		result.Value.Selection.Accent.ToString().Should().StartWith("#");
 	}
 
 	[Fact]

@@ -28,9 +28,10 @@ is added (a larger combo allowance for combo columns).
    always holds the full text, so no trim detection is needed.
 3. **Absolute minimum** — `MinColumnWidth` = `ceil(CellFontSize × MinColumnWidthEms)`,
    `MinColumnWidthEms = 6.0` (72 at the default 12px cell font). Exposed as a public instance
-   property; `ColumnBuilder` reads it as the numbering column's `MinWidth` and as the Star comment
-   column's absorb-floor, so it must not be lowered. The `6.0` is a calibration chosen to reproduce
-   72 at the default font, not a physically derived em count.
+   property; it floors the fixed numbering column width (`NumberingColumnWidth`, a run glyph and a
+   four-digit step number, so a run start moves no column) and `ColumnBuilder` reads it as the Star
+   comment column's absorb-floor, so it must not be lowered. The `6.0` is a calibration chosen to
+   reproduce 72 at the default font, not a physically derived em count.
 
 `Star`/`TextField` columns bypass all of this (`DataGridLength.Star`); they absorb the leftover
 width and are never floored by header words.

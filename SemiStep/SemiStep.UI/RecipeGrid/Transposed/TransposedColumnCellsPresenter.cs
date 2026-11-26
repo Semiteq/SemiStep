@@ -131,14 +131,18 @@ internal sealed class TransposedColumnCellsPresenter : StackPanel
 
 		border.Bind(Border.BackgroundProperty, new MultiBinding
 		{
-			Converter = TransposedCellBackgroundConverter.Instance,
+			Converter = CellBackgroundConverter.Instance,
 			ConverterParameter = isReadOnlyParameter,
 			Bindings =
 			{
 				new Binding { RelativeSource = new RelativeSource(RelativeSourceMode.Self) },
 				new Binding($"{nameof(ParameterCellViewModel.Row)}.{nameof(RecipeRowViewModel.ForDepth)}"),
 				new Binding($"{nameof(ParameterCellViewModel.Row)}.{nameof(RecipeRowViewModel.IsPastStep)}"),
-				new Binding(nameof(ParameterCellViewModel.IsApplicable)),
+				new Binding($"{nameof(ParameterCellViewModel.Row)}.{nameof(RecipeRowViewModel.IsCurrentStep)}"),
+				new Binding(nameof(ParameterCellViewModel.IsApplicable))
+				{
+					Converter = TransposedCellTemplateFactory.NegateConverter,
+				},
 				new Binding(nameof(ParameterCellViewModel.IsChanged)),
 				new Binding(nameof(IsColumnSelected)) { Source = this },
 			},

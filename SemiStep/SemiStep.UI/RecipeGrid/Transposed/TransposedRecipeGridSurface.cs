@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Reactive.Concurrency;
 
 using Microsoft.Extensions.Logging;
 
@@ -17,9 +18,10 @@ public class TransposedRecipeGridSurface(
 	GridStyleOptions gridStyle,
 	MessagePanelViewModel messagePanel,
 	ChangeMarkClearBroadcaster changeMarkClearBroadcaster,
+	IScheduler scheduler,
 	ILogger<TransposedRecipeGridSurface> logger)
 	: RecipeGridSurfaceBase<StepColumnViewModel>(
-		coordinator, recipeMetadataRegistry, messagePanel, changeMarkClearBroadcaster, logger)
+		coordinator, recipeMetadataRegistry, messagePanel, changeMarkClearBroadcaster, scheduler, logger)
 {
 	// Field initializers run before the base constructor subscribes to coordinator events,
 	// so a callback can never observe a half-constructed surface.

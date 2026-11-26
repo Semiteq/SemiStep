@@ -1,10 +1,12 @@
 ﻿using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using ReactiveUI;
@@ -33,8 +35,12 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 			RecipeGrid.CellPointerPressed += OnCellPointerPressed;
 			RecipeGrid.AddHandler(KeyDownEvent, OnTunnelKeyDown, RoutingStrategies.Tunnel);
 			new ComboBoxPressOpener(RecipeGrid, _comboEditCoordinator).Attach().DisposeWith(disposables);
+			OperatorScrollInput.Watch(RecipeGrid, () => ViewModel?.NotifyOperatorScroll(), stepsRunHorizontally: false)
+				.DisposeWith(disposables);
 
 			var selectionRequestsSubscription = new SerialDisposable()
+				.DisposeWith(disposables);
+			var runningStepSubscription = new SerialDisposable()
 				.DisposeWith(disposables);
 
 			this.WhenAnyValue(x => x.ViewModel)
@@ -43,6 +49,7 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 					if (surface is null)
 					{
 						selectionRequestsSubscription.Disposable = null;
+						runningStepSubscription.Disposable = null;
 
 						return;
 					}
@@ -50,6 +57,9 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 					BuildGrid();
 					selectionRequestsSubscription.Disposable =
 						surface.SelectionRequests.Subscribe(OnSelectionRequested);
+					// Background: the request that greets a view activated mid-run lands before the rows' layout.
+					runningStepSubscription.Disposable = surface.RunningStepScrollRequests.Subscribe(stepIndex =>
+						Dispatcher.UIThread.Post(() => ScrollStepIntoView(stepIndex), DispatcherPriority.Background));
 				})
 				.DisposeWith(disposables);
 
@@ -178,11 +188,6 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 		_pendingChangedCell = newPending;
 	}
 
-	private void OnDataGridLoadingRow(object? sender, DataGridRowEventArgs e)
-	{
-		RecipeRowExecutionClassBinder.BindAll(e.Row);
-	}
-
 	internal void FocusGrid()
 	{
 		RecipeGrid.Focus();
@@ -260,6 +265,40 @@ public partial class CanonicalRecipeGridView : ReactiveUserControl<CanonicalReci
 		}
 
 		RecipeGrid.SelectedIndex = index;
+	}
+
+	// ScrollIntoView also brings its column fully into view, so a column already fully shown keeps the horizontal
+	// offset and following moves the view vertically only.
+	private void ScrollStepIntoView(int stepIndex)
+	{
+		if (ViewModel is { } surface && stepIndex < surface.RecipeRows.Count)
+		{
+			RecipeGrid.ScrollIntoView(surface.RecipeRows[stepIndex], FullyShownColumn());
+		}
+	}
+
+	private DataGridColumn? FullyShownColumn()
+	{
+		var shownRow = RecipeGrid.GetVisualDescendants().OfType<DataGridRow>().FirstOrDefault(row => row.IsVisible);
+		if (shownRow?.GetVisualParent() is not Control rowsViewport)
+		{
+			return null;
+		}
+
+		return RecipeGrid.Columns
+			.Where(column => column.IsVisible)
+			.FirstOrDefault(column => IsFullyShown(column.GetCellContent(shownRow), rowsViewport));
+	}
+
+	private static bool IsFullyShown(Control? cellContent, Control rowsViewport)
+	{
+		if (cellContent?.FindAncestorOfType<DataGridCell>() is not { } cell
+			|| cell.TranslatePoint(default, rowsViewport) is not { } topLeft)
+		{
+			return false;
+		}
+
+		return topLeft.X >= 0 && topLeft.X + cell.Bounds.Width <= rowsViewport.Bounds.Width;
 	}
 
 	private void BuildGrid()

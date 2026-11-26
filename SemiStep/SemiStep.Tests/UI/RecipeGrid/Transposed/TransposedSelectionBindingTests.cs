@@ -58,7 +58,7 @@ public sealed class TransposedSelectionBindingTests : IAsyncLifetime
 		Dispatcher.UIThread.RunJobs();
 
 		var cells = FindCellBorders(stepListBox, 0);
-		cells[index].Background.Should().BeSameAs(Resource(CellPaletteInstaller.SelectionBackgroundBrushKey));
+		cells[index].Background.Should().BeSameAs(PlainBrush(selected: true));
 	}
 
 	[AvaloniaFact]
@@ -72,13 +72,13 @@ public sealed class TransposedSelectionBindingTests : IAsyncLifetime
 
 		var cells = FindCellBorders(stepListBox, 0);
 		cells[index].Background.Should().BeSameAs(
-			Resource(CellPaletteInstaller.SelectionBackgroundBrushKey), "selecting the column paints its cells");
+			PlainBrush(selected: true), "selecting the column paints its cells");
 
 		_surface.RequestSelection(null);
 		Dispatcher.UIThread.RunJobs();
 
 		cells[index].Background.Should().BeSameAs(
-			Resource(CellPaletteInstaller.GridBackgroundBrushKey),
+			PlainBrush(selected: false),
 			"deselecting must revert the background, proving the imperative sync propagates change notifications");
 	}
 
@@ -87,7 +87,7 @@ public sealed class TransposedSelectionBindingTests : IAsyncLifetime
 	{
 		var stepListBox = ShowView(1200);
 		var index = EditableApplicableIndex(0, 1);
-		var selectionBrush = Resource(CellPaletteInstaller.SelectionBackgroundBrushKey);
+		var selectionBrush = PlainBrush(selected: true);
 
 		stepListBox.SelectedItems!.Add(_surface.StepColumns[0]);
 		stepListBox.SelectedItems!.Add(_surface.StepColumns[1]);
@@ -104,7 +104,7 @@ public sealed class TransposedSelectionBindingTests : IAsyncLifetime
 	{
 		var stepListBox = ShowView(560);
 		var index = EditableApplicableIndex();
-		var selectionBrush = Resource(CellPaletteInstaller.SelectionBackgroundBrushKey);
+		var selectionBrush = PlainBrush(selected: true);
 
 		_surface.RequestSelection(0);
 		Dispatcher.UIThread.RunJobs();
@@ -195,10 +195,10 @@ public sealed class TransposedSelectionBindingTests : IAsyncLifetime
 		return stepListBox.GetRealizedContainers().Count();
 	}
 
-	private IBrush Resource(string key)
+	private IBrush PlainBrush(bool selected)
 	{
-		_window!.TryFindResource(key, out var value).Should().BeTrue($"resource '{key}' must be installed");
-		return value.Should().BeAssignableTo<IBrush>().Subject;
+		_window!.TryFindResource(CellPalette.ResourceKey, out var value).Should().BeTrue("the cell palette must be installed");
+		return value.Should().BeOfType<CellPalette>().Subject.Resolve(CellBase.Plain, 0, CellExecutionState.Idle, selected);
 	}
 
 	private static List<Border> FindCellBorders(ListBox stepListBox, int columnIndex)
@@ -238,7 +238,6 @@ public sealed class TransposedSelectionBindingTests : IAsyncLifetime
 		};
 
 		CellPaletteInstaller.Install(_window.Resources, _fixture.AppConfiguration.GridStyle);
-		ExecutionPaletteInstaller.Install(_window.Resources, _fixture.AppConfiguration.GridStyle);
 
 		var stepListBox = view.FindControl<ListBox>("StepListBox");
 		stepListBox.Should().NotBeNull();

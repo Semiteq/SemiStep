@@ -169,7 +169,7 @@
 
                     <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorColors}" />
                     <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
                             <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
@@ -189,135 +189,66 @@
                         <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorHeaderForeground}" />
                         <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
                                      Color="{Binding Chrome.HeaderForeground}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorSelectionBackground}" />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorChanged}" />
                         <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Selection.Background}" />
-                        <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorSelectionForeground}" />
-                        <ColorPicker Grid.Row="5" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Selection.Foreground}" />
-                        <TextBlock Grid.Row="6" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorChanged}" />
-                        <ColorPicker Grid.Row="6" Grid.Column="1" IsHexInputVisible="True"
                                      Color="{Binding ChangedCells.Changed}" />
-                        <TextBlock Grid.Row="7" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorChangedSelected}" />
+                        <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorReadOnlyCells}" />
+                        <ColorPicker Grid.Row="5" Grid.Column="1" IsHexInputVisible="True"
+                                     Color="{Binding GreyCells.ReadOnly}" />
+                        <TextBlock Grid.Row="6" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDisabledCells}" />
+                        <ColorPicker Grid.Row="6" Grid.Column="1" IsHexInputVisible="True"
+                                     Color="{Binding GreyCells.Disabled}" />
+                        <TextBlock Grid.Row="7" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorSelectionAccent}" />
                         <ColorPicker Grid.Row="7" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ChangedCells.ChangedSelected}" />
-                    </Grid>
-
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorReadOnlyCells}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ColorPast" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Classes="col-head" Text="{x:Static l:Resources.EditorCurrent}" />
-                        <TextBlock Grid.Row="0" Grid.Column="2" Classes="col-head" Text="{x:Static l:Resources.EditorPast}" />
-
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth0}" />
-                        <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ReadOnlyCells.Depth0}" />
-                        <ColorPicker Grid.Row="1" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding ReadOnlyCells.Depth0Past}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth1}" />
-                        <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ReadOnlyCells.Depth1}" />
-                        <ColorPicker Grid.Row="2" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding ReadOnlyCells.Depth1Past}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth2}" />
-                        <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ReadOnlyCells.Depth2}" />
-                        <ColorPicker Grid.Row="3" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding ReadOnlyCells.Depth2Past}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth3}" />
-                        <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ReadOnlyCells.Depth3}" />
-                        <ColorPicker Grid.Row="4" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding ReadOnlyCells.Depth3Past}" />
-                        <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorSelected}" />
-                        <ColorPicker Grid.Row="5" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ReadOnlyCells.Selected}" />
-                        <TextBlock Grid.Row="6" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorForeground}" />
-                        <ColorPicker Grid.Row="6" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ReadOnlyCells.Foreground}" />
-                    </Grid>
-
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorDisabledCells}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ColorPast" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Classes="col-head" Text="{x:Static l:Resources.EditorCurrent}" />
-                        <TextBlock Grid.Row="0" Grid.Column="2" Classes="col-head" Text="{x:Static l:Resources.EditorPast}" />
-
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth0}" />
-                        <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding DisabledCells.Depth0}" />
-                        <ColorPicker Grid.Row="1" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding DisabledCells.Depth0Past}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth1}" />
-                        <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding DisabledCells.Depth1}" />
-                        <ColorPicker Grid.Row="2" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding DisabledCells.Depth1Past}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth2}" />
-                        <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding DisabledCells.Depth2}" />
-                        <ColorPicker Grid.Row="3" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding DisabledCells.Depth2Past}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth3}" />
-                        <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding DisabledCells.Depth3}" />
-                        <ColorPicker Grid.Row="4" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding DisabledCells.Depth3Past}" />
-                        <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorSelected}" />
-                        <ColorPicker Grid.Row="5" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding DisabledCells.Selected}" />
-                        <TextBlock Grid.Row="6" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorForeground}" />
-                        <ColorPicker Grid.Row="6" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding DisabledCells.Foreground}" />
+                                     Color="{Binding Selection.Accent}" />
+                        <TextBlock Grid.Row="8" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorSelectionWeight}" />
+                        <NumericUpDown Grid.Row="8" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
+                                       FormatString="0.00" Value="{Binding Selection.Weight}" />
                     </Grid>
 
                     <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorExecutionHighlight}" />
                     <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                          RowDefinitions="Auto,Auto,Auto">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
                             <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ColorPast" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Classes="col-head" Text="{x:Static l:Resources.EditorCurrent}" />
-                        <TextBlock Grid.Row="0" Grid.Column="2" Classes="col-head" Text="{x:Static l:Resources.EditorPast}" />
+                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorExecutionColor}" />
+                        <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
+                                     Color="{Binding Execution.Running}" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorRunningWeight}" />
+                        <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
+                                       FormatString="0.00" Value="{Binding Execution.RunningWeight}" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorPastWeight}" />
+                        <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
+                                       FormatString="0.00" Value="{Binding Execution.PastWeight}" />
+                    </Grid>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth0}" />
-                        <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Execution.Depth0}" />
-                        <ColorPicker Grid.Row="1" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding Execution.Depth0Past}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth1}" />
-                        <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Execution.Depth1}" />
-                        <ColorPicker Grid.Row="2" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding Execution.Depth1Past}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth2}" />
-                        <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Execution.Depth2}" />
-                        <ColorPicker Grid.Row="3" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding Execution.Depth2Past}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth3}" />
-                        <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Execution.Depth3}" />
-                        <ColorPicker Grid.Row="4" Grid.Column="2" IsHexInputVisible="True"
-                                     Color="{Binding Execution.Depth3Past}" />
-                        <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorCurrentStepMarker}" />
-                        <ColorPicker Grid.Row="5" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Execution.CurrentStepMarker}" />
+                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorLoopTint}" />
+                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
+                          RowDefinitions="Auto,Auto,Auto,Auto">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorLoopColor}" />
+                        <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
+                                     Color="{Binding Loop.Color}" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth1}" />
+                        <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
+                                       FormatString="0.00" Value="{Binding Loop.Depth1Weight}" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth2}" />
+                        <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
+                                       FormatString="0.00" Value="{Binding Loop.Depth2Weight}" />
+                        <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth3}" />
+                        <NumericUpDown Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
+                                       FormatString="0.00" Value="{Binding Loop.Depth3Weight}" />
                     </Grid>
                 </StackPanel>
 

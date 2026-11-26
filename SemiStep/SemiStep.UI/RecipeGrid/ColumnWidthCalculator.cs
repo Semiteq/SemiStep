@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Recipes;
 
+using SemiStep.UI.Localization;
 using SemiStep.UI.RecipeGrid.Transposed;
 
 namespace SemiStep.UI.RecipeGrid;
@@ -19,6 +20,9 @@ public sealed class ColumnWidthCalculator(
 	// String MaxLength can be very large (production props use 64/255); cap the representative sample
 	// so a wide string column does not dominate the available FullHD width.
 	private const int MaxStringSampleLength = 12;
+
+	// Tabular figures give every four-digit step number the width of this one.
+	private const string NumberingSampleStep = "9999";
 
 	// ceil(CellFontSize × 2.0); calibration of the prior 26 px. See docs/architecture/recipe-grid-column-sizing.md
 	private const double ChromeFontMultiple = 2.0;
@@ -47,8 +51,22 @@ public sealed class ColumnWidthCalculator(
 
 	private int HeaderFloorChrome => (int)Math.Ceiling(gridStyle.Fonts.HeaderFontSize * ChromeFontMultiple);
 
-	// The numbering column (ColumnBuilder) uses it as its MinWidth, so do not lower it.
+	// It floors the numbering column width too, so do not lower it.
 	public int MinColumnWidth => (int)Math.Ceiling(gridStyle.Fonts.CellFontSize * MinColumnWidthEms);
+
+	/// <summary>
+	/// The № column fits a glyph and a four-digit step number, so the "►" or "■" of a run never resizes it and never
+	/// moves the columns to its right.
+	/// </summary>
+	public DataGridLength NumberingColumnWidth()
+	{
+		return CalculateWidth(
+			[
+				$"{RecipeRowViewModel.RunningGlyph} {NumberingSampleStep}",
+				$"{RecipeRowViewModel.StopGlyph} {NumberingSampleStep}",
+			],
+			Resources.StepNumberHeader);
+	}
 
 	/// <summary>A property column whose type is int or float, or the step start time column.</summary>
 	public bool IsNumericColumn(GridColumnDefinition columnDef)

@@ -64,9 +64,7 @@ public sealed class RecipeRowForDepthPropagationTests : IAsyncLifetime
 		foreach (var row in _surface.RecipeRows)
 		{
 			row.ForDepth.Should().Be(0);
-			row.IsForDepth1.Should().BeFalse();
-			row.IsForDepth2.Should().BeFalse();
-			row.IsForDepth3.Should().BeFalse();
+			row.ForDepth.Should().Be(0);
 		}
 	}
 
@@ -89,13 +87,11 @@ public sealed class RecipeRowForDepthPropagationTests : IAsyncLifetime
 
 		var innermostWait = _surface.RecipeRows[3];
 		innermostWait.ForDepth.Should().Be(3);
-		innermostWait.IsForDepth1.Should().BeFalse();
-		innermostWait.IsForDepth2.Should().BeFalse();
-		innermostWait.IsForDepth3.Should().BeTrue();
+		innermostWait.ForDepth.Should().Be(3);
 	}
 
 	[AvaloniaFact]
-	public void ForDepthChange_RaisesInpcForIsForDepthFlags()
+	public void ForDepthChange_RaisesInpcForForDepth()
 	{
 		_fixture.Coordinator.NewRecipe();
 		AppendWait();
@@ -106,7 +102,7 @@ public sealed class RecipeRowForDepthPropagationTests : IAsyncLifetime
 
 		row.ForDepth = 2;
 
-		changedProperties.Should().Contain(nameof(RecipeRowViewModel.IsForDepth2));
+		changedProperties.Should().Contain(nameof(RecipeRowViewModel.ForDepth));
 	}
 
 	private void AppendFor(int iterations)
@@ -132,8 +128,5 @@ public sealed class RecipeRowForDepthPropagationTests : IAsyncLifetime
 	{
 		var row = _surface.RecipeRows[rowIndex];
 		row.ForDepth.Should().Be(expectedDepth);
-		row.IsForDepth1.Should().Be(expectedDepth == 1);
-		row.IsForDepth2.Should().Be(expectedDepth == 2);
-		row.IsForDepth3.Should().Be(expectedDepth >= 3);
 	}
 }

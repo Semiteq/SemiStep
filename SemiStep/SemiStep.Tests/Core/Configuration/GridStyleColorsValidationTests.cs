@@ -44,27 +44,6 @@ public sealed class GridStyleColorsValidationTests
 	}
 
 	[Fact]
-	public void Validate_MissingExecutionSection_Fails()
-	{
-		var dto = new GridStyleOptionsDto
-		{
-			Colors = new GridStyleColorsDto
-			{
-				Cells = new GridStyleCellColorsDto
-				{
-					ReadOnly = CreateValidReadOnly(),
-					Disabled = CreateValidDisabled()
-				}
-			}
-		};
-
-		var result = GridStyleMapper.Map(dto);
-
-		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e => e.Message.Contains("colors.cells.execution"));
-	}
-
-	[Fact]
 	public void Validate_MissingDisabledSection_Fails()
 	{
 		var dto = new GridStyleOptionsDto
@@ -107,7 +86,7 @@ public sealed class GridStyleColorsValidationTests
 	}
 
 	[Fact]
-	public void Validate_NullCells_FailsWithExactlyThreeSectionErrors()
+	public void Validate_NullCells_FailsWithExactlyTwoSectionErrors()
 	{
 		var dto = CreateValidDto();
 		dto.Colors!.Cells = null;
@@ -120,67 +99,35 @@ public sealed class GridStyleColorsValidationTests
 			.Cast<GridStyleSectionMissingError>()
 			.Select(error => error.Section)
 			.Should()
-			.BeEquivalentTo("colors.cells.execution", "colors.cells.readonly", "colors.cells.disabled");
+			.BeEquivalentTo("colors.cells.readonly", "colors.cells.disabled");
 	}
 
-	public static TheoryData<string> DisabledKeyNames =>
-		[
-			"depth_0", "depth_1", "depth_2", "depth_3",
-			"depth_0_past", "depth_1_past", "depth_2_past", "depth_3_past",
-			"selected", "foreground"
-		];
-
-	public static TheoryData<string> ReadOnlyKeyNames =>
-		[
-			"depth_0", "depth_1", "depth_2", "depth_3",
-			"depth_0_past", "depth_1_past", "depth_2_past", "depth_3_past",
-			"selected", "foreground"
-		];
-
-	public static TheoryData<string> ExecutionKeyNames =>
-		[
-			"depth_0", "depth_1", "depth_2", "depth_3",
-			"depth_0_past", "depth_1_past", "depth_2_past", "depth_3_past",
-			"current_step_marker"
-		];
-
-	[Theory]
-	[MemberData(nameof(DisabledKeyNames))]
-	public void Validate_MissingDisabledKey_FailsWithKeyName(string keyName)
+	[Fact]
+	public void Validate_MissingDisabledDepth0_FailsWithKeyName()
 	{
 		var dto = CreateValidDto();
-		ClearDisabledKey(dto, keyName);
+		dto.Colors!.Cells!.Disabled!.Depth0 = null;
 
 		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e => e.Message.Contains($"'colors.cells.disabled.{keyName}'"));
+		result.Errors.Should().ContainSingle(e => e is GridStyleKeyMissingError
+			&& ((GridStyleKeyMissingError)e).Section == "colors.cells.disabled"
+			&& ((GridStyleKeyMissingError)e).Key == "depth_0");
 	}
 
-	[Theory]
-	[MemberData(nameof(ReadOnlyKeyNames))]
-	public void Validate_MissingReadOnlyKey_FailsWithKeyName(string keyName)
+	[Fact]
+	public void Validate_MissingReadOnlyDepth0_FailsWithKeyName()
 	{
 		var dto = CreateValidDto();
-		ClearReadOnlyKey(dto, keyName);
+		dto.Colors!.Cells!.ReadOnly!.Depth0 = null;
 
 		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e => e.Message.Contains($"'colors.cells.readonly.{keyName}'"));
-	}
-
-	[Theory]
-	[MemberData(nameof(ExecutionKeyNames))]
-	public void Validate_MissingIndividualKey_FailsWithKeyName(string keyName)
-	{
-		var dto = CreateValidDto();
-		ClearKey(dto, keyName);
-
-		var result = GridStyleMapper.Map(dto);
-
-		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e => e.Message.Contains($"'colors.cells.execution.{keyName}'"));
+		result.Errors.Should().ContainSingle(e => e is GridStyleKeyMissingError
+			&& ((GridStyleKeyMissingError)e).Section == "colors.cells.readonly"
+			&& ((GridStyleKeyMissingError)e).Key == "depth_0");
 	}
 
 	[Theory]
@@ -191,42 +138,42 @@ public sealed class GridStyleColorsValidationTests
 	public void Validate_MalformedHex_FailsNamingKey(string badHex)
 	{
 		var dto = CreateValidDto();
-		dto.Colors!.Cells!.Execution!.Depth0 = badHex;
+		dto.Colors!.Cells!.Execution!.Running = badHex;
 
 		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
-			e.Message.Contains("'colors.cells.execution.depth_0'") && e.Message.Contains(badHex));
+			e.Message.Contains("'colors.cells.execution.running'") && e.Message.Contains(badHex));
 	}
 
 	[Fact]
 	public void Validate_EmptyValue_FailsNamingKey()
 	{
 		var dto = CreateValidDto();
-		dto.Colors!.Cells!.Execution!.Depth0 = "";
+		dto.Colors!.Cells!.Execution!.Running = "";
 
 		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.execution.depth_0'"));
+		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.execution.running'"));
 	}
 
 	[Fact]
 	public void Validate_MultipleErrors_AllCollected()
 	{
 		var dto = CreateValidDto();
-		dto.Colors!.Cells!.Execution!.Depth0 = "not a color";
-		dto.Colors!.Cells!.Execution!.Depth1 = null;
-		dto.Colors!.Cells!.Execution!.CurrentStepMarker = "#GG";
+		dto.Colors!.Cells!.Execution!.Running = "not a color";
+		dto.Colors!.Cells!.ReadOnly!.Depth0 = null;
+		dto.Colors!.Cells!.Loop = new GridStyleLoopColorsDto { Color = "#GG" };
 
 		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().HaveCountGreaterThanOrEqualTo(3);
-		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.execution.depth_0'"));
-		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.execution.depth_1'"));
-		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.execution.current_step_marker'"));
+		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.execution.running'"));
+		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.readonly.depth_0'"));
+		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.loop.color'"));
 	}
 
 	[Theory]
@@ -238,7 +185,7 @@ public sealed class GridStyleColorsValidationTests
 	public void Validate_ValidHexFormats_Succeeds(string hex)
 	{
 		var dto = CreateValidDto();
-		dto.Colors!.Cells!.Execution!.Depth0 = hex;
+		dto.Colors!.Cells!.Execution!.Running = hex;
 
 		var result = GridStyleMapper.Map(dto);
 
@@ -283,8 +230,8 @@ public sealed class GridStyleColorsValidationTests
 		var dto = CreateValidDto();
 		dto.Colors!.Selection = new GridStyleSelectionColorsDto
 		{
-			Background = "#CCE4F7",
-			Foreground = "#202020"
+			Accent = "#3574F0",
+			Weight = 0.25
 		};
 
 		var result = GridStyleMapper.Map(dto);
@@ -292,23 +239,17 @@ public sealed class GridStyleColorsValidationTests
 		result.IsSuccess.Should().BeTrue();
 	}
 
-	[Theory]
-	[InlineData("background")]
-	[InlineData("foreground")]
-	public void Validate_MalformedSelectionHex_FailsNamingKey(string keyName)
+	[Fact]
+	public void Validate_MalformedSelectionHex_FailsNamingKey()
 	{
 		var dto = CreateValidDto();
-		dto.Colors!.Selection = new GridStyleSelectionColorsDto
-		{
-			Background = keyName == "background" ? "not-a-color" : "#CCE4F7",
-			Foreground = keyName == "foreground" ? "not-a-color" : "#202020"
-		};
+		dto.Colors!.Selection = new GridStyleSelectionColorsDto { Accent = "not-a-color" };
 
 		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
-			e.Message.Contains($"'colors.selection.{keyName}'") && e.Message.Contains("not-a-color"));
+			e.Message.Contains("'colors.selection.accent'") && e.Message.Contains("not-a-color"));
 	}
 
 	[Fact]
@@ -316,27 +257,23 @@ public sealed class GridStyleColorsValidationTests
 	{
 		var dto = CreateValidDto();
 		dto.Colors!.Cells!.Changed = "#FFCC80";
-		dto.Colors!.Cells!.ChangedSelected = "#EFD3A4";
 
 		var result = GridStyleMapper.Map(dto);
 
 		result.IsSuccess.Should().BeTrue();
 	}
 
-	[Theory]
-	[InlineData("changed")]
-	[InlineData("changed_selected")]
-	public void Validate_MalformedChangedCellHex_FailsNamingKey(string keyName)
+	[Fact]
+	public void Validate_MalformedChangedCellHex_FailsNamingKey()
 	{
 		var dto = CreateValidDto();
-		dto.Colors!.Cells!.Changed = keyName == "changed" ? "not-a-color" : "#FFCC80";
-		dto.Colors!.Cells!.ChangedSelected = keyName == "changed_selected" ? "not-a-color" : "#EFD3A4";
+		dto.Colors!.Cells!.Changed = "not-a-color";
 
 		var result = GridStyleMapper.Map(dto);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
-			e.Message.Contains($"'colors.cells.{keyName}'") && e.Message.Contains("not-a-color"));
+			e.Message.Contains("'colors.cells.changed'") && e.Message.Contains("not-a-color"));
 	}
 
 	[Fact]
@@ -453,170 +390,23 @@ public sealed class GridStyleColorsValidationTests
 		};
 	}
 
-	private static GridStyleReadOnlyCellColorsDto CreateValidReadOnly()
+	private static GridStyleGreyCellColorsDto CreateValidReadOnly()
 	{
-		return new GridStyleReadOnlyCellColorsDto
-		{
-			Depth0 = "#D8D8D8",
-			Depth1 = "#CCD5E0",
-			Depth2 = "#B8C3D1",
-			Depth3 = "#94A2B3",
-			Depth0Past = "#C8C8C8",
-			Depth1Past = "#BCC4CE",
-			Depth2Past = "#ACB7C2",
-			Depth3Past = "#8590A0",
-			Selected = "#6B95C0",
-			Foreground = "#606060"
-		};
+		return new GridStyleGreyCellColorsDto { Depth0 = "#D8D8D8" };
 	}
 
 	private static GridStyleExecutionColorsDto CreateValidExecution()
 	{
 		return new GridStyleExecutionColorsDto
 		{
-			Depth0 = "#FFFFFF",
-			Depth1 = "#E8F3FF",
-			Depth2 = "#D0E7FF",
-			Depth3 = "#A8D0FF",
-			Depth0Past = "#F0F0F0",
-			Depth1Past = "#DCE5EE",
-			Depth2Past = "#C4D2E0",
-			Depth3Past = "#9CB4CC",
-			CurrentStepMarker = "#FF8800"
+			Running = "#208A3C",
+			RunningWeight = 0.30,
+			PastWeight = 0.12
 		};
 	}
 
-	private static GridStyleDisabledCellColorsDto CreateValidDisabled()
+	private static GridStyleGreyCellColorsDto CreateValidDisabled()
 	{
-		return new GridStyleDisabledCellColorsDto
-		{
-			Depth0 = "#E0E0E0",
-			Depth1 = "#D5DEEA",
-			Depth2 = "#C2CEDB",
-			Depth3 = "#9DABBC",
-			Depth0Past = "#D0D0D0",
-			Depth1Past = "#C5CDD8",
-			Depth2Past = "#B5C0CC",
-			Depth3Past = "#909AAA",
-			Selected = "#89B4D7",
-			Foreground = "#808080"
-		};
-	}
-
-	private static void ClearDisabledKey(GridStyleOptionsDto dto, string keyName)
-	{
-		var disabled = dto.Colors!.Cells!.Disabled!;
-		switch (keyName)
-		{
-			case "depth_0":
-				disabled.Depth0 = null;
-				break;
-			case "depth_1":
-				disabled.Depth1 = null;
-				break;
-			case "depth_2":
-				disabled.Depth2 = null;
-				break;
-			case "depth_3":
-				disabled.Depth3 = null;
-				break;
-			case "depth_0_past":
-				disabled.Depth0Past = null;
-				break;
-			case "depth_1_past":
-				disabled.Depth1Past = null;
-				break;
-			case "depth_2_past":
-				disabled.Depth2Past = null;
-				break;
-			case "depth_3_past":
-				disabled.Depth3Past = null;
-				break;
-			case "selected":
-				disabled.Selected = null;
-				break;
-			case "foreground":
-				disabled.Foreground = null;
-				break;
-			default:
-				throw new ArgumentOutOfRangeException(nameof(keyName), keyName, "Unknown key");
-		}
-	}
-
-	private static void ClearReadOnlyKey(GridStyleOptionsDto dto, string keyName)
-	{
-		var readonlyCells = dto.Colors!.Cells!.ReadOnly!;
-		switch (keyName)
-		{
-			case "depth_0":
-				readonlyCells.Depth0 = null;
-				break;
-			case "depth_1":
-				readonlyCells.Depth1 = null;
-				break;
-			case "depth_2":
-				readonlyCells.Depth2 = null;
-				break;
-			case "depth_3":
-				readonlyCells.Depth3 = null;
-				break;
-			case "depth_0_past":
-				readonlyCells.Depth0Past = null;
-				break;
-			case "depth_1_past":
-				readonlyCells.Depth1Past = null;
-				break;
-			case "depth_2_past":
-				readonlyCells.Depth2Past = null;
-				break;
-			case "depth_3_past":
-				readonlyCells.Depth3Past = null;
-				break;
-			case "selected":
-				readonlyCells.Selected = null;
-				break;
-			case "foreground":
-				readonlyCells.Foreground = null;
-				break;
-			default:
-				throw new ArgumentOutOfRangeException(nameof(keyName), keyName, "Unknown key");
-		}
-	}
-
-	private static void ClearKey(GridStyleOptionsDto dto, string keyName)
-	{
-		var exec = dto.Colors!.Cells!.Execution!;
-		switch (keyName)
-		{
-			case "depth_0":
-				exec.Depth0 = null;
-				break;
-			case "depth_1":
-				exec.Depth1 = null;
-				break;
-			case "depth_2":
-				exec.Depth2 = null;
-				break;
-			case "depth_3":
-				exec.Depth3 = null;
-				break;
-			case "depth_0_past":
-				exec.Depth0Past = null;
-				break;
-			case "depth_1_past":
-				exec.Depth1Past = null;
-				break;
-			case "depth_2_past":
-				exec.Depth2Past = null;
-				break;
-			case "depth_3_past":
-				exec.Depth3Past = null;
-				break;
-			case "current_step_marker":
-				exec.CurrentStepMarker = null;
-				break;
-			default:
-				throw new ArgumentOutOfRangeException(nameof(keyName), keyName, "Unknown key");
-		}
+		return new GridStyleGreyCellColorsDto { Depth0 = "#E0E0E0" };
 	}
 }

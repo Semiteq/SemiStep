@@ -8,30 +8,6 @@ namespace SemiStep.UI.Styles;
 
 internal static class CellPaletteInstaller
 {
-	public const string CellReadOnlyDepth0BrushKey = "CellReadOnlyDepth0Brush";
-	public const string CellReadOnlyDepth1BrushKey = "CellReadOnlyDepth1Brush";
-	public const string CellReadOnlyDepth2BrushKey = "CellReadOnlyDepth2Brush";
-	public const string CellReadOnlyDepth3BrushKey = "CellReadOnlyDepth3Brush";
-	public const string CellReadOnlyDepth0PastBrushKey = "CellReadOnlyDepth0PastBrush";
-	public const string CellReadOnlyDepth1PastBrushKey = "CellReadOnlyDepth1PastBrush";
-	public const string CellReadOnlyDepth2PastBrushKey = "CellReadOnlyDepth2PastBrush";
-	public const string CellReadOnlyDepth3PastBrushKey = "CellReadOnlyDepth3PastBrush";
-	public const string CellReadOnlySelectedBackgroundBrushKey = "CellReadOnlySelectedBackgroundBrush";
-	public const string CellReadOnlyForegroundBrushKey = "CellReadOnlyForegroundBrush";
-	public const string CellDisabledDepth0BrushKey = "CellDisabledDepth0Brush";
-	public const string CellDisabledDepth1BrushKey = "CellDisabledDepth1Brush";
-	public const string CellDisabledDepth2BrushKey = "CellDisabledDepth2Brush";
-	public const string CellDisabledDepth3BrushKey = "CellDisabledDepth3Brush";
-	public const string CellDisabledDepth0PastBrushKey = "CellDisabledDepth0PastBrush";
-	public const string CellDisabledDepth1PastBrushKey = "CellDisabledDepth1PastBrush";
-	public const string CellDisabledDepth2PastBrushKey = "CellDisabledDepth2PastBrush";
-	public const string CellDisabledDepth3PastBrushKey = "CellDisabledDepth3PastBrush";
-	public const string CellDisabledSelectedBackgroundBrushKey = "CellDisabledSelectedBackgroundBrush";
-	public const string CellDisabledForegroundBrushKey = "CellDisabledForegroundBrush";
-	public const string SelectionBackgroundBrushKey = "SelectionBackgroundBrush";
-	public const string SelectionForegroundBrushKey = "SelectionForegroundBrush";
-	public const string CellChangedBrushKey = "CellChangedBrush";
-	public const string CellChangedSelectedBackgroundBrushKey = "CellChangedSelectedBackgroundBrush";
 	public const string GridLineBrushKey = "GridLineBrush";
 	public const string StatusBarBackgroundBrushKey = "StatusBarBackgroundBrush";
 	public const string StatusBarForegroundBrushKey = "StatusBarForegroundBrush";
@@ -57,37 +33,18 @@ internal static class CellPaletteInstaller
 	public const string GridBackgroundBrushKey = "GridBackgroundBrush";
 	public const string HeaderForegroundBrushKey = "HeaderForegroundBrush";
 	public const string RowHeightKey = "GridRowHeight";
+	public const string DataGridCellCurrentBorderBrushKey = "DataGridCellCurrentBorderBrush";
+	public const string DataGridCellFocusBorderBrushKey = "DataGridCellFocusBorderBrush";
+	public const string CellFocusFrameKey = "CellFocusFrame";
+
+	private const double FocusFrameThickness = 2;
 
 	public static void Install(IResourceDictionary resources, GridStyleOptions gridStyle)
 	{
 		ArgumentNullException.ThrowIfNull(resources);
 		ArgumentNullException.ThrowIfNull(gridStyle);
 
-		resources[CellReadOnlyDepth0BrushKey] = PaletteBrushFactory.From(gridStyle.ReadOnlyCells.Depth0);
-		resources[CellReadOnlyDepth1BrushKey] = PaletteBrushFactory.From(gridStyle.ReadOnlyCells.Depth1);
-		resources[CellReadOnlyDepth2BrushKey] = PaletteBrushFactory.From(gridStyle.ReadOnlyCells.Depth2);
-		resources[CellReadOnlyDepth3BrushKey] = PaletteBrushFactory.From(gridStyle.ReadOnlyCells.Depth3);
-		resources[CellReadOnlyDepth0PastBrushKey] = PaletteBrushFactory.From(gridStyle.ReadOnlyCells.Depth0Past);
-		resources[CellReadOnlyDepth1PastBrushKey] = PaletteBrushFactory.From(gridStyle.ReadOnlyCells.Depth1Past);
-		resources[CellReadOnlyDepth2PastBrushKey] = PaletteBrushFactory.From(gridStyle.ReadOnlyCells.Depth2Past);
-		resources[CellReadOnlyDepth3PastBrushKey] = PaletteBrushFactory.From(gridStyle.ReadOnlyCells.Depth3Past);
-		resources[CellReadOnlySelectedBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.ReadOnlyCells.Selected);
-		resources[CellReadOnlyForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.ReadOnlyCells.Foreground);
-		resources[CellDisabledDepth0BrushKey] = PaletteBrushFactory.From(gridStyle.DisabledCells.Depth0);
-		resources[CellDisabledDepth1BrushKey] = PaletteBrushFactory.From(gridStyle.DisabledCells.Depth1);
-		resources[CellDisabledDepth2BrushKey] = PaletteBrushFactory.From(gridStyle.DisabledCells.Depth2);
-		resources[CellDisabledDepth3BrushKey] = PaletteBrushFactory.From(gridStyle.DisabledCells.Depth3);
-		resources[CellDisabledDepth0PastBrushKey] = PaletteBrushFactory.From(gridStyle.DisabledCells.Depth0Past);
-		resources[CellDisabledDepth1PastBrushKey] = PaletteBrushFactory.From(gridStyle.DisabledCells.Depth1Past);
-		resources[CellDisabledDepth2PastBrushKey] = PaletteBrushFactory.From(gridStyle.DisabledCells.Depth2Past);
-		resources[CellDisabledDepth3PastBrushKey] = PaletteBrushFactory.From(gridStyle.DisabledCells.Depth3Past);
-		resources[CellDisabledSelectedBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.DisabledCells.Selected);
-		resources[CellDisabledForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.DisabledCells.Foreground);
-		resources[SelectionBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.Selection.Background);
-		resources[SelectionForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.Selection.Foreground);
-		resources[CellChangedBrushKey] = PaletteBrushFactory.From(gridStyle.ChangedCells.Changed);
-		resources[CellChangedSelectedBackgroundBrushKey] =
-			PaletteBrushFactory.From(gridStyle.ChangedCells.ChangedSelected);
+		resources[CellPalette.ResourceKey] = CellPalette.Build(gridStyle);
 		resources[GridLineBrushKey] = PaletteBrushFactory.From(gridStyle.Chrome.GridLine);
 		resources[StatusBarBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.StatusBar.Background);
 		resources[StatusBarForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.StatusBar.Foreground);
@@ -115,6 +72,21 @@ internal static class CellPaletteInstaller
 		resources[GridBackgroundBrushKey] = PaletteBrushFactory.From(gridStyle.Chrome.GridBackground);
 		resources[HeaderForegroundBrushKey] = PaletteBrushFactory.From(gridStyle.Chrome.HeaderForeground);
 		resources[RowHeightKey] = gridStyle.Layout.RowHeight;
+		InstallFocusFrame(resources, gridStyle.Selection.Accent);
+	}
+
+	// The focused cell's frame in the selection accent: Semi's current-cell rectangles read the two DataGrid
+	// keys; the transposed cell draws an inset shadow, which moves no layout.
+	private static void InstallFocusFrame(IResourceDictionary resources, StyleColor accent)
+	{
+		resources[DataGridCellCurrentBorderBrushKey] = PaletteBrushFactory.From(accent);
+		resources[DataGridCellFocusBorderBrushKey] = PaletteBrushFactory.From(accent);
+		resources[CellFocusFrameKey] = new BoxShadows(new BoxShadow
+		{
+			IsInset = true,
+			Spread = FocusFrameThickness,
+			Color = accent.ToMediaColor(),
+		});
 	}
 
 	// An empty family means "theme default": FontFamily.Default keeps the application's default

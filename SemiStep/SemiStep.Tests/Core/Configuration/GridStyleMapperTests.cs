@@ -2,7 +2,9 @@
 
 using SemiStep.Core.Configuration;
 using SemiStep.Core.Configuration.Dto;
+using SemiStep.Core.Configuration.Loaders;
 using SemiStep.Core.Configuration.Mapping;
+using SemiStep.Tests.Helpers;
 
 using Xunit;
 
@@ -20,42 +22,157 @@ public sealed class GridStyleMapperTests
 
 		var options = GridStyleMapper.Map(dto).Value;
 
-		options.Selection.Background.Should().Be(StyleColor.Parse("#ABCDEF"));
-		options.Selection.Foreground.Should().Be(StyleColor.Parse("#FEDCBA"));
+		options.Selection.Should().Be(new SelectionColors(StyleColor.Parse("#ABCDEF"), 0.5));
 		options.ChangedCells.Changed.Should().Be(StyleColor.Parse("#0ABBCD"));
-		options.ChangedCells.ChangedSelected.Should().Be(StyleColor.Parse("#0DCCEF"));
+		options.ReadOnlyCell.Should().Be(StyleColor.Parse("#11111B"));
+		options.DisabledCell.Should().Be(StyleColor.Parse("#11111A"));
+		options.Execution.Should().Be(new ExecutionPalette(StyleColor.Parse("#111111"), 0.75, 0.25));
+		options.Loop.Should().Be(new LoopPalette(StyleColor.Parse("#222222"), 0.125, 0.375, 0.625));
+	}
 
-		options.ReadOnlyCells.Depth0.Should().Be(StyleColor.Parse("#11111B"));
-		options.ReadOnlyCells.Depth1.Should().Be(StyleColor.Parse("#22222B"));
-		options.ReadOnlyCells.Depth2.Should().Be(StyleColor.Parse("#33333B"));
-		options.ReadOnlyCells.Depth3.Should().Be(StyleColor.Parse("#44444B"));
-		options.ReadOnlyCells.Depth0Past.Should().Be(StyleColor.Parse("#55555B"));
-		options.ReadOnlyCells.Depth1Past.Should().Be(StyleColor.Parse("#66666B"));
-		options.ReadOnlyCells.Depth2Past.Should().Be(StyleColor.Parse("#77777B"));
-		options.ReadOnlyCells.Depth3Past.Should().Be(StyleColor.Parse("#88888B"));
-		options.ReadOnlyCells.Selected.Should().Be(StyleColor.Parse("#99999B"));
-		options.ReadOnlyCells.Foreground.Should().Be(StyleColor.Parse("#AAAAAC"));
+	[Fact]
+	public void Map_FileWithOnlyTheOldPaletteKeys_LoadsTheNewKeysAtDefaults()
+	{
+		const string OldPaletteYaml = """
+			colors:
+			  selection:
+			    background: "#CCE4F7"
+			    foreground: "#202020"
+			  cells:
+			    changed: "#FFCC80"
+			    changed_selected: "#EFD3A4"
+			    readonly:
+			      depth_0: "#D8D8D8"
+			      depth_1: "#CCD5E0"
+			      selected: "#DCE8F4"
+			      foreground: "#606060"
+			    disabled:
+			      depth_0: "#E0E0E0"
+			      depth_1_past: "#C5CDD8"
+			    execution:
+			      depth_0: "#FFFFFF"
+			      depth_1: "#E8F3FF"
+			      current_step_marker: "#FF8800"
+			""";
+		var dto = YamlConfigDeserializer.Instance.Deserialize<GridStyleOptionsDto?>(OldPaletteYaml);
 
-		options.DisabledCells.Depth0.Should().Be(StyleColor.Parse("#11111A"));
-		options.DisabledCells.Depth1.Should().Be(StyleColor.Parse("#22222A"));
-		options.DisabledCells.Depth2.Should().Be(StyleColor.Parse("#33333A"));
-		options.DisabledCells.Depth3.Should().Be(StyleColor.Parse("#44444A"));
-		options.DisabledCells.Depth0Past.Should().Be(StyleColor.Parse("#55555A"));
-		options.DisabledCells.Depth1Past.Should().Be(StyleColor.Parse("#66666A"));
-		options.DisabledCells.Depth2Past.Should().Be(StyleColor.Parse("#77777A"));
-		options.DisabledCells.Depth3Past.Should().Be(StyleColor.Parse("#88888A"));
-		options.DisabledCells.Selected.Should().Be(StyleColor.Parse("#99999A"));
-		options.DisabledCells.Foreground.Should().Be(StyleColor.Parse("#AAAAAB"));
+		var result = GridStyleMapper.Map(dto);
 
-		options.Execution.Depth0.Should().Be(StyleColor.Parse("#111111"));
-		options.Execution.Depth1.Should().Be(StyleColor.Parse("#222222"));
-		options.Execution.Depth2.Should().Be(StyleColor.Parse("#333333"));
-		options.Execution.Depth3.Should().Be(StyleColor.Parse("#444444"));
-		options.Execution.Depth0Past.Should().Be(StyleColor.Parse("#555555"));
-		options.Execution.Depth1Past.Should().Be(StyleColor.Parse("#666666"));
-		options.Execution.Depth2Past.Should().Be(StyleColor.Parse("#777777"));
-		options.Execution.Depth3Past.Should().Be(StyleColor.Parse("#888888"));
-		options.Execution.CurrentStepMarker.Should().Be(StyleColor.Parse("#999999"));
+		result.IsSuccess.Should().BeTrue();
+		var defaults = GridStyleOptions.Default;
+		result.Value.Selection.Should().Be(defaults.Selection);
+		result.Value.Execution.Should().Be(defaults.Execution);
+		result.Value.Loop.Should().Be(defaults.Loop);
+		result.Value.ReadOnlyCell.Should().Be(StyleColor.Parse("#D8D8D8"));
+	}
+
+	[Fact]
+	public void Map_WithoutTheExecutionSection_Loads()
+	{
+		var dto = BuildCompleteDto();
+		dto.Colors!.Cells!.Execution = null;
+		dto.Colors!.Cells!.Loop = null;
+
+		var result = GridStyleMapper.Map(dto);
+
+		result.IsSuccess.Should().BeTrue();
+		result.Value.Execution.Should().Be(GridStyleOptions.Default.Execution);
+		result.Value.Loop.Should().Be(GridStyleOptions.Default.Loop);
+	}
+
+	[Theory]
+	[InlineData(1.5)]
+	[InlineData(-0.1)]
+	public void Map_RunningWeightOutsideZeroToOne_FailsNamingSectionAndKey(double weight)
+	{
+		var dto = BuildCompleteDto();
+		dto.Colors!.Cells!.Execution!.RunningWeight = weight;
+
+		var result = GridStyleMapper.Map(dto);
+
+		result.IsFailed.Should().BeTrue();
+		var error = result.Errors.Should().ContainSingle().Which.Should().BeOfType<GridStyleWeightOutOfRangeError>().Subject;
+		error.Section.Should().Be("colors.cells.execution");
+		error.Key.Should().Be("running_weight");
+		error.Value.Should().Be(weight);
+	}
+
+	[Theory]
+	[InlineData(0.0)]
+	[InlineData(1.0)]
+	public void Map_WeightsAtTheEndsOfTheRange_AreAccepted(double weight)
+	{
+		var dto = BuildCompleteDto();
+		var execution = dto.Colors!.Cells!.Execution!;
+		var loop = dto.Colors!.Cells!.Loop!;
+		execution.RunningWeight = execution.PastWeight = weight;
+		loop.Depth1Weight = loop.Depth2Weight = loop.Depth3Weight = weight;
+		dto.Colors!.Selection!.Weight = weight;
+
+		var result = GridStyleMapper.Map(dto);
+
+		result.IsSuccess.Should().BeTrue();
+		result.Value.Execution.PastWeight.Should().Be(weight);
+		result.Value.Loop.Depth3Weight.Should().Be(weight);
+		result.Value.Selection.Weight.Should().Be(weight);
+	}
+
+	[Theory]
+	[InlineData("past_weight", 1.01)]
+	[InlineData("past_weight", -0.01)]
+	[InlineData("depth_1_weight", 1.01)]
+	[InlineData("depth_1_weight", -0.01)]
+	[InlineData("depth_3_weight", 1.01)]
+	[InlineData("depth_3_weight", -0.01)]
+	public void Map_WeightOutsideZeroToOne_FailsNamingTheKey(string key, double weight)
+	{
+		var dto = BuildCompleteDto();
+		var execution = dto.Colors!.Cells!.Execution!;
+		var loop = dto.Colors!.Cells!.Loop!;
+		switch (key)
+		{
+			case "past_weight":
+				execution.PastWeight = weight;
+				break;
+			case "depth_1_weight":
+				loop.Depth1Weight = weight;
+				break;
+			default:
+				loop.Depth3Weight = weight;
+				break;
+		}
+
+		var result = GridStyleMapper.Map(dto);
+
+		var error = result.Errors.Should().ContainSingle().Which.Should().BeOfType<GridStyleWeightOutOfRangeError>().Subject;
+		error.Key.Should().Be(key);
+		error.Value.Should().Be(weight);
+	}
+
+	[Fact]
+	public void Map_LoopAndSelectionWeightsOutOfRange_AreCollectedTogether()
+	{
+		var dto = BuildCompleteDto();
+		dto.Colors!.Cells!.Loop!.Depth2Weight = 2;
+		dto.Colors!.Selection!.Weight = -1;
+
+		var result = GridStyleMapper.Map(dto);
+
+		result.Errors.OfType<GridStyleWeightOutOfRangeError>()
+			.Select(error => $"{error.Section}.{error.Key}")
+			.Should()
+			.Equal("colors.cells.loop.depth_2_weight", "colors.selection.weight");
+	}
+
+	[Fact]
+	public void Map_SavedOptionsLoadBackUnchanged()
+	{
+		var options = GridStyleOptionsTestData.Distinct();
+
+		var reloaded = GridStyleMapper.Map(GridStyleDtoMapper.Map(options));
+
+		reloaded.IsSuccess.Should().BeTrue();
+		reloaded.Value.Should().Be(options);
 	}
 
 	[Fact]
@@ -233,50 +350,26 @@ public sealed class GridStyleMapperTests
 			{
 				Selection = new GridStyleSelectionColorsDto
 				{
-					Background = "#ABCDEF",
-					Foreground = "#FEDCBA"
+					Accent = "#ABCDEF",
+					Weight = 0.5
 				},
 				Cells = new GridStyleCellColorsDto
 				{
 					Changed = "#0ABBCD",
-					ChangedSelected = "#0DCCEF",
-					ReadOnly = new GridStyleReadOnlyCellColorsDto
-					{
-						Depth0 = "#11111B",
-						Depth1 = "#22222B",
-						Depth2 = "#33333B",
-						Depth3 = "#44444B",
-						Depth0Past = "#55555B",
-						Depth1Past = "#66666B",
-						Depth2Past = "#77777B",
-						Depth3Past = "#88888B",
-						Selected = "#99999B",
-						Foreground = "#AAAAAC"
-					},
-					Disabled = new GridStyleDisabledCellColorsDto
-					{
-						Depth0 = "#11111A",
-						Depth1 = "#22222A",
-						Depth2 = "#33333A",
-						Depth3 = "#44444A",
-						Depth0Past = "#55555A",
-						Depth1Past = "#66666A",
-						Depth2Past = "#77777A",
-						Depth3Past = "#88888A",
-						Selected = "#99999A",
-						Foreground = "#AAAAAB"
-					},
+					ReadOnly = new GridStyleGreyCellColorsDto { Depth0 = "#11111B" },
+					Disabled = new GridStyleGreyCellColorsDto { Depth0 = "#11111A" },
 					Execution = new GridStyleExecutionColorsDto
 					{
-						Depth0 = "#111111",
-						Depth1 = "#222222",
-						Depth2 = "#333333",
-						Depth3 = "#444444",
-						Depth0Past = "#555555",
-						Depth1Past = "#666666",
-						Depth2Past = "#777777",
-						Depth3Past = "#888888",
-						CurrentStepMarker = "#999999"
+						Running = "#111111",
+						RunningWeight = 0.75,
+						PastWeight = 0.25
+					},
+					Loop = new GridStyleLoopColorsDto
+					{
+						Color = "#222222",
+						Depth1Weight = 0.125,
+						Depth2Weight = 0.375,
+						Depth3Weight = 0.625
 					}
 				}
 			}

@@ -23,6 +23,6 @@
               Background="{DynamicResource GridBackgroundBrush}"
               SelectionMode="Extended"
               ClipboardCopyMode="None"
-              LoadingRow="OnDataGridLoadingRow" />
+              />
 
 </UserControl>

@@ -277,12 +277,6 @@
   <data name="EditorItalic" xml:space="preserve">
     <value>Italic</value>
   </data>
-  <data name="EditorCurrent" xml:space="preserve">
-    <value>Current</value>
-  </data>
-  <data name="EditorPast" xml:space="preserve">
-    <value>Past</value>
-  </data>
   <data name="EditorRowHeight" xml:space="preserve">
     <value>Row height</value>
   </data>
@@ -316,20 +310,8 @@
   <data name="EditorHeaderForeground" xml:space="preserve">
     <value>Header foreground</value>
   </data>
-  <data name="EditorSelectionBackground" xml:space="preserve">
-    <value>Selection background</value>
-  </data>
-  <data name="EditorSelectionForeground" xml:space="preserve">
-    <value>Selection foreground</value>
-  </data>
   <data name="EditorChanged" xml:space="preserve">
     <value>Changed</value>
-  </data>
-  <data name="EditorChangedSelected" xml:space="preserve">
-    <value>Changed (selected)</value>
-  </data>
-  <data name="EditorDepth0" xml:space="preserve">
-    <value>Depth 0</value>
   </data>
   <data name="EditorDepth1" xml:space="preserve">
     <value>Depth 1</value>
@@ -340,14 +322,8 @@
   <data name="EditorDepth3" xml:space="preserve">
     <value>Depth 3</value>
   </data>
-  <data name="EditorSelected" xml:space="preserve">
-    <value>Selected</value>
-  </data>
   <data name="EditorForeground" xml:space="preserve">
     <value>Foreground</value>
-  </data>
-  <data name="EditorCurrentStepMarker" xml:space="preserve">
-    <value>Current step marker</value>
   </data>
   <data name="EditorPadding" xml:space="preserve">
     <value>Padding</value>
@@ -737,13 +713,13 @@
     <value>Not running</value>
   </data>
   <data name="ExecutionRunningFormat" xml:space="preserve">
-    <value>▶ Running: step {0} of {1}</value>
+    <value>► Running: step {0} of {1}</value>
   </data>
   <data name="ExecutionRunningStepOnlyFormat" xml:space="preserve">
-    <value>▶ Running: step {0}</value>
+    <value>► Running: step {0}</value>
   </data>
   <data name="ExecutionRunning" xml:space="preserve">
-    <value>▶ Running</value>
+    <value>► Running</value>
   </data>
   <data name="ExecutionNoData" xml:space="preserve">
     <value>no data</value>
@@ -780,5 +756,32 @@
   </data>
   <data name="RampTimeToolTip" xml:space="preserve">
     <value>ramp time, not part of the step duration</value>
+  </data>
+  <data name="EditorSelectionAccent" xml:space="preserve">
+    <value>Selection colour</value>
+  </data>
+  <data name="EditorSelectionWeight" xml:space="preserve">
+    <value>Selection weight</value>
+  </data>
+  <data name="EditorExecutionColor" xml:space="preserve">
+    <value>Execution colour</value>
+  </data>
+  <data name="EditorRunningWeight" xml:space="preserve">
+    <value>Running step weight</value>
+  </data>
+  <data name="EditorPastWeight" xml:space="preserve">
+    <value>Past steps weight</value>
+  </data>
+  <data name="EditorLoopTint" xml:space="preserve">
+    <value>Loop tint</value>
+  </data>
+  <data name="EditorLoopColor" xml:space="preserve">
+    <value>Loop colour</value>
+  </data>
+  <data name="ErrorGridStyleWeightOutOfRange" xml:space="preserve">
+    <value>Grid style '{0}.{1}' has weight {2}; expected a value from 0 to 1.</value>
+  </data>
+  <data name="EmptyRecipeHint" xml:space="preserve">
+    <value>The recipe is empty. Add a step (Ctrl+N) or open a file (Ctrl+O).</value>
   </data>
 </root>

@@ -137,7 +137,7 @@ internal sealed class ComboBoxCellFactory(ComboBoxItemsProvider comboBoxItemsPro
 		{
 			presenter.Bind(
 				InputElement.IsEnabledProperty,
-				CellApplicabilityBinding.CreateApplicableAndUnlockedBinding(columnDef.Key));
+				CellApplicabilityBinding.CreateApplicableAndUnlockedBinding(columnDef.Key, presenter));
 		}
 
 		return presenter;

@@ -21,9 +21,7 @@
                       VerticalScrollBarVisibility="Auto">
             <DockPanel>
 
-                <!-- Frozen-by-construction parameter-name column: mirrors canonical column headers.
-                     The header/marker split mirrors the step-column template so the header underline
-                     and the marker strip stay continuous across the frozen seam. -->
+                <!-- Frozen-by-construction parameter-name column: mirrors canonical column headers. -->
                 <StackPanel DockPanel.Dock="Left">
                     <Border x:Name="StepNumberCorner"
                             Classes="transposed-header-spacer"
@@ -33,8 +31,6 @@
                                    VerticalAlignment="Center"
                                    Margin="8,0" />
                     </Border>
-                    <Border Classes="transposed-marker-slot"
-                            Height="{DynamicResource TransposedMarkerSlotHeight}" />
                     <ItemsControl x:Name="ParameterNameColumn"
                                   ItemsSource="{Binding ParameterDescriptors}">
                         <ItemsControl.ItemTemplate>
@@ -67,17 +63,11 @@
                             <StackPanel Width="{DynamicResource TransposedStepColumnWidth}">
                                 <Border Classes="transposed-step-header"
                                         Height="{DynamicResource TransposedCellHeight}">
-                                    <TextBlock Text="{Binding Row.StepNumber}"
+                                    <TextBlock Text="{Binding Row.StepNumberText}"
+                                               Classes.running="{Binding Row.IsCurrentStep}"
+                                               Classes.stopped="{Binding Row.IsStopStep}"
                                                HorizontalAlignment="Center"
                                                VerticalAlignment="Center" />
-                                </Border>
-                                <!-- Marker slot keeps a constant height so the current column's cells
-                                     stay row-aligned with every other column. -->
-                                <Border Classes="transposed-marker-slot"
-                        Height="{DynamicResource TransposedMarkerSlotHeight}">
-                                    <Border Classes="transposed-current-marker"
-                                            Background="{DynamicResource CurrentStepMarkerBrush}"
-                                            IsVisible="{Binding Row.IsCurrentStep}" />
                                 </Border>
                                 <!-- Hosts a pooled cell presenter that rebinds when the container re-points
                                      to a different column. The heavy cell subtrees live in the view-owned

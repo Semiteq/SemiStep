@@ -30,50 +30,26 @@ internal static class GridStyleDtoMapper
 			{
 				Selection = new GridStyleSelectionColorsDto
 				{
-					Background = options.Selection.Background.ToString(),
-					Foreground = options.Selection.Foreground.ToString()
+					Accent = options.Selection.Accent.ToString(),
+					Weight = options.Selection.Weight
 				},
 				Cells = new GridStyleCellColorsDto
 				{
 					Changed = options.ChangedCells.Changed.ToString(),
-					ChangedSelected = options.ChangedCells.ChangedSelected.ToString(),
-					ReadOnly = new GridStyleReadOnlyCellColorsDto
-					{
-						Depth0 = options.ReadOnlyCells.Depth0.ToString(),
-						Depth1 = options.ReadOnlyCells.Depth1.ToString(),
-						Depth2 = options.ReadOnlyCells.Depth2.ToString(),
-						Depth3 = options.ReadOnlyCells.Depth3.ToString(),
-						Depth0Past = options.ReadOnlyCells.Depth0Past.ToString(),
-						Depth1Past = options.ReadOnlyCells.Depth1Past.ToString(),
-						Depth2Past = options.ReadOnlyCells.Depth2Past.ToString(),
-						Depth3Past = options.ReadOnlyCells.Depth3Past.ToString(),
-						Selected = options.ReadOnlyCells.Selected.ToString(),
-						Foreground = options.ReadOnlyCells.Foreground.ToString()
-					},
-					Disabled = new GridStyleDisabledCellColorsDto
-					{
-						Depth0 = options.DisabledCells.Depth0.ToString(),
-						Depth1 = options.DisabledCells.Depth1.ToString(),
-						Depth2 = options.DisabledCells.Depth2.ToString(),
-						Depth3 = options.DisabledCells.Depth3.ToString(),
-						Depth0Past = options.DisabledCells.Depth0Past.ToString(),
-						Depth1Past = options.DisabledCells.Depth1Past.ToString(),
-						Depth2Past = options.DisabledCells.Depth2Past.ToString(),
-						Depth3Past = options.DisabledCells.Depth3Past.ToString(),
-						Selected = options.DisabledCells.Selected.ToString(),
-						Foreground = options.DisabledCells.Foreground.ToString()
-					},
+					ReadOnly = new GridStyleGreyCellColorsDto { Depth0 = options.ReadOnlyCell.ToString() },
+					Disabled = new GridStyleGreyCellColorsDto { Depth0 = options.DisabledCell.ToString() },
 					Execution = new GridStyleExecutionColorsDto
 					{
-						Depth0 = options.Execution.Depth0.ToString(),
-						Depth1 = options.Execution.Depth1.ToString(),
-						Depth2 = options.Execution.Depth2.ToString(),
-						Depth3 = options.Execution.Depth3.ToString(),
-						Depth0Past = options.Execution.Depth0Past.ToString(),
-						Depth1Past = options.Execution.Depth1Past.ToString(),
-						Depth2Past = options.Execution.Depth2Past.ToString(),
-						Depth3Past = options.Execution.Depth3Past.ToString(),
-						CurrentStepMarker = options.Execution.CurrentStepMarker.ToString()
+						Running = options.Execution.Running.ToString(),
+						RunningWeight = options.Execution.RunningWeight,
+						PastWeight = options.Execution.PastWeight
+					},
+					Loop = new GridStyleLoopColorsDto
+					{
+						Color = options.Loop.Color.ToString(),
+						Depth1Weight = options.Loop.Depth1Weight,
+						Depth2Weight = options.Loop.Depth2Weight,
+						Depth3Weight = options.Loop.Depth3Weight
 					}
 				},
 				GridLine = options.Chrome.GridLine.ToString()

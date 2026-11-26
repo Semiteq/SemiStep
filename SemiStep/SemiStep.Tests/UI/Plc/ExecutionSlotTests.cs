@@ -14,6 +14,7 @@ using SemiStep.Tests.UI.Helpers;
 using SemiStep.Tests.UI.MainWindow;
 using SemiStep.UI.Localization;
 using SemiStep.UI.Plc;
+using SemiStep.UI.RecipeGrid;
 
 using Xunit;
 
@@ -147,6 +148,21 @@ public sealed class ExecutionSlotTests : IAsyncLifetime
 		viewModel.WindowTitle.Should().NotEndWith(Resources.WindowTitleRunningSuffix);
 
 		viewModel.Dispose();
+	}
+
+	// The running row's glyph: the chrome fonts have no U+25B6, so the bar would fall back to another font for it.
+	[AvaloniaTheory]
+	[InlineData(nameof(Resources.ExecutionRunningFormat), "")]
+	[InlineData(nameof(Resources.ExecutionRunningStepOnlyFormat), "")]
+	[InlineData(nameof(Resources.ExecutionRunning), "")]
+	[InlineData(nameof(Resources.ExecutionRunningFormat), "ru")]
+	[InlineData(nameof(Resources.ExecutionRunningStepOnlyFormat), "ru")]
+	[InlineData(nameof(Resources.ExecutionRunning), "ru")]
+	public void RunningText_StartsWithTheGridsRunningGlyph(string resourceName, string culture)
+	{
+		var text = Resources.ResourceManager.GetString(resourceName, CultureInfo.GetCultureInfo(culture));
+
+		text.Should().StartWith(RecipeRowViewModel.RunningGlyph + " ");
 	}
 
 	[AvaloniaFact]

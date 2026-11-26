@@ -5,6 +5,28 @@
              mc:Ignorable="d"
              d:DesignWidth="1600"
              d:DesignHeight="600"
+             xmlns:rg="clr-namespace:SemiStep.UI.RecipeGrid"
+             xmlns:l="clr-namespace:SemiStep.UI.Localization"
              x:Class="SemiStep.UI.RecipeGrid.RecipeGridHost">
+
+    <!-- The empty-recipe hint lies over the presenter of Content, never in Content, so the orientation swap
+         and IsEditing keep reading the active grid view. It takes no input: Ctrl+N and Ctrl+O reach the grid. -->
+    <UserControl.Template>
+        <ControlTemplate TargetType="rg:RecipeGridHost">
+            <Panel>
+                <ContentPresenter Name="PART_ContentPresenter"
+                                  Content="{TemplateBinding Content}" />
+                <TextBlock x:Name="EmptyRecipeHint"
+                           x:DataType="rg:ActiveRecipeGridSurface"
+                           Text="{x:Static l:Resources.EmptyRecipeHint}"
+                           IsVisible="{Binding IsRecipeEmpty}"
+                           Foreground="{DynamicResource SecondaryForegroundBrush}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           IsHitTestVisible="False"
+                           Focusable="False" />
+            </Panel>
+        </ControlTemplate>
+    </UserControl.Template>
 
 </UserControl>

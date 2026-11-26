@@ -17,11 +17,7 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 {
 	internal const string CellHeightResourceKey = "TransposedCellHeight";
 	internal const string StepColumnWidthResourceKey = "TransposedStepColumnWidth";
-	internal const string MarkerSlotHeightResourceKey = "TransposedMarkerSlotHeight";
 
-	private const double CurrentStepMarkerHeight = 4;
-
-	private readonly TransposedStepColumnClassBinder _stepColumnClassBinder = new();
 	private readonly CellEditCoordinator _editCoordinator = new();
 	private readonly TransposedGridNavigator _gridNavigator;
 	private readonly TransposedGridSelectionController _gridSelectionController;
@@ -49,7 +45,6 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 
 		this.WhenActivated(disposables =>
 		{
-			StepListBox.ContainerPrepared += OnContainerPrepared;
 			StepListBox.ContainerClearing += OnContainerClearing;
 			StepListBox.SelectionChanged += OnSelectionChanged;
 			// Tunnel: a press inside a cell editor never bubbles to the ListBoxItem, so selection/click-away must hook first.
@@ -57,14 +52,12 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 			// Tunnel: arrow keys must not reach a closed ComboBox (it cycles its value on arrows).
 			AddHandler(KeyDownEvent, OnTunnelKeyDown, RoutingStrategies.Tunnel);
 
-			// Activation fires on Loaded, after the first layout pass has already realized
-			// containers; stamp those retroactively so their execution classes bind too.
-			foreach (var container in StepListBox.GetRealizedContainers())
-			{
-				_stepColumnClassBinder.OnContainerPrepared(container);
-			}
+			OperatorScrollInput.Watch(this, () => ViewModel?.NotifyOperatorScroll(), stepsRunHorizontally: true)
+				.DisposeWith(disposables);
 
 			var selectionRequestsSubscription = new SerialDisposable()
+				.DisposeWith(disposables);
+			var runningStepSubscription = new SerialDisposable()
 				.DisposeWith(disposables);
 			var editorMustCloseSubscription = new SerialDisposable()
 				.DisposeWith(disposables);
@@ -76,9 +69,13 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 					{
 						selectionRequestsSubscription.Disposable = null;
 						editorMustCloseSubscription.Disposable = null;
+						runningStepSubscription.Disposable = null;
 
 						return;
 					}
+
+					runningStepSubscription.Disposable =
+						surface.RunningStepScrollRequests.Subscribe(ScrollStepIntoView);
 
 					selectionRequestsSubscription.Disposable =
 						surface.SelectionRequests.Subscribe(OnSelectionRequested);
@@ -89,13 +86,11 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 
 			Disposable.Create(() =>
 			{
-				StepListBox.ContainerPrepared -= OnContainerPrepared;
 				StepListBox.ContainerClearing -= OnContainerClearing;
 				StepListBox.SelectionChanged -= OnSelectionChanged;
 				StepListBox.RemoveHandler(PointerPressedEvent, OnGridPointerPressed);
 				RemoveHandler(KeyDownEvent, OnTunnelKeyDown);
 				_pendingChangedCell = null;
-				_stepColumnClassBinder.Reset();
 			}).DisposeWith(disposables);
 		});
 	}
@@ -104,15 +99,8 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 
 	internal TransposedColumnCellsPool? ColumnCellsPool { get; private set; }
 
-	private void OnContainerPrepared(object? sender, ContainerPreparedEventArgs e)
-	{
-		_stepColumnClassBinder.OnContainerPrepared(e.Container);
-	}
-
 	private void OnContainerClearing(object? sender, ContainerClearingEventArgs e)
 	{
-		_stepColumnClassBinder.OnContainerClearing(e.Container);
-
 		// Capture focus ownership BEFORE the commit. CommitActiveEditor tears the focused editor out of the
 		// subtree (the lazy cell swaps its Child back to the display control), which drops keyboard focus to
 		// null, so a post-commit IsKeyboardFocusWithin check would always miss.
@@ -204,6 +192,14 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 		// before handing it to the surface. It is index-aligned with StepColumns (the same ItemsSource).
 		var indices = StepListBox.Selection.SelectedIndexes.ToList();
 		ViewModel.UpdateSelection(indices);
+	}
+
+	private void ScrollStepIntoView(int stepIndex)
+	{
+		if (ViewModel is { } surface && stepIndex < surface.StepColumns.Count)
+		{
+			StepListBox.ScrollIntoView(stepIndex);
+		}
 	}
 
 	private void OnSelectionRequested(int? suggestedIndex)
@@ -358,7 +354,6 @@ public partial class TransposedRecipeGridView : ReactiveUserControl<TransposedRe
 	{
 		var gridStyle = surface.GridStyle;
 		Resources[CellHeightResourceKey] = gridStyle.Layout.RowHeight;
-		Resources[MarkerSlotHeightResourceKey] = CurrentStepMarkerHeight;
 		Resources[StepColumnWidthResourceKey] = surface.WidthCalculator.TransposedStepColumnWidth();
 
 		GridFontApplier.ApplyCellFont(StepListBox, gridStyle);

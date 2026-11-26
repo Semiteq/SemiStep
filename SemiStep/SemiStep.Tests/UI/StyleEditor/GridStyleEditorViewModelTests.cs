@@ -43,14 +43,14 @@ public sealed class GridStyleEditorViewModelTests
 		var viewModel = CreateViewModel(source);
 
 		viewModel.Fonts.CellFontSize = 18;
-		viewModel.Selection.Background = Color.Parse("#123456");
+		viewModel.Selection.Accent = Color.Parse("#123456");
 
 		var record = viewModel.BuildRecord();
 
 		var expected = source with
 		{
 			Fonts = source.Fonts with { CellFontSize = 18 },
-			Selection = source.Selection with { Background = StyleColor.Parse("#123456") }
+			Selection = source.Selection with { Accent = StyleColor.Parse("#123456") }
 		};
 		record.Should().Be(expected);
 	}
@@ -145,9 +145,9 @@ public sealed class GridStyleEditorViewModelTests
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		viewModel.Selection.Background = Color.Parse("#A1B2C3");
+		viewModel.Selection.Accent = Color.Parse("#A1B2C3");
 
-		viewModel.BuildRecord().Selection.Background.Should().Be(StyleColor.Parse("#A1B2C3"));
+		viewModel.BuildRecord().Selection.Accent.Should().Be(StyleColor.Parse("#A1B2C3"));
 	}
 
 	[AvaloniaFact]
@@ -155,9 +155,9 @@ public sealed class GridStyleEditorViewModelTests
 	{
 		var viewModel = CreateViewModel(GridStyleOptions.Default);
 
-		viewModel.Selection.Background = Color.FromArgb(0x80, 0x11, 0x22, 0x33);
+		viewModel.Selection.Accent = Color.FromArgb(0x80, 0x11, 0x22, 0x33);
 
-		viewModel.BuildRecord().Selection.Background.Should().Be(StyleColor.Parse("#80112233"));
+		viewModel.BuildRecord().Selection.Accent.Should().Be(StyleColor.Parse("#80112233"));
 	}
 
 	[AvaloniaFact]

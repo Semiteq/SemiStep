@@ -75,12 +75,6 @@
                          can also go transparent without losing the selection look. -->
                     <SolidColorBrush x:Key="DataGridRowPointeroverBackground" Color="Transparent" />
                     <SolidColorBrush x:Key="DataGridRowSelectedPointeroverBackground" Color="Transparent" />
-
-                    <!-- Black frame on the current/focused cell. Semi draws the CurrencyVisual/FocusVisual
-                         rectangles (Stroke = DataGridCellCurrentBorderBrush / DataGridCellFocusBorderBrush)
-                         in a light brush that does not read; retint black. -->
-                    <SolidColorBrush x:Key="DataGridCellCurrentBorderBrush" Color="#000000" />
-                    <SolidColorBrush x:Key="DataGridCellFocusBorderBrush" Color="#000000" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>

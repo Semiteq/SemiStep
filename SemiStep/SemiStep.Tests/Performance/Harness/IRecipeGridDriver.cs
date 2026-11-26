@@ -1,6 +1,8 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 
+using SemiStep.Core.Plc.State;
+
 namespace SemiStep.Tests.Performance.Harness;
 
 // User actions driven over the PUBLIC view surface, so one parity scenario body runs against either driver.
@@ -33,6 +35,9 @@ public interface IRecipeGridDriver : IAsyncDisposable
 	Task RemoveStepsAsync(int count);
 
 	Task SelectRangeAsync(int from, int to);
+
+	// Publishes one PLC execution emission and drains the dispatcher and the layout pass it queues.
+	Task PushExecutionStateAsync(PlcExecutionInfo info);
 
 	Task WaitForIdleAsync();
 }

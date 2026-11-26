@@ -44,6 +44,8 @@ public sealed class CoreErrorLocalizationCoverageTests
 			new GridStyleKeyMissingError("colors.cells", "depth_0"),
 		[typeof(GridStyleHexColorInvalidError)] =
 			new GridStyleHexColorInvalidError("colors.cells", "depth_0", "zzz"),
+		[typeof(GridStyleWeightOutOfRangeError)] =
+			new GridStyleWeightOutOfRangeError("colors.cells.execution", "running_weight", 1.5),
 		[typeof(GridStyleConfigNotFoundError)] =
 			new GridStyleConfigNotFoundError("config/ui/grid_style.yaml"),
 		[typeof(GridStyleLoadFailedError)] =

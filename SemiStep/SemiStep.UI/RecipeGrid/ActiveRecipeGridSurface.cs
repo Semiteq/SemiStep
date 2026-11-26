@@ -17,6 +17,7 @@ namespace SemiStep.UI.RecipeGrid;
 /// </summary>
 public class ActiveRecipeGridSurface : ReactiveObject, IRecipeGridSurface
 {
+	private readonly ObservableAsPropertyHelper<bool> _isRecipeEmpty;
 	private GridOrientation _orientation;
 
 	public ActiveRecipeGridSurface(
@@ -44,6 +45,14 @@ public class ActiveRecipeGridSurface : ReactiveObject, IRecipeGridSurface
 			.Select(orientation => SurfaceFor(orientation).EditorMustClose)
 			.Switch();
 
+		_isRecipeEmpty = this
+			.WhenAnyValue(x => x.Orientation)
+			.Select(orientation => orientation == GridOrientation.ColumnsAsSteps
+				? transposedSurface.WhenAnyValue(surface => surface.IsRecipeEmpty)
+				: canonicalSurface.WhenAnyValue(surface => surface.IsRecipeEmpty))
+			.Switch()
+			.ToProperty(this, x => x.IsRecipeEmpty);
+
 		HasChangedMarks = canonicalSurface.HasChangedMarks
 			.CombineLatest(transposedSurface.HasChangedMarks, (canonical, transposed) => canonical || transposed)
 			.DistinctUntilChanged();
@@ -68,6 +77,9 @@ public class ActiveRecipeGridSurface : ReactiveObject, IRecipeGridSurface
 	public IObservable<bool> HasChangedMarks { get; }
 
 	public int StepCount => ActiveSurface.StepCount;
+
+	/// <summary>The active surface's <see cref="RecipeGridSurfaceBase{TItem}.IsRecipeEmpty"/>; drives the empty-recipe hint.</summary>
+	public bool IsRecipeEmpty => _isRecipeEmpty.Value;
 
 	public bool IsReadOnly => ActiveSurface.IsReadOnly;
 
@@ -121,6 +133,7 @@ public class ActiveRecipeGridSurface : ReactiveObject, IRecipeGridSurface
 	// The concrete surfaces are container-owned singletons; the container disposes them.
 	public void Dispose()
 	{
+		_isRecipeEmpty.Dispose();
 		GC.SuppressFinalize(this);
 	}
 

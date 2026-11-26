@@ -111,6 +111,7 @@ public sealed class UIFixture : IAsyncLifetime
 			ColumnBuilder,
 			MessagePanel,
 			ChangeMarkClearBroadcaster,
+			Scheduler,
 			logger ?? NullLogger<CanonicalRecipeGridSurface>.Instance);
 		_ownedDisposables.Add(surface);
 
@@ -127,6 +128,7 @@ public sealed class UIFixture : IAsyncLifetime
 			AppConfiguration.GridStyle,
 			MessagePanel,
 			ChangeMarkClearBroadcaster,
+			Scheduler,
 			logger ?? NullLogger<TransposedRecipeGridSurface>.Instance);
 		_ownedDisposables.Add(surface);
 

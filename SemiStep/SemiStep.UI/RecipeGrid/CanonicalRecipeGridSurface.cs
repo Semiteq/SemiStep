@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Reactive.Concurrency;
 
 using Microsoft.Extensions.Logging;
 
@@ -16,9 +17,10 @@ public class CanonicalRecipeGridSurface(
 	ColumnBuilder columnBuilder,
 	MessagePanelViewModel messagePanel,
 	ChangeMarkClearBroadcaster changeMarkClearBroadcaster,
+	IScheduler scheduler,
 	ILogger<CanonicalRecipeGridSurface> logger)
 	: RecipeGridSurfaceBase<RecipeRowViewModel>(
-		coordinator, recipeMetadataRegistry, messagePanel, changeMarkClearBroadcaster, logger)
+		coordinator, recipeMetadataRegistry, messagePanel, changeMarkClearBroadcaster, scheduler, logger)
 {
 	public ColumnBuilder ColumnBuilder { get; } = columnBuilder;
 

@@ -38,6 +38,11 @@ public static class ReasonLocalizer
 			GridStyleKeyMissingError error => Format(Resources.ErrorGridStyleKeyMissing, error.Section, error.Key),
 			GridStyleHexColorInvalidError error => Format(
 				Resources.ErrorGridStyleHexColorInvalid, error.Section, error.Key, error.Value),
+			GridStyleWeightOutOfRangeError error => Format(
+				Resources.ErrorGridStyleWeightOutOfRange,
+				error.Section,
+				error.Key,
+				error.Value.ToString(CultureInfo.InvariantCulture)),
 			GridStyleConfigNotFoundError error => Format(Resources.ErrorGridStyleConfigNotFound, error.FilePath),
 			GridStyleLoadFailedError error => Format(Resources.ErrorGridStyleLoadFailed, error.FileName),
 			GridStyleSaveFailedError error => Format(Resources.ErrorGridStyleSaveFailed, error.FileName),

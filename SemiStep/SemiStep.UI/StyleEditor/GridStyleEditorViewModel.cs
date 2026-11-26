@@ -13,6 +13,7 @@ using ReactiveUI;
 
 using SemiStep.Core.Configuration;
 using SemiStep.UI.Localization;
+using SemiStep.UI.Styles;
 
 namespace SemiStep.UI.StyleEditor;
 
@@ -22,7 +23,7 @@ namespace SemiStep.UI.StyleEditor;
 /// record, never the DI singleton); the AXAML binds grouped <c>Group.Leaf</c> paths against those drafts.
 /// <see cref="CanSave"/> gates on the VM-side numeric range checks alone; a typed <see cref="StyleColor"/>
 /// cannot hold an invalid color, so there is nothing else to validate. <see cref="BuildRecord"/> constructs
-/// a new record positionally from the ten drafts' <c>Build()</c> calls, carrying the one unsurfaced field
+/// a new record positionally from the drafts' <c>Build()</c> calls, carrying the one unsurfaced field
 /// <see cref="GridStyleOptions.Orientation"/> straight from <c>_source.Orientation</c>.
 /// </summary>
 public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
@@ -35,6 +36,8 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 	public const int MaxPadding = 100;
 	public const int MinPanelMaxHeight = 20;
 	public const int MaxPanelMaxHeight = 2000;
+	public const int MinWeight = 0;
+	public const int MaxWeight = 1;
 
 	private readonly IGridStyleEditorFacade _gridStyleEditorFacade;
 	private readonly string _configDir;
@@ -114,19 +117,19 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
-	public DepthPaletteDraft ReadOnlyCells
-	{
-		get;
-		private set => this.RaiseAndSetIfChanged(ref field, value);
-	}
-
-	public DepthPaletteDraft DisabledCells
+	public GreyCellColorsDraft GreyCells
 	{
 		get;
 		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
 	public ExecutionPaletteDraft Execution
+	{
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	}
+
+	public LoopPaletteDraft Loop
 	{
 		get;
 		private set => this.RaiseAndSetIfChanged(ref field, value);
@@ -186,9 +189,10 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 			Layout: Layout.Build(),
 			Selection: Selection.Build(),
 			ChangedCells: ChangedCells.Build(),
-			ReadOnlyCells: ReadOnlyCells.Build(),
-			DisabledCells: DisabledCells.Build(),
+			ReadOnlyCell: GreyCells.ReadOnly.ToStyleColor(),
+			DisabledCell: GreyCells.Disabled.ToStyleColor(),
 			Execution: Execution.Build(),
+			Loop: Loop.Build(),
 			StatusBar: StatusBar.Build(),
 			ValidationPanel: ValidationPanel.Build(),
 			Chrome: Chrome.Build(),
@@ -235,9 +239,9 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 		nameof(Layout),
 		nameof(Selection),
 		nameof(ChangedCells),
-		nameof(ReadOnlyCells),
-		nameof(DisabledCells),
+		nameof(GreyCells),
 		nameof(Execution),
+		nameof(Loop),
 		nameof(StatusBar),
 		nameof(ValidationPanel),
 		nameof(Chrome))]
@@ -247,9 +251,9 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 		Layout = new GridStyleLayoutDraft(options.Layout);
 		Selection = new SelectionColorsDraft(options.Selection);
 		ChangedCells = new ChangedCellColorsDraft(options.ChangedCells);
-		ReadOnlyCells = new DepthPaletteDraft(options.ReadOnlyCells);
-		DisabledCells = new DepthPaletteDraft(options.DisabledCells);
+		GreyCells = new GreyCellColorsDraft(options.ReadOnlyCell, options.DisabledCell);
 		Execution = new ExecutionPaletteDraft(options.Execution);
+		Loop = new LoopPaletteDraft(options.Loop);
 		StatusBar = new StatusBarStyleDraft(options.StatusBar);
 		ValidationPanel = new ValidationPanelStyleDraft(options.ValidationPanel);
 		Chrome = new ChromeColorsDraft(options.Chrome);
@@ -263,9 +267,9 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 			SubscribeCanSave(Layout),
 			SubscribeCanSave(Selection),
 			SubscribeCanSave(ChangedCells),
-			SubscribeCanSave(ReadOnlyCells),
-			SubscribeCanSave(DisabledCells),
+			SubscribeCanSave(GreyCells),
 			SubscribeCanSave(Execution),
+			SubscribeCanSave(Loop),
 			SubscribeCanSave(StatusBar),
 			SubscribeCanSave(ValidationPanel),
 			SubscribeCanSave(Chrome));
@@ -346,7 +350,13 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 			&& InRange(Layout.CellPaddingBottom, MinPadding, MaxPadding)
 			&& InRange(StatusBar.Padding, MinPadding, MaxPadding)
 			&& InRange(StatusBar.FontSize, MinFontSize, MaxFontSize)
-			&& InRange(ValidationPanel.MaxHeight, MinPanelMaxHeight, MaxPanelMaxHeight);
+			&& InRange(ValidationPanel.MaxHeight, MinPanelMaxHeight, MaxPanelMaxHeight)
+			&& InRange(Selection.Weight, MinWeight, MaxWeight)
+			&& InRange(Execution.RunningWeight, MinWeight, MaxWeight)
+			&& InRange(Execution.PastWeight, MinWeight, MaxWeight)
+			&& InRange(Loop.Depth1Weight, MinWeight, MaxWeight)
+			&& InRange(Loop.Depth2Weight, MinWeight, MaxWeight)
+			&& InRange(Loop.Depth3Weight, MinWeight, MaxWeight);
 	}
 
 	private static bool InRange(decimal? value, int min, int max)

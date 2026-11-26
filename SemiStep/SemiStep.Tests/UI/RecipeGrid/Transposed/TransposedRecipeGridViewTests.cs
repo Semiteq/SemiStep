@@ -10,7 +10,6 @@ using AwesomeAssertions;
 
 using SemiStep.Tests.UI.Helpers;
 
-using SemiStep.UI.RecipeGrid;
 using SemiStep.UI.RecipeGrid.Transposed;
 
 using Xunit;
@@ -24,7 +23,6 @@ public sealed class TransposedRecipeGridViewTests : IAsyncLifetime
 {
 	private const int SeededStepCount = 3;
 	private const string CellClass = "transposed-cell";
-	private const string MarkerClass = "transposed-current-marker";
 
 	private readonly UIFixture _fixture = new();
 	private TransposedRecipeGridSurface _surface = null!;
@@ -134,7 +132,7 @@ public sealed class TransposedRecipeGridViewTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void CurrentStep_StampsClassOnContainer_AndShowsMarker()
+	public void CurrentStep_HeaderShowsRunningGlyph_AndNoMarkerStripExists()
 	{
 		var (_, stepListBox) = ShowView();
 
@@ -142,30 +140,10 @@ public sealed class TransposedRecipeGridViewTests : IAsyncLifetime
 		Dispatcher.UIThread.RunJobs();
 
 		var currentContainer = (ListBoxItem)stepListBox.ContainerFromIndex(1)!;
-		currentContainer.Classes.Contains(RowExecutionClasses.CurrentStepClass).Should().BeTrue();
-		FindMarker(currentContainer).IsVisible.Should().BeTrue();
-
-		var idleContainer = (ListBoxItem)stepListBox.ContainerFromIndex(0)!;
-		idleContainer.Classes.Contains(RowExecutionClasses.CurrentStepClass).Should().BeFalse();
-		FindMarker(idleContainer).IsVisible.Should().BeFalse();
-	}
-
-	[AvaloniaFact]
-	public void ForDepth_Toggle_SwapsDepthClassOnContainer()
-	{
-		var (_, stepListBox) = ShowView();
-		var container = (ListBoxItem)stepListBox.ContainerFromIndex(1)!;
-
-		_surface.StepColumns[1].Row.ForDepth = 1;
-		Dispatcher.UIThread.RunJobs();
-
-		container.Classes.Contains(RowExecutionClasses.ForDepth1Class).Should().BeTrue();
-
-		_surface.StepColumns[1].Row.ForDepth = 2;
-		Dispatcher.UIThread.RunJobs();
-
-		container.Classes.Contains(RowExecutionClasses.ForDepth1Class).Should().BeFalse();
-		container.Classes.Contains(RowExecutionClasses.ForDepth2Class).Should().BeTrue();
+		HeaderText(currentContainer).Should().Be("► 2");
+		HeaderText((ListBoxItem)stepListBox.ContainerFromIndex(0)!).Should().Be("1");
+		stepListBox.GetVisualDescendants().OfType<Border>()
+			.Should().NotContain(border => border.Classes.Contains("transposed-current-marker"));
 	}
 
 	[AvaloniaFact]
@@ -221,11 +199,15 @@ public sealed class TransposedRecipeGridViewTests : IAsyncLifetime
 		throw new InvalidOperationException("No parameter descriptor matches the test predicate.");
 	}
 
-	private static Border FindMarker(ListBoxItem container)
+	private static string? HeaderText(ListBoxItem container)
 	{
 		return container.GetVisualDescendants()
 			.OfType<Border>()
-			.Single(border => border.Classes.Contains(MarkerClass));
+			.Single(border => border.Classes.Contains("transposed-step-header"))
+			.GetVisualDescendants()
+			.OfType<TextBlock>()
+			.Single()
+			.Text;
 	}
 
 	private static List<Border> FindCellBorders(ListBoxItem container)

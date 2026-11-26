@@ -64,18 +64,18 @@ public sealed class ColumnBuilderIdempotencyTests : IAsyncLifetime
 		actionColumn.CellEditingTemplate.Should().BeNull(
 			"the Avalonia 12 broken CellEditingTemplate path must not be wired up");
 		actionColumn.CellTheme.Should().NotBeNull(
-			"InapplicableCellTheme must be attached so the [IsInapplicable=True] selector paints disabled cells");
+			"the recipe cell theme must be attached so the cell takes its colour from the palette");
 	}
 
 	[AvaloniaFact]
-	public void BuildColumns_AllColumns_HaveInapplicableCellTheme()
+	public void BuildColumns_AllColumns_HaveTheRecipeCellTheme()
 	{
 		var grid = BuildGrid();
 
 		foreach (var column in grid.Columns.OfType<DataGridTemplateColumn>())
 		{
 			column.CellTheme.Should().NotBeNull(
-				$"column {column.Tag} must have InapplicableCellTheme so the greyed-disabled visual fires");
+				$"column {column.Tag} must have the recipe cell theme so its cells take their colour from the palette");
 		}
 	}
 

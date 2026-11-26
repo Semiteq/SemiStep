@@ -283,8 +283,9 @@ in both grids. `RecipeGridSurfaceBase` sets `RecipeRowViewModel.LoopPassText` fr
 `ActiveLoops.Resolve`, the same derivation the status bar reads, so the pill and the bar cannot
 disagree. It recomputes only when `RecipeActive`, `ActualLine` or a loop counter changes, and after
 every mutation, and writes only rows whose text changes. The pill is a `Border.loop-badge`
-(`LoopBadge`), styled in `DataGridStyles.axaml` from the `LoopBadge*Brush` palette keys; the action name
-trims before it.
+(`LoopBadge`). `LoopBadge` sets its size and font, the values the column widths reserve for it (see
+`recipe-grid-column-sizing.md`); `DataGridStyles.axaml` colours it from the `LoopBadge*Brush` palette keys.
+The action name trims before it.
 
 ## Run states: running, past, stop
 

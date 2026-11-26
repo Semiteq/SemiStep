@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Threading;
 
 using AwesomeAssertions;
 
@@ -23,6 +24,19 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	private const int LargeHeaderFontSize = 28;
 	private const int SampleLength = 12;
 	private const string LongWord = "Internationalization";
+	private const string WidestPassText = "(99/99)";
+	private const int LoopStartActionId = 20;
+	private const int PlainActionId = 1;
+	private const int OtherActionId = 21;
+	private const double TransposedStepColumnCap = 240;
+
+	private static readonly GridColumnDefinition _actionColumn = new(
+		Key: "action",
+		ColumnType: ColumnTypes.ActionComboBox,
+		UiName: "",
+		PropertyTypeId: "comment",
+		ReadOnly: false,
+		SaveToCsv: true);
 
 	private readonly UIFixture _fixture = new();
 	private ColumnWidthCalculator _calculator = null!;
@@ -260,6 +274,87 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 			"both columns grow with the text, but only the content column also grows its font-proportional chrome");
 	}
 
+	[AvaloniaFact]
+	public void ActionColumn_GrowsByTheWidestPill_OnlyForALoopStartAction()
+	{
+		var loopStartWidth = GetPixelWidth(ActionCalculator((LoopStartActionId, LongWord))
+			.CalculateColumnWidth(_actionColumn));
+		var plainWidth = GetPixelWidth(ActionCalculator((PlainActionId, LongWord))
+			.CalculateColumnWidth(_actionColumn));
+
+		((double)(loopStartWidth - plainWidth)).Should().BeApproximately(
+			RenderedWidestPillWidth(),
+			1,
+			"only a loop start shows the pill, so only its name reserves the widest one");
+	}
+
+	[AvaloniaFact]
+	public void ActionColumn_LongerPlainName_KeepsTheColumnWidth()
+	{
+		var longName = $"{LongWord} {LongWord}";
+
+		var withLoopStart = GetPixelWidth(ActionCalculator((LoopStartActionId, "For"), (PlainActionId, longName))
+			.CalculateColumnWidth(_actionColumn));
+		var withoutLoopStart = GetPixelWidth(ActionCalculator((OtherActionId, "For"), (PlainActionId, longName))
+			.CalculateColumnWidth(_actionColumn));
+
+		withLoopStart.Should().Be(withoutLoopStart, "the longer plain name already leaves room for the pill");
+	}
+
+	[AvaloniaFact]
+	public void TransposedStepColumn_GrowsByTheWidestPill_OnlyForALoopStartAction()
+	{
+		var loopStartWidth = ActionCalculator((LoopStartActionId, "Loop")).TransposedStepColumnWidth();
+		var plainWidth = ActionCalculator((PlainActionId, "Loop")).TransposedStepColumnWidth();
+
+		loopStartWidth.Should().BeLessThan(TransposedStepColumnCap, "precondition: the name and the pill fit the cap");
+		(loopStartWidth - plainWidth).Should().BeApproximately(RenderedWidestPillWidth(), 1);
+	}
+
+	[AvaloniaFact]
+	public void TransposedStepColumn_LoopStartNameNearTheCap_StaysAtTheCap()
+	{
+		var name = new string('Ш', 15);
+
+		var plainWidth = ActionCalculator((PlainActionId, name)).TransposedStepColumnWidth();
+		var loopStartWidth = ActionCalculator((LoopStartActionId, name)).TransposedStepColumnWidth();
+
+		(plainWidth + RenderedWidestPillWidth()).Should().BeGreaterThan(
+			TransposedStepColumnCap,
+			"precondition: the name and the pill together pass the cap");
+		loopStartWidth.Should().Be(TransposedStepColumnCap);
+	}
+
+	private static ColumnWidthCalculator ActionCalculator(params (int Id, string UiName)[] actions)
+	{
+		var registry = TestRecipeMetadataRegistryFactory.Build(
+			[TestPropertyTypeDefinitionBuilder.CreateString("comment", TestRecipeMetadataRegistryFactory.DefaultStringMaxLength)],
+			actions.ToDictionary(
+				action => action.Id,
+				action => new ActionDefinition(action.Id, action.UiName, DeployDuration.Immediate, [])),
+			columns: new Dictionary<string, GridColumnDefinition> { ["action"] = _actionColumn });
+
+		return new ColumnWidthCalculator(registry, GridStyleOptions.Default);
+	}
+
+	private static double RenderedWidestPillWidth()
+	{
+		var pill = LoopBadge.Create(nameof(PassText.LoopPassText));
+		var window = new Window
+		{
+			Width = 400,
+			Height = 100,
+			Content = pill,
+			DataContext = new PassText(WidestPassText),
+		};
+		window.Show();
+		Dispatcher.UIThread.RunJobs();
+		var width = pill.DesiredSize.Width;
+		window.Close();
+
+		return width;
+	}
+
 	private static (ColumnWidthCalculator Calculator, GridColumnDefinition Combo, GridColumnDefinition Content)
 		BuildComboAndContent(GridStyleOptions style)
 	{
@@ -331,4 +426,6 @@ public sealed class ColumnWidthCalculatorTests : IAsyncLifetime
 	{
 		return (int)length.Value;
 	}
+
+	public sealed record PassText(string LoopPassText);
 }

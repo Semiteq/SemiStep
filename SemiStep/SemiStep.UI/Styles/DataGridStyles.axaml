@@ -89,19 +89,14 @@
         <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
     </Style>
 
-    <!-- Loop pass pill "(2/5)" in the action cell of a running loop's start row, both grids. -->
+    <!-- Loop pass pill "(2/5)" in the action cell of a running loop's start row, both grids. Its size and font
+         are LoopBadge constants, because the column widths reserve the pill from the same values. -->
     <Style Selector="Border.loop-badge">
         <Setter Property="Background" Value="{DynamicResource LoopBadgeBackgroundBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource LoopBadgeBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="Height" Value="20" />
-        <Setter Property="Padding" Value="8,0" />
     </Style>
     <Style Selector="Border.loop-badge > TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource LoopBadgeForegroundBrush}" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
     <!-- Every recipe column is non-sortable, but Semi's header template always reserves a ~24px sort-icon

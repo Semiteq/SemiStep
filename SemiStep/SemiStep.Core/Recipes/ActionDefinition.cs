@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 
+using SemiStep.Core.Recipes.Analysis;
 using SemiStep.Core.Recipes.Formulas;
 
 namespace SemiStep.Core.Recipes;
@@ -23,6 +24,9 @@ public sealed class ActionDefinition(
 	public IReadOnlyList<ActionPropertyDefinition> Properties { get; } = properties;
 
 	public FormulaDefinition? Formula { get; } = formula;
+
+	/// <summary>A step of this action opens a loop, so its row shows the loop pass pill while the loop runs.</summary>
+	public bool StartsLoop => Id == (int)ServiceActionId.ForLoop;
 
 	public Result<ActionPropertyDefinition> FindProperty(string propertyKey)
 	{

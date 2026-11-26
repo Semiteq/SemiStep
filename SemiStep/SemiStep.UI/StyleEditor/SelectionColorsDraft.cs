@@ -13,22 +13,22 @@ namespace SemiStep.UI.StyleEditor;
 /// </summary>
 public sealed class SelectionColorsDraft(SelectionColors source) : ReactiveObject
 {
-	public Color Background
+	public Color Accent
 	{
 		get;
 		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Background.ToMediaColor();
+	} = source.Accent.ToMediaColor();
 
-	public Color Foreground
+	public decimal? Weight
 	{
 		get;
 		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Foreground.ToMediaColor();
+	} = (decimal)source.Weight;
 
 	public SelectionColors Build()
 	{
 		return new SelectionColors(
-			Background: Background.ToStyleColor(),
-			Foreground: Foreground.ToStyleColor());
+			Accent: Accent.ToStyleColor(),
+			Weight: DraftNumbers.ToDouble(Weight));
 	}
 }

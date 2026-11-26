@@ -1,4 +1,6 @@
-﻿using Avalonia.Headless.XUnit;
+﻿using System.Reactive.Concurrency;
+
+using Avalonia.Headless.XUnit;
 
 using AwesomeAssertions;
 
@@ -74,6 +76,7 @@ public sealed class TransposedSelectorEditTests : IAsyncLifetime
 			_services.GetRequiredService<SemiStep.Core.Configuration.AppConfiguration>().GridStyle,
 			_messagePanel,
 			_changeMarkClearBroadcaster,
+			ImmediateScheduler.Instance,
 			NullLogger<TransposedRecipeGridSurface>.Instance);
 		_surface.Initialize();
 	}
@@ -148,6 +151,7 @@ public sealed class TransposedSelectorEditTests : IAsyncLifetime
 			new ColumnBuilder(gridStyle, _registry, _comboBoxItemsProvider),
 			_messagePanel,
 			_changeMarkClearBroadcaster,
+			ImmediateScheduler.Instance,
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 		canonicalSurface.Initialize();
 		AppendBranchingStep();

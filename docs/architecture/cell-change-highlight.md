@@ -37,17 +37,12 @@ view-model:
 ## Mechanism
 
 - Per-row `ChangedColumns` set (above).
-- Per-column `IsChanged` attached property on `InapplicableCellTheme`
-  (`SemiStep.UI/RecipeGrid/InapplicableCellTheme.cs`). A `DataGridColumn` carries a single
-  `CellTheme`, so the changed and inapplicable setters share that one `ControlTheme`. The
-  `IsChanged` setter binds to `CellApplicabilityBinding.CreateChangedBinding(columnKey)`, which
-  evaluates `set is not null && set.Contains(columnKey)`.
-- One style rule in `SemiStep.UI/Styles/DataGridStyles.axaml`:
-  `DataGridCell[(rg|InapplicableCellTheme.IsChanged)=True]` sets `Background` to
-  `CellChangedBrush`.
-- `CellChangedBrush` comes from `colors.cells.changed` in `grid_style.yaml`, installed by
-  `CellPaletteInstaller`; `changed_selected` is the selected variant. Foreground stays the default
-  (black).
+- Per-column `RecipeCellTheme` (`SemiStep.UI/RecipeGrid/RecipeCellTheme.cs`). A `DataGridColumn`
+  carries a single `CellTheme`; its background MultiBinding takes the changed leg from
+  `CellApplicabilityBinding.CreateChangedBinding(columnKey)`, which evaluates
+  `set is not null && set.Contains(columnKey)`, and the inapplicable leg from the sibling binding.
+- `CellBackgroundConverter` makes a changed cell's base orange (`colors.cells.changed`) and looks the
+  brush up in `CellPalette`; one style in `DataGridStyles.axaml` paints it. Text stays black.
 
 ## When cells are marked
 
@@ -123,15 +118,16 @@ mutation), so the marks stay in the UI:
   `Recipe` instance, and New recipe yields `Recipe.Empty`, which has no rows. A fresh recipe
   therefore starts unmarked and `RecipeReplaced` carries no reason.
 
-## Cascade placement
+## Layer order
 
-The orange rule sits after the inapplicable per-depth chains and before the
-`DataGridRow:selected` rule in `DataGridStyles.axaml`. Last-match-wins ordering means it beats
-the normal background and the idle per-depth tints, and loses to selection. Orange and
-inapplicable/read-only are disjoint (inapplicable cells carry no seeded value; read-only columns
-are not value cells). Clicking an orange cell selects its row, so that cell shows `SelectionBackgroundBrush`
-until click-away clears it — consistent with the pending-cell model, not a bug. Execution
-past/current tints never coexist with orange because execution start clears it.
+Orange is a base, not an overlay: the cell colour is base, then loop tint, then execution green, then
+selection (`grid-style-configuration.md`, "Cell palette"). Orange wins the base over the read-only and
+inapplicable greys, so a marked cell in a read-only column is orange. The loop tint blends over it,
+and a selected orange cell shows the selection blended over orange (`#CDB69C` on the approved palette),
+so both signals read at once. Orange and green never meet in the app: run start clears the marks, and
+the first edit after a run clears the run's tints in the same mutation, so after an action change the
+reset cells are orange and no row is past. The palette still holds the orange-plus-green colours, so
+no state falls through.
 
 The highlight persists across PLC sync because `RecipeRowViewModel.UpdateStep` only swaps the
 backing `_step` and raises the indexer; it never touches `ChangedColumns`, and the same row VM
@@ -148,8 +144,8 @@ owns its **own** row instances. The transposed-specific pieces are on the view s
 - Click-away: `TransposedRecipeGridView` resolves cell presses through the shared
   `ChangedCellClickResolver` (same no-`IsReadOnly`-guard rule) and routes the clear through
   the surface's `ClearChangedByClickAway`.
-- Painting: the `changed` style class on the cell border, rules in
-  `Styles/TransposedGridStyles.axaml`.
+- Painting: the cell border's background MultiBinding takes `IsChanged` as its changed leg and
+  resolves through the same `CellBackgroundConverter`.
 
 Because both surfaces are live simultaneously and hold separate row VMs, the changed sets
 would diverge if one surface alone applied them. `RecipeRowUpdateSynchronizer` keeps them

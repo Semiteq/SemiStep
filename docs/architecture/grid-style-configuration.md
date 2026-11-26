@@ -17,7 +17,7 @@ feed that computation) come from and how they reach the screen.
 The app chrome (buttons, scrollbars, inputs, window surfaces) is themed by **Semi.Avalonia**, retinted
 toward JetBrains/IntelliJ "New UI" tokens, **Light variant only**. The retint overrides Semi's
 component keys (`TextBoxForeground`, `ButtonSolidPrimaryBackground`, `CheckBoxCheckedDefaultBackground`,
-`MenuItemForeground`, `DataGridCellCurrentBorderBrush` and others) in the `Light` theme dictionary in
+`MenuItemForeground` and others) in the `Light` theme dictionary in
 `App.axaml`, plus the `*CornerRadius` component keys and the static tokens in `Styles/ColorPalette.axaml`.
 The interactive controls get a corner radius of 4. `DataGridRowCornerRadius` is 0, which removes the
 row pointer-over halo.
@@ -41,13 +41,13 @@ The UI font is the native system Segoe UI (set via `ChromeFontFamily` in `Styles
 the grid uses that same Segoe family with OpenType tabular figures (`+tnum`) so digit columns align
 without a monospaced font. There are no embedded fonts (no `Assets/Fonts`).
 
-The boundary between that fixed theme and per-equipment config is exact: **the brush keys the two
-installers push from `grid_style.yaml`** (`CellPaletteInstaller`, `ExecutionPaletteInstaller`, listed in
-"Resources projection" below) are the config-driven palette — cell states, selection, execution tints,
-status bar, and app chrome. Everything else is the Semi-plus-overrides theme. Together those two — the
-installer brush keys and the Semi semantic-token overrides in `App.axaml` — are the theming contract: a
-config file restyles the grid/chrome palette through the installer keys without touching the base theme,
-and the base theme governs every control the installers do not reach. Dark mode is deferred; styles
+The boundary between that fixed theme and per-equipment config is exact: **the resources
+`CellPaletteInstaller` pushes from `grid_style.yaml`** (listed in "Resources projection" below) are the
+config-driven palette — the cell palette, the focus frame, status bar, and app chrome. Everything else
+is the Semi-plus-overrides theme. Together those two — the installer resources and the Semi
+semantic-token overrides in `App.axaml` — are the theming contract: a config file restyles the
+grid/chrome palette through the installer without touching the base theme, and the base theme governs
+every control the installer does not reach. Dark mode is deferred; styles
 consume tokens via `DynamicResource` to stay dark-ready.
 
 ## YAML is the single source of truth
@@ -94,8 +94,8 @@ bundles the resulting `GridStyleOptions` record into `AppConfiguration`. `UiDi.A
 `AppConfiguration.GridStyle` as a `GridStyleOptions` singleton, so every consumer (the installers, the
 column factories, `ColumnWidthCalculator`) injects the same typed record.
 
-`GridStyleOptions` is an immutable record with a `Default` fallback used only by tests; the `#000000`
-cell-palette placeholders in `Default` are never rendered in production.
+`GridStyleOptions` is an immutable record. `GridStyleOptions.Default` holds the approved palette: a site
+file that omits an optional key renders with the `Default` value, so `Default` is production data.
 
 Colors are the typed `StyleColor` value (channels `A`/`R`/`G`/`B`) end to end in the record; hex is a
 string only at the two I/O edges. Validation lives inside the load mapper: `GridStyleMapper.Map` returns
@@ -105,11 +105,11 @@ validator — the parse and its format check sit at the one place the hex string
 
 ## Record shape: nested per group
 
-`GridStyleOptions` is a one-level nested root record. It composes ten per-group records (`Fonts`,
-`Layout`, `Selection`, `ChangedCells`, `ReadOnlyCells`, `DisabledCells`, `Execution`, `StatusBar`,
-`ValidationPanel`, `Chrome`) plus the root-level `Orientation`. `ReadOnlyCells` and `DisabledCells` share
-one `DepthPalette` type. Consumers read short nested paths — `gridStyle.Fonts.CellFontSize`,
-`gridStyle.ReadOnlyCells.Depth1`, `gridStyle.Chrome.GridLine`. Every group record is positional, so
+`GridStyleOptions` is a one-level nested root record. It composes the per-group records `Fonts`,
+`Layout`, `Selection`, `ChangedCells`, `Execution`, `Loop`, `StatusBar`, `ValidationPanel` and `Chrome`,
+the two grey cell bases `ReadOnlyCell` and `DisabledCell` (plain `StyleColor` values), and the root-level
+`Orientation`. Consumers read short nested paths — `gridStyle.Fonts.CellFontSize`,
+`gridStyle.Loop.Depth1Weight`, `gridStyle.Chrome.GridLine`. Every group record is positional, so
 construction is compile-checked: an omitted component is a CS7036 build error.
 
 The nesting mirrors how the record is consumed — each reader takes one group (fonts, a palette, the
@@ -129,14 +129,14 @@ operator edits, not the record path.
 The typed record is projected into `Application.Resources` at startup so XAML can bind styles via
 `{DynamicResource}`:
 
-- `CellPaletteInstaller.Install` pushes `SolidColorBrush` objects for the read-only / disabled / changed
-  cell palettes, selection, grid line, status-bar and validation-panel colors, the app-wide
-  `ErrorBrush` / `WarningBrush` (driven by the validation-panel severity colors), and all app-chrome
-  brushes (`InfoBrush`, `ConnectedBrush`, `DisconnectedBrush`, `PanelBackgroundBrush`,
-  `PanelHeaderBackgroundBrush`, `SubtleBorderBrush`, `SeparatorBrush`, `SecondaryForegroundBrush`,
-  `GridBorderBrush`, `GridBackgroundBrush`, `HeaderForegroundBrush`).
-- `ExecutionPaletteInstaller.Install` pushes the per-depth execution row brushes plus the
-  current-step-marker brush.
+- `CellPaletteInstaller.Install` pushes the `CellPalette` table under the key `CellPalette` (see "Cell
+  palette" below), the focus frame (`DataGridCellCurrentBorderBrush`, `DataGridCellFocusBorderBrush`
+  and the `CellFocusFrame` inset shadow, all in `selection.accent`), `SolidColorBrush` objects for
+  the grid line, status-bar and validation-panel colors, the app-wide `ErrorBrush` / `WarningBrush`
+  (driven by the validation-panel severity colors), and all app-chrome brushes (`InfoBrush`,
+  `ConnectedBrush`, `DisconnectedBrush`, `PanelBackgroundBrush`, `PanelHeaderBackgroundBrush`,
+  `SubtleBorderBrush`, `SeparatorBrush`, `SecondaryForegroundBrush`, `GridBorderBrush`,
+  `GridBackgroundBrush`, `HeaderForegroundBrush`).
 
 The header text reads `HeaderForegroundBrush` (`chrome.header_foreground`, `#6C707E` in the three
 presets and in `GridStyleOptions.Default`).
@@ -161,6 +161,49 @@ consumes directly: `StatusBarPadding` (a `Thickness`) and `ValidationPanelMaxHei
 its fixed slot widths and its `MinHeight` of 38 are fixed in `AppStatusBar.axaml`. The status-bar
 ground is `status_bar.background` `#F7F8FA`. The status-bar **font** resources are described in the
 font-model section below.
+
+## Cell palette
+
+Every cell colour in both grids comes from one rule with four layers, each blended over the one below:
+the base, then the loop tint, then the execution green, then the selection. No layer fills.
+
+| Layer | Colour key | Weight keys | Approved |
+|---|---|---|---|
+| Base | `colors.cells.changed` (marked), `colors.cells.disabled.depth_0` (inapplicable), `colors.cells.readonly.depth_0` (read-only column), `chrome.grid_background` (other) | — | `#FFCC80`, `#E0E0E0`, `#D8D8D8`, `#FFFFFF` |
+| Loop depth 1 / 2 / 3 | `colors.cells.loop.color` | `depth_1_weight`, `depth_2_weight`, `depth_3_weight` | `#7D4DC8` at 0.08 / 0.16 / 0.26 |
+| Execution: running / past | `colors.cells.execution.running` | `running_weight`, `past_weight` | `#208A3C` at 0.30 / 0.12 |
+| Selection | `colors.selection.accent` | `colors.selection.weight` | `#3574F0` at 0.25 |
+
+The base priority is orange, then inapplicable grey, then read-only grey, then white. Grey cells take
+the same weights as white cells. A loop deeper than 3 uses depth 3. The blend is integer per channel
+with the weight in thousandths, rounded half up: `(base × (1000 − w) + colour × w + 500) / 1000`. The
+result does not depend on floating point; it can differ by 1 per channel from a double-precision blend.
+
+`CellPalette.Build` computes all 96 colours (4 bases × 4 depths × 3 execution states × 2 selection
+states) once per config load as immutable brushes, and `CellPaletteInstaller` puts the table into the
+application resources under one key. `CellPalette.Resolve` is the one resolver from cell state to brush.
+Both grids reach it through `CellBackgroundConverter`, which finds the table through the cell's own
+resource lookup: the canonical grid through the per-column `RecipeCellTheme`, whose MultiBinding fills
+an attached `CellBackground` that one `DataGridCell` style paints (a style outranks the Semi cell theme),
+and the transposed grid through the local `Border.Background` MultiBinding of each cell slot. Cell text
+is black in every state, disabled text included.
+
+Required and optional keys:
+
+- Required, as before: `colors.cells.readonly.depth_0` and `colors.cells.disabled.depth_0`. A missing
+  `readonly` or `disabled` section reports `GridStyleSectionMissingError`.
+- Optional with the `Default` values above: `colors.cells.changed`, `colors.grid_line`, the whole
+  `colors.cells.execution` and `colors.cells.loop` sections, and `colors.selection`.
+- A weight outside 0..1 reports `GridStyleWeightOutOfRangeError(section, key, value)`, collected with
+  the other per-key errors.
+
+Compatibility: the keys of the previous palette (`execution.depth_*` and `depth_*_past`,
+`current_step_marker`, `readonly` and `disabled` `depth_1..3`, `depth_*_past`, `selected`, `foreground`,
+`cells.changed_selected`, `selection.background`, `selection.foreground`) are no longer read.
+`YamlConfigDeserializer` ignores unmatched keys, so a site file that still holds them loads without a
+message, and the new keys take the `Default` values. The selection colour has a new name (`accent`) on
+purpose: an old `selection.background` `#CCE4F7` blended at 0.25 would be nearly invisible. Site files
+are not migrated; the presets ship the new keys.
 
 ## Grid orientation
 
@@ -287,7 +330,8 @@ GridStyleEditorWindow
   compile-checked by the window-level `x:DataType` (a stale or mistyped path fails the build with
   AVLN2000). `CanSave` is gated by VM-side numeric range checks alone (font/padding/row-height/spacing/
   panel-height bounds); an invalid color is unrepresentable in the typed record, so there is nothing
-  else to validate. The editor surfaces effectively the whole record: all ~54 colors, 13 numerics, plus
+  else to validate. The weights are `NumericUpDown` fields from 0 to 1 in steps of 0.01, and `CanSave`
+  checks them too. The editor surfaces effectively the whole record: every color and numeric, plus
   the font controls — one global font-family `ComboBox`, and a per-role weight `ComboBox` (curated
   300–900 list) and italic `CheckBox`. The window groups these into two cards: **Fonts** (the family row
   plus a size / weight / italic row per role) and **Layout** (paddings, row height, status padding/
@@ -329,10 +373,6 @@ restart is the simplest correct behavior for v1.
 
 ## What is intentionally not wired
 
-- **Execution depth-0.** `ExecutionDepth0Color` / `ExecRowDepth0Brush` stay installed for palette
-  symmetry but have no `for-depth-0` selector. `RecipeRowExecutionClassBinder` binds only
-  `current-step` / `past-step` / `for-depth-1..3`, and depth-0 already renders default white
-  (`#FFFFFF`), so a selector would be a no-op. The brush is installed; no selector is added.
 - **Removed fields.** Grid-line thickness, alternating-row background, and normal-row background were
   dropped from the model, DTOs, mapper, and shipped configs. Semi's `DataGrid` exposes no
   inner-gridline-thickness or alternating-row-background property, so they had no wire target.

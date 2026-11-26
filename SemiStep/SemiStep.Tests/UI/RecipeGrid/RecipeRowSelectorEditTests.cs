@@ -1,4 +1,6 @@
-﻿using Avalonia.Headless.XUnit;
+﻿using System.Reactive.Concurrency;
+
+using Avalonia.Headless.XUnit;
 
 using AwesomeAssertions;
 
@@ -73,6 +75,7 @@ public sealed class RecipeRowSelectorEditTests : IAsyncLifetime
 			new ColumnBuilder(GridStyleOptions.Default, _registry, comboBoxItemsProvider),
 			_messagePanel,
 			new ChangeMarkClearBroadcaster(),
+			ImmediateScheduler.Instance,
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 		_surface.Initialize();
 	}

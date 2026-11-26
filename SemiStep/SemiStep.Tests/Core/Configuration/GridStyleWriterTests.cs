@@ -85,7 +85,7 @@ public sealed class GridStyleWriterTests
 
 		var content = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
 		content.Should().Contain("\"#");
-		content.Should().Contain($"\"{options.Selection.Background}\"");
+		content.Should().Contain($"\"{options.Selection.Accent}\"");
 
 		var unquotedHex = Regex.Matches(content, @":\s*#[0-9A-Fa-f]+");
 		unquotedHex.Should().BeEmpty(

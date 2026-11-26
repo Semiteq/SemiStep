@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Runtime.CompilerServices;
 
 using ReactiveUI;
 
@@ -18,22 +17,38 @@ public sealed class RecipeRowViewModel(
 	: ReactiveObject, IDisposable
 {
 	private const string IndexerName = "Item";
-
-	// Cached per action (stable ActionDefinition instance makes the reference key safe); weak table drops entries when an action is collected.
-	private static readonly ConditionalWeakTable<ActionDefinition, ActionColumnMetadata> _actionMetadataCache = [];
+	// U+25BA: the chrome fonts (Segoe UI, Segoe UI Variable) have no U+25B6 "▶" and would fall back for it.
+	internal const string RunningGlyph = "►";
+	internal const string StopGlyph = "■";
 
 	private static readonly PropertyValue _emptyValue = PropertyValue.FromString(string.Empty);
 
 	private readonly ActionColumnMetadata _actionMetadata =
-		GetActionMetadata(action, recipeMetadataRegistry, comboBoxItemsProvider);
+		ActionColumnMetadata.For(action, recipeMetadataRegistry, comboBoxItemsProvider);
 
 	internal Step CurrentStep { get; private set; } = step;
 
 	public int StepNumber
 	{
 		get;
-		private set => this.RaiseAndSetIfChanged(ref field, value);
+		private set
+		{
+			if (field == value)
+			{
+				return;
+			}
+
+			this.RaiseAndSetIfChanged(ref field, value);
+			this.RaisePropertyChanged(nameof(StepNumberText));
+		}
 	} = stepNumber;
+
+	/// <summary>The № cell text: the step number, after "►" on the running row and "■" on the row a run stopped on.</summary>
+	public string StepNumberText => IsCurrentStep
+		? string.Create(CultureInfo.InvariantCulture, $"{RunningGlyph} {StepNumber}")
+		: IsStopStep
+			? string.Create(CultureInfo.InvariantCulture, $"{StopGlyph} {StepNumber}")
+			: StepNumber.ToString(CultureInfo.InvariantCulture);
 
 	public string? StepStartTime
 	{
@@ -46,13 +61,37 @@ public sealed class RecipeRowViewModel(
 	public bool IsCurrentStep
 	{
 		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
+		set
+		{
+			if (field == value)
+			{
+				return;
+			}
+
+			this.RaiseAndSetIfChanged(ref field, value);
+			this.RaisePropertyChanged(nameof(StepNumberText));
+		}
 	}
 
 	public bool IsPastStep
 	{
 		get;
 		set => this.RaiseAndSetIfChanged(ref field, value);
+	}
+
+	public bool IsStopStep
+	{
+		get;
+		set
+		{
+			if (field == value)
+			{
+				return;
+			}
+
+			this.RaiseAndSetIfChanged(ref field, value);
+			this.RaisePropertyChanged(nameof(StepNumberText));
+		}
 	}
 
 	/// <summary>"(pass/count)" while the loop this row starts is running; null otherwise.</summary>
@@ -65,27 +104,8 @@ public sealed class RecipeRowViewModel(
 	public int ForDepth
 	{
 		get;
-		set
-		{
-			if (field == value)
-			{
-				return;
-			}
-
-			this.RaiseAndSetIfChanged(ref field, value);
-			this.RaisePropertyChanged(nameof(IsForDepth1));
-			this.RaisePropertyChanged(nameof(IsForDepth2));
-			this.RaisePropertyChanged(nameof(IsForDepth3));
-		}
+		set => this.RaiseAndSetIfChanged(ref field, value);
 	}
-
-	public bool IsForDepth1 => ForDepth == 1;
-
-	public bool IsForDepth2 => ForDepth == 2;
-
-	// `>= 3` is defense-in-depth: ForDepth is capped at 3 upstream in RefreshLoopDepths,
-	// but using `>=` guards against future UI cap drift so deeper nestings still render.
-	public bool IsForDepth3 => ForDepth >= 3;
 
 	public IReadOnlySet<string> InapplicableColumns
 	{
@@ -361,88 +381,4 @@ public sealed class RecipeRowViewModel(
 
 		return inapplicable;
 	}
-
-	private static PropertyTypeDefinition? ResolvePropertyType(
-		ActionPropertyDefinition actionProperty,
-		RecipeMetadataRegistry recipeMetadataRegistry)
-	{
-		var propertyResult = recipeMetadataRegistry.GetProperty(actionProperty.PropertyTypeId);
-		return propertyResult.IsSuccess ? propertyResult.Value : null;
-	}
-
-	private static ActionColumnMetadata GetActionMetadata(
-		ActionDefinition action,
-		RecipeMetadataRegistry recipeMetadataRegistry,
-		ComboBoxItemsProvider comboBoxItemsProvider)
-	{
-		return _actionMetadataCache.GetValue(
-			action,
-			resolvedAction =>
-			{
-				var (units, formatKinds) = BuildColumnMetadata(resolvedAction, recipeMetadataRegistry);
-				return new ActionColumnMetadata(
-					units,
-					formatKinds,
-					BuildGroupItemsByColumn(resolvedAction, recipeMetadataRegistry, comboBoxItemsProvider));
-			});
-	}
-
-	private static IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> BuildGroupItemsByColumn(
-		ActionDefinition actionDefinition,
-		RecipeMetadataRegistry recipeMetadataRegistry,
-		ComboBoxItemsProvider comboBoxItemsProvider)
-	{
-		// Pre-populate group-bound columns with empty lists so a recycle onto an action lacking the property doesn't throw KeyNotFoundException.
-		var result = new Dictionary<string, IReadOnlyList<ComboBoxItemViewModel>>(StringComparer.OrdinalIgnoreCase);
-
-		foreach (var column in recipeMetadataRegistry.GetAllColumns())
-		{
-			if (ColumnTypes.IsGroupBoundColumn(column.ColumnType))
-			{
-				result[column.Key] = [];
-			}
-		}
-
-		foreach (var actionProperty in actionDefinition.Properties)
-		{
-			if (actionProperty.GroupName is null)
-			{
-				continue;
-			}
-
-			// Validation already rejects unknown keys; this guard confines the overlay to pre-populated columns.
-			if (!result.ContainsKey(actionProperty.Key))
-			{
-				continue;
-			}
-
-			result[actionProperty.Key] = comboBoxItemsProvider.GetGroupItems(actionProperty.GroupName);
-		}
-
-		return result;
-	}
-
-	private static (IReadOnlyDictionary<string, string?> Units, IReadOnlyDictionary<string, string> FormatKinds) BuildColumnMetadata(
-		ActionDefinition actionDefinition,
-		RecipeMetadataRegistry recipeMetadataRegistry)
-	{
-		var units = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-		var formatKinds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-		foreach (var actionProperty in actionDefinition.Properties)
-		{
-			var propertyType = ResolvePropertyType(actionProperty, recipeMetadataRegistry);
-			units[actionProperty.Key] = propertyType?.Units;
-			formatKinds[actionProperty.Key] = propertyType?.FormatKind ?? TimeFormatHelper.DefaultFormatKind;
-		}
-
-		formatKinds[TimeFormatHelper.StepStartTimeColumnKey] = TimeFormatHelper.TimeHmsFormat;
-
-		return (units, formatKinds);
-	}
-
-	private sealed record ActionColumnMetadata(
-		IReadOnlyDictionary<string, string?> Units,
-		IReadOnlyDictionary<string, string> FormatKinds,
-		IReadOnlyDictionary<string, IReadOnlyList<ComboBoxItemViewModel>> GroupItemsByColumn);
 }

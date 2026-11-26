@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+﻿using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
 
@@ -6,6 +7,20 @@ namespace SemiStep.UI.RecipeGrid;
 
 internal static class CellApplicabilityBinding
 {
+	// Inherited from the DataGrid, which mirrors its own IsReadOnly into it; a cell outside a DataGrid keeps the
+	// default and fails closed. The cell reads it from itself, so a detached cell logs no "Ancestor not found".
+	public static readonly AttachedProperty<bool> IsGridUnlockedProperty =
+		AvaloniaProperty.RegisterAttached<Control, bool>(
+			"IsGridUnlocked",
+			typeof(CellApplicabilityBinding),
+			defaultValue: false,
+			inherits: true);
+
+	public static void MirrorGridLock(DataGrid grid)
+	{
+		grid.Bind(IsGridUnlockedProperty, grid.GetObservable(DataGrid.IsReadOnlyProperty, isReadOnly => !isReadOnly));
+	}
+
 	public static Binding CreateApplicableBinding(string columnKey)
 	{
 		return new Binding(nameof(RecipeRowViewModel.InapplicableColumns))
@@ -16,8 +31,7 @@ internal static class CellApplicabilityBinding
 		};
 	}
 
-	// Fails closed: until the cell is inside a DataGrid the lock leg is unresolved and the cell takes no input.
-	public static MultiBinding CreateApplicableAndUnlockedBinding(string columnKey)
+	public static MultiBinding CreateApplicableAndUnlockedBinding(string columnKey, Control cell)
 	{
 		return new MultiBinding
 		{
@@ -26,14 +40,7 @@ internal static class CellApplicabilityBinding
 			Bindings =
 			{
 				CreateApplicableBinding(columnKey),
-				new Binding(nameof(DataGrid.IsReadOnly))
-				{
-					RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor)
-					{
-						AncestorType = typeof(DataGrid),
-					},
-					Converter = BoolConverters.Not,
-				},
+				cell.GetObservable(IsGridUnlockedProperty).ToBinding(),
 			},
 		};
 	}

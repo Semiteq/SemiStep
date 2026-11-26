@@ -5,15 +5,16 @@ public sealed record GridStyleOptions(
 	GridStyleLayout Layout,
 	SelectionColors Selection,
 	ChangedCellColors ChangedCells,
-	DepthPalette ReadOnlyCells,
-	DepthPalette DisabledCells,
+	StyleColor ReadOnlyCell,
+	StyleColor DisabledCell,
 	ExecutionPalette Execution,
+	LoopPalette Loop,
 	StatusBarStyle StatusBar,
 	ValidationPanelStyle ValidationPanel,
 	ChromeColors Chrome,
 	GridOrientation Orientation)
 {
-	// Test-only fallback; the #000000 cell palettes are placeholders, never rendered in production.
+	// The approved palette; a site file that omits an optional key renders with these values.
 	public static GridStyleOptions Default { get; } = new(
 		Fonts: new GridStyleFonts(
 			FontFamily: "",
@@ -30,43 +31,21 @@ public sealed record GridStyleOptions(
 			CellPaddingBottom: 4,
 			RowHeight: 28),
 		Selection: new SelectionColors(
-			Background: StyleColor.Parse("#CCE4F7"),
-			Foreground: StyleColor.Parse("#202020")),
+			Accent: StyleColor.Parse("#3574F0"),
+			Weight: 0.25),
 		ChangedCells: new ChangedCellColors(
-			Changed: StyleColor.Parse("#FFCC80"),
-			ChangedSelected: StyleColor.Parse("#EFD3A4")),
-		ReadOnlyCells: new DepthPalette(
-			Depth0: StyleColor.Parse("#000000"),
-			Depth1: StyleColor.Parse("#000000"),
-			Depth2: StyleColor.Parse("#000000"),
-			Depth3: StyleColor.Parse("#000000"),
-			Depth0Past: StyleColor.Parse("#000000"),
-			Depth1Past: StyleColor.Parse("#000000"),
-			Depth2Past: StyleColor.Parse("#000000"),
-			Depth3Past: StyleColor.Parse("#000000"),
-			Selected: StyleColor.Parse("#000000"),
-			Foreground: StyleColor.Parse("#000000")),
-		DisabledCells: new DepthPalette(
-			Depth0: StyleColor.Parse("#000000"),
-			Depth1: StyleColor.Parse("#000000"),
-			Depth2: StyleColor.Parse("#000000"),
-			Depth3: StyleColor.Parse("#000000"),
-			Depth0Past: StyleColor.Parse("#000000"),
-			Depth1Past: StyleColor.Parse("#000000"),
-			Depth2Past: StyleColor.Parse("#000000"),
-			Depth3Past: StyleColor.Parse("#000000"),
-			Selected: StyleColor.Parse("#000000"),
-			Foreground: StyleColor.Parse("#000000")),
+			Changed: StyleColor.Parse("#FFCC80")),
+		ReadOnlyCell: StyleColor.Parse("#D8D8D8"),
+		DisabledCell: StyleColor.Parse("#E0E0E0"),
 		Execution: new ExecutionPalette(
-			Depth0: StyleColor.Parse("#000000"),
-			Depth1: StyleColor.Parse("#000000"),
-			Depth2: StyleColor.Parse("#000000"),
-			Depth3: StyleColor.Parse("#000000"),
-			Depth0Past: StyleColor.Parse("#000000"),
-			Depth1Past: StyleColor.Parse("#000000"),
-			Depth2Past: StyleColor.Parse("#000000"),
-			Depth3Past: StyleColor.Parse("#000000"),
-			CurrentStepMarker: StyleColor.Parse("#000000")),
+			Running: StyleColor.Parse("#208A3C"),
+			RunningWeight: 0.30,
+			PastWeight: 0.12),
+		Loop: new LoopPalette(
+			Color: StyleColor.Parse("#7D4DC8"),
+			Depth1Weight: 0.08,
+			Depth2Weight: 0.16,
+			Depth3Weight: 0.26),
 		StatusBar: new StatusBarStyle(
 			Background: StyleColor.Parse("#F7F8FA"),
 			Foreground: StyleColor.Parse("#000000"),

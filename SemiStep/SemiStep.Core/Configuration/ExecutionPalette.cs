@@ -1,12 +1,7 @@
 ﻿namespace SemiStep.Core.Configuration;
 
+/// <summary>The execution green and its blend weights (0..1) for the running row and the past rows.</summary>
 public sealed record ExecutionPalette(
-	StyleColor Depth0,
-	StyleColor Depth1,
-	StyleColor Depth2,
-	StyleColor Depth3,
-	StyleColor Depth0Past,
-	StyleColor Depth1Past,
-	StyleColor Depth2Past,
-	StyleColor Depth3Past,
-	StyleColor CurrentStepMarker);
+	StyleColor Running,
+	double RunningWeight,
+	double PastWeight);

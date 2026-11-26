@@ -20,34 +20,33 @@ public sealed class ConfigFacadeGridStyleValidationTests
 		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
 
 		result.IsSuccess.Should().BeTrue();
-		result.Value.GridStyle.Execution.Depth0.ToString().Should().StartWith("#");
-		result.Value.GridStyle.Execution.CurrentStepMarker.ToString().Should().StartWith("#");
+		result.Value.GridStyle.Execution.Running.ToString().Should().StartWith("#");
+		result.Value.GridStyle.Loop.Color.ToString().Should().StartWith("#");
 	}
 
 	[Fact]
-	public async Task LoadAndValidateAsync_GridStyleMissingExecutionKey_Fails()
+	public async Task LoadAndValidateAsync_GridStyleMissingReadOnlyDepth0_Fails()
 	{
 		using var tempDir = TestDataCopier.PrepareValidCase();
 		var gridStylePath = Path.Combine(tempDir.Path, "ui", "grid_style.yaml");
 		var token = TestContext.Current.CancellationToken;
 		var content = await File.ReadAllTextAsync(gridStylePath, token);
-		// Remove only the depth_0 line under `execution:` — the disabled section also has its own
-		// depth_0 key, and stripping by line-prefix alone would delete both and weaken the assertion.
+		// Blank only the depth_0 value under `readonly:`; the disabled section has its own depth_0 key.
 		var lines = content.Split(["\r\n", "\n"], StringSplitOptions.None).ToList();
-		var executionSectionIndex = lines.FindIndex(line => line.TrimStart().StartsWith("execution:", StringComparison.Ordinal));
-		executionSectionIndex.Should().BeGreaterThan(-1);
+		var readOnlySectionIndex = lines.FindIndex(line => line.TrimStart().StartsWith("readonly:", StringComparison.Ordinal));
+		readOnlySectionIndex.Should().BeGreaterThan(-1);
 		var depth0Index = lines.FindIndex(
-			executionSectionIndex + 1,
+			readOnlySectionIndex + 1,
 			line => line.TrimStart().StartsWith("depth_0:", StringComparison.Ordinal));
 		depth0Index.Should().BeGreaterThan(-1);
-		lines.RemoveAt(depth0Index);
+		lines[depth0Index] = "      depth_0: \"\"";
 		var mutated = string.Join(Environment.NewLine, lines);
 		await File.WriteAllTextAsync(gridStylePath, mutated, token);
 
 		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
 
 		result.IsFailed.Should().BeTrue();
-		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.execution.depth_0'"));
+		result.Errors.Should().Contain(e => e.Message.Contains("'colors.cells.readonly.depth_0'"));
 	}
 
 	[Fact]
@@ -58,15 +57,15 @@ public sealed class ConfigFacadeGridStyleValidationTests
 		var token = TestContext.Current.CancellationToken;
 		var content = await File.ReadAllTextAsync(gridStylePath, token);
 		var mutated = content.Replace(
-			"current_step_marker: \"#FF8800\"",
-			"current_step_marker: \"not-a-color\"");
+			"running: \"#208A3C\"",
+			"running: \"not-a-color\"");
 		await File.WriteAllTextAsync(gridStylePath, mutated, token);
 
 		var result = await ConfigFacade.LoadAndValidateAsync(tempDir.Path);
 
 		result.IsFailed.Should().BeTrue();
 		result.Errors.Should().Contain(e =>
-			e.Message.Contains("current_step_marker") && e.Message.Contains("not-a-color"));
+			e.Message.Contains("'colors.cells.execution.running'") && e.Message.Contains("not-a-color"));
 	}
 
 	[Fact]

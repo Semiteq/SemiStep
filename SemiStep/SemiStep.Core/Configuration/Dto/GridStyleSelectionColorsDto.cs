@@ -5,9 +5,8 @@ namespace SemiStep.Core.Configuration.Dto;
 
 internal sealed class GridStyleSelectionColorsDto
 {
-	[YamlMember(Alias = "background", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? Background { get; set; }
+	[YamlMember(Alias = "accent", ScalarStyle = ScalarStyle.DoubleQuoted)]
+	public string? Accent { get; set; }
 
-	[YamlMember(Alias = "foreground", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? Foreground { get; set; }
+	[YamlMember(Alias = "weight")] public double? Weight { get; set; }
 }

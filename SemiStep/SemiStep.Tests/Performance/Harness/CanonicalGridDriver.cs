@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
+using SemiStep.Core.Plc.State;
 using SemiStep.Tests.Core.Helpers;
 using SemiStep.Tests.UI.Helpers;
 
@@ -120,6 +121,15 @@ public sealed class CanonicalGridDriver : IRecipeGridDriver
 		}
 
 		return WaitForIdleAsync();
+	}
+
+	public Task PushExecutionStateAsync(PlcExecutionInfo info)
+	{
+		_fixture.S7Service.PushExecutionState(info);
+		Dispatcher.UIThread.RunJobs();
+		_window.UpdateLayout();
+		Dispatcher.UIThread.RunJobs();
+		return Task.CompletedTask;
 	}
 
 	public Task WaitForIdleAsync()

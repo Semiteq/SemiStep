@@ -277,12 +277,6 @@
   <data name="EditorItalic" xml:space="preserve">
     <value>Курсив</value>
   </data>
-  <data name="EditorCurrent" xml:space="preserve">
-    <value>Текущий</value>
-  </data>
-  <data name="EditorPast" xml:space="preserve">
-    <value>Прошедший</value>
-  </data>
   <data name="EditorRowHeight" xml:space="preserve">
     <value>Высота строки</value>
   </data>
@@ -316,20 +310,8 @@
   <data name="EditorHeaderForeground" xml:space="preserve">
     <value>Текст заголовка</value>
   </data>
-  <data name="EditorSelectionBackground" xml:space="preserve">
-    <value>Фон выделения</value>
-  </data>
-  <data name="EditorSelectionForeground" xml:space="preserve">
-    <value>Текст выделения</value>
-  </data>
   <data name="EditorChanged" xml:space="preserve">
     <value>Изменённая</value>
-  </data>
-  <data name="EditorChangedSelected" xml:space="preserve">
-    <value>Изменённая (выбранная)</value>
-  </data>
-  <data name="EditorDepth0" xml:space="preserve">
-    <value>Глубина 0</value>
   </data>
   <data name="EditorDepth1" xml:space="preserve">
     <value>Глубина 1</value>
@@ -340,14 +322,8 @@
   <data name="EditorDepth3" xml:space="preserve">
     <value>Глубина 3</value>
   </data>
-  <data name="EditorSelected" xml:space="preserve">
-    <value>Выбранная</value>
-  </data>
   <data name="EditorForeground" xml:space="preserve">
     <value>Текст</value>
-  </data>
-  <data name="EditorCurrentStepMarker" xml:space="preserve">
-    <value>Маркер текущего шага</value>
   </data>
   <data name="EditorPadding" xml:space="preserve">
     <value>Отступ</value>
@@ -737,13 +713,13 @@
     <value>Не выполняется</value>
   </data>
   <data name="ExecutionRunningFormat" xml:space="preserve">
-    <value>▶ Выполняется: шаг {0} из {1}</value>
+    <value>► Выполняется: шаг {0} из {1}</value>
   </data>
   <data name="ExecutionRunningStepOnlyFormat" xml:space="preserve">
-    <value>▶ Выполняется: шаг {0}</value>
+    <value>► Выполняется: шаг {0}</value>
   </data>
   <data name="ExecutionRunning" xml:space="preserve">
-    <value>▶ Выполняется</value>
+    <value>► Выполняется</value>
   </data>
   <data name="ExecutionNoData" xml:space="preserve">
     <value>нет данных</value>
@@ -780,5 +756,32 @@
   </data>
   <data name="RampTimeToolTip" xml:space="preserve">
     <value>время рампы, не входит в длительность шага</value>
+  </data>
+  <data name="EditorSelectionAccent" xml:space="preserve">
+    <value>Цвет выделения</value>
+  </data>
+  <data name="EditorSelectionWeight" xml:space="preserve">
+    <value>Доля выделения</value>
+  </data>
+  <data name="EditorExecutionColor" xml:space="preserve">
+    <value>Цвет выполнения</value>
+  </data>
+  <data name="EditorRunningWeight" xml:space="preserve">
+    <value>Доля: текущий шаг</value>
+  </data>
+  <data name="EditorPastWeight" xml:space="preserve">
+    <value>Доля: прошедшие шаги</value>
+  </data>
+  <data name="EditorLoopTint" xml:space="preserve">
+    <value>Подсветка циклов</value>
+  </data>
+  <data name="EditorLoopColor" xml:space="preserve">
+    <value>Цвет цикла</value>
+  </data>
+  <data name="ErrorGridStyleWeightOutOfRange" xml:space="preserve">
+    <value>Недопустимая доля в «{0}.{1}»: {2}. Ожидается значение от 0 до 1.</value>
+  </data>
+  <data name="EmptyRecipeHint" xml:space="preserve">
+    <value>Рецепт пуст. Добавьте шаг (Ctrl+N) или откройте файл (Ctrl+O).</value>
   </data>
 </root>

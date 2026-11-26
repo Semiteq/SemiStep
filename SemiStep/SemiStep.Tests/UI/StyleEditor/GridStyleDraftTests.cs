@@ -51,27 +51,19 @@ public sealed class GridStyleDraftTests
 	}
 
 	[Fact]
-	public void DepthPaletteDraft_RoundTrips_FromReadOnlyCellsFixture()
-	{
-		var fixture = GridStyleOptionsTestData.Distinct().ReadOnlyCells;
-
-		new DepthPaletteDraft(fixture).Build().Should().Be(fixture);
-	}
-
-	[Fact]
-	public void DepthPaletteDraft_RoundTrips_FromDisabledCellsFixture()
-	{
-		var fixture = GridStyleOptionsTestData.Distinct().DisabledCells;
-
-		new DepthPaletteDraft(fixture).Build().Should().Be(fixture);
-	}
-
-	[Fact]
 	public void ExecutionPaletteDraft_RoundTrips_FromDistinctFixture()
 	{
 		var fixture = GridStyleOptionsTestData.Distinct().Execution;
 
 		new ExecutionPaletteDraft(fixture).Build().Should().Be(fixture);
+	}
+
+	[Fact]
+	public void LoopPaletteDraft_RoundTrips_FromDistinctFixture()
+	{
+		var fixture = GridStyleOptionsTestData.Distinct().Loop;
+
+		new LoopPaletteDraft(fixture).Build().Should().Be(fixture);
 	}
 
 	[Fact]

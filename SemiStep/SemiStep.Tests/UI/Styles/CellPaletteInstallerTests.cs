@@ -27,34 +27,6 @@ public sealed class CellPaletteInstallerTests
 				FontFamily = "Arial",
 				CellFontSize = 12,
 			},
-			Selection = new SelectionColors(
-				Background: StyleColor.Parse("#CCE4F7"),
-				Foreground: StyleColor.Parse("#202020")),
-			ChangedCells = new ChangedCellColors(
-				Changed: StyleColor.Parse("#FFCC80"),
-				ChangedSelected: StyleColor.Parse("#EFD3A4")),
-			ReadOnlyCells = new DepthPalette(
-				Depth0: StyleColor.Parse("#D8D8D8"),
-				Depth1: StyleColor.Parse("#CCD5E0"),
-				Depth2: StyleColor.Parse("#B8C3D1"),
-				Depth3: StyleColor.Parse("#94A2B3"),
-				Depth0Past: StyleColor.Parse("#C8C8C8"),
-				Depth1Past: StyleColor.Parse("#BCC4CE"),
-				Depth2Past: StyleColor.Parse("#ACB7C2"),
-				Depth3Past: StyleColor.Parse("#8590A0"),
-				Selected: StyleColor.Parse("#6B95C0"),
-				Foreground: StyleColor.Parse("#606060")),
-			DisabledCells = new DepthPalette(
-				Depth0: StyleColor.Parse("#E0E0E0"),
-				Depth1: StyleColor.Parse("#D5DEEA"),
-				Depth2: StyleColor.Parse("#C2CEDB"),
-				Depth3: StyleColor.Parse("#9DABBC"),
-				Depth0Past: StyleColor.Parse("#D0D0D0"),
-				Depth1Past: StyleColor.Parse("#C5CDD8"),
-				Depth2Past: StyleColor.Parse("#B5C0CC"),
-				Depth3Past: StyleColor.Parse("#909AAA"),
-				Selected: StyleColor.Parse("#89B4D7"),
-				Foreground: StyleColor.Parse("#808080")),
 			StatusBar = new StatusBarStyle(
 				Background: StyleColor.Parse("#F0F0F0"),
 				Foreground: StyleColor.Parse("#111111"),
@@ -86,30 +58,7 @@ public sealed class CellPaletteInstallerTests
 
 		CellPaletteInstaller.Install(resources, gridStyle);
 
-		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth0BrushKey, "#D8D8D8");
-		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth1BrushKey, "#CCD5E0");
-		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth2BrushKey, "#B8C3D1");
-		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth3BrushKey, "#94A2B3");
-		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth0PastBrushKey, "#C8C8C8");
-		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth1PastBrushKey, "#BCC4CE");
-		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth2PastBrushKey, "#ACB7C2");
-		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyDepth3PastBrushKey, "#8590A0");
-		AssertBrush(resources, CellPaletteInstaller.CellReadOnlySelectedBackgroundBrushKey, "#6B95C0");
-		AssertBrush(resources, CellPaletteInstaller.CellReadOnlyForegroundBrushKey, "#606060");
-		AssertBrush(resources, CellPaletteInstaller.CellDisabledDepth0BrushKey, "#E0E0E0");
-		AssertBrush(resources, CellPaletteInstaller.CellDisabledDepth1BrushKey, "#D5DEEA");
-		AssertBrush(resources, CellPaletteInstaller.CellDisabledDepth2BrushKey, "#C2CEDB");
-		AssertBrush(resources, CellPaletteInstaller.CellDisabledDepth3BrushKey, "#9DABBC");
-		AssertBrush(resources, CellPaletteInstaller.CellDisabledDepth0PastBrushKey, "#D0D0D0");
-		AssertBrush(resources, CellPaletteInstaller.CellDisabledDepth1PastBrushKey, "#C5CDD8");
-		AssertBrush(resources, CellPaletteInstaller.CellDisabledDepth2PastBrushKey, "#B5C0CC");
-		AssertBrush(resources, CellPaletteInstaller.CellDisabledDepth3PastBrushKey, "#909AAA");
-		AssertBrush(resources, CellPaletteInstaller.CellDisabledSelectedBackgroundBrushKey, "#89B4D7");
-		AssertBrush(resources, CellPaletteInstaller.CellDisabledForegroundBrushKey, "#808080");
-		AssertBrush(resources, CellPaletteInstaller.SelectionBackgroundBrushKey, "#CCE4F7");
-		AssertBrush(resources, CellPaletteInstaller.SelectionForegroundBrushKey, "#202020");
-		AssertBrush(resources, CellPaletteInstaller.CellChangedBrushKey, "#FFCC80");
-		AssertBrush(resources, CellPaletteInstaller.CellChangedSelectedBackgroundBrushKey, "#EFD3A4");
+		resources[CellPalette.ResourceKey].Should().BeOfType<CellPalette>();
 		AssertBrush(resources, CellPaletteInstaller.GridLineBrushKey, "#CCCCCC");
 		AssertBrush(resources, CellPaletteInstaller.StatusBarBackgroundBrushKey, "#F0F0F0");
 		AssertBrush(resources, CellPaletteInstaller.StatusBarForegroundBrushKey, "#111111");
@@ -141,7 +90,7 @@ public sealed class CellPaletteInstallerTests
 
 		resources.ContainsKey("StatusBarTimerFontSize").Should().BeFalse();
 
-		resources.Count.Should().Be(49);
+		resources.Count.Should().Be(29);
 	}
 
 	[AvaloniaFact]

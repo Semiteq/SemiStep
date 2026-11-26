@@ -21,12 +21,13 @@ internal static class GridStyleMapper
 		var defaults = GridStyleOptions.Default;
 		var errors = new List<IError>();
 
-		// Parse phase in the validator's emission order: execution -> readonly -> disabled -> chrome ->
-		// selection -> cells.changed/changed_selected -> colors.grid_line -> status_bar -> validation_panel ->
-		// orientation. The join into one user-visible message depends on this order.
+		// Parse phase in the validator's emission order: execution -> loop -> readonly -> disabled -> chrome ->
+		// selection -> cells.changed -> colors.grid_line -> status_bar -> validation_panel -> orientation.
+		// The join into one user-visible message depends on this order.
 		var execution = MapExecution(dto.Colors.Cells?.Execution, defaults.Execution, errors);
-		var readOnly = MapReadOnly(dto.Colors.Cells?.ReadOnly, defaults.ReadOnlyCells, errors);
-		var disabled = MapDisabled(dto.Colors.Cells?.Disabled, defaults.DisabledCells, errors);
+		var loop = MapLoop(dto.Colors.Cells?.Loop, defaults.Loop, errors);
+		var readOnly = MapGreyCell(dto.Colors.Cells?.ReadOnly, "colors.cells.readonly", errors);
+		var disabled = MapGreyCell(dto.Colors.Cells?.Disabled, "colors.cells.disabled", errors);
 		var chrome = MapChrome(dto.Chrome, defaults.Chrome, errors);
 		var selection = MapSelection(dto.Colors.Selection, defaults.Selection, errors);
 		var changedCells = MapChangedCells(dto.Colors.Cells, defaults.ChangedCells, errors);
@@ -55,87 +56,51 @@ internal static class GridStyleMapper
 				RowHeight: dto.Layout?.RowHeight ?? defaults.Layout.RowHeight),
 			Selection: selection,
 			ChangedCells: changedCells,
-			ReadOnlyCells: readOnly,
-			DisabledCells: disabled,
+			ReadOnlyCell: readOnly,
+			DisabledCell: disabled,
 			Execution: execution,
+			Loop: loop,
 			StatusBar: statusBar,
 			ValidationPanel: validationPanel,
 			Chrome: chrome,
 			Orientation: orientation));
 	}
 
+	// The section and every key in it are optional; a missing one takes the default.
 	private static ExecutionPalette MapExecution(
 		GridStyleExecutionColorsDto? dto,
 		ExecutionPalette defaults,
 		List<IError> errors)
 	{
 		var section = "colors.cells.execution";
-		if (dto is null)
-		{
-			errors.Add(new GridStyleSectionMissingError(section));
-			return defaults;
-		}
-
 		return new ExecutionPalette(
-			Depth0: RequiredColor(dto.Depth0, section, "depth_0", errors),
-			Depth1: RequiredColor(dto.Depth1, section, "depth_1", errors),
-			Depth2: RequiredColor(dto.Depth2, section, "depth_2", errors),
-			Depth3: RequiredColor(dto.Depth3, section, "depth_3", errors),
-			Depth0Past: RequiredColor(dto.Depth0Past, section, "depth_0_past", errors),
-			Depth1Past: RequiredColor(dto.Depth1Past, section, "depth_1_past", errors),
-			Depth2Past: RequiredColor(dto.Depth2Past, section, "depth_2_past", errors),
-			Depth3Past: RequiredColor(dto.Depth3Past, section, "depth_3_past", errors),
-			CurrentStepMarker: RequiredColor(dto.CurrentStepMarker, section, "current_step_marker", errors));
+			Running: OptionalColor(dto?.Running, defaults.Running, section, "running", errors),
+			RunningWeight: OptionalWeight(dto?.RunningWeight, defaults.RunningWeight, section, "running_weight", errors),
+			PastWeight: OptionalWeight(dto?.PastWeight, defaults.PastWeight, section, "past_weight", errors));
 	}
 
-	private static DepthPalette MapReadOnly(
-		GridStyleReadOnlyCellColorsDto? dto,
-		DepthPalette defaults,
+	private static LoopPalette MapLoop(
+		GridStyleLoopColorsDto? dto,
+		LoopPalette defaults,
 		List<IError> errors)
 	{
-		var section = "colors.cells.readonly";
+		var section = "colors.cells.loop";
+		return new LoopPalette(
+			Color: OptionalColor(dto?.Color, defaults.Color, section, "color", errors),
+			Depth1Weight: OptionalWeight(dto?.Depth1Weight, defaults.Depth1Weight, section, "depth_1_weight", errors),
+			Depth2Weight: OptionalWeight(dto?.Depth2Weight, defaults.Depth2Weight, section, "depth_2_weight", errors),
+			Depth3Weight: OptionalWeight(dto?.Depth3Weight, defaults.Depth3Weight, section, "depth_3_weight", errors));
+	}
+
+	private static StyleColor MapGreyCell(GridStyleGreyCellColorsDto? dto, string section, List<IError> errors)
+	{
 		if (dto is null)
 		{
 			errors.Add(new GridStyleSectionMissingError(section));
-			return defaults;
+			return default;
 		}
 
-		return new DepthPalette(
-			Depth0: RequiredColor(dto.Depth0, section, "depth_0", errors),
-			Depth1: RequiredColor(dto.Depth1, section, "depth_1", errors),
-			Depth2: RequiredColor(dto.Depth2, section, "depth_2", errors),
-			Depth3: RequiredColor(dto.Depth3, section, "depth_3", errors),
-			Depth0Past: RequiredColor(dto.Depth0Past, section, "depth_0_past", errors),
-			Depth1Past: RequiredColor(dto.Depth1Past, section, "depth_1_past", errors),
-			Depth2Past: RequiredColor(dto.Depth2Past, section, "depth_2_past", errors),
-			Depth3Past: RequiredColor(dto.Depth3Past, section, "depth_3_past", errors),
-			Selected: RequiredColor(dto.Selected, section, "selected", errors),
-			Foreground: RequiredColor(dto.Foreground, section, "foreground", errors));
-	}
-
-	private static DepthPalette MapDisabled(
-		GridStyleDisabledCellColorsDto? dto,
-		DepthPalette defaults,
-		List<IError> errors)
-	{
-		var section = "colors.cells.disabled";
-		if (dto is null)
-		{
-			errors.Add(new GridStyleSectionMissingError(section));
-			return defaults;
-		}
-
-		return new DepthPalette(
-			Depth0: RequiredColor(dto.Depth0, section, "depth_0", errors),
-			Depth1: RequiredColor(dto.Depth1, section, "depth_1", errors),
-			Depth2: RequiredColor(dto.Depth2, section, "depth_2", errors),
-			Depth3: RequiredColor(dto.Depth3, section, "depth_3", errors),
-			Depth0Past: RequiredColor(dto.Depth0Past, section, "depth_0_past", errors),
-			Depth1Past: RequiredColor(dto.Depth1Past, section, "depth_1_past", errors),
-			Depth2Past: RequiredColor(dto.Depth2Past, section, "depth_2_past", errors),
-			Depth3Past: RequiredColor(dto.Depth3Past, section, "depth_3_past", errors),
-			Selected: RequiredColor(dto.Selected, section, "selected", errors),
-			Foreground: RequiredColor(dto.Foreground, section, "foreground", errors));
+		return RequiredColor(dto.Depth0, section, "depth_0", errors);
 	}
 
 	private static ChromeColors MapChrome(
@@ -162,7 +127,7 @@ internal static class GridStyleMapper
 			HeaderForeground: OptionalColor(
 				dto?.HeaderForeground, defaults.HeaderForeground, section, "header_foreground", errors),
 			// Placeholder: Map overwrites this with the parsed colors.grid_line so that key's error lands
-			// after changed_selected in emission order, not here in the chrome block.
+			// after cells.changed in emission order, not here in the chrome block.
 			GridLine: defaults.GridLine);
 	}
 
@@ -173,8 +138,8 @@ internal static class GridStyleMapper
 	{
 		var section = "colors.selection";
 		return new SelectionColors(
-			Background: OptionalColor(dto?.Background, defaults.Background, section, "background", errors),
-			Foreground: OptionalColor(dto?.Foreground, defaults.Foreground, section, "foreground", errors));
+			Accent: OptionalColor(dto?.Accent, defaults.Accent, section, "accent", errors),
+			Weight: OptionalWeight(dto?.Weight, defaults.Weight, section, "weight", errors));
 	}
 
 	private static ChangedCellColors MapChangedCells(
@@ -184,9 +149,7 @@ internal static class GridStyleMapper
 	{
 		var section = "colors.cells";
 		return new ChangedCellColors(
-			Changed: OptionalColor(cells?.Changed, defaults.Changed, section, "changed", errors),
-			ChangedSelected: OptionalColor(
-				cells?.ChangedSelected, defaults.ChangedSelected, section, "changed_selected", errors));
+			Changed: OptionalColor(cells?.Changed, defaults.Changed, section, "changed", errors));
 	}
 
 	private static StatusBarStyle MapStatusBar(
@@ -279,5 +242,26 @@ internal static class GridStyleMapper
 		}
 
 		return color;
+	}
+
+	private static double OptionalWeight(
+		double? value,
+		double fallback,
+		string section,
+		string key,
+		List<IError> errors)
+	{
+		if (value is null)
+		{
+			return fallback;
+		}
+
+		if (value is < 0 or > 1 || double.IsNaN(value.Value))
+		{
+			errors.Add(new GridStyleWeightOutOfRangeError(section, key, value.Value));
+			return fallback;
+		}
+
+		return value.Value;
 	}
 }

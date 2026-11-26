@@ -290,7 +290,7 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void ExecutionStop_ClearsStepHighlights()
+	public void ExecutionStop_KeepsThePastTint_AndMarksTheStopColumn()
 	{
 		_fixture.Coordinator.NewRecipe();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.WaitActionId);
@@ -303,8 +303,9 @@ public sealed class TransposedRecipeGridSurfaceTests : IAsyncLifetime
 		_surface.StepColumns.Should().AllSatisfy(column =>
 		{
 			column.Row.IsCurrentStep.Should().BeFalse();
-			column.Row.IsPastStep.Should().BeFalse();
+			column.Row.IsPastStep.Should().BeTrue();
 		});
+		_surface.StepColumns.Select(column => column.Row.IsStopStep).Should().Equal(false, true);
 	}
 
 	[AvaloniaFact]

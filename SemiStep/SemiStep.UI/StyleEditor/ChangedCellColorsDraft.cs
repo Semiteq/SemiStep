@@ -22,16 +22,9 @@ public sealed class ChangedCellColorsDraft(ChangedCellColors source) : ReactiveO
 		set => this.RaiseAndSetIfChanged(ref field, value);
 	} = source.Changed.ToMediaColor();
 
-	public Color ChangedSelected
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.ChangedSelected.ToMediaColor();
-
 	public ChangedCellColors Build()
 	{
 		return new ChangedCellColors(
-			Changed: Changed.ToStyleColor(),
-			ChangedSelected: ChangedSelected.ToStyleColor());
+			Changed: Changed.ToStyleColor());
 	}
 }

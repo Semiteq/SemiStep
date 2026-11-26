@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 using System.Reactive;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Disposables.Fluent;
 using System.Reactive.Linq;
@@ -14,9 +15,7 @@ using Microsoft.Extensions.Logging;
 
 using ReactiveUI;
 
-using SemiStep.Core.Plc.State;
 using SemiStep.Core.Recipes;
-using SemiStep.Core.Recipes.Analysis;
 
 using SemiStep.UI.Coordinator;
 using SemiStep.UI.Localization;
@@ -34,18 +33,20 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 	private readonly RecipeCoordinator _coordinator;
 	private readonly CompositeDisposable _disposables = [];
 	private readonly ExecutionHighlightTracker _executionHighlightTracker;
+	private readonly RunningStepFollower _runningStepFollower;
+	private readonly RowAnnotationRefresher _rowAnnotationRefresher;
 	private readonly HashSet<RecipeRowViewModel> _markedRows = [];
 	private readonly ILogger _logger;
 	private readonly MessagePanelViewModel _messagePanel;
 	private readonly Subject<int?> _selectionRequests = new();
 	private Recipe _shownRecipe = Recipe.Empty;
-	private PlcExecutionInfo _loopExecutionInfo = PlcExecutionInfo.Empty;
 
 	protected RecipeGridSurfaceBase(
 		RecipeCoordinator coordinator,
 		RecipeMetadataRegistry recipeMetadataRegistry,
 		MessagePanelViewModel messagePanel,
 		ChangeMarkClearBroadcaster changeMarkClearBroadcaster,
+		IScheduler scheduler,
 		ILogger logger)
 	{
 		_coordinator = coordinator;
@@ -59,6 +60,8 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		Items.CollectionChanged += OnItemsChanged;
 		HasChangedMarks = this.WhenAnyValue(x => x.AnyCellChanged);
 		_executionHighlightTracker = new ExecutionHighlightTracker(() => Items.Count, i => RowOf(Items[i]));
+		_runningStepFollower = new RunningStepFollower(scheduler).DisposeWith(_disposables);
+		_rowAnnotationRefresher = new RowAnnotationRefresher(coordinator, () => Items.Count, i => RowOf(Items[i]));
 
 		CanDeleteStep = this
 			.WhenAnyValue(x => x.SelectedStepIndices)
@@ -86,16 +89,18 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 			.Subscribe(_executionHighlightTracker.OnExecutionStateChanged)
 			.DisposeWith(_disposables);
 
+		coordinator.ExecutionState
+			.Subscribe(
+				_runningStepFollower.OnExecutionStateChanged,
+				exception => _logger.LogError(exception, "Running step follow failed"))
+			.DisposeWith(_disposables);
+
 		// Only the fields a pill reads; a poll that advances the step time alone recomputes nothing.
 		coordinator.ExecutionState
 			.DistinctUntilChanged(info =>
 				(info.RecipeActive, info.ActualLine, info.ForLoopCount1, info.ForLoopCount2, info.ForLoopCount3))
 			.Subscribe(
-				info =>
-				{
-					_loopExecutionInfo = info;
-					RefreshLoopPasses();
-				},
+				_rowAnnotationRefresher.OnLoopExecutionChanged,
 				exception => _logger.LogError(exception, "Loop pass refresh failed"))
 			.DisposeWith(_disposables);
 
@@ -136,11 +141,27 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 
 	public int StepCount => Items.Count;
 
+	/// <summary>True while the recipe has no step; set once per applied mutation, so a load never flashes it.</summary>
+	public bool IsRecipeEmpty
+	{
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	}
+
 	public IObservable<int?> SelectionRequests => _selectionRequests.AsObservable();
+
+	/// <summary>Surface to view: the step to scroll into view; scrolling must not move the selection or the focus.</summary>
+	public IObservable<int> RunningStepScrollRequests => _runningStepFollower.ScrollRequests;
 
 	protected abstract RecipeRowViewModel RowOf(TItem item);
 
 	protected abstract TItem CreateItem(int stepNumber, Step step, ActionDefinition action);
+
+	/// <summary>View to surface: the operator scrolled; auto-scroll pauses for 10 s.</summary>
+	public void NotifyOperatorScroll()
+	{
+		_runningStepFollower.OnOperatorScroll();
+	}
 
 	public void UpdateSelection(IReadOnlyList<int> stepIndices)
 	{
@@ -160,9 +181,8 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		FullRebuild(_shownRecipe);
 
 		// Run the start-time tail from 0 to seed the baseline; a later mutation refreshes only from its own index.
-		RefreshStepStartTimes(0);
-		RefreshLoopDepths();
-		RefreshLoopPasses();
+		_rowAnnotationRefresher.Refresh(startTimesFromIndex: 0);
+		IsRecipeEmpty = Items.Count == 0;
 	}
 
 	public void OnMutation(MutationSignal signal)
@@ -218,6 +238,8 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 				case MutationSignal.StateRefreshed:
 					return;
 			}
+
+			_executionHighlightTracker.ClearRunTintsWhenIdle();
 		}
 		catch (UnknownActionKeyException exception)
 		{
@@ -246,9 +268,8 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 			}
 		}
 
-		RefreshStepStartTimes(RefreshStartIndexFor(signal));
-		RefreshLoopDepths();
-		RefreshLoopPasses();
+		_rowAnnotationRefresher.Refresh(RefreshStartIndexFor(signal));
+		IsRecipeEmpty = Items.Count == 0;
 	}
 
 	private RecipeRowViewModel[] ShownRows()
@@ -579,54 +600,6 @@ public abstract class RecipeGridSurfaceBase<TItem> : ReactiveObject, IRecipeGrid
 		for (var i = 0; i < recipe.StepCount; i++)
 		{
 			Items.Add(CreateItemChecked(recipe.Steps[i], i + 1));
-		}
-	}
-
-	private void RefreshStepStartTimes(int fromIndex)
-	{
-		var stepStartTimes = _coordinator.Snapshot.StepStartTimes;
-		for (var i = fromIndex; i < Items.Count; i++)
-		{
-			string formattedTime;
-			if (i < stepStartTimes.Count)
-			{
-				var rawSeconds = stepStartTimes[i].TotalSeconds.ToString(CultureInfo.InvariantCulture);
-				formattedTime = TimeFormatHelper.FormatValue(
-					rawSeconds,
-					TimeFormatHelper.TimeHmsFormat,
-					units: null);
-			}
-			else
-			{
-				formattedTime = string.Empty;
-			}
-
-			RowOf(Items[i]).UpdateStepStartTime(formattedTime);
-		}
-	}
-
-	private void RefreshLoopDepths()
-	{
-		var rowLoopDepths = _coordinator.Snapshot.RowLoopDepths;
-		for (var i = 0; i < Items.Count; i++)
-		{
-			RowOf(Items[i]).ForDepth = Math.Min(rowLoopDepths[i], 3);
-		}
-	}
-
-	private void RefreshLoopPasses()
-	{
-		var passTextByStartRow = new Dictionary<int, string>();
-		foreach (var active in ActiveLoops.Resolve(_coordinator.Snapshot, _loopExecutionInfo))
-		{
-			passTextByStartRow[active.Loop.StartIndex] = string.Create(
-				CultureInfo.InvariantCulture,
-				$"({active.Pass}/{active.Loop.Iterations})");
-		}
-
-		for (var i = 0; i < Items.Count; i++)
-		{
-			RowOf(Items[i]).LoopPassText = passTextByStartRow.GetValueOrDefault(i);
 		}
 	}
 

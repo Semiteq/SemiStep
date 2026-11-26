@@ -1,0 +1,12 @@
+# SEP=";"
+# ROWS="9"
+action;target;initial_value;task;speed;step_duration;comment
+10;;;;;2;
+20;;;3;;;
+10;;;;;2;
+20;;;5;;;
+10;;;;;2;
+10;;;;;2;
+30;;;;;;
+30;;;;;;
+10;;;;;2;

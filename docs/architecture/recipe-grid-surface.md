@@ -42,9 +42,8 @@ The pieces:
   `TransposedColumnCellsPresenter` whose fixed per-descriptor slots rebind when the container
   re-points to a different column, and
   `TransposedCellTemplateFactory.CreateEditor` builds each slot's lazy display/editor cell (see
-  "Allocation characteristics" for the recycle-in-place panel, the pooled presenter, and the lazy editor swap);
-  `TransposedStepColumnClassBinder` stamps execution classes on item containers via
-  `ContainerPrepared`/`ContainerClearing`. A tunnel pointer-pressed hook implements the
+  "Allocation characteristics" for the recycle-in-place panel, the pooled presenter, and the lazy editor swap).
+  A tunnel pointer-pressed hook implements the
   select-then-edit press model (editors would otherwise swallow the bubbling press): a plain
   left click on a not-yet-selected column selects it and focuses the item container — keeping
   Delete/Ctrl+C live — while a second click on the selected column enters edit, building the
@@ -55,7 +54,8 @@ The pieces:
 - `ActiveRecipeGridSurface` — the delegating router and the single owner of orientation; see
   "Orientation switching" below.
 - `RecipeGridHost` — the swap point hosted by `MainWindow.axaml`. Constructs both child views
-  eagerly, keeps them alive across flips, and swaps its `Content` on orientation changes.
+  eagerly, keeps them alive across flips, and swaps its `Content` on orientation changes. Its
+  template lays the empty-recipe hint over the content presenter (see "Empty-recipe hint").
   Its `Surface` property (`DataContext as IRecipeGridSurface`) has no production consumer —
   `MainWindow` reads only `IsEditing`; `Surface` is pinned by tests.
 
@@ -213,8 +213,11 @@ disabled presenter (locked, inapplicable or read-only) shows none. The rules are
 
 **Lock.** While the PLC runs the recipe no combo list may open. Each presenter binds `IsEnabled`: the
 canonical one to `CellApplicabilityBinding.CreateApplicableAndUnlockedBinding`, which reads
-`DataGrid.IsReadOnly` from the ancestor grid and fails closed outside a grid; the transposed one to
-`TransposedCellTemplateFactory.CreateEditableBinding`. It reads the grid, not the surface:
+`CellApplicabilityBinding.IsGridUnlocked` from the presenter itself; the transposed one to
+`TransposedCellTemplateFactory.CreateEditableBinding`. `IsGridUnlocked` is an inherited attached property:
+`ColumnBuilder` binds it on the `DataGrid` to `!IsReadOnly`, and a presenter outside a grid keeps the default
+`false` and fails closed. The presenter reads its own value, so a detached cell logs no "Ancestor not found",
+as a `FindAncestor DataGrid` leg did on every orientation flip. It reads the grid, not the surface:
 `ComboBoxCellFactory` is built through `ColumnBuilder`, and a surface dependency would make a DI cycle.
 A disabled presenter is not hit-testable, so a press on it still selects the row. On the lock transition
 `DataGridEditorCloseBehavior` closes an open list, which ends the edit and returns focus to the grid.
@@ -282,6 +285,75 @@ disagree. It recomputes only when `RecipeActive`, `ActualLine` or a loop counter
 every mutation, and writes only rows whose text changes. The pill is a `Border.loop-badge`
 (`LoopBadge`), styled in `DataGridStyles.axaml` from the `LoopBadge*Brush` palette keys; the action name
 trims before it.
+
+## Run states: running, past, stop
+
+`ExecutionHighlightTracker` (one per surface) writes three row flags from the PLC execution stream:
+`IsCurrentStep` (the running row), `IsPastStep` (every row above the running line, also inside loops)
+and `IsStopStep`. The cell palette reads the first two; `RecipeRowViewModel.StepNumberText` reads the
+first and the last and shows "► 3" on the running row and "■ 3" on the stop row. The canonical `№`
+column and the transposed step header both bind `StepNumberText`, so no extra visual carries the glyph.
+
+The PLC reports no end reason. The tracker keeps the last line seen while the run was active and
+decides when the run goes inactive. The inactive emission's own line counts only when it is at or past
+the step count, because `PlcExecutionMonitor` publishes `PlcExecutionInfo.Empty` (line 0) on link loss or
+sync off; a link loss therefore reads as a stop on the last line seen while active:
+
+| Last active line | Result |
+|---|---|
+| at or past the step count, or the inactive emission's line is | every row past, no glyph (the run finished) |
+| on a step | rows up to it past, "■" on it (the run stopped there) |
+| -1 | no tint, no glyph |
+
+The tints and the "■" outlive the run. `RecipeGridSurfaceBase.OnMutation` calls
+`ClearRunTintsWhenIdle` after every applied signal except `StateRefreshed` (save), and the tracker
+clears only while no run is active. Undo, redo and loads arrive as `RecipeReplaced`, whose full rebuild
+makes fresh rows and resets the tracker, so the next active execution emission counts as a run start
+(an inactive one changes nothing): it clears the change marks (as before) and repaints running and
+past. The reconnect path takes the same route.
+
+## Auto-scroll to the running step
+
+`RunningStepFollower` (owned by the surface, timer on the DI `IScheduler`) emits the running step on
+each line change; the view answers with `ScrollIntoView` only, never selection, current cell or focus.
+The canonical view passes the first column fully in view, so the grid scrolls vertically only and keeps
+the horizontal offset; with no column passed, `ScrollIntoView` aligns a partly shown first column.
+A view that subscribes while a run is active, as after an orientation flip, first gets the running
+step, unless a pause is on; the canonical view posts its scroll at `Background` priority, after layout.
+`OperatorScrollInput` reports operator scrolling from input, never from offset changes: a tunnel
+`KeyDown` with handled events included (Up, Down, PageUp, PageDown, Home, End with any modifier; in
+the transposed grid also Left and Right, which move between steps there; a key whose source sits in
+an open `TextBox` or `ComboBox` editor does not count), a tunnel `PointerWheelChanged` with handled
+events included, and the routed `Thumb.DragDelta` and `Button.Click` from inside any `ScrollBar` of
+the grid, also one created later (`ScrollBar.Scroll` is a CLR event; code-driven scrolling raises
+none of these). Each input pauses following for
+10 s and restarts the pause; when the pause ends during a run the grid scrolls to the running step at
+once. A run that ends during the pause ends it, and nothing scrolls.
+
+## Focus frame
+
+The current cell shows a 2 px frame in the selection accent in both grids. This is a stated exception
+to the desktop-ui rule "In a DataGrid hide the cell focus visual": the recipe grid is an editor, and
+the operator must see which cell F2, typing and the arrow keys act on. The canonical frame is Semi's
+`Rectangle#CurrencyVisual` and `Panel#FocusVisual > Rectangle`; the template sets their thickness, so
+`DataGridStyles.axaml` raises it to 2 with `:current` / `:focus` selectors (style-trigger priority
+outranks template values). The focus rectangle has a 1 px template inset, which stacked a third pixel
+inside the current rectangle, so the same style sets its `Margin` to 0 and both rectangles cover the same
+2 px. These parts are theme-private, so `FocusFrameTests` reads the rendered rectangles back, measures
+the frame thickness on each side, and fails on a Semi update that renames, restyles or offsets them. The transposed frame is an inset
+`BoxShadow` (spread 2) on the focused presenter: it draws inside the cell and moves no layout.
+Read-only transposed cells hold no focusable presenter and show no frame. In the transposed grid a click
+selects the step column and keyboard focus goes to the column container, so no cell frame shows until a
+key moves the current cell; this is the transposed selection model, not a defect.
+
+## Empty-recipe hint
+
+`RecipeGridSurfaceBase.IsRecipeEmpty` is set once at the end of `Initialize` and of each applied
+mutation, never per `Items` change, so a CSV load of N steps never reports empty for a frame.
+`ActiveRecipeGridSurface.IsRecipeEmpty` forwards the active surface. `RecipeGridHost`'s template lays
+a centred `TextBlock` (`Resources.EmptyRecipeHint`, `SecondaryForegroundBrush`) over the content
+presenter. The hint is neither hit-testable nor focusable, so Ctrl+N and Ctrl+O reach the grid, and
+the host's `Content` stays the active view for the orientation swap and `IsEditing`.
 
 ## Default grid focus
 
@@ -388,16 +460,17 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   and fall back to the old empty/missing behavior. The per-PLC-tick timing path shares
   `ExtractStepDuration`, so it inherits the same win.
 - **Cell background via a converter, not a style matrix.** The transposed cell background is
-  resolved by a single `IMultiValueConverter`
-  (`TransposedCellBackgroundConverter`) over five reactive state legs
-  `(ForDepth, IsPastStep, IsApplicable, IsChanged, IsSelected)` plus the Self host, applied as a local
-  `Border.Background` MultiBinding, reproducing the old document-order last-match-wins precedence.
+  resolved by the shared `CellBackgroundConverter` over six reactive state legs
+  `(ForDepth, IsPastStep, IsCurrentStep, !IsApplicable, IsChanged, IsSelected)` plus the Self host,
+  applied as a local `Border.Background` MultiBinding that looks the brush up in `CellPalette` (see
+  `grid-style-configuration.md`, "Cell palette").
   `IsReadOnly` is column-invariant, so it is not a reactive leg: it arrives through the per-slot
   `ConverterParameter` as a build-time constant, and the `read-only-cell` class is added statically in
   `BuildCellSlot` rather than via a `BindClass`.
   This replaces the descendant-selector background rules in `TransposedGridStyles.axaml`, avoiding
-  the per-cell style-activator / dynamic-resource machinery those rules multiplied. The
-  `TextElement.Foreground` setters stay as style setters (background stripped out), so foreground
+  the per-cell style-activator / dynamic-resource machinery those rules multiplied. Cell text is black
+  in every state through a `TextElement.Foreground` setter on `Border.transposed-cell` and the
+  `Border.transposed-cell TextBlock:disabled` rule in `DataGridStyles.axaml`, so foreground
   precedence is unchanged. The `IsSelected` leg is sourced from the presenter's own
   `TransposedColumnCellsPresenter.IsColumnSelected` (a `DirectProperty`, bound `Source = this`),
   which `TransposedColumnCellsHost` keeps in sync with the container `ListBoxItem.IsSelected`
@@ -512,8 +585,7 @@ same recipe and churned gen0 on every mutation. The reductions land in three pla
   the surface-swap teardown — a `RecipeReplaced` / Reset detaches every container
   (`RemoveInternalChild` on all children, realized and idle), each host releases its presenter into
   the dying pool, and the next surface's pool starts fresh. Cell height and the frozen left
-  name-column alignment are unchanged; the execution-class binder and current-step marker still
-  operate at `ListBoxItem` / row level. Slots are only built for actually-realized columns, so the
+  name-column alignment are unchanged. Slots are only built for actually-realized columns, so the
   never-realized-column `Lazy<>` optimization stays intact.
 
 - **Lazy display/editor swap for both cell kinds.** With reuse in place, live editors also leave the

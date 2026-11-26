@@ -1,4 +1,6 @@
-﻿using Avalonia.Headless.XUnit;
+﻿using System.Reactive.Concurrency;
+
+using Avalonia.Headless.XUnit;
 
 using AwesomeAssertions;
 
@@ -53,6 +55,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			_fixture.ColumnBuilder,
 			_fixture.MessagePanel,
 			_fixture.ChangeMarkClearBroadcaster,
+			ImmediateScheduler.Instance,
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 
 		var act = surface.Initialize;
@@ -72,6 +75,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			_fixture.AppConfiguration.GridStyle,
 			_fixture.MessagePanel,
 			_fixture.ChangeMarkClearBroadcaster,
+			ImmediateScheduler.Instance,
 			NullLogger<TransposedRecipeGridSurface>.Instance);
 
 		var act = surface.Initialize;
@@ -91,6 +95,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			_fixture.ColumnBuilder,
 			_fixture.MessagePanel,
 			_fixture.ChangeMarkClearBroadcaster,
+			ImmediateScheduler.Instance,
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 		var probeSignals = new List<MutationSignal>();
 		_fixture.Coordinator.Mutated += probeSignals.Add;
@@ -116,6 +121,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			_fixture.AppConfiguration.GridStyle,
 			_fixture.MessagePanel,
 			_fixture.ChangeMarkClearBroadcaster,
+			ImmediateScheduler.Instance,
 			NullLogger<TransposedRecipeGridSurface>.Instance);
 		var probeSignals = new List<MutationSignal>();
 		_fixture.Coordinator.Mutated += probeSignals.Add;
@@ -142,6 +148,7 @@ public sealed class RecipeGridSurfaceFailLoudTests : IAsyncLifetime
 			_fixture.ColumnBuilder,
 			_fixture.MessagePanel,
 			_fixture.ChangeMarkClearBroadcaster,
+			ImmediateScheduler.Instance,
 			NullLogger<CanonicalRecipeGridSurface>.Instance);
 		surface.Initialize();
 		_fixture.Coordinator.AppendStep(RecipeTestDriver.ForLoopActionId);

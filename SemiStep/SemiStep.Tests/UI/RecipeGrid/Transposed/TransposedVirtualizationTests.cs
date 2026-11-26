@@ -136,7 +136,7 @@ public sealed class TransposedVirtualizationTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void RecycledContainer_CarriesExactlyOneSetOfExecutionClasses()
+	public void RecycledContainer_ShowsTheRunningGlyphOnlyOnTheRunningColumn()
 	{
 		var stepListBox = ShowView();
 		_surface.StepColumns[0].Row.IsCurrentStep = true;
@@ -145,15 +145,20 @@ public sealed class TransposedVirtualizationTests : IAsyncLifetime
 		ScrollToHorizontalEnd(stepListBox);
 		ScrollToHorizontalStart(stepListBox);
 
-		var currentContainer = (ListBoxItem)stepListBox.ContainerFromIndex(0)!;
-		currentContainer.Classes
-			.Count(className => className == RowExecutionClasses.CurrentStepClass)
-			.Should().Be(1, "recycling must not stack duplicate class bindings");
+		HeaderText((ListBoxItem)stepListBox.ContainerFromIndex(0)!).Should().StartWith("►");
+		HeaderText((ListBoxItem)stepListBox.ContainerFromIndex(1)!).Should().NotContain(
+			"►", "a container recycled from the running column must not keep its glyph");
+	}
 
-		var idleContainer = (ListBoxItem)stepListBox.ContainerFromIndex(1)!;
-		idleContainer.Classes.Should().NotContain(
-			RowExecutionClasses.CurrentStepClass,
-			"a container recycled from the current column must not leak its class");
+	private static string? HeaderText(ListBoxItem container)
+	{
+		return container.GetVisualDescendants()
+			.OfType<Border>()
+			.Single(border => border.Classes.Contains("transposed-step-header"))
+			.GetVisualDescendants()
+			.OfType<TextBlock>()
+			.Single()
+			.Text;
 	}
 
 	// A focused editor holding uncommitted text that gets recycled across a scroll must never leak

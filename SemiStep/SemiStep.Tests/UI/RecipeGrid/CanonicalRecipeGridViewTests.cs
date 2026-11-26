@@ -118,20 +118,6 @@ public sealed class CanonicalRecipeGridViewTests : IAsyncLifetime
 	}
 
 	[AvaloniaFact]
-	public void LoadingRowWiring_StampsForDepthClasses_OnRenderedRows()
-	{
-		var dataGrid = ShowView();
-
-		_surface.RecipeRows[1].ForDepth = 1;
-		Dispatcher.UIThread.RunJobs();
-
-		var dataGridRows = dataGrid.GetVisualDescendants().OfType<DataGridRow>().ToList();
-		var stampedRow = dataGridRows.Single(row => ReferenceEquals(row.DataContext, _surface.RecipeRows[1]));
-		stampedRow.Classes.Contains(RowExecutionClasses.ForDepth1Class).Should().BeTrue(
-			"the view's LoadingRow wiring must bind the ForDepth pseudo-classes on real row containers");
-	}
-
-	[AvaloniaFact]
 	public void BeginEdit_OnInapplicableColumn_IsCancelled_AndIsEditingStaysFalse()
 	{
 		var (view, dataGrid) = ShowViewWithControl();

@@ -5,30 +5,10 @@ namespace SemiStep.Core.Configuration.Dto;
 
 internal sealed class GridStyleExecutionColorsDto
 {
-	[YamlMember(Alias = "depth_0", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? Depth0 { get; set; }
+	[YamlMember(Alias = "running", ScalarStyle = ScalarStyle.DoubleQuoted)]
+	public string? Running { get; set; }
 
-	[YamlMember(Alias = "depth_1", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? Depth1 { get; set; }
+	[YamlMember(Alias = "running_weight")] public double? RunningWeight { get; set; }
 
-	[YamlMember(Alias = "depth_2", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? Depth2 { get; set; }
-
-	[YamlMember(Alias = "depth_3", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? Depth3 { get; set; }
-
-	[YamlMember(Alias = "depth_0_past", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? Depth0Past { get; set; }
-
-	[YamlMember(Alias = "depth_1_past", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? Depth1Past { get; set; }
-
-	[YamlMember(Alias = "depth_2_past", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? Depth2Past { get; set; }
-
-	[YamlMember(Alias = "depth_3_past", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? Depth3Past { get; set; }
-
-	[YamlMember(Alias = "current_step_marker", ScalarStyle = ScalarStyle.DoubleQuoted)]
-	public string? CurrentStepMarker { get; set; }
+	[YamlMember(Alias = "past_weight")] public double? PastWeight { get; set; }
 }

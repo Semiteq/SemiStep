@@ -8,21 +8,15 @@
         <Setter Property="IsVisible" Value="True" />
     </Style>
 
-    <!-- ============================================== -->
-    <!-- Transposed recipe grid (ListBox of step-       -->
-    <!-- columns). All brushes come from the existing   -->
-    <!-- CellPaletteInstaller / ExecutionPaletteInstaller -->
-    <!-- resources. The per-cell BACKGROUND state matrix -->
-    <!-- (depth / past / read-only / inapplicable /     -->
-    <!-- changed / selection) is resolved by a single   -->
-    <!-- TransposedCellBackgroundConverter MultiBinding -->
-    <!-- on Border.transposed-cell.Background (see       -->
-    <!-- TransposedRecipeGridView.axaml); that local     -->
-    <!-- value outranks style setters, so no background -->
-    <!-- setters live here. Only FOREGROUND state and   -->
-    <!-- the current-step header tint remain as style   -->
-    <!-- setters, in document order (last match wins).  -->
-    <!-- ============================================== -->
+    <!-- Transposed recipe grid (ListBox of step columns). Each cell's background is a local
+         CellBackgroundConverter MultiBinding (TransposedColumnCellsPresenter) that outranks style
+         setters, so no background setters for cells live here. -->
+
+    <!-- Focus frame on the focused editable cell: an inset shadow in the selection accent, so the cell keeps
+         its size. Read-only cells hold no focusable presenter and never show it. -->
+    <Style Selector=":is(rg|LazyCellPresenter):focus">
+        <Setter Property="BoxShadow" Value="{DynamicResource CellFocusFrame}" />
+    </Style>
 
     <!-- Container reset: the grid paints its own cell chrome, so the ListBox and its item
          containers must contribute no padding, radius, or state background of their own. -->
@@ -53,45 +47,18 @@
     <Style Selector="Border.transposed-header-spacer, Border.transposed-name-cell, Border.transposed-step-header">
         <Setter Property="TextElement.Foreground" Value="{DynamicResource HeaderForegroundBrush}" />
     </Style>
-
-    <!-- Marker strip: right border keeps the vertical column separators continuous through
-         the slot; no bottom border, so the header underline stays the single horizontal line
-         on every column including the frozen one. -->
-    <Style Selector="Border.transposed-marker-slot">
-        <Setter Property="Background" Value="{DynamicResource GridBackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource GridLineBrush}" />
-        <Setter Property="BorderThickness" Value="0,0,1,0" />
+    <!-- The running and stop step headers carry the run glyph; the whole label is black, as in the canonical № cell. -->
+    <Style Selector="Border.transposed-step-header TextBlock.running, Border.transposed-step-header TextBlock.stopped">
+        <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
     </Style>
 
-    <!-- Base cell chrome. Background is the TransposedCellBackgroundConverter MultiBinding set in
+    <!-- Base cell chrome. Background is the CellBackgroundConverter MultiBinding set in
          the view; the border thickness is set in code (TransposedColumnCellsPresenter.GridLineWidth),
-         so the step column width can reserve it; only the grid-line brush lives here. -->
+         so the step column width can reserve it. All cell text is black in every state, so the
+         cell does not inherit the ListBoxItem foreground. -->
     <Style Selector="Border.transposed-cell">
         <Setter Property="BorderBrush" Value="{DynamicResource GridLineBrush}" />
-    </Style>
-
-    <!-- Read-only and inapplicable foreground: two disjoint signals, inapplicable last so it wins
-         when a cell is both (parity with the background converter's precedence). Their backgrounds
-         are folded into the converter; only the text foreground remains as a style setter. -->
-    <Style Selector="Border.transposed-cell.read-only-cell">
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource CellReadOnlyForegroundBrush}" />
-    </Style>
-    <Style Selector="Border.transposed-cell.inapplicable">
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource CellDisabledForegroundBrush}" />
-    </Style>
-
-    <!-- Selection foreground wins on every cell of the selected column. All four old selected
-         variants set the identical SelectionForegroundBrush, so one base rule covers them; the
-         selection BACKGROUND (including the read-only / inapplicable / changed variants) is folded
-         into the converter. -->
-    <Style Selector="ListBoxItem:selected Border.transposed-cell">
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource SelectionForegroundBrush}" />
-    </Style>
-
-    <!-- Current-step header tint: the transposed analog of canonical's step-number cell marker.
-         MUST remain the final selector so it wins over selection on the current column's header. -->
-    <Style Selector="ListBoxItem.current-step Border.transposed-step-header">
-        <Setter Property="Background" Value="{DynamicResource CurrentStepMarkerBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource SemiColorText0}" />
     </Style>
 
 </Styles>

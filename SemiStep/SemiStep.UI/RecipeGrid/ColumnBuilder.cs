@@ -39,6 +39,7 @@ public sealed class ColumnBuilder(
 		// The numbering column is a DataGridTextColumn with no FontFeatures property; tabular figures
 		// reach its generated cells through the inherited grid-level value set here.
 		grid.SetValue(TextElement.FontFeaturesProperty, GridFonts.TabularFigures);
+		CellApplicabilityBinding.MirrorGridLock(grid);
 		grid.Columns.Clear();
 		AddNumberingColumn(grid);
 
@@ -51,17 +52,18 @@ public sealed class ColumnBuilder(
 
 	private void AddNumberingColumn(DataGrid grid)
 	{
+		var width = _widthCalculator.NumberingColumnWidth();
 		var column = new DataGridTextColumn
 		{
 			Header = Resources.StepNumberHeader,
 			HeaderTemplate = _headerTemplate,
-			Binding = new Binding("StepNumber"),
+			Binding = new Binding(nameof(RecipeRowViewModel.StepNumberText)),
 			FontSize = gridStyle.Fonts.CellFontSize,
 			FontWeight = (FontWeight)gridStyle.Fonts.CellFontWeight,
 			FontStyle = gridStyle.Fonts.CellItalic ? FontStyle.Italic : FontStyle.Normal,
 			IsReadOnly = true,
-			Width = DataGridLength.Auto,
-			MinWidth = _widthCalculator.MinColumnWidth,
+			Width = width,
+			MinWidth = width.Value,
 			CanUserSort = false,
 			FontFamily = string.IsNullOrWhiteSpace(gridStyle.Fonts.FontFamily)
 				? GridFonts.DefaultFamily
@@ -69,6 +71,7 @@ public sealed class ColumnBuilder(
 		};
 
 		column.CellStyleClasses.Add(StepNumberColumnClass);
+		column.CellTheme = RecipeCellTheme.Create(columnKey: null, isReadOnly: false);
 		grid.Columns.Add(column);
 	}
 
@@ -103,7 +106,7 @@ public sealed class ColumnBuilder(
 		{
 			column.CellStyleClasses.Add(ReadOnlyColumnClass);
 		}
-		column.CellTheme = InapplicableCellTheme.Create(columnDef.Key);
+		column.CellTheme = RecipeCellTheme.Create(columnDef.Key, columnDef.ReadOnly);
 		// Pin absolute columns to their content width so a narrow window scrolls instead of clipping
 		// (the DataGrid otherwise shrinks columns to MinWidth). See docs/architecture/recipe-grid-column-sizing.md.
 		column.MinWidth = width.IsAbsolute ? width.Value : _widthCalculator.MinColumnWidth;

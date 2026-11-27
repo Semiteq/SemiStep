@@ -1,6 +1,4 @@
-﻿using ReactiveUI;
-
-using SemiStep.Core.Configuration;
+﻿using SemiStep.Core.Configuration;
 
 namespace SemiStep.UI.StyleEditor;
 
@@ -8,45 +6,30 @@ namespace SemiStep.UI.StyleEditor;
 /// Editable draft of <see cref="GridStyleLayout"/>. Property initializers seed from <paramref name="source"/>;
 /// <see cref="Build"/> reconstructs the record positionally so an omitted component is a compile error.
 /// </summary>
-public sealed class GridStyleLayoutDraft(GridStyleLayout source) : ReactiveObject
+public sealed class GridStyleLayoutDraft(GridStyleLayout source)
 {
-	public decimal? CellPaddingLeft
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.CellPaddingLeft;
+	public NumberDraft CellPaddingLeft { get; } =
+		new((decimal)source.CellPaddingLeft, DraftRanges.MinPadding, DraftRanges.MaxPadding);
 
-	public decimal? CellPaddingTop
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.CellPaddingTop;
+	public NumberDraft CellPaddingTop { get; } =
+		new((decimal)source.CellPaddingTop, DraftRanges.MinPadding, DraftRanges.MaxPadding);
 
-	public decimal? CellPaddingRight
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.CellPaddingRight;
+	public NumberDraft CellPaddingRight { get; } =
+		new((decimal)source.CellPaddingRight, DraftRanges.MinPadding, DraftRanges.MaxPadding);
 
-	public decimal? CellPaddingBottom
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.CellPaddingBottom;
+	public NumberDraft CellPaddingBottom { get; } =
+		new((decimal)source.CellPaddingBottom, DraftRanges.MinPadding, DraftRanges.MaxPadding);
 
-	public decimal? RowHeight
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.RowHeight;
+	public NumberDraft RowHeight { get; } =
+		new((decimal)source.RowHeight, DraftRanges.MinRowHeight, DraftRanges.MaxRowHeight);
 
 	public GridStyleLayout Build()
 	{
 		return new GridStyleLayout(
-			CellPaddingLeft: DraftNumbers.ToDouble(CellPaddingLeft),
-			CellPaddingTop: DraftNumbers.ToDouble(CellPaddingTop),
-			CellPaddingRight: DraftNumbers.ToDouble(CellPaddingRight),
-			CellPaddingBottom: DraftNumbers.ToDouble(CellPaddingBottom),
-			RowHeight: DraftNumbers.ToDouble(RowHeight));
+			CellPaddingLeft: CellPaddingLeft.ToDouble(),
+			CellPaddingTop: CellPaddingTop.ToDouble(),
+			CellPaddingRight: CellPaddingRight.ToDouble(),
+			CellPaddingBottom: CellPaddingBottom.ToDouble(),
+			RowHeight: RowHeight.ToDouble());
 	}
 }

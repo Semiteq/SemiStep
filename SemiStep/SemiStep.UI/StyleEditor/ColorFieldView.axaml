@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:styleEditor="clr-namespace:SemiStep.UI.StyleEditor"
+             x:Class="SemiStep.UI.StyleEditor.ColorFieldView"
+             x:DataType="styleEditor:ColorDraft">
+
+    <ColorPicker Name="Picker"
+                 Height="32"
+                 HorizontalAlignment="Stretch"
+                 IsAlphaEnabled="False"
+                 IsAlphaVisible="False"
+                 Color="{Binding Color, Mode=OneWay}">
+        <ColorPicker.Content>
+            <Border Name="Swatch"
+                    Margin="4"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    CornerRadius="{DynamicResource ColorPickerCornerRadius}">
+                <Border.Background>
+                    <SolidColorBrush Color="{Binding Color}" />
+                </Border.Background>
+            </Border>
+        </ColorPicker.Content>
+    </ColorPicker>
+
+</UserControl>

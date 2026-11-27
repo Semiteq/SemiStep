@@ -1,3 +1,4 @@
+<!-- Layout: docs/architecture/grid-style-configuration.md, "Editor write-back". -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -5,16 +6,15 @@
         xmlns:styleEditor="clr-namespace:SemiStep.UI.StyleEditor"
         xmlns:l="clr-namespace:SemiStep.UI.Localization"
         mc:Ignorable="d"
-        d:DesignWidth="720"
-        d:DesignHeight="780"
+        d:DesignWidth="756"
+        d:DesignHeight="560"
         x:Class="SemiStep.UI.StyleEditor.GridStyleEditorWindow"
         x:DataType="styleEditor:GridStyleEditorViewModel"
         Title="{x:Static l:Resources.EditorTitle}"
-        MinWidth="680"
-        MinHeight="520"
-        Width="720"
-        Height="780"
-        CanResize="True"
+        Width="756"
+        Height="560"
+        CanResize="False"
+        ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner">
 
     <Window.Resources>
@@ -24,428 +24,462 @@
         <DataTemplate x:Key="FontFamilyItemTemplate" x:DataType="styleEditor:FontFamilyOption">
             <TextBlock Text="{Binding Name}" />
         </DataTemplate>
-
-        <x:Double x:Key="ControlWidth">72</x:Double>
-        <x:Double x:Key="ColorWidth">200</x:Double>
-        <x:Double x:Key="WeightWidth">120</x:Double>
-        <x:Double x:Key="FontFamilyWidth">200</x:Double>
-        <x:Double x:Key="LabelGap">12</x:Double>
-        <x:Double x:Key="RowGap">6</x:Double>
-        <x:Double x:Key="SectionGap">24</x:Double>
     </Window.Resources>
 
     <Window.Styles>
-        <Style Selector="TextBlock.section-header">
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="Foreground" Value="{DynamicResource SemiColorText0}" />
-            <Setter Property="Margin" Value="0,18,0,2" />
+        <Style Selector="ListBox#SectionList">
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SubtleBorderBrush}" />
+            <Setter Property="CornerRadius" Value="4" />
         </Style>
-        <Style Selector="TextBlock.sub-header">
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
-            <Setter Property="Margin" Value="0,10,0,2" />
+        <Style Selector="ListBox#SectionList > ListBoxItem">
+            <Setter Property="Height" Value="32" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Grid.page">
+            <Setter Property="RowSpacing" Value="8" />
+            <Setter Property="VerticalAlignment" Value="Top" />
         </Style>
         <Style Selector="TextBlock.field-label">
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
-        <Style Selector="TextBlock.col-head">
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="VerticalAlignment" Value="Bottom" />
+        <Style Selector="TextBlock.page-header">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Height" Value="16" />
         </Style>
-        <Style Selector="NumericUpDown">
-            <Setter Property="Width" Value="{StaticResource ControlWidth}" />
+        <Style Selector="TextBlock.page-header.next">
+            <Setter Property="Margin" Value="0,8,0,0" />
+        </Style>
+        <Style Selector="TextBlock.page-subtitle">
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+        </Style>
+        <Style Selector="TextBlock.column-head">
+            <Setter Property="Height" Value="16" />
+        </Style>
+        <Style Selector="NumericUpDown.number">
+            <Setter Property="Width" Value="120" />
+            <Setter Property="Height" Value="32" />
             <Setter Property="HorizontalAlignment" Value="Left" />
             <Setter Property="HorizontalContentAlignment" Value="Right" />
         </Style>
-        <Style Selector="ColorPicker">
-            <Setter Property="Width" Value="{StaticResource ColorWidth}" />
+        <Style Selector="NumericUpDown.whole">
+            <Setter Property="Increment" Value="1" />
+            <Setter Property="TextConverter" Value="{x:Static styleEditor:SpinnerTextConverter.Whole}" />
+        </Style>
+        <Style Selector="NumericUpDown.percent">
+            <Setter Property="Increment" Value="1" />
+            <Setter Property="TextConverter" Value="{x:Static styleEditor:SpinnerTextConverter.Percent}" />
+        </Style>
+        <Style Selector="ComboBox.family">
+            <Setter Property="Width" Value="240" />
+            <Setter Property="Height" Value="32" />
             <Setter Property="HorizontalAlignment" Value="Left" />
-            <!-- Semi's default ColorPicker swatch forces Width = Height, collapsing to a tiny square.
-                 Replace the content with a full-width color bar (checkered alpha base + color overlay). -->
-            <Setter Property="Content">
+        </Style>
+        <Style Selector="ComboBox.weight">
+            <Setter Property="Width" Value="160" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+        <Style Selector="CheckBox.italic">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="NumericUpDown.invalid /template/ TextBox#PART_TextBox /template/ Border#PART_ContentPresenterBorder">
+            <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}" />
+        </Style>
+        <Style Selector="NumericUpDown.invalid">
+            <Setter Property="InnerLeftContent">
                 <Template>
-                    <Panel>
-                        <Border Margin="1" CornerRadius="{Binding $parent[ColorPicker].CornerRadius}"
-                                Background="{DynamicResource ColorControlCheckeredBackgroundBrush}" />
-                        <Border Margin="1" CornerRadius="{Binding $parent[ColorPicker].CornerRadius}">
-                            <Border.Background>
-                                <SolidColorBrush Color="{Binding $parent[ColorPicker].Color}" />
-                            </Border.Background>
-                        </Border>
-                    </Panel>
+                    <PathIcon Classes="invalid-glyph" Data="{StaticResource WarningGeometry}" />
                 </Template>
             </Setter>
         </Style>
-        <Style Selector="ComboBox.weight-picker">
-            <Setter Property="Width" Value="{StaticResource WeightWidth}" />
-            <Setter Property="HorizontalAlignment" Value="Left" />
-            <Setter Property="VerticalAlignment" Value="Center" />
+        <Style Selector="PathIcon.invalid-glyph">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
         </Style>
-        <Style Selector="CheckBox.italic-check">
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="HorizontalAlignment" Value="Center" />
+
+        <Style Selector="Border#Footer Button">
+            <Setter Property="Height" Value="32" />
+        </Style>
+        <Style Selector="TextBlock.form-message">
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            <Setter Property="MaxLines" Value="2" />
+            <Setter Property="LineHeight" Value="20" />
+            <Setter Property="Height" Value="40" />
+        </Style>
+        <Style Selector="TextBlock.form-message.error">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
         </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="*,Auto">
 
-        <ScrollViewer Grid.Row="0"
-                      HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto">
-            <StackPanel Grid.IsSharedSizeScope="True"
-                        Spacing="{StaticResource SectionGap}"
-                        Margin="20,16,20,20"
-                        MaxWidth="640"
-                        HorizontalAlignment="Stretch">
+        <Grid Grid.Row="0" Margin="16" ColumnDefinitions="176,16,*">
 
-                <StackPanel Spacing="8">
-                    <TextBlock Classes="section-header" Text="{x:Static l:Resources.EditorRecipeGrid}" />
+            <ListBox Name="SectionList"
+                     Grid.Column="0"
+                     ItemsSource="{Binding Sections.All}"
+                     SelectionMode="AlwaysSelected"
+                     SelectedIndex="0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="styleEditor:StyleEditorSection">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <TextBlock Text="{Binding Title}"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" />
+                            <PathIcon Grid.Column="1"
+                                      Width="16"
+                                      Height="16"
+                                      Data="{StaticResource WarningGeometry}"
+                                      Foreground="{DynamicResource ErrorBrush}"
+                                      IsVisible="{Binding HasError}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorDimensions}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorRowHeight}" />
-                        <NumericUpDown Grid.Row="0" Grid.Column="1" Minimum="12" Maximum="400" Increment="1"
-                                       Value="{Binding Layout.RowHeight}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorCellPaddingLeft}" />
-                        <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="100" Increment="1"
-                                       Value="{Binding Layout.CellPaddingLeft}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorCellPaddingTop}" />
-                        <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="100" Increment="1"
-                                       Value="{Binding Layout.CellPaddingTop}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorCellPaddingRight}" />
-                        <NumericUpDown Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="100" Increment="1"
-                                       Value="{Binding Layout.CellPaddingRight}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorCellPaddingBottom}" />
-                        <NumericUpDown Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="100" Increment="1"
-                                       Value="{Binding Layout.CellPaddingBottom}" />
+            <Carousel Name="Pages"
+                      Grid.Column="2"
+                      SelectedIndex="{Binding #SectionList.SelectedIndex}">
+
+                <Grid Name="FontsPage" Classes="page" ColumnDefinitions="152,12,344,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0" Classes="field-label" Text="{x:Static l:Resources.EditorFontFamily}" />
+                    <ComboBox Name="FontsFontFamily"
+                              Grid.Row="0"
+                              Grid.Column="2"
+                              Classes="family"
+                              ItemsSource="{Binding AvailableFontFamilies}"
+                              ItemTemplate="{StaticResource FontFamilyItemTemplate}"
+                              SelectedValueBinding="{Binding Value}"
+                              SelectedValue="{Binding Fonts.FontFamily}" />
+
+                    <Grid Grid.Row="1" Grid.Column="2" ColumnDefinitions="120,8,160,8,48">
+                        <TextBlock Grid.Column="0" Classes="column-head" Text="{x:Static l:Resources.EditorSize}" />
+                        <TextBlock Grid.Column="2" Classes="column-head" Text="{x:Static l:Resources.EditorWeight}" />
+                        <TextBlock Grid.Column="4" Classes="column-head" Text="{x:Static l:Resources.EditorItalic}" />
                     </Grid>
 
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorFonts}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SizeCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Classes="col-head" Text="{x:Static l:Resources.EditorSize}" />
-                        <TextBlock Grid.Row="0" Grid.Column="2" Classes="col-head" Text="{x:Static l:Resources.EditorWeight}" />
-                        <TextBlock Grid.Row="0" Grid.Column="3" Classes="col-head" Text="{x:Static l:Resources.EditorItalic}" />
-
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorGridHeader}" />
-                        <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="6" Maximum="72" Increment="1"
-                                       Value="{Binding Fonts.HeaderFontSize}" />
-                        <ComboBox Grid.Row="1" Grid.Column="2" Classes="weight-picker"
+                    <TextBlock Grid.Row="2" Classes="field-label" Text="{x:Static l:Resources.EditorGridHeaders}" />
+                    <Grid Grid.Row="2" Grid.Column="2" ColumnDefinitions="120,8,160,8,48">
+                        <NumericUpDown Name="FontsHeaderFontSize"
+                                       Classes="number whole"
+                                       Classes.invalid="{Binding !Fonts.HeaderFontSize.IsValid}"
+                                       Value="{Binding Fonts.HeaderFontSize.Value}" />
+                        <ComboBox Name="FontsHeaderFontWeight"
+                                  Grid.Column="2"
+                                  Classes="weight"
                                   ItemsSource="{Binding AvailableFontWeights}"
                                   ItemTemplate="{StaticResource FontWeightItemTemplate}"
                                   SelectedValueBinding="{Binding Value}"
                                   SelectedValue="{Binding Fonts.HeaderFontWeight}" />
-                        <CheckBox Grid.Row="1" Grid.Column="3" Classes="italic-check"
+                        <CheckBox Name="FontsHeaderItalic"
+                                  Grid.Column="4"
+                                  Classes="italic"
                                   IsChecked="{Binding Fonts.HeaderItalic}" />
+                    </Grid>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorGridCell}" />
-                        <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="6" Maximum="72" Increment="1"
-                                       Value="{Binding Fonts.CellFontSize}" />
-                        <ComboBox Grid.Row="2" Grid.Column="2" Classes="weight-picker"
+                    <TextBlock Grid.Row="3" Classes="field-label" Text="{x:Static l:Resources.EditorGridCells}" />
+                    <Grid Grid.Row="3" Grid.Column="2" ColumnDefinitions="120,8,160,8,48">
+                        <NumericUpDown Name="FontsCellFontSize"
+                                       Classes="number whole"
+                                       Classes.invalid="{Binding !Fonts.CellFontSize.IsValid}"
+                                       Value="{Binding Fonts.CellFontSize.Value}" />
+                        <ComboBox Name="FontsCellFontWeight"
+                                  Grid.Column="2"
+                                  Classes="weight"
                                   ItemsSource="{Binding AvailableFontWeights}"
                                   ItemTemplate="{StaticResource FontWeightItemTemplate}"
                                   SelectedValueBinding="{Binding Value}"
                                   SelectedValue="{Binding Fonts.CellFontWeight}" />
-                        <CheckBox Grid.Row="2" Grid.Column="3" Classes="italic-check"
+                        <CheckBox Name="FontsCellItalic"
+                                  Grid.Column="4"
+                                  Classes="italic"
                                   IsChecked="{Binding Fonts.CellItalic}" />
                     </Grid>
 
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorColors}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorGridBackground}" />
-                        <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.GridBackground}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorGridBorder}" />
-                        <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.GridBorder}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorGridLine}" />
-                        <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.GridLine}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorHeaderForeground}" />
-                        <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.HeaderForeground}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorChanged}" />
-                        <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ChangedCells.Changed}" />
-                        <TextBlock Grid.Row="5" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorReadOnlyCells}" />
-                        <ColorPicker Grid.Row="5" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding GreyCells.ReadOnly}" />
-                        <TextBlock Grid.Row="6" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDisabledCells}" />
-                        <ColorPicker Grid.Row="6" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding GreyCells.Disabled}" />
-                        <TextBlock Grid.Row="7" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorSelectionAccent}" />
-                        <ColorPicker Grid.Row="7" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Selection.Accent}" />
-                        <TextBlock Grid.Row="8" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorSelectionWeight}" />
-                        <NumericUpDown Grid.Row="8" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
-                                       FormatString="0.00" Value="{Binding Selection.Weight}" />
-                    </Grid>
-
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorExecutionHighlight}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorExecutionColor}" />
-                        <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Execution.Running}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorRunningWeight}" />
-                        <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
-                                       FormatString="0.00" Value="{Binding Execution.RunningWeight}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorPastWeight}" />
-                        <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
-                                       FormatString="0.00" Value="{Binding Execution.PastWeight}" />
-                    </Grid>
-
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorLoopTint}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto,Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorLoopColor}" />
-                        <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Loop.Color}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth1}" />
-                        <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
-                                       FormatString="0.00" Value="{Binding Loop.Depth1Weight}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth2}" />
-                        <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
-                                       FormatString="0.00" Value="{Binding Loop.Depth2Weight}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDepth3}" />
-                        <NumericUpDown Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="1" Increment="0.01"
-                                       FormatString="0.00" Value="{Binding Loop.Depth3Weight}" />
-                    </Grid>
-                </StackPanel>
-
-                <StackPanel Spacing="8">
-                    <TextBlock Classes="section-header" Text="{x:Static l:Resources.EditorStatusBar}" />
-
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorDimensions}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorPadding}" />
-                        <NumericUpDown Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="100" Increment="1"
-                                       Value="{Binding StatusBar.Padding}" />
-                    </Grid>
-
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorFonts}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SizeCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Classes="col-head" Text="{x:Static l:Resources.EditorSize}" />
-                        <TextBlock Grid.Row="0" Grid.Column="2" Classes="col-head" Text="{x:Static l:Resources.EditorWeight}" />
-                        <TextBlock Grid.Row="0" Grid.Column="3" Classes="col-head" Text="{x:Static l:Resources.EditorItalic}" />
-
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorText}" />
-                        <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="6" Maximum="72" Increment="1"
-                                       Value="{Binding StatusBar.FontSize}" />
-                        <ComboBox Grid.Row="1" Grid.Column="2" Classes="weight-picker"
+                    <TextBlock Grid.Row="4" Classes="field-label" Text="{x:Static l:Resources.EditorPageStatusBar}" />
+                    <Grid Grid.Row="4" Grid.Column="2" ColumnDefinitions="120,8,160,8,48">
+                        <NumericUpDown Name="StatusBarFontSize"
+                                       Classes="number whole"
+                                       Classes.invalid="{Binding !StatusBar.FontSize.IsValid}"
+                                       Value="{Binding StatusBar.FontSize.Value}" />
+                        <ComboBox Name="StatusBarWeight"
+                                  Grid.Column="2"
+                                  Classes="weight"
                                   ItemsSource="{Binding AvailableFontWeights}"
                                   ItemTemplate="{StaticResource FontWeightItemTemplate}"
                                   SelectedValueBinding="{Binding Value}"
                                   SelectedValue="{Binding StatusBar.Weight}" />
-                        <CheckBox Grid.Row="1" Grid.Column="3" Classes="italic-check"
+                        <CheckBox Name="StatusBarItalic"
+                                  Grid.Column="4"
+                                  Classes="italic"
                                   IsChecked="{Binding StatusBar.Italic}" />
                     </Grid>
+                </Grid>
 
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorColors}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto,Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorBackground}" />
-                        <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding StatusBar.Background}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorForeground}" />
-                        <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding StatusBar.Foreground}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorConnected}" />
-                        <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.Connected}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorDisconnected}" />
-                        <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.Disconnected}" />
-                    </Grid>
-                </StackPanel>
+                <Grid Name="GridPage" Classes="page" ColumnDefinitions="152,12,344,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Classes="page-header" Text="{x:Static l:Resources.EditorRowsAndCells}" />
 
-                <StackPanel Spacing="8">
-                    <TextBlock Classes="section-header" Text="{x:Static l:Resources.EditorNotificationPanel}" />
+                    <TextBlock Grid.Row="1" Classes="field-label" Text="{x:Static l:Resources.EditorRowHeight}" />
+                    <NumericUpDown Name="LayoutRowHeight"
+                                   Grid.Row="1"
+                                   Grid.Column="2"
+                                   Classes="number whole"
+                                   Classes.invalid="{Binding !Layout.RowHeight.IsValid}"
+                                   Value="{Binding Layout.RowHeight.Value}" />
 
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorDimensions}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorMaxHeight}" />
-                        <NumericUpDown Grid.Row="0" Grid.Column="1" Minimum="20" Maximum="2000" Increment="10"
-                                       Value="{Binding ValidationPanel.MaxHeight}" />
-                    </Grid>
+                    <TextBlock Grid.Row="2" Classes="field-label" Text="{x:Static l:Resources.EditorPaddingLeft}" />
+                    <NumericUpDown Name="LayoutCellPaddingLeft"
+                                   Grid.Row="2"
+                                   Grid.Column="2"
+                                   Classes="number whole"
+                                   Classes.invalid="{Binding !Layout.CellPaddingLeft.IsValid}"
+                                   Value="{Binding Layout.CellPaddingLeft.Value}" />
 
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorColors}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorBackground}" />
-                        <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ValidationPanel.Background}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorForeground}" />
-                        <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ValidationPanel.Foreground}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorInfoSeverity}" />
-                        <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.Info}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorErrorSeverity}" />
-                        <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ValidationPanel.ErrorColor}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorWarningSeverity}" />
-                        <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding ValidationPanel.WarningColor}" />
-                    </Grid>
-                </StackPanel>
+                    <TextBlock Grid.Row="3" Classes="field-label" Text="{x:Static l:Resources.EditorPaddingTop}" />
+                    <NumericUpDown Name="LayoutCellPaddingTop"
+                                   Grid.Row="3"
+                                   Grid.Column="2"
+                                   Classes="number whole"
+                                   Classes.invalid="{Binding !Layout.CellPaddingTop.IsValid}"
+                                   Value="{Binding Layout.CellPaddingTop.Value}" />
 
-                <StackPanel Spacing="8">
-                    <TextBlock Classes="section-header" Text="{x:Static l:Resources.EditorApplicationTheme}" />
+                    <TextBlock Grid.Row="4" Classes="field-label" Text="{x:Static l:Resources.EditorPaddingRight}" />
+                    <NumericUpDown Name="LayoutCellPaddingRight"
+                                   Grid.Row="4"
+                                   Grid.Column="2"
+                                   Classes="number whole"
+                                   Classes.invalid="{Binding !Layout.CellPaddingRight.IsValid}"
+                                   Value="{Binding Layout.CellPaddingRight.Value}" />
 
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorTypography}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorFontFamily}" />
-                        <ComboBox Grid.Row="0" Grid.Column="1"
-                                  Width="{StaticResource FontFamilyWidth}"
-                                  HorizontalAlignment="Left"
-                                  VerticalAlignment="Center"
-                                  ItemsSource="{Binding AvailableFontFamilies}"
-                                  ItemTemplate="{StaticResource FontFamilyItemTemplate}"
-                                  SelectedValueBinding="{Binding Value}"
-                                  SelectedValue="{Binding Fonts.FontFamily}" />
-                    </Grid>
+                    <TextBlock Grid.Row="5" Classes="field-label" Text="{x:Static l:Resources.EditorPaddingBottom}" />
+                    <NumericUpDown Name="LayoutCellPaddingBottom"
+                                   Grid.Row="5"
+                                   Grid.Column="2"
+                                   Classes="number whole"
+                                   Classes.invalid="{Binding !Layout.CellPaddingBottom.IsValid}"
+                                   Value="{Binding Layout.CellPaddingBottom.Value}" />
 
-                    <TextBlock Classes="sub-header" Text="{x:Static l:Resources.EditorSharedColors}" />
-                    <Grid ColumnSpacing="{StaticResource LabelGap}" RowSpacing="{StaticResource RowGap}"
-                          RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingLabel" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="SettingControl" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="WeightCol" />
-                            <ColumnDefinition Width="Auto" SharedSizeGroup="ItalicCol" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorPanelBackground}" />
-                        <ColorPicker Grid.Row="0" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.PanelBackground}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorPanelHeaderBackground}" />
-                        <ColorPicker Grid.Row="1" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.PanelHeaderBackground}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorSubtleBorder}" />
-                        <ColorPicker Grid.Row="2" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.SubtleBorder}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorSeparator}" />
-                        <ColorPicker Grid.Row="3" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.Separator}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Classes="field-label" Text="{x:Static l:Resources.EditorSecondaryForeground}" />
-                        <ColorPicker Grid.Row="4" Grid.Column="1" IsHexInputVisible="True"
-                                     Color="{Binding Chrome.SecondaryForeground}" />
-                    </Grid>
-                </StackPanel>
+                    <TextBlock Grid.Row="6" Grid.ColumnSpan="3" Classes="page-header next" Text="{x:Static l:Resources.EditorColors}" />
 
-            </StackPanel>
-        </ScrollViewer>
+                    <TextBlock Grid.Row="7" Classes="field-label" Text="{x:Static l:Resources.EditorGridBackground}" />
+                    <styleEditor:ColorFieldView Name="ChromeGridBackground" Grid.Row="7" Grid.Column="2" DataContext="{Binding Chrome.GridBackground}" />
 
-        <Border Grid.Row="1"
+                    <TextBlock Grid.Row="8" Classes="field-label" Text="{x:Static l:Resources.EditorGridBorder}" />
+                    <styleEditor:ColorFieldView Name="ChromeGridBorder" Grid.Row="8" Grid.Column="2" DataContext="{Binding Chrome.GridBorder}" />
+
+                    <TextBlock Grid.Row="9" Classes="field-label" Text="{x:Static l:Resources.EditorGridLines}" />
+                    <styleEditor:ColorFieldView Name="ChromeGridLine" Grid.Row="9" Grid.Column="2" DataContext="{Binding Chrome.GridLine}" />
+
+                    <TextBlock Grid.Row="10" Classes="field-label" Text="{x:Static l:Resources.EditorHeaderText}" />
+                    <styleEditor:ColorFieldView Name="ChromeHeaderForeground" Grid.Row="10" Grid.Column="2" DataContext="{Binding Chrome.HeaderForeground}" />
+                </Grid>
+
+                <Grid Name="CellColorsPage" Classes="page" ColumnDefinitions="152,12,344,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Classes="page-header" Text="{x:Static l:Resources.EditorBaseColor}" />
+
+                    <TextBlock Grid.Row="1" Classes="field-label" Text="{x:Static l:Resources.EditorChangedCells}" />
+                    <styleEditor:ColorFieldView Name="ChangedCellsChanged" Grid.Row="1" Grid.Column="2" DataContext="{Binding ChangedCells.Changed}" />
+
+                    <TextBlock Grid.Row="2" Classes="field-label" Text="{x:Static l:Resources.EditorReadOnlyCells}" />
+                    <styleEditor:ColorFieldView Name="GreyCellsReadOnly" Grid.Row="2" Grid.Column="2" DataContext="{Binding GreyCells.ReadOnly}" />
+
+                    <TextBlock Grid.Row="3" Classes="field-label" Text="{x:Static l:Resources.EditorInapplicableCells}" />
+                    <styleEditor:ColorFieldView Name="GreyCellsDisabled" Grid.Row="3" Grid.Column="2" DataContext="{Binding GreyCells.Disabled}" />
+
+                    <TextBlock Grid.Row="4" Grid.ColumnSpan="3" Classes="page-header next" Text="{x:Static l:Resources.EditorSelection}" />
+
+                    <TextBlock Grid.Row="5" Classes="field-label" Text="{x:Static l:Resources.EditorColor}" />
+                    <styleEditor:ColorFieldView Name="SelectionAccent" Grid.Row="5" Grid.Column="2" DataContext="{Binding Selection.Accent}" />
+
+                    <TextBlock Grid.Row="6" Classes="field-label" Text="{x:Static l:Resources.EditorOpacity}" />
+                    <NumericUpDown Name="SelectionWeight"
+                                   Grid.Row="6"
+                                   Grid.Column="2"
+                                   Classes="number percent"
+                                   Classes.invalid="{Binding !Selection.Weight.IsValid}"
+                                   Value="{Binding Selection.Weight.Value, Converter={x:Static styleEditor:WeightPercentConverter.Instance}}" />
+                </Grid>
+
+                <Grid Name="HighlightPage" Classes="page" ColumnDefinitions="152,12,344,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0" Grid.ColumnSpan="4" Classes="page-subtitle" Text="{x:Static l:Resources.EditorHighlightSubtitle}" />
+
+                    <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Classes="page-header" Text="{x:Static l:Resources.EditorExecution}" />
+
+                    <TextBlock Grid.Row="2" Classes="field-label" Text="{x:Static l:Resources.EditorColor}" />
+                    <styleEditor:ColorFieldView Name="ExecutionRunning" Grid.Row="2" Grid.Column="2" DataContext="{Binding Execution.Running}" />
+
+                    <TextBlock Grid.Row="3" Classes="field-label" Text="{x:Static l:Resources.EditorCurrentStep}" />
+                    <NumericUpDown Name="ExecutionRunningWeight"
+                                   Grid.Row="3"
+                                   Grid.Column="2"
+                                   Classes="number percent"
+                                   Classes.invalid="{Binding !Execution.RunningWeight.IsValid}"
+                                   Value="{Binding Execution.RunningWeight.Value, Converter={x:Static styleEditor:WeightPercentConverter.Instance}}" />
+
+                    <TextBlock Grid.Row="4" Classes="field-label" Text="{x:Static l:Resources.EditorCompletedSteps}" />
+                    <NumericUpDown Name="ExecutionPastWeight"
+                                   Grid.Row="4"
+                                   Grid.Column="2"
+                                   Classes="number percent"
+                                   Classes.invalid="{Binding !Execution.PastWeight.IsValid}"
+                                   Value="{Binding Execution.PastWeight.Value, Converter={x:Static styleEditor:WeightPercentConverter.Instance}}" />
+
+                    <TextBlock Grid.Row="5" Grid.ColumnSpan="3" Classes="page-header next" Text="{x:Static l:Resources.EditorLoops}" />
+
+                    <TextBlock Grid.Row="6" Classes="field-label" Text="{x:Static l:Resources.EditorColor}" />
+                    <styleEditor:ColorFieldView Name="LoopColor" Grid.Row="6" Grid.Column="2" DataContext="{Binding Loop.Color}" />
+
+                    <TextBlock Grid.Row="7" Classes="field-label" Text="{x:Static l:Resources.EditorDepth1}" />
+                    <NumericUpDown Name="LoopDepth1Weight"
+                                   Grid.Row="7"
+                                   Grid.Column="2"
+                                   Classes="number percent"
+                                   Classes.invalid="{Binding !Loop.Depth1Weight.IsValid}"
+                                   Value="{Binding Loop.Depth1Weight.Value, Converter={x:Static styleEditor:WeightPercentConverter.Instance}}" />
+
+                    <TextBlock Grid.Row="8" Classes="field-label" Text="{x:Static l:Resources.EditorDepth2}" />
+                    <NumericUpDown Name="LoopDepth2Weight"
+                                   Grid.Row="8"
+                                   Grid.Column="2"
+                                   Classes="number percent"
+                                   Classes.invalid="{Binding !Loop.Depth2Weight.IsValid}"
+                                   Value="{Binding Loop.Depth2Weight.Value, Converter={x:Static styleEditor:WeightPercentConverter.Instance}}" />
+
+                    <TextBlock Grid.Row="9" Classes="field-label" Text="{x:Static l:Resources.EditorDepth3}" />
+                    <NumericUpDown Name="LoopDepth3Weight"
+                                   Grid.Row="9"
+                                   Grid.Column="2"
+                                   Classes="number percent"
+                                   Classes.invalid="{Binding !Loop.Depth3Weight.IsValid}"
+                                   Value="{Binding Loop.Depth3Weight.Value, Converter={x:Static styleEditor:WeightPercentConverter.Instance}}" />
+                </Grid>
+
+                <Grid Name="StatusBarPage" Classes="page" ColumnDefinitions="152,12,344,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Classes="page-header" Text="{x:Static l:Resources.EditorDimensions}" />
+
+                    <TextBlock Grid.Row="1" Classes="field-label" Text="{x:Static l:Resources.EditorVerticalPadding}" />
+                    <NumericUpDown Name="StatusBarPadding"
+                                   Grid.Row="1"
+                                   Grid.Column="2"
+                                   Classes="number whole"
+                                   Classes.invalid="{Binding !StatusBar.Padding.IsValid}"
+                                   Value="{Binding StatusBar.Padding.Value}" />
+
+                    <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Classes="page-header next" Text="{x:Static l:Resources.EditorColors}" />
+
+                    <TextBlock Grid.Row="3" Classes="field-label" Text="{x:Static l:Resources.EditorBackground}" />
+                    <styleEditor:ColorFieldView Name="StatusBarBackground" Grid.Row="3" Grid.Column="2" DataContext="{Binding StatusBar.Background}" />
+
+                    <TextBlock Grid.Row="4" Classes="field-label" Text="{x:Static l:Resources.EditorText}" />
+                    <styleEditor:ColorFieldView Name="StatusBarForeground" Grid.Row="4" Grid.Column="2" DataContext="{Binding StatusBar.Foreground}" />
+
+                    <TextBlock Grid.Row="5"
+                               Classes="field-label"
+                               Text="{x:Static l:Resources.EditorSecondaryText}"
+                               ToolTip.Tip="{x:Static l:Resources.EditorSecondaryTextTip}" />
+                    <styleEditor:ColorFieldView Name="ChromeSecondaryForeground"
+                                                Grid.Row="5"
+                                                Grid.Column="2"
+                                                ToolTip.Tip="{x:Static l:Resources.EditorSecondaryTextTip}"
+                                                DataContext="{Binding Chrome.SecondaryForeground}" />
+
+                    <TextBlock Grid.Row="6" Classes="field-label" Text="{x:Static l:Resources.EditorConnected}" />
+                    <styleEditor:ColorFieldView Name="ChromeConnected" Grid.Row="6" Grid.Column="2" DataContext="{Binding Chrome.Connected}" />
+
+                    <TextBlock Grid.Row="7" Classes="field-label" Text="{x:Static l:Resources.EditorNoLink}" />
+                    <styleEditor:ColorFieldView Name="ChromeDisconnected" Grid.Row="7" Grid.Column="2" DataContext="{Binding Chrome.Disconnected}" />
+
+                    <TextBlock Grid.Row="8" Classes="field-label" Text="{x:Static l:Resources.EditorSeparators}" />
+                    <styleEditor:ColorFieldView Name="ChromeSeparator" Grid.Row="8" Grid.Column="2" DataContext="{Binding Chrome.Separator}" />
+
+                    <TextBlock Grid.Row="9"
+                               Classes="field-label"
+                               Text="{x:Static l:Resources.EditorPanelBorders}"
+                               ToolTip.Tip="{x:Static l:Resources.EditorPanelBordersTip}" />
+                    <styleEditor:ColorFieldView Name="ChromeSubtleBorder"
+                                                Grid.Row="9"
+                                                Grid.Column="2"
+                                                ToolTip.Tip="{x:Static l:Resources.EditorPanelBordersTip}"
+                                                DataContext="{Binding Chrome.SubtleBorder}" />
+                </Grid>
+
+                <Grid Name="NotificationPanelPage" Classes="page" ColumnDefinitions="152,12,344,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Classes="page-header" Text="{x:Static l:Resources.EditorDimensions}" />
+
+                    <TextBlock Grid.Row="1" Classes="field-label" Text="{x:Static l:Resources.EditorMaximumHeight}" />
+                    <NumericUpDown Name="ValidationPanelMaxHeight"
+                                   Grid.Row="1"
+                                   Grid.Column="2"
+                                   Classes="number whole"
+                                   Increment="10"
+                                   Classes.invalid="{Binding !ValidationPanel.MaxHeight.IsValid}"
+                                   Value="{Binding ValidationPanel.MaxHeight.Value}" />
+
+                    <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Classes="page-header next" Text="{x:Static l:Resources.EditorColors}" />
+
+                    <TextBlock Grid.Row="3" Classes="field-label" Text="{x:Static l:Resources.EditorBackground}" />
+                    <styleEditor:ColorFieldView Name="ValidationPanelBackground" Grid.Row="3" Grid.Column="2" DataContext="{Binding ValidationPanel.Background}" />
+
+                    <TextBlock Grid.Row="4" Classes="field-label" Text="{x:Static l:Resources.EditorHeaderBackground}" />
+                    <styleEditor:ColorFieldView Name="ChromePanelHeaderBackground" Grid.Row="4" Grid.Column="2" DataContext="{Binding Chrome.PanelHeaderBackground}" />
+
+                    <TextBlock Grid.Row="5" Classes="field-label" Text="{x:Static l:Resources.EditorText}" />
+                    <styleEditor:ColorFieldView Name="ValidationPanelForeground" Grid.Row="5" Grid.Column="2" DataContext="{Binding ValidationPanel.Foreground}" />
+
+                    <TextBlock Grid.Row="6" Classes="field-label" Text="{x:Static l:Resources.EditorErrors}" />
+                    <styleEditor:ColorFieldView Name="ValidationPanelErrorColor" Grid.Row="6" Grid.Column="2" DataContext="{Binding ValidationPanel.ErrorColor}" />
+
+                    <TextBlock Grid.Row="7" Classes="field-label" Text="{x:Static l:Resources.EditorWarnings}" />
+                    <styleEditor:ColorFieldView Name="ValidationPanelWarningColor" Grid.Row="7" Grid.Column="2" DataContext="{Binding ValidationPanel.WarningColor}" />
+                </Grid>
+
+            </Carousel>
+        </Grid>
+
+        <Border Name="Footer"
+                Grid.Row="1"
                 BorderThickness="0,1,0,0"
                 BorderBrush="{DynamicResource SubtleBorderBrush}"
-                Background="{DynamicResource PanelBackgroundBrush}"
-                Padding="20,14,20,14">
-            <Grid ColumnDefinitions="*,Auto">
-                <TextBlock Grid.Column="0"
-                           Text="{Binding ErrorMessage}"
-                           Foreground="{DynamicResource ErrorBrush}"
-                           TextWrapping="Wrap"
-                           VerticalAlignment="Center"
-                           IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                <StackPanel Grid.Column="1"
+                Padding="16">
+            <Grid RowDefinitions="40,32" RowSpacing="8">
+                <TextBlock Name="MessageLine"
+                           Grid.Row="0"
+                           Classes="form-message"
+                           Classes.error="{Binding IsMessageError}"
+                           Text="{Binding Message}" />
+                <Button Name="DefaultsButton"
+                        Grid.Row="1"
+                        HorizontalAlignment="Left"
+                        Classes="secondary"
+                        Content="{x:Static l:Resources.EditorDefaults}"
+                        Command="{Binding RestoreDefaultsCommand}" />
+                <StackPanel Grid.Row="1"
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
-                            Spacing="10">
-                    <Button Content="{x:Static l:Resources.DialogSave}"
+                            Spacing="8">
+                    <Button Name="SaveButton"
                             Classes="primary"
                             IsDefault="True"
+                            Content="{x:Static l:Resources.DialogSave}"
                             Command="{Binding SaveCommand}" />
-                    <Button Content="{x:Static l:Resources.DialogCancel}"
+                    <Button Name="CloseButton"
                             Classes="secondary"
                             IsCancel="True"
-                            Click="OnCancelClick" />
+                            Content="{x:Static l:Resources.EditorClose}"
+                            Click="OnCloseClick" />
                 </StackPanel>
             </Grid>
         </Border>

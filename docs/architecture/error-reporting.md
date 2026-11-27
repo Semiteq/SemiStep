@@ -399,8 +399,8 @@ an in-flight command. A raw `.Execute().Subscribe()` with no `onError` bypasses 
 delivery channel (the `Execute()` observable's `OnError`) rethrows inside the dispatcher and unwinds to
 `Program.Main`, killing the process.
 
-The two async-void dialog paths (`OnWindowClosing`, `OnSaveCompleted`) carry their own try/catch guards.
-Those are the current cover for dialog faults the global backstop cannot catch: it installs no Avalonia
+The async-void dialog path `OnWindowClosing` carries its own try/catch guard.
+That is the current cover for dialog faults the global backstop cannot catch: it installs no Avalonia
 dispatcher hook, so an async-void throw would otherwise unwind the dispatcher into `Program.Main`.
 
 For the VM-driven dialogs that route through `Interaction`s registered in `WhenActivated` (rather than

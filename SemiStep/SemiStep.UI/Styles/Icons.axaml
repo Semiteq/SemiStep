@@ -25,4 +25,6 @@
 
     <StreamGeometry x:Key="LockGeometry">F0 M4,7 L4,5 A4,4 0 0 1 12,5 L12,7 L13,7 L13,14.5 L3,14.5 L3,7 Z M5.5,7 L10.5,7 L10.5,5 A2.5,2.5 0 0 0 5.5,5 Z</StreamGeometry>
 
+    <StreamGeometry x:Key="WarningGeometry">F0 M8,1.5 L15,14.5 L1,14.5 Z M7.25,6 L8.75,6 L8.75,10.5 L7.25,10.5 Z M7.25,11.75 L8.75,11.75 L8.75,13.25 L7.25,13.25 Z</StreamGeometry>
+
 </ResourceDictionary>

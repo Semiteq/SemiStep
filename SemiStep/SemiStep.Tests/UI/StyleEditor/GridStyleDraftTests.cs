@@ -1,5 +1,8 @@
-﻿using AwesomeAssertions;
+﻿using Avalonia.Media;
 
+using AwesomeAssertions;
+
+using SemiStep.Core.Configuration;
 using SemiStep.Tests.Helpers;
 using SemiStep.UI.StyleEditor;
 
@@ -91,18 +94,52 @@ public sealed class GridStyleDraftTests
 	}
 
 	[Fact]
-	public void DraftNumbers_ToInt_Throws_OnNull()
+	public void NumberDraft_ToInt_Throws_WhenEmpty()
 	{
-		var toInt = () => DraftNumbers.ToInt(null);
+		var draft = new NumberDraft(10, 0, 100) { Value = null };
+
+		Func<int> toInt = draft.ToInt;
 
 		toInt.Should().Throw<InvalidOperationException>();
 	}
 
 	[Fact]
-	public void DraftNumbers_ToDouble_Throws_OnNull()
+	public void NumberDraft_ToDouble_Throws_WhenEmpty()
 	{
-		var toDouble = () => DraftNumbers.ToDouble(null);
+		var draft = new NumberDraft(10, 0, 100) { Value = null };
+
+		Func<double> toDouble = draft.ToDouble;
 
 		toDouble.Should().Throw<InvalidOperationException>();
+	}
+
+	[Theory]
+	[InlineData(null, false)]
+	[InlineData(-1, false)]
+	[InlineData(0, true)]
+	[InlineData(100, true)]
+	[InlineData(101, false)]
+	public void NumberDraft_IsValid_OnlyInsideItsRange(int? value, bool expected)
+	{
+		var draft = new NumberDraft(10, 0, 100) { Value = value };
+
+		draft.IsValid.Should().Be(expected);
+	}
+
+	[Fact]
+	public void ColorDraft_Pick_DropsTheAlpha_SoTheFileGetsSixDigits()
+	{
+		var draft = new ColorDraft(StyleColor.Parse("#80A1B2C3"));
+
+		draft.Pick(Color.FromArgb(0x40, 0x12, 0x34, 0xAB));
+
+		draft.Color.Should().Be(Color.FromRgb(0x12, 0x34, 0xAB));
+		draft.ToStyleColor().ToString().Should().Be("#1234AB");
+	}
+
+	[Fact]
+	public void ColorDraft_WithoutAPick_KeepsATranslucentSeed()
+	{
+		new ColorDraft(StyleColor.Parse("#80A1B2C3")).ToStyleColor().Should().Be(StyleColor.Parse("#80A1B2C3"));
 	}
 }

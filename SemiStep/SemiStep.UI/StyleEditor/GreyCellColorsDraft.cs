@@ -1,24 +1,11 @@
-﻿using Avalonia.Media;
-
-using ReactiveUI;
-
-using SemiStep.Core.Configuration;
-using SemiStep.UI.Styles;
+﻿using SemiStep.Core.Configuration;
 
 namespace SemiStep.UI.StyleEditor;
 
 /// <summary>Editable draft of the read-only and inapplicable cell bases (<see cref="GridStyleOptions.ReadOnlyCell"/>, <see cref="GridStyleOptions.DisabledCell"/>).</summary>
-public sealed class GreyCellColorsDraft(StyleColor readOnly, StyleColor disabled) : ReactiveObject
+public sealed class GreyCellColorsDraft(StyleColor readOnly, StyleColor disabled)
 {
-	public Color ReadOnly
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = readOnly.ToMediaColor();
+	public ColorDraft ReadOnly { get; } = new(readOnly);
 
-	public Color Disabled
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = disabled.ToMediaColor();
+	public ColorDraft Disabled { get; } = new(disabled);
 }

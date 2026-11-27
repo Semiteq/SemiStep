@@ -1,9 +1,4 @@
-﻿using Avalonia.Media;
-
-using ReactiveUI;
-
-using SemiStep.Core.Configuration;
-using SemiStep.UI.Styles;
+﻿using SemiStep.Core.Configuration;
 
 namespace SemiStep.UI.StyleEditor;
 
@@ -11,31 +6,21 @@ namespace SemiStep.UI.StyleEditor;
 /// Editable draft of <see cref="ExecutionPalette"/>. Property initializers seed from <paramref name="source"/>;
 /// <see cref="Build"/> reconstructs the record positionally so an omitted component is a compile error.
 /// </summary>
-public sealed class ExecutionPaletteDraft(ExecutionPalette source) : ReactiveObject
+public sealed class ExecutionPaletteDraft(ExecutionPalette source)
 {
-	public Color Running
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Running.ToMediaColor();
+	public ColorDraft Running { get; } = new(source.Running);
 
-	public decimal? RunningWeight
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.RunningWeight;
+	public NumberDraft RunningWeight { get; } =
+		new((decimal)source.RunningWeight, DraftRanges.MinWeight, DraftRanges.MaxWeight);
 
-	public decimal? PastWeight
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.PastWeight;
+	public NumberDraft PastWeight { get; } =
+		new((decimal)source.PastWeight, DraftRanges.MinWeight, DraftRanges.MaxWeight);
 
 	public ExecutionPalette Build()
 	{
 		return new ExecutionPalette(
 			Running: Running.ToStyleColor(),
-			RunningWeight: DraftNumbers.ToDouble(RunningWeight),
-			PastWeight: DraftNumbers.ToDouble(PastWeight));
+			RunningWeight: RunningWeight.ToDouble(),
+			PastWeight: PastWeight.ToDouble());
 	}
 }

@@ -76,7 +76,8 @@ plain text. The style editor does not read `ui/app.yaml`: if someone deletes the
 SemiStep runs, the editor still works, and the next start fails.
 
 The file header documents the accepted hex formats (`#RRGGBB`, `#AARRGGBB`); the
-writer preserves that header on save.
+writer preserves that header on save. A comment below the header, such as the note under `fonts:` in the presets, is
+lost on the first editor save; this predates the editor rework and stays out of its scope.
 
 ## The load pipeline
 
@@ -323,37 +324,69 @@ the other way around.
 
 ## Editor write-back
 
-The in-app editor is the write path back to the same file:
+The in-app editor ("Вид" > "Настройки оформления…") is the write path back to the same file:
 
 ```
-GridStyleEditorWindow
-  → GridStyleEditorViewModel    (per-group ReactiveObject drafts: Color per color, decimal? per size)
+GridStyleEditorWindow           (fixed 756 x 560 dialog: section list, six form pages, footer)
+  → GridStyleEditorViewModel    (per-group drafts: ColorDraft per colour, NumberDraft per number)
   → GridStyleEditorFacade       (the single public Core seam)
   → GridStyleWriter             (record → DTO, serialize, atomic write)
 ```
 
-- **ViewModel.** A thin parent exposes each of the ten record groups as a per-group `ReactiveObject`
-  draft (`Fonts`, `Layout`, `Selection`, …, `Chrome`), seeded from a mutable copy of the loaded record
-  (a separate copy, never the DI singleton). A draft's property initializers are the seed — each leaf
-  reads its same-named source component — and its `Build()` calls the group record's positional
-  constructor, so a dropped field is a compile error (CS7036), not a silent revert. Colors are exposed
-  as `Color` for the `ColorPicker`; sizes as `decimal?` for `NumericUpDown`. Channel↔`Color` conversion
-  goes through `StyleColorConversions` (`ToMediaColor` / `ToStyleColor`, in `SemiStep.UI/Styles`), not
-  `Color.ToString()`. The AXAML binds grouped `Group.Leaf` paths against the drafts, each resolved and
-  compile-checked by the window-level `x:DataType` (a stale or mistyped path fails the build with
-  AVLN2000). `CanSave` is gated by VM-side numeric range checks alone (font/padding/row-height/spacing/
-  panel-height bounds); an invalid color is unrepresentable in the typed record, so there is nothing
-  else to validate. The weights are `NumericUpDown` fields from 0 to 1 in steps of 0.01, and `CanSave`
-  checks them too. The editor surfaces effectively the whole record: every color and numeric, plus
-  the font controls — one global font-family `ComboBox`, and a per-role weight `ComboBox` (curated
-  300–900 list) and italic `CheckBox`. The window groups these into two cards: **Fonts** (the family row
-  plus a size / weight / italic row per role) and **Layout** (paddings, row height, status padding/
-  spacing, panel height). The family/weight pickers always include the seeded value even when it is
-  outside the offered list, so a hand-edited family or weight round-trips losslessly. `BuildRecord`
-  constructs a new record positionally from the ten drafts' `Build()` calls, carrying the one unsurfaced
-  field `Orientation` straight from the seeded source.
+- **ViewModel.** A thin parent exposes each of the ten record groups as a per-group draft (`Fonts`,
+  `Layout`, `Selection`, …, `Chrome`), seeded from a copy of the loaded record, never the DI singleton.
+  A draft's property initializers are the seed: each leaf reads its same-named source component. Its
+  `Build()` calls the group record's positional constructor, so a dropped field is a compile error
+  (CS7036), not a silent revert. Each colour leaf is a `ColorDraft` that holds one `Color`. The picker
+  reads it one way, and `ColorDraft.Pick` is the only writer: it drops the alpha, so a picked colour is
+  saved as `#RRGGBB`, while a seeded `#AARRGGBB` value that nobody picks over keeps its alpha. Each number leaf is a `NumberDraft` with its `Value`
+  (`decimal?`, null while the box is empty) and its range from `DraftRanges`. Channel↔`Color`
+  conversion goes through `StyleColorConversions` (`ToMediaColor` / `ToStyleColor`, in
+  `SemiStep.UI/Styles`), not `Color.ToString()`. The AXAML binds grouped `Group.Leaf.Value` paths and
+  sets each colour row's `DataContext` to a `Group.Leaf` path, each resolved and compile-checked by the window-level `x:DataType` (a stale or
+  mistyped path fails the build with AVLN2000).
+- **Validation.** `EditorFieldList` lists every number field with its page and label, in page
+  order and then in the order the page shows them; a colour cannot be invalid. It also lists the colour
+  drafts, so a pick counts as an edit and clears the restart notice. The view model reads each field's `IsValid` after any
+  change: the first invalid field becomes `ValidationMessage` ("Таблица › Высота строки: введите число
+  от 12 до 400"), each page with an invalid field sets `StyleEditorSection.HasError` (the warning glyph in
+  the section list), and `CanSave` is false while any field is invalid. The field's own `IsValid` drives
+  its error border and glyph (`Classes.invalid`), so one rule feeds the field, the list, the message and
+  Save. The footer's message line shows `Message`: a validation message, then a load or save failure,
+  then the restart notice. A seeded value outside its range, such as a hand-edited `row_height: 500`, stays
+  in the draft and shows as invalid; neither a page visit nor Save clamps it.
+- **Save, defaults, close.** Save builds the record and compares it with the last loaded or saved one.
+  An equal record writes nothing. After a failed load there is no such record, so Save always writes.
+  A changed record is written, the window stays open and
+  `IsRestartPending` shows "Сохранено. Вступит в силу после перезапуска.". "Стандартные значения" loads
+  `GridStyleOptions.Default` into every draft and writes nothing until Save. `chrome.info` and
+  `chrome.panel_background` have no row (nothing on screen reads them), so `ChromeColorsDraft` carries
+  their seeded values through Save and through "Стандартные значения"; `BuildRecord` carries
+  `Orientation` from the last loaded or saved record. "Закрыть" and Escape close the window and drop
+  unsaved edits; an open drop-down or colour flyout takes Escape first.
+- **Window.** Fixed `Width="756"`, `Height="560"`, `CanResize="False"`, no scroll. A 176 px `ListBox`
+  switches a `Carousel` of six page grids: "Шрифты", "Таблица", "Цвета ячеек", "Подсветка", "Строка
+  состояния", "Панель уведомлений". Every page grid has columns `152,12,344,*` and `RowSpacing="8"`, so
+  the label column and the field edge stay put when the page changes. The tallest page, "Таблица", is
+  408 px. Numbers are 120 px `NumericUpDown`s with no `Minimum` or `Maximum`, so a typed 500 in a 12..400
+  field stays in the draft and shows the range message instead of being clamped or dropped. Their
+  `TextConverter` is `SpinnerTextConverter`: it reads "," or "." as the decimal separator in every culture
+  (the rule of the recipe grid's number cells), rejects text with both, shows the value with a point, and
+  rounds a whole-number field. The six weights show percent through
+  `WeightPercentConverter` (draft x 100, so a hand-edited `0.125` shows 12.5 and round-trips). A colour
+  is `ColorFieldView`: one stock `ColorPicker`, 32 px high, stretched across the 344 px field column, with
+  `IsAlphaEnabled` and `IsAlphaVisible` false. Its `Content` is a `Border` swatch with `Margin="4"` and
+  the theme's `ColorPickerCornerRadius`, filled with the colour. The flyout has a hex field on its
+  third tab, so the row has no hex box of its own. As in SemiPlot's pen editor, the code-behind hooks
+  the flyout's `Opened` and `Closed` events and calls `ColorDraft.Pick` on close when the picker's colour
+  differs from the colour at open; an opened and dismissed flyout writes nothing. The font row is size 120 + weight `ComboBox` 160 (Russian
+  weight names, a seeded weight outside the list shows its number) + italic `CheckBox`. The
+  family/weight pickers always include the seeded value, so a hand-edited family or weight round-trips
+  losslessly. The layout departs from the `avalonia-form-layout` skill in four places: a fixed size
+  with no scroll instead of a resizable scroll, no `MaxWidth` column, a picker as wide as the field
+  column instead of a 200 px picker, and 120 px numbers instead of 116.
 
-![In-app grid style editor](../img/visual_style_window.png)
+![In-app style editor, page "Таблица"](../img/visual_style_window.png)
 
 - **Facade.** `GridStyleEditorFacade` is the only public Core seam for the editor:
   `Load(configDir)` → `Task<Result<GridStyleOptions>>` and `Save(configDir, GridStyleOptions)` →
@@ -382,7 +415,8 @@ v1 applies changes on restart: the loader re-runs the normal pipeline on the nex
 values flow through. There is no live preview. Live color preview is deferred (Task 8): it would
 require the installers to re-push brushes through a provider on change. Font and size changes always
 need a layout rebuild regardless (they feed `ColumnWidthCalculator` and the column build), so a full
-restart is the simplest correct behavior for v1.
+restart is the simplest correct behavior for v1. The editor says so on its message line after a save that changed a
+value; SemiStep has no relaunch, so the operator restarts the app.
 
 ## What is intentionally not wired
 

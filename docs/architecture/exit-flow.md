@@ -76,16 +76,3 @@ Automated tests cover:
 
 Checked by hand only: `StartWithClassicDesktopLifetime` returning and the process exit, the teardown
 after `App.Run` throws, and Windows session end.
-
-## Style-editor restart path
-
-The grid style editor's restart prompt exits through the same sanctioned path. `RestartPromptDialog`
-is a pure decision dialog: "Exit Now" resolves `ShowDialog<bool>` to `true` (`Close(true)`), "Restart
-Later" to `false` (`Close(false)`), and any dismissal (title-bar close / Escape via `IsCancel`)
-defaults to `false`. `GridStyleEditorWindow.OnSaveCompleted` reads that decision and calls
-`CompleteEditorClose(bool)`, which captures `Owner as Window` before `Close()` (Avalonia detaches the
-owned-window link during the close sequence, so reading `Owner` afterwards yields `null` and would
-silently drop the exit intent), then closes the captured owner (`MainWindow`) when exit was
-requested. Closing `MainWindow` runs `OnWindowClosing` → the same dirty guard → `ExitConfirmationDialog`
-on a dirty session, or a clean cascade to exit. This closes the earlier gap where "Exit Now" forced a
-shutdown and could drop unsaved recipe changes.

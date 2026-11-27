@@ -1,9 +1,4 @@
-﻿using Avalonia.Media;
-
-using ReactiveUI;
-
-using SemiStep.Core.Configuration;
-using SemiStep.UI.Styles;
+﻿using SemiStep.Core.Configuration;
 
 namespace SemiStep.UI.StyleEditor;
 
@@ -11,24 +6,17 @@ namespace SemiStep.UI.StyleEditor;
 /// Editable draft of <see cref="SelectionColors"/>. Property initializers seed from <paramref name="source"/>;
 /// <see cref="Build"/> reconstructs the record positionally so an omitted component is a compile error.
 /// </summary>
-public sealed class SelectionColorsDraft(SelectionColors source) : ReactiveObject
+public sealed class SelectionColorsDraft(SelectionColors source)
 {
-	public Color Accent
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Accent.ToMediaColor();
+	public ColorDraft Accent { get; } = new(source.Accent);
 
-	public decimal? Weight
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.Weight;
+	public NumberDraft Weight { get; } =
+		new((decimal)source.Weight, DraftRanges.MinWeight, DraftRanges.MaxWeight);
 
 	public SelectionColors Build()
 	{
 		return new SelectionColors(
 			Accent: Accent.ToStyleColor(),
-			Weight: DraftNumbers.ToDouble(Weight));
+			Weight: Weight.ToDouble());
 	}
 }

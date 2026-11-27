@@ -38,20 +38,18 @@ try/catch turns that into a reported failure rather than a no-op.
 
 ## The view-side boundary
 
-Two dialogs deliberately stay in view code-behind and are **not** routed through VM interactions,
-because they are window-lifecycle concerns the view model cannot own:
+One dialog deliberately stays in view code-behind and is **not** routed through a VM interaction,
+because it is a window-lifecycle concern the view model cannot own:
 
 - **Exit confirmation** — `ExitConfirmationDialog`, shown from `MainWindow.OnWindowClosing` via
   `ShowExitChoiceAsync`. It hangs off `WindowClosingEventArgs` / `e.Cancel` / `Close()`, state that
   belongs to the window's own `Closing` event. The dialog and the meaning of each answer are shared
   with New and Open; see "Unsaved changes" below.
-- **Style-editor restart prompt** — `RestartPromptDialog`, shown from
-  `GridStyleEditorWindow.OnSaveCompleted`. It belongs to the style-editor window's own save flow.
 
-A view showing a dialog in response to its own lifecycle event is correct MVVM, not a violation. Both
-paths run as `async void` event handlers, so they carry their own try/catch guards; the global backstop
-installs no Avalonia dispatcher hook and cannot catch an `async void` throw. Those guards remain in
-place and are not superseded by the interaction convention above. See `error-reporting.md` for the
+A view showing a dialog in response to its own lifecycle event is correct MVVM, not a violation. The
+path runs as an `async void` event handler, so it carries its own try/catch guard; the global backstop
+installs no Avalonia dispatcher hook and cannot catch an `async void` throw. That guard remains in
+place and is not superseded by the interaction convention above. See `error-reporting.md` for the
 guard rationale and `exit-flow.md` for the exit path.
 
 ## Unsaved changes

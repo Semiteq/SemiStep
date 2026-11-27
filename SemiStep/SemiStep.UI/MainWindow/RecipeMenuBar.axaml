@@ -76,7 +76,7 @@
                       IsChecked="{Binding IsTransposedOrientation, Mode=OneWay}"
                       InputGesture="{x:Static local:WindowGestures.ToggleOrientation}" />
             <Separator />
-            <MenuItem Header="{x:Static l:Resources.MenuViewGridStyleSettings}"
+            <MenuItem Header="{x:Static l:Resources.MenuViewAppearanceSettings}"
                       Command="{Binding OpenStyleEditorCommand}" />
         </MenuItem>
 

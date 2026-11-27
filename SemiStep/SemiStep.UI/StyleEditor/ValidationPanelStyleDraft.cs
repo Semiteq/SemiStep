@@ -1,9 +1,4 @@
-﻿using Avalonia.Media;
-
-using ReactiveUI;
-
-using SemiStep.Core.Configuration;
-using SemiStep.UI.Styles;
+﻿using SemiStep.Core.Configuration;
 
 namespace SemiStep.UI.StyleEditor;
 
@@ -11,37 +6,18 @@ namespace SemiStep.UI.StyleEditor;
 /// Editable draft of <see cref="ValidationPanelStyle"/>. Property initializers seed from <paramref name="source"/>;
 /// <see cref="Build"/> reconstructs the record positionally so an omitted component is a compile error.
 /// </summary>
-public sealed class ValidationPanelStyleDraft(ValidationPanelStyle source) : ReactiveObject
+public sealed class ValidationPanelStyleDraft(ValidationPanelStyle source)
 {
-	public Color Background
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Background.ToMediaColor();
+	public ColorDraft Background { get; } = new(source.Background);
 
-	public Color Foreground
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Foreground.ToMediaColor();
+	public ColorDraft Foreground { get; } = new(source.Foreground);
 
-	public Color ErrorColor
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.ErrorColor.ToMediaColor();
+	public ColorDraft ErrorColor { get; } = new(source.ErrorColor);
 
-	public Color WarningColor
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.WarningColor.ToMediaColor();
+	public ColorDraft WarningColor { get; } = new(source.WarningColor);
 
-	public decimal? MaxHeight
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.MaxHeight;
+	public NumberDraft MaxHeight { get; } =
+		new((decimal)source.MaxHeight, DraftRanges.MinPanelMaxHeight, DraftRanges.MaxPanelMaxHeight);
 
 	public ValidationPanelStyle Build()
 	{
@@ -50,6 +26,6 @@ public sealed class ValidationPanelStyleDraft(ValidationPanelStyle source) : Rea
 			Foreground: Foreground.ToStyleColor(),
 			ErrorColor: ErrorColor.ToStyleColor(),
 			WarningColor: WarningColor.ToStyleColor(),
-			MaxHeight: DraftNumbers.ToDouble(MaxHeight));
+			MaxHeight: MaxHeight.ToDouble());
 	}
 }

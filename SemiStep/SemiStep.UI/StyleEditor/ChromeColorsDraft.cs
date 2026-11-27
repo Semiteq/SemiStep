@@ -1,97 +1,45 @@
-﻿using Avalonia.Media;
-
-using ReactiveUI;
-
-using SemiStep.Core.Configuration;
-using SemiStep.UI.Styles;
+﻿using SemiStep.Core.Configuration;
 
 namespace SemiStep.UI.StyleEditor;
 
 /// <summary>
 /// Editable draft of <see cref="ChromeColors"/>. Property initializers seed from <paramref name="source"/>;
 /// <see cref="Build"/> reconstructs the record positionally so an omitted component is a compile error.
+/// <see cref="Info"/> and <see cref="PanelBackground"/> have no row in the editor and keep their seeded values.
 /// </summary>
-public sealed class ChromeColorsDraft(ChromeColors source) : ReactiveObject
+public sealed class ChromeColorsDraft(ChromeColors source)
 {
-	public Color Info
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Info.ToMediaColor();
+	public StyleColor Info { get; } = source.Info;
 
-	public Color Connected
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Connected.ToMediaColor();
+	public ColorDraft Connected { get; } = new(source.Connected);
 
-	public Color Disconnected
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Disconnected.ToMediaColor();
+	public ColorDraft Disconnected { get; } = new(source.Disconnected);
 
-	public Color PanelBackground
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.PanelBackground.ToMediaColor();
+	public StyleColor PanelBackground { get; } = source.PanelBackground;
 
-	public Color PanelHeaderBackground
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.PanelHeaderBackground.ToMediaColor();
+	public ColorDraft PanelHeaderBackground { get; } = new(source.PanelHeaderBackground);
 
-	public Color SubtleBorder
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.SubtleBorder.ToMediaColor();
+	public ColorDraft SubtleBorder { get; } = new(source.SubtleBorder);
 
-	public Color Separator
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Separator.ToMediaColor();
+	public ColorDraft Separator { get; } = new(source.Separator);
 
-	public Color SecondaryForeground
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.SecondaryForeground.ToMediaColor();
+	public ColorDraft SecondaryForeground { get; } = new(source.SecondaryForeground);
 
-	public Color GridBorder
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.GridBorder.ToMediaColor();
+	public ColorDraft GridBorder { get; } = new(source.GridBorder);
 
-	public Color GridBackground
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.GridBackground.ToMediaColor();
+	public ColorDraft GridBackground { get; } = new(source.GridBackground);
 
-	public Color HeaderForeground
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.HeaderForeground.ToMediaColor();
+	public ColorDraft HeaderForeground { get; } = new(source.HeaderForeground);
 
-	public Color GridLine
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.GridLine.ToMediaColor();
+	public ColorDraft GridLine { get; } = new(source.GridLine);
 
 	public ChromeColors Build()
 	{
 		return new ChromeColors(
-			Info: Info.ToStyleColor(),
+			Info: Info,
 			Connected: Connected.ToStyleColor(),
 			Disconnected: Disconnected.ToStyleColor(),
-			PanelBackground: PanelBackground.ToStyleColor(),
+			PanelBackground: PanelBackground,
 			PanelHeaderBackground: PanelHeaderBackground.ToStyleColor(),
 			SubtleBorder: SubtleBorder.ToStyleColor(),
 			Separator: Separator.ToStyleColor(),

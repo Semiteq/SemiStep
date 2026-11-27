@@ -112,9 +112,6 @@
   <data name="MenuViewTransposedGrid" xml:space="preserve">
     <value>Trans_posed Grid</value>
   </data>
-  <data name="MenuViewGridStyleSettings" xml:space="preserve">
-    <value>Grid _Style Settings...</value>
-  </data>
   <data name="MenuHelp" xml:space="preserve">
     <value>_Help</value>
   </data>
@@ -228,165 +225,6 @@
   </data>
   <data name="MessagePanelWarningsFormat" xml:space="preserve">
     <value>Warnings: {0}</value>
-  </data>
-  <data name="EditorTitle" xml:space="preserve">
-    <value>Grid Style Settings</value>
-  </data>
-  <data name="EditorRecipeGrid" xml:space="preserve">
-    <value>Recipe Grid</value>
-  </data>
-  <data name="EditorStatusBar" xml:space="preserve">
-    <value>Status Bar</value>
-  </data>
-  <data name="EditorNotificationPanel" xml:space="preserve">
-    <value>Notification Panel</value>
-  </data>
-  <data name="EditorApplicationTheme" xml:space="preserve">
-    <value>Application Theme</value>
-  </data>
-  <data name="EditorDimensions" xml:space="preserve">
-    <value>Dimensions</value>
-  </data>
-  <data name="EditorFonts" xml:space="preserve">
-    <value>Fonts</value>
-  </data>
-  <data name="EditorColors" xml:space="preserve">
-    <value>Colors</value>
-  </data>
-  <data name="EditorReadOnlyCells" xml:space="preserve">
-    <value>Read-only cells</value>
-  </data>
-  <data name="EditorDisabledCells" xml:space="preserve">
-    <value>Disabled cells</value>
-  </data>
-  <data name="EditorExecutionHighlight" xml:space="preserve">
-    <value>Execution highlight</value>
-  </data>
-  <data name="EditorTypography" xml:space="preserve">
-    <value>Typography</value>
-  </data>
-  <data name="EditorSharedColors" xml:space="preserve">
-    <value>Shared colors</value>
-  </data>
-  <data name="EditorSize" xml:space="preserve">
-    <value>Size</value>
-  </data>
-  <data name="EditorWeight" xml:space="preserve">
-    <value>Weight</value>
-  </data>
-  <data name="EditorItalic" xml:space="preserve">
-    <value>Italic</value>
-  </data>
-  <data name="EditorRowHeight" xml:space="preserve">
-    <value>Row height</value>
-  </data>
-  <data name="EditorCellPaddingLeft" xml:space="preserve">
-    <value>Cell padding left</value>
-  </data>
-  <data name="EditorCellPaddingTop" xml:space="preserve">
-    <value>Cell padding top</value>
-  </data>
-  <data name="EditorCellPaddingRight" xml:space="preserve">
-    <value>Cell padding right</value>
-  </data>
-  <data name="EditorCellPaddingBottom" xml:space="preserve">
-    <value>Cell padding bottom</value>
-  </data>
-  <data name="EditorGridHeader" xml:space="preserve">
-    <value>Grid header</value>
-  </data>
-  <data name="EditorGridCell" xml:space="preserve">
-    <value>Grid cell</value>
-  </data>
-  <data name="EditorGridBackground" xml:space="preserve">
-    <value>Grid background</value>
-  </data>
-  <data name="EditorGridBorder" xml:space="preserve">
-    <value>Grid border</value>
-  </data>
-  <data name="EditorGridLine" xml:space="preserve">
-    <value>Grid line</value>
-  </data>
-  <data name="EditorHeaderForeground" xml:space="preserve">
-    <value>Header foreground</value>
-  </data>
-  <data name="EditorChanged" xml:space="preserve">
-    <value>Changed</value>
-  </data>
-  <data name="EditorDepth1" xml:space="preserve">
-    <value>Depth 1</value>
-  </data>
-  <data name="EditorDepth2" xml:space="preserve">
-    <value>Depth 2</value>
-  </data>
-  <data name="EditorDepth3" xml:space="preserve">
-    <value>Depth 3</value>
-  </data>
-  <data name="EditorForeground" xml:space="preserve">
-    <value>Foreground</value>
-  </data>
-  <data name="EditorPadding" xml:space="preserve">
-    <value>Padding</value>
-  </data>
-  <data name="EditorText" xml:space="preserve">
-    <value>Text</value>
-  </data>
-  <data name="EditorBackground" xml:space="preserve">
-    <value>Background</value>
-  </data>
-  <data name="EditorConnected" xml:space="preserve">
-    <value>Connected</value>
-  </data>
-  <data name="EditorDisconnected" xml:space="preserve">
-    <value>Disconnected</value>
-  </data>
-  <data name="EditorMaxHeight" xml:space="preserve">
-    <value>Max height</value>
-  </data>
-  <data name="EditorInfoSeverity" xml:space="preserve">
-    <value>Info severity</value>
-  </data>
-  <data name="EditorErrorSeverity" xml:space="preserve">
-    <value>Error severity</value>
-  </data>
-  <data name="EditorWarningSeverity" xml:space="preserve">
-    <value>Warning severity</value>
-  </data>
-  <data name="EditorFontFamily" xml:space="preserve">
-    <value>Font family</value>
-  </data>
-  <data name="EditorPanelBackground" xml:space="preserve">
-    <value>Panel background</value>
-  </data>
-  <data name="EditorPanelHeaderBackground" xml:space="preserve">
-    <value>Panel header background</value>
-  </data>
-  <data name="EditorSubtleBorder" xml:space="preserve">
-    <value>Subtle border</value>
-  </data>
-  <data name="EditorSeparator" xml:space="preserve">
-    <value>Separator</value>
-  </data>
-  <data name="EditorSecondaryForeground" xml:space="preserve">
-    <value>Secondary foreground</value>
-  </data>
-  <data name="EditorRestartTitle" xml:space="preserve">
-    <value>Settings Saved</value>
-  </data>
-  <data name="EditorRestartMessage" xml:space="preserve">
-    <value>Settings saved. Restart the application to apply the changes.</value>
-  </data>
-  <data name="EditorExitNow" xml:space="preserve">
-    <value>Exit Now</value>
-  </data>
-  <data name="EditorRestartLater" xml:space="preserve">
-    <value>Restart Later</value>
-  </data>
-  <data name="EditorCannotSave" xml:space="preserve">
-    <value>Cannot save: the current style draft has invalid or out-of-range values.</value>
-  </data>
-  <data name="EditorDefaultFont" xml:space="preserve">
-    <value>(Default)</value>
   </data>
   <data name="ErrorConnectionLost" xml:space="preserve">
     <value>PLC connection lost</value>
@@ -757,31 +595,214 @@
   <data name="StepNumberHeader" xml:space="preserve">
     <value>No</value>
   </data>
-  <data name="EditorSelectionAccent" xml:space="preserve">
-    <value>Selection colour</value>
-  </data>
-  <data name="EditorSelectionWeight" xml:space="preserve">
-    <value>Selection weight</value>
-  </data>
-  <data name="EditorExecutionColor" xml:space="preserve">
-    <value>Execution colour</value>
-  </data>
-  <data name="EditorRunningWeight" xml:space="preserve">
-    <value>Running step weight</value>
-  </data>
-  <data name="EditorPastWeight" xml:space="preserve">
-    <value>Past steps weight</value>
-  </data>
-  <data name="EditorLoopTint" xml:space="preserve">
-    <value>Loop tint</value>
-  </data>
-  <data name="EditorLoopColor" xml:space="preserve">
-    <value>Loop colour</value>
-  </data>
   <data name="ErrorGridStyleWeightOutOfRange" xml:space="preserve">
     <value>Grid style '{0}.{1}' has weight {2}; expected a value from 0 to 1.</value>
   </data>
   <data name="EmptyRecipeHint" xml:space="preserve">
     <value>The recipe is empty. Add a step (Ctrl+N) or open a file (Ctrl+O).</value>
+  </data>
+  <data name="MenuViewAppearanceSettings" xml:space="preserve">
+    <value>_Appearance Settings...</value>
+  </data>
+  <data name="EditorTitle" xml:space="preserve">
+    <value>Appearance settings</value>
+  </data>
+  <data name="EditorPageFonts" xml:space="preserve">
+    <value>Fonts</value>
+  </data>
+  <data name="EditorPageGrid" xml:space="preserve">
+    <value>Grid</value>
+  </data>
+  <data name="EditorPageCellColors" xml:space="preserve">
+    <value>Cell colours</value>
+  </data>
+  <data name="EditorPageHighlight" xml:space="preserve">
+    <value>Highlight</value>
+  </data>
+  <data name="EditorPageStatusBar" xml:space="preserve">
+    <value>Status bar</value>
+  </data>
+  <data name="EditorPageNotificationPanel" xml:space="preserve">
+    <value>Notification panel</value>
+  </data>
+  <data name="EditorFontFamily" xml:space="preserve">
+    <value>Font</value>
+  </data>
+  <data name="EditorDefaultFont" xml:space="preserve">
+    <value>Segoe UI (default)</value>
+  </data>
+  <data name="EditorSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="EditorWeight" xml:space="preserve">
+    <value>Weight</value>
+  </data>
+  <data name="EditorItalic" xml:space="preserve">
+    <value>Italic</value>
+  </data>
+  <data name="EditorGridHeaders" xml:space="preserve">
+    <value>Grid headers</value>
+  </data>
+  <data name="EditorGridCells" xml:space="preserve">
+    <value>Grid cells</value>
+  </data>
+  <data name="EditorWeightLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="EditorWeightNormal" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="EditorWeightMedium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="EditorWeightSemibold" xml:space="preserve">
+    <value>Semibold</value>
+  </data>
+  <data name="EditorWeightBold" xml:space="preserve">
+    <value>Bold</value>
+  </data>
+  <data name="EditorWeightExtraBold" xml:space="preserve">
+    <value>Extra bold</value>
+  </data>
+  <data name="EditorWeightBlack" xml:space="preserve">
+    <value>Black</value>
+  </data>
+  <data name="EditorRowsAndCells" xml:space="preserve">
+    <value>Rows and cells</value>
+  </data>
+  <data name="EditorRowHeight" xml:space="preserve">
+    <value>Row height</value>
+  </data>
+  <data name="EditorPaddingLeft" xml:space="preserve">
+    <value>Left padding</value>
+  </data>
+  <data name="EditorPaddingTop" xml:space="preserve">
+    <value>Top padding</value>
+  </data>
+  <data name="EditorPaddingRight" xml:space="preserve">
+    <value>Right padding</value>
+  </data>
+  <data name="EditorPaddingBottom" xml:space="preserve">
+    <value>Bottom padding</value>
+  </data>
+  <data name="EditorColors" xml:space="preserve">
+    <value>Colours</value>
+  </data>
+  <data name="EditorGridBackground" xml:space="preserve">
+    <value>Grid background</value>
+  </data>
+  <data name="EditorGridBorder" xml:space="preserve">
+    <value>Grid border</value>
+  </data>
+  <data name="EditorGridLines" xml:space="preserve">
+    <value>Grid lines</value>
+  </data>
+  <data name="EditorHeaderText" xml:space="preserve">
+    <value>Header text</value>
+  </data>
+  <data name="EditorBaseColor" xml:space="preserve">
+    <value>Base colour</value>
+  </data>
+  <data name="EditorChangedCells" xml:space="preserve">
+    <value>Changed cells</value>
+  </data>
+  <data name="EditorReadOnlyCells" xml:space="preserve">
+    <value>Read-only cells</value>
+  </data>
+  <data name="EditorInapplicableCells" xml:space="preserve">
+    <value>Inapplicable cells</value>
+  </data>
+  <data name="EditorSelection" xml:space="preserve">
+    <value>Selection</value>
+  </data>
+  <data name="EditorColor" xml:space="preserve">
+    <value>Colour</value>
+  </data>
+  <data name="EditorOpacity" xml:space="preserve">
+    <value>Opacity, %</value>
+  </data>
+  <data name="EditorHighlightSubtitle" xml:space="preserve">
+    <value>The percentage is the opacity of the layer over the cell colour.</value>
+  </data>
+  <data name="EditorExecution" xml:space="preserve">
+    <value>Execution</value>
+  </data>
+  <data name="EditorCurrentStep" xml:space="preserve">
+    <value>Current step, %</value>
+  </data>
+  <data name="EditorCompletedSteps" xml:space="preserve">
+    <value>Completed steps, %</value>
+  </data>
+  <data name="EditorLoops" xml:space="preserve">
+    <value>Loops</value>
+  </data>
+  <data name="EditorDepth1" xml:space="preserve">
+    <value>Depth 1, %</value>
+  </data>
+  <data name="EditorDepth2" xml:space="preserve">
+    <value>Depth 2, %</value>
+  </data>
+  <data name="EditorDepth3" xml:space="preserve">
+    <value>Depth 3, %</value>
+  </data>
+  <data name="EditorDimensions" xml:space="preserve">
+    <value>Dimensions</value>
+  </data>
+  <data name="EditorVerticalPadding" xml:space="preserve">
+    <value>Top and bottom padding</value>
+  </data>
+  <data name="EditorBackground" xml:space="preserve">
+    <value>Background</value>
+  </data>
+  <data name="EditorText" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="EditorSecondaryText" xml:space="preserve">
+    <value>Secondary text</value>
+  </data>
+  <data name="EditorSecondaryTextTip" xml:space="preserve">
+    <value>Also the hint in an empty grid</value>
+  </data>
+  <data name="EditorConnected" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="EditorNoLink" xml:space="preserve">
+    <value>No link</value>
+  </data>
+  <data name="EditorSeparators" xml:space="preserve">
+    <value>Separators</value>
+  </data>
+  <data name="EditorPanelBorders" xml:space="preserve">
+    <value>Panel borders</value>
+  </data>
+  <data name="EditorPanelBordersTip" xml:space="preserve">
+    <value>Also the notification panel border</value>
+  </data>
+  <data name="EditorMaximumHeight" xml:space="preserve">
+    <value>Maximum height</value>
+  </data>
+  <data name="EditorHeaderBackground" xml:space="preserve">
+    <value>Header background</value>
+  </data>
+  <data name="EditorErrors" xml:space="preserve">
+    <value>Errors</value>
+  </data>
+  <data name="EditorWarnings" xml:space="preserve">
+    <value>Warnings</value>
+  </data>
+  <data name="EditorDefaults" xml:space="preserve">
+    <value>Defaults</value>
+  </data>
+  <data name="EditorClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="EditorSavedRestartNotice" xml:space="preserve">
+    <value>Saved. Takes effect after a restart.</value>
+  </data>
+  <data name="EditorFieldMessage" xml:space="preserve">
+    <value>{0} › {1}: {2}</value>
+  </data>
+  <data name="EditorEnterNumber" xml:space="preserve">
+    <value>enter a number from {0} to {1}</value>
   </data>
 </root>

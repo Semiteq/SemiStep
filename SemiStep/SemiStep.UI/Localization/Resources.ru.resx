@@ -112,9 +112,6 @@
   <data name="MenuViewTransposedGrid" xml:space="preserve">
     <value>Транс_понированная таблица</value>
   </data>
-  <data name="MenuViewGridStyleSettings" xml:space="preserve">
-    <value>Настройки _стиля таблицы…</value>
-  </data>
   <data name="MenuHelp" xml:space="preserve">
     <value>_Справка</value>
   </data>
@@ -228,165 +225,6 @@
   </data>
   <data name="MessagePanelWarningsFormat" xml:space="preserve">
     <value>Предупреждений: {0}</value>
-  </data>
-  <data name="EditorTitle" xml:space="preserve">
-    <value>Настройки стиля таблицы</value>
-  </data>
-  <data name="EditorRecipeGrid" xml:space="preserve">
-    <value>Таблица рецепта</value>
-  </data>
-  <data name="EditorStatusBar" xml:space="preserve">
-    <value>Строка состояния</value>
-  </data>
-  <data name="EditorNotificationPanel" xml:space="preserve">
-    <value>Панель уведомлений</value>
-  </data>
-  <data name="EditorApplicationTheme" xml:space="preserve">
-    <value>Тема приложения</value>
-  </data>
-  <data name="EditorDimensions" xml:space="preserve">
-    <value>Размеры</value>
-  </data>
-  <data name="EditorFonts" xml:space="preserve">
-    <value>Шрифты</value>
-  </data>
-  <data name="EditorColors" xml:space="preserve">
-    <value>Цвета</value>
-  </data>
-  <data name="EditorReadOnlyCells" xml:space="preserve">
-    <value>Ячейки только для чтения</value>
-  </data>
-  <data name="EditorDisabledCells" xml:space="preserve">
-    <value>Отключённые ячейки</value>
-  </data>
-  <data name="EditorExecutionHighlight" xml:space="preserve">
-    <value>Подсветка выполнения</value>
-  </data>
-  <data name="EditorTypography" xml:space="preserve">
-    <value>Типографика</value>
-  </data>
-  <data name="EditorSharedColors" xml:space="preserve">
-    <value>Общие цвета</value>
-  </data>
-  <data name="EditorSize" xml:space="preserve">
-    <value>Размер</value>
-  </data>
-  <data name="EditorWeight" xml:space="preserve">
-    <value>Насыщенность</value>
-  </data>
-  <data name="EditorItalic" xml:space="preserve">
-    <value>Курсив</value>
-  </data>
-  <data name="EditorRowHeight" xml:space="preserve">
-    <value>Высота строки</value>
-  </data>
-  <data name="EditorCellPaddingLeft" xml:space="preserve">
-    <value>Отступ ячейки слева</value>
-  </data>
-  <data name="EditorCellPaddingTop" xml:space="preserve">
-    <value>Отступ ячейки сверху</value>
-  </data>
-  <data name="EditorCellPaddingRight" xml:space="preserve">
-    <value>Отступ ячейки справа</value>
-  </data>
-  <data name="EditorCellPaddingBottom" xml:space="preserve">
-    <value>Отступ ячейки снизу</value>
-  </data>
-  <data name="EditorGridHeader" xml:space="preserve">
-    <value>Заголовок таблицы</value>
-  </data>
-  <data name="EditorGridCell" xml:space="preserve">
-    <value>Ячейка таблицы</value>
-  </data>
-  <data name="EditorGridBackground" xml:space="preserve">
-    <value>Фон таблицы</value>
-  </data>
-  <data name="EditorGridBorder" xml:space="preserve">
-    <value>Граница таблицы</value>
-  </data>
-  <data name="EditorGridLine" xml:space="preserve">
-    <value>Линия сетки</value>
-  </data>
-  <data name="EditorHeaderForeground" xml:space="preserve">
-    <value>Текст заголовка</value>
-  </data>
-  <data name="EditorChanged" xml:space="preserve">
-    <value>Изменённая</value>
-  </data>
-  <data name="EditorDepth1" xml:space="preserve">
-    <value>Глубина 1</value>
-  </data>
-  <data name="EditorDepth2" xml:space="preserve">
-    <value>Глубина 2</value>
-  </data>
-  <data name="EditorDepth3" xml:space="preserve">
-    <value>Глубина 3</value>
-  </data>
-  <data name="EditorForeground" xml:space="preserve">
-    <value>Текст</value>
-  </data>
-  <data name="EditorPadding" xml:space="preserve">
-    <value>Отступ</value>
-  </data>
-  <data name="EditorText" xml:space="preserve">
-    <value>Текст</value>
-  </data>
-  <data name="EditorBackground" xml:space="preserve">
-    <value>Фон</value>
-  </data>
-  <data name="EditorConnected" xml:space="preserve">
-    <value>Подключено</value>
-  </data>
-  <data name="EditorDisconnected" xml:space="preserve">
-    <value>Отключено</value>
-  </data>
-  <data name="EditorMaxHeight" xml:space="preserve">
-    <value>Макс. высота</value>
-  </data>
-  <data name="EditorInfoSeverity" xml:space="preserve">
-    <value>Уровень: информация</value>
-  </data>
-  <data name="EditorErrorSeverity" xml:space="preserve">
-    <value>Уровень: ошибка</value>
-  </data>
-  <data name="EditorWarningSeverity" xml:space="preserve">
-    <value>Уровень: предупреждение</value>
-  </data>
-  <data name="EditorFontFamily" xml:space="preserve">
-    <value>Гарнитура шрифта</value>
-  </data>
-  <data name="EditorPanelBackground" xml:space="preserve">
-    <value>Фон панели</value>
-  </data>
-  <data name="EditorPanelHeaderBackground" xml:space="preserve">
-    <value>Фон заголовка панели</value>
-  </data>
-  <data name="EditorSubtleBorder" xml:space="preserve">
-    <value>Тонкая граница</value>
-  </data>
-  <data name="EditorSeparator" xml:space="preserve">
-    <value>Разделитель</value>
-  </data>
-  <data name="EditorSecondaryForeground" xml:space="preserve">
-    <value>Вторичный текст</value>
-  </data>
-  <data name="EditorRestartTitle" xml:space="preserve">
-    <value>Настройки сохранены</value>
-  </data>
-  <data name="EditorRestartMessage" xml:space="preserve">
-    <value>Настройки сохранены. Перезапустите приложение, чтобы применить изменения.</value>
-  </data>
-  <data name="EditorExitNow" xml:space="preserve">
-    <value>Выйти сейчас</value>
-  </data>
-  <data name="EditorRestartLater" xml:space="preserve">
-    <value>Перезапустить позже</value>
-  </data>
-  <data name="EditorCannotSave" xml:space="preserve">
-    <value>Сохранение невозможно: черновик стиля содержит недопустимые значения или значения вне диапазона.</value>
-  </data>
-  <data name="EditorDefaultFont" xml:space="preserve">
-    <value>(По умолчанию)</value>
   </data>
   <data name="ErrorConnectionLost" xml:space="preserve">
     <value>Соединение с ПЛК потеряно</value>
@@ -757,31 +595,214 @@
   <data name="StepNumberHeader" xml:space="preserve">
     <value>№</value>
   </data>
-  <data name="EditorSelectionAccent" xml:space="preserve">
-    <value>Цвет выделения</value>
-  </data>
-  <data name="EditorSelectionWeight" xml:space="preserve">
-    <value>Доля выделения</value>
-  </data>
-  <data name="EditorExecutionColor" xml:space="preserve">
-    <value>Цвет выполнения</value>
-  </data>
-  <data name="EditorRunningWeight" xml:space="preserve">
-    <value>Доля: текущий шаг</value>
-  </data>
-  <data name="EditorPastWeight" xml:space="preserve">
-    <value>Доля: прошедшие шаги</value>
-  </data>
-  <data name="EditorLoopTint" xml:space="preserve">
-    <value>Подсветка циклов</value>
-  </data>
-  <data name="EditorLoopColor" xml:space="preserve">
-    <value>Цвет цикла</value>
-  </data>
   <data name="ErrorGridStyleWeightOutOfRange" xml:space="preserve">
     <value>Недопустимая доля в «{0}.{1}»: {2}. Ожидается значение от 0 до 1.</value>
   </data>
   <data name="EmptyRecipeHint" xml:space="preserve">
     <value>Рецепт пуст. Добавьте шаг (Ctrl+N) или откройте файл (Ctrl+O).</value>
+  </data>
+  <data name="MenuViewAppearanceSettings" xml:space="preserve">
+    <value>Настройки _оформления…</value>
+  </data>
+  <data name="EditorTitle" xml:space="preserve">
+    <value>Настройки оформления</value>
+  </data>
+  <data name="EditorPageFonts" xml:space="preserve">
+    <value>Шрифты</value>
+  </data>
+  <data name="EditorPageGrid" xml:space="preserve">
+    <value>Таблица</value>
+  </data>
+  <data name="EditorPageCellColors" xml:space="preserve">
+    <value>Цвета ячеек</value>
+  </data>
+  <data name="EditorPageHighlight" xml:space="preserve">
+    <value>Подсветка</value>
+  </data>
+  <data name="EditorPageStatusBar" xml:space="preserve">
+    <value>Строка состояния</value>
+  </data>
+  <data name="EditorPageNotificationPanel" xml:space="preserve">
+    <value>Панель уведомлений</value>
+  </data>
+  <data name="EditorFontFamily" xml:space="preserve">
+    <value>Шрифт</value>
+  </data>
+  <data name="EditorDefaultFont" xml:space="preserve">
+    <value>Segoe UI (по умолчанию)</value>
+  </data>
+  <data name="EditorSize" xml:space="preserve">
+    <value>Размер</value>
+  </data>
+  <data name="EditorWeight" xml:space="preserve">
+    <value>Насыщенность</value>
+  </data>
+  <data name="EditorItalic" xml:space="preserve">
+    <value>Курсив</value>
+  </data>
+  <data name="EditorGridHeaders" xml:space="preserve">
+    <value>Заголовки таблицы</value>
+  </data>
+  <data name="EditorGridCells" xml:space="preserve">
+    <value>Ячейки таблицы</value>
+  </data>
+  <data name="EditorWeightLight" xml:space="preserve">
+    <value>Светлый</value>
+  </data>
+  <data name="EditorWeightNormal" xml:space="preserve">
+    <value>Обычный</value>
+  </data>
+  <data name="EditorWeightMedium" xml:space="preserve">
+    <value>Средний</value>
+  </data>
+  <data name="EditorWeightSemibold" xml:space="preserve">
+    <value>Полужирный</value>
+  </data>
+  <data name="EditorWeightBold" xml:space="preserve">
+    <value>Жирный</value>
+  </data>
+  <data name="EditorWeightExtraBold" xml:space="preserve">
+    <value>Сверхжирный</value>
+  </data>
+  <data name="EditorWeightBlack" xml:space="preserve">
+    <value>Чёрный</value>
+  </data>
+  <data name="EditorRowsAndCells" xml:space="preserve">
+    <value>Строки и ячейки</value>
+  </data>
+  <data name="EditorRowHeight" xml:space="preserve">
+    <value>Высота строки</value>
+  </data>
+  <data name="EditorPaddingLeft" xml:space="preserve">
+    <value>Отступ слева</value>
+  </data>
+  <data name="EditorPaddingTop" xml:space="preserve">
+    <value>Отступ сверху</value>
+  </data>
+  <data name="EditorPaddingRight" xml:space="preserve">
+    <value>Отступ справа</value>
+  </data>
+  <data name="EditorPaddingBottom" xml:space="preserve">
+    <value>Отступ снизу</value>
+  </data>
+  <data name="EditorColors" xml:space="preserve">
+    <value>Цвета</value>
+  </data>
+  <data name="EditorGridBackground" xml:space="preserve">
+    <value>Фон таблицы</value>
+  </data>
+  <data name="EditorGridBorder" xml:space="preserve">
+    <value>Рамка таблицы</value>
+  </data>
+  <data name="EditorGridLines" xml:space="preserve">
+    <value>Линии сетки</value>
+  </data>
+  <data name="EditorHeaderText" xml:space="preserve">
+    <value>Текст заголовков</value>
+  </data>
+  <data name="EditorBaseColor" xml:space="preserve">
+    <value>Основной цвет</value>
+  </data>
+  <data name="EditorChangedCells" xml:space="preserve">
+    <value>Изменённые ячейки</value>
+  </data>
+  <data name="EditorReadOnlyCells" xml:space="preserve">
+    <value>Ячейки только для чтения</value>
+  </data>
+  <data name="EditorInapplicableCells" xml:space="preserve">
+    <value>Неприменимые ячейки</value>
+  </data>
+  <data name="EditorSelection" xml:space="preserve">
+    <value>Выделение</value>
+  </data>
+  <data name="EditorColor" xml:space="preserve">
+    <value>Цвет</value>
+  </data>
+  <data name="EditorOpacity" xml:space="preserve">
+    <value>Непрозрачность, %</value>
+  </data>
+  <data name="EditorHighlightSubtitle" xml:space="preserve">
+    <value>Проценты задают непрозрачность слоя поверх цвета ячейки.</value>
+  </data>
+  <data name="EditorExecution" xml:space="preserve">
+    <value>Выполнение</value>
+  </data>
+  <data name="EditorCurrentStep" xml:space="preserve">
+    <value>Текущий шаг, %</value>
+  </data>
+  <data name="EditorCompletedSteps" xml:space="preserve">
+    <value>Выполненные шаги, %</value>
+  </data>
+  <data name="EditorLoops" xml:space="preserve">
+    <value>Циклы</value>
+  </data>
+  <data name="EditorDepth1" xml:space="preserve">
+    <value>Глубина 1, %</value>
+  </data>
+  <data name="EditorDepth2" xml:space="preserve">
+    <value>Глубина 2, %</value>
+  </data>
+  <data name="EditorDepth3" xml:space="preserve">
+    <value>Глубина 3, %</value>
+  </data>
+  <data name="EditorDimensions" xml:space="preserve">
+    <value>Размеры</value>
+  </data>
+  <data name="EditorVerticalPadding" xml:space="preserve">
+    <value>Отступ сверху и снизу</value>
+  </data>
+  <data name="EditorBackground" xml:space="preserve">
+    <value>Фон</value>
+  </data>
+  <data name="EditorText" xml:space="preserve">
+    <value>Текст</value>
+  </data>
+  <data name="EditorSecondaryText" xml:space="preserve">
+    <value>Вторичный текст</value>
+  </data>
+  <data name="EditorSecondaryTextTip" xml:space="preserve">
+    <value>Также подсказка в пустой таблице</value>
+  </data>
+  <data name="EditorConnected" xml:space="preserve">
+    <value>Подключено</value>
+  </data>
+  <data name="EditorNoLink" xml:space="preserve">
+    <value>Нет связи</value>
+  </data>
+  <data name="EditorSeparators" xml:space="preserve">
+    <value>Разделители</value>
+  </data>
+  <data name="EditorPanelBorders" xml:space="preserve">
+    <value>Рамки панелей</value>
+  </data>
+  <data name="EditorPanelBordersTip" xml:space="preserve">
+    <value>Также рамка панели уведомлений</value>
+  </data>
+  <data name="EditorMaximumHeight" xml:space="preserve">
+    <value>Наибольшая высота</value>
+  </data>
+  <data name="EditorHeaderBackground" xml:space="preserve">
+    <value>Фон заголовка</value>
+  </data>
+  <data name="EditorErrors" xml:space="preserve">
+    <value>Ошибки</value>
+  </data>
+  <data name="EditorWarnings" xml:space="preserve">
+    <value>Предупреждения</value>
+  </data>
+  <data name="EditorDefaults" xml:space="preserve">
+    <value>Стандартные значения</value>
+  </data>
+  <data name="EditorClose" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="EditorSavedRestartNotice" xml:space="preserve">
+    <value>Сохранено. Вступит в силу после перезапуска.</value>
+  </data>
+  <data name="EditorFieldMessage" xml:space="preserve">
+    <value>{0} › {1}: {2}</value>
+  </data>
+  <data name="EditorEnterNumber" xml:space="preserve">
+    <value>введите число от {0} до {1}</value>
   </data>
 </root>

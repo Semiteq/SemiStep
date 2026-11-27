@@ -16,11 +16,8 @@ public sealed class GridStyleFontsDraft(GridStyleFonts source) : ReactiveObject
 		set => this.RaiseAndSetIfChanged(ref field, value);
 	} = source.FontFamily;
 
-	public decimal? HeaderFontSize
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.HeaderFontSize;
+	public NumberDraft HeaderFontSize { get; } =
+		new(source.HeaderFontSize, DraftRanges.MinFontSize, DraftRanges.MaxFontSize);
 
 	public int HeaderFontWeight
 	{
@@ -34,11 +31,8 @@ public sealed class GridStyleFontsDraft(GridStyleFonts source) : ReactiveObject
 		set => this.RaiseAndSetIfChanged(ref field, value);
 	} = source.HeaderItalic;
 
-	public decimal? CellFontSize
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.CellFontSize;
+	public NumberDraft CellFontSize { get; } =
+		new(source.CellFontSize, DraftRanges.MinFontSize, DraftRanges.MaxFontSize);
 
 	public int CellFontWeight
 	{
@@ -56,10 +50,10 @@ public sealed class GridStyleFontsDraft(GridStyleFonts source) : ReactiveObject
 	{
 		return new GridStyleFonts(
 			FontFamily: FontFamily ?? "",
-			HeaderFontSize: DraftNumbers.ToInt(HeaderFontSize),
+			HeaderFontSize: HeaderFontSize.ToInt(),
 			HeaderFontWeight: HeaderFontWeight,
 			HeaderItalic: HeaderItalic,
-			CellFontSize: DraftNumbers.ToInt(CellFontSize),
+			CellFontSize: CellFontSize.ToInt(),
 			CellFontWeight: CellFontWeight,
 			CellItalic: CellItalic);
 	}

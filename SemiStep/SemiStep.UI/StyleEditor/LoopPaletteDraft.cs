@@ -1,9 +1,4 @@
-﻿using Avalonia.Media;
-
-using ReactiveUI;
-
-using SemiStep.Core.Configuration;
-using SemiStep.UI.Styles;
+﻿using SemiStep.Core.Configuration;
 
 namespace SemiStep.UI.StyleEditor;
 
@@ -11,38 +6,25 @@ namespace SemiStep.UI.StyleEditor;
 /// Editable draft of <see cref="LoopPalette"/>. Property initializers seed from <paramref name="source"/>;
 /// <see cref="Build"/> reconstructs the record positionally so an omitted component is a compile error.
 /// </summary>
-public sealed class LoopPaletteDraft(LoopPalette source) : ReactiveObject
+public sealed class LoopPaletteDraft(LoopPalette source)
 {
-	public Color Color
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Color.ToMediaColor();
+	public ColorDraft Color { get; } = new(source.Color);
 
-	public decimal? Depth1Weight
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.Depth1Weight;
+	public NumberDraft Depth1Weight { get; } =
+		new((decimal)source.Depth1Weight, DraftRanges.MinWeight, DraftRanges.MaxWeight);
 
-	public decimal? Depth2Weight
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.Depth2Weight;
+	public NumberDraft Depth2Weight { get; } =
+		new((decimal)source.Depth2Weight, DraftRanges.MinWeight, DraftRanges.MaxWeight);
 
-	public decimal? Depth3Weight
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.Depth3Weight;
+	public NumberDraft Depth3Weight { get; } =
+		new((decimal)source.Depth3Weight, DraftRanges.MinWeight, DraftRanges.MaxWeight);
 
 	public LoopPalette Build()
 	{
 		return new LoopPalette(
 			Color: Color.ToStyleColor(),
-			Depth1Weight: DraftNumbers.ToDouble(Depth1Weight),
-			Depth2Weight: DraftNumbers.ToDouble(Depth2Weight),
-			Depth3Weight: DraftNumbers.ToDouble(Depth3Weight));
+			Depth1Weight: Depth1Weight.ToDouble(),
+			Depth2Weight: Depth2Weight.ToDouble(),
+			Depth3Weight: Depth3Weight.ToDouble());
 	}
 }

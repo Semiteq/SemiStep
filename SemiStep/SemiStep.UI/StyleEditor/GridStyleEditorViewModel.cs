@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Reactive;
 using System.Reactive.Disposables;
+using System.Reactive.Linq;
 
 using Avalonia.Media;
 
@@ -13,38 +14,27 @@ using ReactiveUI;
 
 using SemiStep.Core.Configuration;
 using SemiStep.UI.Localization;
-using SemiStep.UI.Styles;
 
 namespace SemiStep.UI.StyleEditor;
 
 /// <summary>
-/// Thin parent for the in-app style editor. It exposes each group of <see cref="GridStyleOptions"/> as a
-/// per-group <see cref="ReactiveObject"/> draft (initializer-seeded from a mutable copy of the loaded
-/// record, never the DI singleton); the AXAML binds grouped <c>Group.Leaf</c> paths against those drafts.
-/// <see cref="CanSave"/> gates on the VM-side numeric range checks alone; a typed <see cref="StyleColor"/>
-/// cannot hold an invalid color, so there is nothing else to validate. <see cref="BuildRecord"/> constructs
-/// a new record positionally from the drafts' <c>Build()</c> calls, carrying the one unsurfaced field
-/// <see cref="GridStyleOptions.Orientation"/> straight from <c>_source.Orientation</c>.
+/// The style editor: one draft per <see cref="GridStyleOptions"/> group, validated field by field in page order;
+/// see docs/architecture/grid-style-configuration.md, "Editor write-back".
 /// </summary>
 public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 {
-	public const int MinFontSize = 6;
-	public const int MaxFontSize = 72;
-	public const int MinRowHeight = 12;
-	public const int MaxRowHeight = 400;
-	public const int MinPadding = 0;
-	public const int MaxPadding = 100;
-	public const int MinPanelMaxHeight = 20;
-	public const int MaxPanelMaxHeight = 2000;
-	public const int MinWeight = 0;
-	public const int MaxWeight = 1;
-
 	private readonly IGridStyleEditorFacade _gridStyleEditorFacade;
 	private readonly string _configDir;
 	private readonly ILogger<GridStyleEditorViewModel> _logger;
+	private readonly ObservableAsPropertyHelper<string?> _message;
+	private readonly ObservableAsPropertyHelper<bool> _isMessageError;
 
-	private GridStyleOptions _source;
-	private CompositeDisposable _draftSubscriptions = [];
+	private GridOrientation _orientation;
+
+	// Null after a failed load: there is no file content to compare with, so the next Save writes.
+	private GridStyleOptions? _saved;
+	private IReadOnlyList<EditorField> _fields = [];
+	private IDisposable _draftSubscription = Disposable.Empty;
 
 	public GridStyleEditorViewModel(
 		IGridStyleEditorFacade gridStyleEditorFacade,
@@ -62,28 +52,71 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 	{
 		_gridStyleEditorFacade = gridStyleEditorFacade;
 		_configDir = configDir;
-		_source = source;
+		_orientation = source.Orientation;
+		_saved = source;
 		_logger = logger;
 
 		SaveCommand = ReactiveCommand.CreateFromTask(
 			SaveAsync,
 			this.WhenAnyValue(viewModel => viewModel.CanSave));
 
-		// Modal editor: a save fault must surface on the editor's own ErrorMessage, not the
-		// shared message panel hidden behind the dialog. Subscription lifetime tracks this
-		// transient dialog VM, which is neither IDisposable nor pooled.
+		// A modal editor shows a save fault on its own message line, not on the main window's panel
+		// hidden behind it.
 		SaveCommand.ThrownExceptions.Subscribe(ReportSaveException);
 
+		RestoreDefaultsCommand = ReactiveCommand.Create(RestoreDefaults);
+
+		_message = this
+			.WhenAnyValue(
+				viewModel => viewModel.ValidationMessage,
+				viewModel => viewModel.ErrorMessage,
+				viewModel => viewModel.IsRestartPending,
+				ComposeMessage)
+			.ToProperty(this, viewModel => viewModel.Message);
+
+		_isMessageError = this
+			.WhenAnyValue(
+				viewModel => viewModel.ValidationMessage,
+				viewModel => viewModel.ErrorMessage,
+				(validation, error) => validation is not null || error is not null)
+			.ToProperty(this, viewModel => viewModel.IsMessageError);
+
 		ReplaceDrafts(source);
+		SeedPickers(source);
 	}
 
+	/// <summary>Writes the drafts to the file; true when the file was written.</summary>
 	public ReactiveCommand<Unit, bool> SaveCommand { get; }
 
+	public ReactiveCommand<Unit, Unit> RestoreDefaultsCommand { get; }
+
+	public StyleEditorSections Sections { get; } = new();
+
+	/// <summary>The last load or save failure.</summary>
 	public string? ErrorMessage
 	{
 		get;
 		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
+
+	/// <summary>The first invalid field in page order, or null while every field is valid.</summary>
+	public string? ValidationMessage
+	{
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	}
+
+	/// <summary>True after a save that wrote a change; the change applies on the next start.</summary>
+	public bool IsRestartPending
+	{
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	}
+
+	/// <summary>The footer's message line: a validation message, then a failure, then the restart notice.</summary>
+	public string? Message => _message.Value;
+
+	public bool IsMessageError => _isMessageError.Value;
 
 	public bool CanSave
 	{
@@ -91,8 +124,8 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 		private set => this.RaiseAndSetIfChanged(ref field, value);
 	}
 
-	// Raising change on a whole-draft swap re-evaluates every bound leaf path, so a successful
-	// re-seed refreshes the editor.
+	// Raising change on a whole-draft swap re-evaluates every bound leaf path, so a reseed
+	// (load or defaults) refreshes the editor.
 	public GridStyleFontsDraft Fonts
 	{
 		get;
@@ -172,14 +205,17 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 		var result = await _gridStyleEditorFacade.Load(_configDir);
 		if (result.IsFailed)
 		{
+			_saved = null;
 			ErrorMessage = string.Join("; ", result.Errors.Select(ReasonLocalizer.Localize));
 			LogCausedByExceptions(result, "Grid style load failed");
 			return;
 		}
 
-		_source = result.Value;
+		_orientation = result.Value.Orientation;
+		_saved = result.Value;
 		ErrorMessage = null;
 		ReplaceDrafts(result.Value);
+		SeedPickers(result.Value);
 	}
 
 	public GridStyleOptions BuildRecord()
@@ -196,18 +232,19 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 			StatusBar: StatusBar.Build(),
 			ValidationPanel: ValidationPanel.Build(),
 			Chrome: Chrome.Build(),
-			Orientation: _source.Orientation);
+			Orientation: _orientation);
 	}
 
 	private async Task<bool> SaveAsync()
 	{
-		if (!CanSave)
+		var record = BuildRecord();
+		if (record == _saved)
 		{
-			ErrorMessage = Resources.EditorCannotSave;
+			ErrorMessage = null;
 			return false;
 		}
 
-		var result = await _gridStyleEditorFacade.Save(_configDir, BuildRecord());
+		var result = await _gridStyleEditorFacade.Save(_configDir, record);
 		if (result.IsFailed)
 		{
 			ErrorMessage = string.Join("; ", result.Errors.Select(ReasonLocalizer.Localize));
@@ -215,11 +252,24 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 			return false;
 		}
 
+		_saved = record;
 		ErrorMessage = null;
+		IsRestartPending = true;
 		return true;
 	}
 
-	internal void ReportSaveException(Exception exception)
+	// The two chrome keys without a row keep their current value, so a key the operator cannot see
+	// never changes; BuildRecord takes the orientation from the loaded record.
+	private void RestoreDefaults()
+	{
+		var defaults = GridStyleOptions.Default;
+		ReplaceDrafts(defaults with
+		{
+			Chrome = defaults.Chrome with { Info = Chrome.Info, PanelBackground = Chrome.PanelBackground }
+		});
+	}
+
+	private void ReportSaveException(Exception exception)
 	{
 		_logger.LogError(exception, "Style editor save failed");
 		ErrorMessage = Resources.SaveFailed;
@@ -233,7 +283,14 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 		}
 	}
 
-	// Swaps the CanSave subscriptions so a stale draft never keeps driving CanSave.
+	private static string? ComposeMessage(string? validationMessage, string? errorMessage, bool isRestartPending)
+	{
+		return validationMessage
+			?? errorMessage
+			?? (isRestartPending ? Resources.EditorSavedRestartNotice : null);
+	}
+
+	// Swaps the draft subscription so a stale draft never keeps driving validation.
 	[MemberNotNull(
 		nameof(Fonts),
 		nameof(Layout),
@@ -258,30 +315,42 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 		ValidationPanel = new ValidationPanelStyleDraft(options.ValidationPanel);
 		Chrome = new ChromeColorsDraft(options.Chrome);
 
-		AvailableFontFamilies = BuildFontFamilies(options.Fonts.FontFamily);
-		AvailableFontWeights = BuildFontWeights(options);
+		_fields = EditorFieldList.Build(this);
+		_draftSubscription.Dispose();
+		_draftSubscription = _fields
+			.Select(field => field.Draft.Changed)
+			.Concat(EditorFieldList.ColorDrafts(this).Select(draft => draft.Changed))
+			.Append(Fonts.Changed)
+			.Append(StatusBar.Changed)
+			.Merge()
+			.Subscribe(_ => OnDraftChanged());
 
-		_draftSubscriptions.Dispose();
-		_draftSubscriptions = new CompositeDisposable(
-			SubscribeCanSave(Fonts),
-			SubscribeCanSave(Layout),
-			SubscribeCanSave(Selection),
-			SubscribeCanSave(ChangedCells),
-			SubscribeCanSave(GreyCells),
-			SubscribeCanSave(Execution),
-			SubscribeCanSave(Loop),
-			SubscribeCanSave(StatusBar),
-			SubscribeCanSave(ValidationPanel),
-			SubscribeCanSave(Chrome));
-
-		RecomputeCanSave();
+		OnDraftChanged();
 	}
 
-	// Takes the base ReactiveObject so the ChangedCellColorsDraft.Changed leaf (which hides the base
-	// Changed observable with `new`) resolves to the observable here, not the color property.
-	private IDisposable SubscribeCanSave(ReactiveObject draft)
+	// An edit after a save makes the drafts differ from the file again, so the restart notice no longer applies.
+	private void OnDraftChanged()
 	{
-		return draft.Changed.Subscribe(_ => RecomputeCanSave());
+		IsRestartPending = false;
+		Revalidate();
+	}
+
+	private void Revalidate()
+	{
+		var firstInvalid = _fields.FirstOrDefault(field => !field.IsValid);
+		ValidationMessage = firstInvalid?.Message;
+		CanSave = firstInvalid is null;
+
+		foreach (var section in Sections.All)
+		{
+			section.HasError = _fields.Any(field => field.Section == section && !field.IsValid);
+		}
+	}
+
+	private void SeedPickers(GridStyleOptions options)
+	{
+		AvailableFontFamilies = BuildFontFamilies(options.Fonts.FontFamily);
+		AvailableFontWeights = BuildFontWeights(options);
 	}
 
 	private static IReadOnlyList<FontFamilyOption> BuildFontFamilies(string seededFamily)
@@ -307,13 +376,13 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 	{
 		var weights = new List<FontWeightOption>
 		{
-			new(300, "Light"),
-			new(400, "Normal"),
-			new(500, "Medium"),
-			new(600, "SemiBold"),
-			new(700, "Bold"),
-			new(800, "ExtraBold"),
-			new(900, "Black")
+			new(300, Resources.EditorWeightLight),
+			new(400, Resources.EditorWeightNormal),
+			new(500, Resources.EditorWeightMedium),
+			new(600, Resources.EditorWeightSemibold),
+			new(700, Resources.EditorWeightBold),
+			new(800, Resources.EditorWeightExtraBold),
+			new(900, Resources.EditorWeightBlack)
 		};
 
 		var seededWeights = new[]
@@ -334,38 +403,10 @@ public sealed class GridStyleEditorViewModel : ReactiveObject, IDisposable
 		return weights;
 	}
 
-	private void RecomputeCanSave()
-	{
-		CanSave = NumericsInRange();
-	}
-
-	private bool NumericsInRange()
-	{
-		return InRange(Fonts.HeaderFontSize, MinFontSize, MaxFontSize)
-			&& InRange(Fonts.CellFontSize, MinFontSize, MaxFontSize)
-			&& InRange(Layout.RowHeight, MinRowHeight, MaxRowHeight)
-			&& InRange(Layout.CellPaddingLeft, MinPadding, MaxPadding)
-			&& InRange(Layout.CellPaddingTop, MinPadding, MaxPadding)
-			&& InRange(Layout.CellPaddingRight, MinPadding, MaxPadding)
-			&& InRange(Layout.CellPaddingBottom, MinPadding, MaxPadding)
-			&& InRange(StatusBar.Padding, MinPadding, MaxPadding)
-			&& InRange(StatusBar.FontSize, MinFontSize, MaxFontSize)
-			&& InRange(ValidationPanel.MaxHeight, MinPanelMaxHeight, MaxPanelMaxHeight)
-			&& InRange(Selection.Weight, MinWeight, MaxWeight)
-			&& InRange(Execution.RunningWeight, MinWeight, MaxWeight)
-			&& InRange(Execution.PastWeight, MinWeight, MaxWeight)
-			&& InRange(Loop.Depth1Weight, MinWeight, MaxWeight)
-			&& InRange(Loop.Depth2Weight, MinWeight, MaxWeight)
-			&& InRange(Loop.Depth3Weight, MinWeight, MaxWeight);
-	}
-
-	private static bool InRange(decimal? value, int min, int max)
-	{
-		return value is not null && value >= min && value <= max;
-	}
-
 	public void Dispose()
 	{
-		_draftSubscriptions.Dispose();
+		_draftSubscription.Dispose();
+		_message.Dispose();
+		_isMessageError.Dispose();
 	}
 }

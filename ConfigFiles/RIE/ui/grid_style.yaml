@@ -1,5 +1,5 @@
 fonts:
-  # Font family plus per-role weight and italic are configurable in-app (View > Grid Style Settings).
+  # Font family plus per-role weight and italic are configurable in-app (Вид → Настройки оформления).
   family: ""
   header_size: 12
   header_weight: 600

@@ -1,9 +1,6 @@
-﻿using Avalonia.Media;
-
-using ReactiveUI;
+﻿using ReactiveUI;
 
 using SemiStep.Core.Configuration;
-using SemiStep.UI.Styles;
 
 namespace SemiStep.UI.StyleEditor;
 
@@ -13,29 +10,15 @@ namespace SemiStep.UI.StyleEditor;
 /// </summary>
 public sealed class StatusBarStyleDraft(StatusBarStyle source) : ReactiveObject
 {
-	public Color Background
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Background.ToMediaColor();
+	public ColorDraft Background { get; } = new(source.Background);
 
-	public Color Foreground
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.Foreground.ToMediaColor();
+	public ColorDraft Foreground { get; } = new(source.Foreground);
 
-	public decimal? Padding
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = (decimal)source.Padding;
+	public NumberDraft Padding { get; } =
+		new((decimal)source.Padding, DraftRanges.MinPadding, DraftRanges.MaxPadding);
 
-	public decimal? FontSize
-	{
-		get;
-		set => this.RaiseAndSetIfChanged(ref field, value);
-	} = source.FontSize;
+	public NumberDraft FontSize { get; } =
+		new(source.FontSize, DraftRanges.MinFontSize, DraftRanges.MaxFontSize);
 
 	public int Weight
 	{
@@ -54,8 +37,8 @@ public sealed class StatusBarStyleDraft(StatusBarStyle source) : ReactiveObject
 		return new StatusBarStyle(
 			Background: Background.ToStyleColor(),
 			Foreground: Foreground.ToStyleColor(),
-			Padding: DraftNumbers.ToDouble(Padding),
-			FontSize: DraftNumbers.ToInt(FontSize),
+			Padding: Padding.ToDouble(),
+			FontSize: FontSize.ToInt(),
 			Weight: Weight,
 			Italic: Italic);
 	}

@@ -146,6 +146,24 @@ public sealed class GridPaletteRenderTests : IAsyncLifetime
 		HexOf(Foreground(grid, 1, InapplicableKey())).Should().Be("#000000");
 	}
 
+	// The grid line stays darker than both idle greys, so grey cells keep visible edges (#157).
+	[AvaloniaTheory]
+	[InlineData(GridKind.Canonical)]
+	[InlineData(GridKind.Transposed)]
+	public void GridLine_IsTheApprovedGrey(GridKind grid)
+	{
+		Show(grid);
+
+		if (grid == GridKind.Canonical)
+		{
+			HexOf(_dataGrid!.HorizontalGridLinesBrush).Should().Be("#B8B8B8");
+			HexOf(_dataGrid.VerticalGridLinesBrush).Should().Be("#B8B8B8");
+			return;
+		}
+
+		HexOf(TransposedCell(0, InapplicableKey()).BorderBrush).Should().Be("#B8B8B8");
+	}
+
 	[AvaloniaFact]
 	public void CanonicalStepNumberCell_ShowsTheRowTint()
 	{

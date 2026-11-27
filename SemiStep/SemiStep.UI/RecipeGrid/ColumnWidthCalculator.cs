@@ -36,7 +36,7 @@ public sealed class ColumnWidthCalculator(
 	private const double ComboBoxChromeWidth =
 		ComboBoxCellFactory.DisplayPaddingLeft + ComboBoxCellFactory.ChevronSlotWidth + CanonicalGridLineWidth;
 
-	// Designer cap for the transposed step column; a longer action name trims with a tooltip.
+	// Designer cap for the transposed step column; a longer action or group name trims with a tooltip.
 	private const double TransposedStepColumnCap = 240;
 
 	private readonly GridTextMeasurer _textMeasurer = new(gridStyle);
@@ -116,12 +116,12 @@ public sealed class ColumnWidthCalculator(
 	}
 
 	/// <summary>
-	/// One width for every transposed step column: the wider of the widest action name display with the combo chrome
-	/// and the widest value with the unit slot, capped at <see cref="TransposedStepColumnCap"/>.
+	/// One width for every transposed step column: the wider of the widest action or group name display with the combo
+	/// chrome and the widest value with the unit slot, capped at <see cref="TransposedStepColumnCap"/>.
 	/// </summary>
 	public double TransposedStepColumnWidth()
 	{
-		var widestName = WidestActionNameDisplay();
+		var widestName = Math.Max(WidestActionNameDisplay(), WidestGroupItemName());
 		var widestValue = recipeMetadataRegistry.GetAllColumns()
 			.Where(column => string.Equals(
 				column.ColumnType,
@@ -165,6 +165,16 @@ public sealed class ColumnWidthCalculator(
 
 		return recipeMetadataRegistry.GetAllActions()
 			.Select(action => _textMeasurer.MeasureContent(action.UiName) + (action.StartsLoop ? loopPillWidth : 0))
+			.DefaultIfEmpty(0)
+			.Max();
+	}
+
+	private double WidestGroupItemName()
+	{
+		return recipeMetadataRegistry.GetAllColumns()
+			.Where(column => ColumnTypes.IsGroupBoundColumn(column.ColumnType))
+			.SelectMany(column => CollectGroupDisplayStrings(column.Key))
+			.Select(_textMeasurer.MeasureContent)
 			.DefaultIfEmpty(0)
 			.Max();
 	}

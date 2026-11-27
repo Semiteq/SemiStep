@@ -15,7 +15,7 @@ using Xunit;
 
 namespace SemiStep.Tests.UI.RecipeGrid.Transposed;
 
-// The WithGroups names are short, so the longest one sizes the step column below the cap.
+// The WithGroups action and group names are short, so the longest one sizes the step column below the cap.
 [Trait("Component", "UI")]
 [Trait("Area", "TransposedStepWidth")]
 [Trait("Category", "Integration")]
@@ -25,6 +25,10 @@ public sealed class TransposedStepWidthTests : IAsyncLifetime
 	private const string ConfigName = "WithGroups";
 	private const string WaitNameLine = "ui_name: \"Wait\"";
 	private const string ServiceActionsFile = "actions/service.yaml";
+	private const string OpenItemLine = "1: \"Open\"";
+	private const string ValveGroupFile = "groups/valve.yaml";
+	private const string ActionKey = "action";
+	private const string TargetKey = "target";
 
 	private readonly UIFixture _fixture = new();
 	private bool _fixtureStarted;
@@ -95,15 +99,57 @@ public sealed class TransposedStepWidthTests : IAsyncLifetime
 		ToolTip.GetTip(name).Should().Be(longName, "the tooltip always holds the full name");
 	}
 
+	[AvaloniaFact]
+	public async Task GroupNameLongerThanEveryActionName_SizesTheColumn_AndShowsUntrimmed()
+	{
+		var longName = new string('Ш', 15);
+		await StartWithLongValveItemAsync(longName);
+		var widestAction = _fixture.RecipeMetadataRegistry.GetAllActions().Max(action => MeasureCell(action.UiName));
+		MeasureCell(longName).Should().BeGreaterThan(widestAction, "precondition: the group name is the longest");
+
+		var stepListBox = ShowTransposedGrid(RecipeTestDriver.WithGroupActionId);
+
+		stepListBox.ContainerFromIndex(0)!.Bounds.Width.Should().BeLessThan(Cap, "precondition: the name fits");
+		var group = ComboText(stepListBox, TargetKey);
+		group.Text.Should().Be(longName, "precondition: the rendered step shows the long group name");
+		IsTrimmed(group).Should().BeFalse("the column measures group names as well as action names");
+		ToolTip.GetTip(group).Should().Be(longName, "a group cell carries its full text as a tooltip");
+	}
+
+	[AvaloniaFact]
+	public async Task GroupNameLongerThanTheCap_GivesTheCap_AndTheCellTrimsWithAFullTooltip()
+	{
+		var longName = new string('Ш', 80);
+		await StartWithLongValveItemAsync(longName);
+
+		var stepListBox = ShowTransposedGrid(RecipeTestDriver.WithGroupActionId);
+
+		stepListBox.ContainerFromIndex(0)!.Bounds.Width.Should().Be(Cap);
+		var group = ComboText(stepListBox, TargetKey);
+		group.Text.Should().Be(longName, "precondition: the rendered step shows the 80-character group name");
+		IsTrimmed(group).Should().BeTrue("a group name past the cap ends in an ellipsis");
+		ToolTip.GetTip(group).Should().Be(longName, "the tooltip always holds the full group name");
+	}
+
 	private async Task StartWithLongWaitNameAsync(string uiName)
 	{
+		await StartWithReplacedLineAsync(ServiceActionsFile, WaitNameLine, $"ui_name: \"{uiName}\"");
+	}
+
+	private async Task StartWithLongValveItemAsync(string itemName)
+	{
+		await StartWithReplacedLineAsync(ValveGroupFile, OpenItemLine, $"1: \"{itemName}\"");
+	}
+
+	private async Task StartWithReplacedLineAsync(string relativeFile, string line, string replacement)
+	{
 		_configCopy = TestDataCopier.PrepareValidCase(ConfigName);
-		var actionsFile = Path.Combine(_configCopy.Path, ServiceActionsFile);
-		var yaml = await File.ReadAllTextAsync(actionsFile, TestContext.Current.CancellationToken);
-		yaml.Should().Contain(WaitNameLine, "precondition: the config names the wait action this way");
+		var file = Path.Combine(_configCopy.Path, relativeFile);
+		var yaml = await File.ReadAllTextAsync(file, TestContext.Current.CancellationToken);
+		yaml.Should().Contain(line, "precondition: the config holds the line the test replaces");
 		await File.WriteAllTextAsync(
-			actionsFile,
-			yaml.Replace(WaitNameLine, $"ui_name: \"{uiName}\"", StringComparison.Ordinal),
+			file,
+			yaml.Replace(line, replacement, StringComparison.Ordinal),
 			TestContext.Current.CancellationToken);
 
 		await StartAsync(_configCopy.Path);
@@ -131,11 +177,17 @@ public sealed class TransposedStepWidthTests : IAsyncLifetime
 
 	private static TextBlock ActionNameText(ListBox stepListBox)
 	{
+		return ComboText(stepListBox, ActionKey);
+	}
+
+	private static TextBlock ComboText(ListBox stepListBox, string parameterKey)
+	{
 		var container = (ListBoxItem)stepListBox.ContainerFromIndex(0)!;
 
 		return container.GetVisualDescendants()
 			.OfType<LazyComboCellPresenter>()
-			.Single(presenter => presenter.DataContext is ParameterCellViewModel { Descriptor.ParameterKey: "action" })
+			.Single(presenter => presenter.DataContext is ParameterCellViewModel cell
+				&& cell.Descriptor.ParameterKey == parameterKey)
 			.GetVisualDescendants()
 			.OfType<TextBlock>()
 			.First();

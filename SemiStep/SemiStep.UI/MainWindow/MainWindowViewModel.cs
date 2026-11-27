@@ -87,13 +87,17 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		ToggleOrientationCommand.ReportThrownExceptions(MessagePanel, _logger, new LocalizedText(nameof(Resources.OrientationToggleFailed)))
 			.DisposeWith(_disposables);
 
-		_windowTitle = Observable.FromEvent<MutationSignal>(
+		var isDirty = Observable.FromEvent<MutationSignal>(
 				handler => coordinator.Mutated += handler,
 				handler => coordinator.Mutated -= handler)
-			.Select(_ => Unit.Default)
-			.StartWith(Unit.Default)
-			.CombineLatest(plcMonitor.WhenAnyValue(x => x.IsRecipeActive), (_, isRecipeActive) => isRecipeActive)
-			.Select(BuildWindowTitle)
+			.Select(_ => coordinator.IsDirty)
+			.StartWith(coordinator.IsDirty);
+
+		_windowTitle = Observable.CombineLatest(
+				recipeFile.WhenAnyValue(x => x.CurrentFilePath),
+				isDirty,
+				plcMonitor.WhenAnyValue(x => x.IsRecipeActive),
+				BuildWindowTitle)
 			.ToProperty(this, x => x.WindowTitle)
 			.DisposeWith(_disposables);
 
@@ -295,12 +299,12 @@ public class MainWindowViewModel : ReactiveObject, IDisposable
 		this.RaisePropertyChanged(nameof(IsSyncEnabled));
 	}
 
-	private string BuildWindowTitle(bool isRecipeActive)
+	private static string BuildWindowTitle(string? filePath, bool isDirty, bool isRecipeActive)
 	{
-		var fileName = RecipeFile.CurrentFilePath is not null
-			? Path.GetFileNameWithoutExtension(RecipeFile.CurrentFilePath)
+		var fileName = filePath is not null
+			? Path.GetFileNameWithoutExtension(filePath)
 			: Resources.WindowTitleNewRecipe;
-		var dirtyIndicator = IsDirty ? " *" : "";
+		var dirtyIndicator = isDirty ? " *" : "";
 		var runningIndicator = isRecipeActive ? Resources.WindowTitleRunningSuffix : "";
 
 		return $"SemiStep - {fileName}{dirtyIndicator}{runningIndicator}";

@@ -71,7 +71,11 @@ public class RecipeFileViewModel : ReactiveObject, IDisposable
 
 	public ReactiveCommand<Unit, Unit> NewRecipeCommand { get; }
 
-	public string? CurrentFilePath { get; private set; }
+	public string? CurrentFilePath
+	{
+		get;
+		private set => this.RaiseAndSetIfChanged(ref field, value);
+	}
 
 	public void Dispose()
 	{

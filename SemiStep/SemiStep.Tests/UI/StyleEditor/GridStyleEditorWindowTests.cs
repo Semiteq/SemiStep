@@ -124,11 +124,44 @@ public sealed class GridStyleEditorWindowTests
 		BoundsIn(window, Control(window, "LayoutRowHeight")).Should().Match<Rect>(rect =>
 			rect.X == FieldLeft && rect.Width == 120 && rect.Height == 32);
 		BoundsIn(window, Picker(window, "ChromeGridBackground")).Should().Match<Rect>(rect =>
-			rect.X == FieldLeft && rect.Width == 344 && rect.Height == 32);
+			rect.X == FieldLeft && rect.Width == 120 && rect.Height == 32);
 
 		ShowPage(window, 2);
 		BoundsIn(window, Control(window, "SelectionWeight")).Should().Match<Rect>(rect =>
 			rect.X == FieldLeft && rect.Width == 120 && rect.Height == 32);
+	}
+
+	[AvaloniaTheory]
+	[InlineData(1, "ChromeGridBackground", "LayoutRowHeight")]
+	[InlineData(2, "SelectionAccent", "SelectionWeight")]
+	[InlineData(3, "ExecutionRunning", "ExecutionRunningWeight")]
+	public async Task ColourPicker_IsANumberFieldWide_AndEndsOnItsEdges(int index, string colour, string number)
+	{
+		using var editor = await ShownEditor.OpenAsync();
+		var window = editor.Window;
+
+		ShowPage(window, index);
+		var picker = BoundsIn(window, Picker(window, colour));
+		var spinner = BoundsIn(window, Control(window, number));
+
+		picker.Size.Should().Be(new Size(120, 32));
+		picker.Left.Should().Be(spinner.Left);
+		picker.Right.Should().Be(spinner.Right);
+	}
+
+	[AvaloniaFact]
+	public async Task ColourSwatch_Is76By22_WithTheFixedBorder()
+	{
+		using var editor = await ShownEditor.OpenAsync();
+		var window = editor.Window;
+
+		ShowPage(window, 1);
+		var swatch = Picker(window, "ChromeGridBackground").Content.Should().BeOfType<Border>().Subject;
+
+		swatch.Bounds.Size.Should().Be(new Size(76, 22));
+		swatch.BorderThickness.Should().Be(new Thickness(1));
+		swatch.CornerRadius.Should().Be(new CornerRadius(2));
+		((ISolidColorBrush)swatch.BorderBrush!).Color.Should().Be(Color.Parse("#818594"));
 	}
 
 	[AvaloniaFact]

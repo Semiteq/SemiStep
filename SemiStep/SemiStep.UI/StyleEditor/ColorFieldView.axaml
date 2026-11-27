@@ -5,8 +5,9 @@
              x:DataType="styleEditor:ColorDraft">
 
     <ColorPicker Name="Picker"
+                 Width="120"
                  Height="32"
-                 HorizontalAlignment="Stretch"
+                 HorizontalAlignment="Left"
                  IsAlphaEnabled="False"
                  IsAlphaVisible="False"
                  Color="{Binding Color, Mode=OneWay}">
@@ -15,7 +16,9 @@
                     Margin="4"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    CornerRadius="{DynamicResource ColorPickerCornerRadius}">
+                    BorderBrush="{DynamicResource ColorSwatchBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="2">
                 <Border.Background>
                     <SolidColorBrush Color="{Binding Color}" />
                 </Border.Background>

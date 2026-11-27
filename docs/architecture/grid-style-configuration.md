@@ -374,9 +374,12 @@ GridStyleEditorWindow           (fixed 756 x 560 dialog: section list, six form 
   (the rule of the recipe grid's number cells), rejects text with both, shows the value with a point, and
   rounds a whole-number field. The six weights show percent through
   `WeightPercentConverter` (draft x 100, so a hand-edited `0.125` shows 12.5 and round-trips). A colour
-  is `ColorFieldView`: one stock `ColorPicker`, 32 px high, stretched across the 344 px field column, with
-  `IsAlphaEnabled` and `IsAlphaVisible` false. Its `Content` is a `Border` swatch with `Margin="4"` and
-  the theme's `ColorPickerCornerRadius`, filled with the colour. The flyout has a hex field on its
+  is `ColorFieldView`: one stock `ColorPicker`, 120 x 32 and left-aligned in the field column, with
+  `IsAlphaEnabled` and `IsAlphaVisible` false, so it starts and ends on the same edges as the 120 px
+  number fields. Semi's drop-down part keeps its 39 px. The picker's `Content` is a `Border` swatch with
+  `Margin="4"`, a 1 px border from the fixed palette key `ColorSwatchBorderBrush` (`#818594`, not set
+  from config) and corner radius 2, filled with the colour, so it measures 76 x 22. The border keeps a
+  light colour such as `#FAFAFA` visible against the picker's `#F5F5F6` ground. The flyout has a hex field on its
   third tab, so the row has no hex box of its own. As in SemiPlot's pen editor, the code-behind hooks
   the flyout's `Opened` and `Closed` events and calls `ColorDraft.Pick` on close when the picker's colour
   differs from the colour at open; an opened and dismissed flyout writes nothing. The font row is size 120 + weight `ComboBox` 160 (Russian

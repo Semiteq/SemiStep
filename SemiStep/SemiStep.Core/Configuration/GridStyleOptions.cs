@@ -71,6 +71,6 @@ public sealed record GridStyleOptions(
 			GridBorder: StyleColor.Parse("#808080"),
 			GridBackground: StyleColor.Parse("#FFFFFF"),
 			HeaderForeground: StyleColor.Parse("#6C707E"),
-			GridLine: StyleColor.Parse("#E0E0E0")),
+			GridLine: StyleColor.Parse("#B8B8B8")),
 		Orientation: GridOrientation.RowsAsSteps);
 }

@@ -189,10 +189,12 @@ Star columns keep the small floor, because they are meant to absorb or yield rem
 ## Transposed step column width
 
 `ColumnWidthCalculator.TransposedStepColumnWidth` gives every transposed step column one width, computed
-once per surface: the wider of the longest action name plus the name chrome and the widest value plus
-`WidestUnitSlotWidth` plus the content chrome, floored at `MinColumnWidth` and capped at 240 px. The name
-chrome is what the transposed name display takes: `CellPaddingLeft` + `CellPaddingRight` + the 32 px
-chevron slot + `TransposedColumnCellsPresenter.GridLineWidth`, 45 px at the default paddings. A
-longer action name trims with an ellipsis and carries its full text as a tooltip. A loop start name
+once per surface: the wider of the longest combo name plus the name chrome and the widest value plus
+`WidestUnitSlotWidth` plus the content chrome, floored at `MinColumnWidth` and capped at 240 px. A combo
+name is an action name or an item of a group that a group-bound column shows, for example a heater name.
+The name chrome is what the transposed name display takes: `CellPaddingLeft` + `CellPaddingRight` + the
+32 px chevron slot + `TransposedColumnCellsPresenter.GridLineWidth`, 45 px at the default paddings. Every
+transposed combo cell carries its full text as a tooltip, so a longer name trims with an ellipsis and
+stays readable. A loop start name
 adds the widest loop pass pill, as in the canonical action column (see "Loop start names reserve the
 loop pass pill"); the cap still applies to the sum, so past 240 px the name trims before the pill.

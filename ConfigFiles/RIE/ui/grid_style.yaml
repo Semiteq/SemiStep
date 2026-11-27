@@ -34,7 +34,7 @@ colors:
       depth_1_weight: 0.08
       depth_2_weight: 0.16
       depth_3_weight: 0.26
-  grid_line: "#E0E0E0"
+  grid_line: "#B8B8B8"
 
 status_bar:
   background: "#F7F8FA"

@@ -19,6 +19,10 @@ internal sealed class TransposedCellTemplateFactory(
 	internal static readonly FuncValueConverter<bool, bool> NegateConverter = new(value => !value);
 	private static readonly PropertyTimeMultiConverter _displayConverter = new();
 
+	// An inapplicable combo cell shows no text; a null tip keeps it from opening an empty tooltip.
+	private static readonly FuncValueConverter<string?, string?> _emptyTextAsNoTipConverter =
+		new(text => string.IsNullOrEmpty(text) ? null : text);
+
 	// All step columns share one width, so every number cell shares the widest unit slot of the grid.
 	private readonly IReadOnlySet<string> _numericKeys = surface.WidthCalculator.NumericColumnKeys();
 	private readonly double _unitSlotWidth = surface.WidthCalculator.WidestUnitSlotWidth();
@@ -65,14 +69,12 @@ internal sealed class TransposedCellTemplateFactory(
 			},
 		});
 
-		// The step column stops at its width cap, so an action name may trim; the tooltip always holds it whole.
-		if (descriptor.ParameterKey == ColumnTypes.Action)
+		// The step column stops at its width cap, so a combo name may trim; the tooltip always holds it whole.
+		textBlock.Bind(ToolTip.TipProperty, new Binding(nameof(TextBlock.Text))
 		{
-			textBlock.Bind(ToolTip.TipProperty, new Binding(nameof(TextBlock.Text))
-			{
-				RelativeSource = new RelativeSource(RelativeSourceMode.Self),
-			});
-		}
+			RelativeSource = new RelativeSource(RelativeSourceMode.Self),
+			Converter = _emptyTextAsNoTipConverter,
+		});
 
 		var loopPassTextPath = descriptor.ParameterKey == ColumnTypes.Action
 			? $"{nameof(ParameterCellViewModel.Row)}.{nameof(RecipeRowViewModel.LoopPassText)}"

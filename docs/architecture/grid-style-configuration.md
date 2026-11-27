@@ -178,7 +178,17 @@ the base, then the loop tint, then the execution green, then the selection. No l
 | Selection | `colors.selection.accent` | `colors.selection.weight` | `#3574F0` at 0.25 |
 
 The base priority is orange, then inapplicable grey, then read-only grey, then white. Grey cells take
-the same weights as white cells. A loop deeper than 3 uses depth 3. The blend is integer per channel
+the same weights as white cells.
+
+The grid line `colors.grid_line` is `#B8B8B8` in the three presets and in `GridStyleOptions.Default`,
+darker than both idle greys, so grey cells keep visible edges. Both grids draw it from `GridLineBrush`:
+the canonical `DataGrid` grid lines, the transposed cell, name and header borders, and the entry
+separators of the message panel. The designer's measurements for `#B8B8B8`: delta-E 14.4 against an
+idle inapplicable cell (0.0 with the old `#E0E0E0`), 11.6 against an idle read-only cell (2.8 before),
+4.9 at the weakest edge of any unselected cell, and a contrast of 1.98:1 against white (1.32:1 before).
+If the grid reads too heavy, the designer's fallback is `#C4C4C4`. The greys stay unchanged, so the
+contrast checks between cell colours do not move. A site file that sets `grid_line` keeps its value
+until the site edits it. A loop deeper than 3 uses depth 3. The blend is integer per channel
 with the weight in thousandths, rounded half up: `(base × (1000 − w) + colour × w + 500) / 1000`. The
 result does not depend on floating point; it can differ by 1 per channel from a double-precision blend.
 

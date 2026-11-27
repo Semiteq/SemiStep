@@ -19,6 +19,7 @@
     <SolidColorBrush x:Key="ToolbarSwitchOffTrackBrush" Color="Transparent" />
     <SolidColorBrush x:Key="ToolbarSwitchBorderBrush" Color="#A8ADBD" />
     <SolidColorBrush x:Key="ToolbarSwitchKnobBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ColorSwatchBorderBrush" Color="#818594" />
 
     <!-- Config-driven brushes (cell state, selection, grid lines) are installed at startup by
          CellPaletteInstaller from GridStyleOptions. See CellPaletteInstaller for the full key
